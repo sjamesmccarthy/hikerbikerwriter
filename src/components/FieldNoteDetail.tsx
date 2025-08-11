@@ -1,0 +1,495 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import {
+  ArrowBack as ArrowBackIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+  Close as CloseIcon,
+  ChevronLeft as ChevronLeftIcon,
+  ChevronRight as ChevronRightIcon,
+} from "@mui/icons-material";
+import {
+  IconButton,
+  Chip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Button,
+} from "@mui/material";
+import { renderFooter } from "./shared/footerHelpers";
+import { useSession } from "next-auth/react";
+import FieldNoteForm from "./FieldNoteForm";
+
+type FieldNote = {
+  id: number;
+  slug: string;
+  title: string;
+  content: string;
+  author: string;
+  date: string;
+  tags?: string;
+  mood?: string;
+  images?: string[];
+};
+
+interface FieldNoteDetailProps {
+  slug: string;
+}
+
+const FieldNoteDetail: React.FC<FieldNoteDetailProps> = ({ slug }) => {
+  const router = useRouter();
+  const { data: session } = useSession();
+  const [fieldNote, setFieldNote] = useState<FieldNote | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  useEffect(() => {
+    async function fetchFieldNote() {
+      try {
+        setLoading(true);
+        const params = new URLSearchParams();
+        if (session?.user?.email) {
+          params.set("userEmail", session.user.email);
+        }
+        const queryString = params.toString();
+        let url = `/api/fieldnotes/${slug}`;
+        if (queryString) {
+          url += `?${queryString}`;
+        }
+        const res = await fetch(url);
+        if (!res.ok) {
+          if (res.status === 404) {
+            setError("Field note not found");
+          } else {
+            setError("Failed to load field note");
+          }
+          return;
+        }
+        const data = await res.json();
+        setFieldNote(data);
+      } catch (error) {
+        console.error("Failed to load field note:", error);
+        setError("Failed to load field note");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    fetchFieldNote();
+  }, [slug, session]);
+
+  const handleEdit = () => {
+    setIsEditing(true);
+  };
+
+  const handleFormSubmit = async (formData: {
+    title: string;
+    content: string;
+    tags?: string;
+    mood?: string;
+    images?: string[];
+  }) => {
+    if (!fieldNote) return;
+
+    setIsSubmitting(true);
+
+    try {
+      const res = await fetch("/api/fieldnotes", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: fieldNote.id,
+          userEmail: session?.user?.email,
+          userName: session?.user?.name,
+          ...formData,
+        }),
+      });
+
+      if (res.ok) {
+        const updatedFieldNote = await res.json();
+        setFieldNote(updatedFieldNote);
+        setIsEditing(false);
+
+        // If slug changed, redirect to new URL
+        if (updatedFieldNote.slug !== slug) {
+          router.push(`/fieldnotes/${updatedFieldNote.slug}`);
+        }
+      } else {
+        const errorData = await res.json();
+        console.error("Update error:", errorData);
+        alert(
+          `Error updating fieldnote: ${errorData.error || "Unknown error"}`
+        );
+      }
+    } catch (err) {
+      console.error("Failed to update field note:", err);
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleFormCancel = () => {
+    setIsEditing(false);
+  };
+
+  const handleDelete = async () => {
+    if (!fieldNote) return;
+
+    try {
+      const res = await fetch("/api/fieldnotes", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: fieldNote.id,
+          userEmail: session?.user?.email,
+        }),
+      });
+
+      if (res.ok) {
+        router.push("/fieldnotes");
+      } else {
+        const errorData = await res.json();
+        console.error("Delete error:", errorData);
+        alert(
+          `Error deleting fieldnote: ${errorData.error || "Unknown error"}`
+        );
+      }
+    } catch (err) {
+      console.error("Failed to delete field note:", err);
+    }
+  };
+
+  const formatTags = (tags: string) => {
+    if (!tags) return [];
+    return tags.split(/[ ,]+/).filter((tag) => tag.trim().length > 0);
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  const getMoodEmoji = (mood: string) => {
+    const moodEmojis: { [key: string]: string } = {
+      excited: "🎉",
+      happy: "😊",
+      reflective: "🤔",
+      inspired: "💡",
+      calm: "😌",
+      adventurous: "�️",
+    };
+    return moodEmojis[mood] || "";
+  };
+
+  const openImageModal = (index: number) => {
+    setCurrentImageIndex(index);
+    setIsImageModalOpen(true);
+  };
+
+  const closeImageModal = () => {
+    setIsImageModalOpen(false);
+  };
+
+  const goToNextImage = () => {
+    if (fieldNote?.images) {
+      setCurrentImageIndex((prev) => (prev + 1) % fieldNote.images!.length);
+    }
+  };
+
+  const goToPreviousImage = () => {
+    if (fieldNote?.images) {
+      setCurrentImageIndex((prev) =>
+        prev === 0 ? fieldNote.images!.length - 1 : prev - 1
+      );
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-500">Loading field note...</div>
+      </div>
+    );
+  }
+
+  if (error || !fieldNote) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        <div className="max-xl bg-white flex-1">
+          <div className="sticky top-0 z-20 bg-white border-b border-gray-200">
+            <div className="px-4 py-3 flex items-center justify-between">
+              <div className="flex items-center space-x-3">
+                <Link
+                  href="/fieldnotes"
+                  className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+                >
+                  <ArrowBackIcon className="w-5 h-5 text-gray-600" />
+                </Link>
+                <div>
+                  <h1 className="text-lg font-medium text-gray-900">
+                    Field Note Not Found
+                  </h1>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="p-4 text-center">
+            <p className="text-gray-500 mb-4">{error}</p>
+            <Link
+              href="/fieldnotes"
+              className="text-blue-600 hover:text-blue-800 cursor-pointer"
+            >
+              ← Back to Field Notes
+            </Link>
+          </div>
+        </div>
+        {renderFooter()}
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="max-xl bg-white flex-1">
+        {/* Header */}
+        <div className="flex items-center justify-between h-[61px] border-b border-gray-200 px-3">
+          <div className="flex items-center space-x-3">
+            <Link href="/fieldnotes">
+              <button className="px-3 py-1 rounded text-sm font-medium transition-colors flex items-center gap-1 text-gray-600 hover:text-gray-800 hover:bg-gray-100 cursor-pointer">
+                <ArrowBackIcon sx={{ fontSize: 16 }} />
+                Back to Field Notes
+              </button>
+            </Link>
+            {/* <div>
+              <h1 className="text-lg font-medium text-gray-900">
+                {isEditing ? "Edit Field Note" : fieldNote.title}
+              </h1>
+            </div> */}
+          </div>
+
+          <div className="flex items-center space-x-2">
+            {session && !isEditing && (
+              <>
+                <IconButton onClick={handleEdit} size="small">
+                  <EditIcon className="w-5 h-5" />
+                </IconButton>
+                <IconButton
+                  onClick={() => setIsDeleteDialogOpen(true)}
+                  size="small"
+                  color="error"
+                >
+                  <DeleteIcon className="w-5 h-5" />
+                </IconButton>
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Content */}
+        {isEditing ? (
+          <FieldNoteForm
+            initialData={fieldNote}
+            isEditing={true}
+            onSubmit={handleFormSubmit}
+            onCancel={handleFormCancel}
+            isSubmitting={isSubmitting}
+          />
+        ) : (
+          <div className="p-4 pt-12 max-w-4xl mx-auto">
+            <div className="space-y-6">
+              {/* Title */}
+              <h1 className="text-3xl font-bold text-gray-900 mb-1">
+                {fieldNote.title}
+              </h1>
+
+              {/* Metadata */}
+              <div className="flex flex-wrap items-center gap-2 text-sm text-gray-500 mb-6">
+                <span>By {fieldNote.author}</span>
+                {fieldNote.mood && (
+                  <span className="text-lg">
+                    {getMoodEmoji(fieldNote.mood)}
+                  </span>
+                )}
+                <span className="text-sm text-gray-500">
+                  {formatDate(fieldNote.date)}
+                </span>
+              </div>
+
+              {/* Content */}
+              <div className="prose max-w-none">
+                <div className="whitespace-pre-wrap text-gray-800 leading-relaxed">
+                  {fieldNote.content}
+                </div>
+              </div>
+
+              {/* Images */}
+              {fieldNote.images && fieldNote.images.length > 0 && (
+                <div className="flex gap-4 overflow-x-auto pb-2">
+                  {fieldNote.images.map((image, index) => (
+                    <Image
+                      key={`image-${fieldNote.id}-${index}`}
+                      src={image}
+                      alt={`Field note photo ${index + 1}`}
+                      width={96}
+                      height={96}
+                      className="h-24 w-24 object-cover rounded-lg border border-gray-200 flex-shrink-0 cursor-pointer hover:opacity-80 transition-opacity"
+                      onClick={() => openImageModal(index)}
+                    />
+                  ))}
+                </div>
+              )}
+
+              {/* Tags */}
+              {formatTags(fieldNote.tags || "").length > 0 && (
+                <>
+                  <hr className="border-gray-200" />
+                  <div className="flex flex-wrap gap-2">
+                    {formatTags(fieldNote.tags || "").map((tag) => (
+                      <Chip
+                        key={tag}
+                        label={tag}
+                        size="small"
+                        variant="outlined"
+                        className="bg-gray-50"
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Image Modal */}
+        <Dialog
+          open={isImageModalOpen}
+          onClose={closeImageModal}
+          maxWidth="lg"
+          fullWidth
+          slotProps={{
+            paper: {
+              style: {
+                backgroundColor: "rgba(0, 0, 0, 0.9)",
+                boxShadow: "none",
+                borderRadius: 0,
+              },
+            },
+          }}
+        >
+          <div className="relative">
+            {/* Close Button */}
+            <IconButton
+              onClick={closeImageModal}
+              style={{
+                position: "absolute",
+                top: 16,
+                right: 16,
+                color: "white",
+                backgroundColor: "rgba(0, 0, 0, 0.5)",
+                zIndex: 10,
+              }}
+            >
+              <CloseIcon />
+            </IconButton>
+
+            {/* Navigation Buttons */}
+            {fieldNote?.images && fieldNote.images.length > 1 && (
+              <>
+                <IconButton
+                  onClick={goToPreviousImage}
+                  style={{
+                    position: "absolute",
+                    left: 16,
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    color: "white",
+                    backgroundColor: "rgba(0, 0, 0, 0.5)",
+                    zIndex: 10,
+                  }}
+                >
+                  <ChevronLeftIcon />
+                </IconButton>
+                <IconButton
+                  onClick={goToNextImage}
+                  style={{
+                    position: "absolute",
+                    right: 16,
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    color: "white",
+                    backgroundColor: "rgba(0, 0, 0, 0.5)",
+                    zIndex: 10,
+                  }}
+                >
+                  <ChevronRightIcon />
+                </IconButton>
+              </>
+            )}
+
+            {/* Image */}
+            {fieldNote?.images?.[currentImageIndex] && (
+              <div className="flex justify-center items-center p-4">
+                <Image
+                  src={fieldNote.images[currentImageIndex]}
+                  alt={`Field note photo ${currentImageIndex + 1}`}
+                  width={800}
+                  height={600}
+                  className="max-w-full max-h-[80vh] object-contain"
+                />
+              </div>
+            )}
+
+            {/* Image Counter */}
+            {fieldNote?.images && fieldNote.images.length > 1 && (
+              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 text-white bg-black bg-opacity-50 px-3 py-1 rounded">
+                {currentImageIndex + 1} / {fieldNote.images.length}
+              </div>
+            )}
+          </div>
+        </Dialog>
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog
+          open={isDeleteDialogOpen}
+          onClose={() => setIsDeleteDialogOpen(false)}
+        >
+          <DialogTitle>Delete Field Note</DialogTitle>
+          <DialogContent>
+            <p>
+              Are you sure you want to delete &ldquo;{fieldNote.title}&rdquo;?
+              This action cannot be undone.
+            </p>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setIsDeleteDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleDelete} color="error" variant="contained">
+              Delete
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </div>
+
+      {/* Footer */}
+      {renderFooter()}
+    </div>
+  );
+};
+
+// Fixed syntax issues
+export default FieldNoteDetail;
