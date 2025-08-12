@@ -56,8 +56,8 @@ const RollAndWrite: React.FC = () => {
 
   // Auto-roll on page load if autoroll parameter is present
   useEffect(() => {
-    const autoroll = searchParams?.get('autoroll');
-    if (autoroll === 'true' && currentDice1 === 0 && currentDice2 === 0) {
+    const autoroll = searchParams?.get("autoroll");
+    if (autoroll === "true" && currentDice1 === 0 && currentDice2 === 0) {
       // Small delay to ensure component is mounted
       setTimeout(() => {
         rollDice();
@@ -404,7 +404,11 @@ const RollAndWrite: React.FC = () => {
                     disabled={isRolling}
                     className="w-1/2 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-md transition-all"
                   >
-                    {isRolling ? "Rolling..." : (currentDice1 !== null && currentDice2 !== null ? "Roll Again" : "Roll Dice")}
+                    {isRolling
+                      ? "Rolling..."
+                      : currentDice1 !== null && currentDice2 !== null
+                      ? "Roll Again"
+                      : "Roll Dice"}
                   </Button>
 
                   {currentDice1 !== null && currentDice2 !== null && (

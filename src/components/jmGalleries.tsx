@@ -152,11 +152,38 @@ const JmGalleries: React.FC = () => {
           <h1 className="text-3xl font-bold text-center mt-12 mb-4">
             jM Galleries
           </h1>
-          <h2 className="text-lg text-gray-600 text-center mb-4">
-            Everyday Fine Art, Portraits, Weddings, Real Estate and Lifestyle
-            Photography
+          <h2 className="text-lg text-gray-600 text-center mb-8">
+            <a
+              href="https://jmgalleries.com/fineart"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline inline-flex items-center gap-1"
+            >
+              Everyday Fine Art
+              <OpenInNewOutlinedIcon sx={{ fontSize: 16, color: "#d1d5db" }} />
+            </a>
+            ,{" "}
+            <a
+              href="http://nvrealestatemedia.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline inline-flex items-center gap-1"
+            >
+              Real Estate
+              <OpenInNewOutlinedIcon sx={{ fontSize: 16, color: "#d1d5db" }} />
+            </a>
+            ,{" "}
+            <a
+              href="https://jmportraits.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline inline-flex items-center gap-1"
+            >
+              Portraits, Weddings and Lifestyle Photography
+              <OpenInNewOutlinedIcon sx={{ fontSize: 16, color: "#d1d5db" }} />
+            </a>
           </h2>
-          <div className="mb-8">
+          <div className="hidden mb-8">
             <a
               href="https://jmgalleries.com"
               target="_blank"
