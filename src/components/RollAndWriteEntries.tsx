@@ -247,17 +247,19 @@ const RollAndWriteEntries: React.FC = () => {
               </p>
             </div>
 
-            {/* Create New Entry Button */}
-            <div className="w-3/4 mx-auto mb-6">
-              <div className="w-full flex items-center justify-end">
-                <Link
-                  href="/rollandwrite/roll"
-                  className="px-4 py-2 rounded bg-blue-600 text-white font-mono text-sm hover:bg-blue-700 transition"
-                >
-                  Roll Them Dice
-                </Link>
+            {/* Create New Entry Button - Only show when there are entries */}
+            {!loadingEntries && entries.length > 0 && (
+              <div className="w-3/4 mx-auto mb-6">
+                <div className="w-full flex items-center justify-end">
+                  <Link
+                    href="/rollandwrite/roll?autoroll=true"
+                    className="px-4 py-2 rounded bg-blue-600 text-white font-mono text-sm hover:bg-blue-700 transition"
+                  >
+                    Roll Them Dice
+                  </Link>
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Entries List */}
             <div className="w-3/4 mx-auto">
@@ -274,18 +276,30 @@ const RollAndWriteEntries: React.FC = () => {
                     <div className="text-gray-400 font-mono text-lg mb-2">
                       Sorry, there are no public stories right now.
                     </div>
-                    <div className="text-gray-400 font-mono text-lg mb-4">
+                    <div className="text-gray-400 font-mono text-lg mb-6">
                       Sign in to create and view your own stories.
                     </div>
+                    <Link
+                      href="/rollandwrite/roll?autoroll=true"
+                      className="inline-block px-4 py-2 rounded bg-blue-600 text-white font-mono text-sm hover:bg-blue-700 transition"
+                    >
+                      Roll Them Dice
+                    </Link>
                   </div>
                 ) : (
                   <div className="text-center py-12">
                     <div className="mb-6">
                       <CasinoIcon sx={{ fontSize: 64, color: "#9ca3af" }} />
                     </div>
-                    <div className="text-gray-400 font-mono text-lg mb-4">
+                    <div className="text-gray-400 font-mono text-lg mb-6">
                       No stories yet. Create your first one!
                     </div>
+                    <Link
+                      href="/rollandwrite/roll?autoroll=true"
+                      className="inline-block px-4 py-2 rounded bg-blue-600 text-white font-mono text-sm hover:bg-blue-700 transition"
+                    >
+                      Roll Them Dice
+                    </Link>
                   </div>
                 )
               ) : (

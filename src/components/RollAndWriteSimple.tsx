@@ -1,8 +1,8 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowBack as ArrowBackIcon,
   Casino as CasinoIcon,
@@ -52,6 +52,19 @@ const RollAndWrite: React.FC = () => {
 
   // Add authentication
   const { data: session, status } = useSession();
+  const searchParams = useSearchParams();
+
+  // Auto-roll on page load if autoroll parameter is present
+  useEffect(() => {
+    const autoroll = searchParams?.get('autoroll');
+    if (autoroll === 'true' && currentDice1 === 0 && currentDice2 === 0) {
+      // Small delay to ensure component is mounted
+      setTimeout(() => {
+        rollDice();
+      }, 500);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams, currentDice1, currentDice2]);
 
   const rollDice = () => {
     if (isRolling) return;
@@ -391,7 +404,7 @@ const RollAndWrite: React.FC = () => {
                     disabled={isRolling}
                     className="w-1/2 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg shadow-md transition-all"
                   >
-                    {isRolling ? "Rolling..." : "Roll Dice"}
+                    {isRolling ? "Rolling..." : (currentDice1 !== null && currentDice2 !== null ? "Roll Again" : "Roll Dice")}
                   </Button>
 
                   {currentDice1 !== null && currentDice2 !== null && (
