@@ -1,0 +1,33 @@
+{
+  "id": 1754961065885,
+  "slug": "test",
+  "title": "TEst",
+  "description": "Test",
+  "type": "grill",
+  "recommendedPellets": "",
+  "categories": [
+    "Dinner"
+  ],
+  "photo": "",
+  "prepTime": 0,
+  "cookTime": 0,
+  "servings": 1,
+  "ingredients": [
+    {
+      "name": "Beef",
+      "amount": 1,
+      "unit": "lb"
+    }
+  ],
+  "steps": [
+    {
+      "step": "Step 1",
+      "superSmoke": false
+    }
+  ],
+  "myNotes": "",
+  "author": "James M",
+  "favorite": false,
+  "public": false,
+  "date": "2025-08-12T01:11:05.886Z"
+}
