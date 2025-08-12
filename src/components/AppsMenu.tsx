@@ -25,8 +25,8 @@ const apps: AppItem[] = [
   { name: "Brew Log", path: "/brewday", icon: LogIcon },
   { name: "Roll&Write", path: "/rollandwrite", icon: RollIcon },
   { name: "Field Notes", path: "/fieldnotes", icon: FieldNotesIcon },
-  { name: "jM Galleries", path: "/jmgalleries", icon: PhotoCameraIcon },
   { name: "Recipes", path: "/recipes", icon: RestaurantIcon },
+  { name: "jM Galleries", path: "/jmgalleries", icon: PhotoCameraIcon },
 ];
 
 const AppsMenu: React.FC = () => {

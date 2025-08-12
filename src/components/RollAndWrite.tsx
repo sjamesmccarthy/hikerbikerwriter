@@ -43,8 +43,8 @@ const RollAndWrite: React.FC = () => {
     { name: "Md Editor", path: "/markdown", icon: EditNoteIcon },
     { name: "Brew Log", path: "/brewday", icon: LogIcon },
     { name: "Field Notes", path: "/fieldnotes", icon: FieldNotesIcon },
-    { name: "jM Galleries", path: "/jmgalleries", icon: PhotoCameraIcon },
     { name: "Recipes", path: "/recipes", icon: RestaurantIcon },
+    { name: "jM Galleries", path: "/jmgalleries", icon: PhotoCameraIcon },
   ];
 
   // Handle app selection from menu

@@ -27,8 +27,8 @@ const JmGalleries: React.FC = () => {
     { name: "Md Editor", path: "/markdown", icon: EditNoteIcon },
     { name: "Brew Log", path: "/brewday", icon: LogIcon },
     { name: "Roll&Write", path: "/rollandwrite", icon: RollIcon },
-    { name: "Field Notes", path: "/fieldnotes", icon: FieldNotesIcon },
     { name: "Recipes", path: "/recipes", icon: RestaurantIcon },
+    { name: "Field Notes", path: "/fieldnotes", icon: FieldNotesIcon },
   ];
 
   // Handle app selection from menu
