@@ -210,7 +210,7 @@ const JmGalleries: React.FC = () => {
                     rel="noopener noreferrer"
                   >
                     <Image
-                      src={`/gallery-thumbnails/${photo.file_name}.jpg`}
+                      src={`https://jmgalleries.com/view/__catalog/__thumbnail/${photo.file_name}.jpg`}
                       alt={photo.title}
                       width={400}
                       height={300}

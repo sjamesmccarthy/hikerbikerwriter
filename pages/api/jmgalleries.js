@@ -1,8 +1,8 @@
-import pool from "../../src/lib/db";
+import jmGalleriesPool from "../../src/lib/db-jmgalleries";
 
 export default async function handler(req, res) {
   try {
-    const [rows] = await pool.query(
+    const [rows] = await jmGalleriesPool.query(
       "SELECT title, file_name FROM catalog_photo WHERE status='ACTIVE' LIMIT 24"
     );
     res.status(200).json(rows);
