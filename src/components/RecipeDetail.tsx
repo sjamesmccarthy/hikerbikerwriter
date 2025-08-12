@@ -180,7 +180,7 @@ const RecipeDetail: React.FC<RecipeDetailProps> = ({ slug }) => {
         // If not authenticated or no recipe found, try public recipes
         if (!foundRecipe) {
           try {
-            const publicRes = await fetch("/api/recipes/public");
+            const publicRes = await fetch("/api/recipes");
             if (publicRes.ok) {
               const publicRecipes = await publicRes.json();
               foundRecipe = publicRecipes.find((r: Recipe) => r.slug === slug);

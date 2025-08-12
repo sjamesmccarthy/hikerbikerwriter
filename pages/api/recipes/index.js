@@ -14,15 +14,21 @@ export default async function handler(req, res) {
     try {
       const { userEmail } = req.query;
 
-      if (!userEmail) {
-        return res.status(400).json({ error: "User email required" });
+      let query;
+      let params;
+
+      if (userEmail) {
+        // Logged in user: get their recipes + public recipes
+        query = "SELECT * FROM recipes WHERE user_email = ? OR is_public = TRUE ORDER BY created DESC";
+        params = [userEmail];
+      } else {
+        // Not logged in: only get public recipes
+        query = "SELECT * FROM recipes WHERE is_public = TRUE ORDER BY created DESC";
+        params = [];
       }
 
-      // Get all recipes for the user from database
-      const [rows] = await pool.query(
-        "SELECT * FROM recipes WHERE user_email = ? ORDER BY created DESC",
-        [userEmail]
-      );
+      // Get recipes from database
+      const [rows] = await pool.query(query, params);
 
       // Parse the JSON data and add any missing fields for frontend compatibility
       const recipes = rows.map((row) => {
@@ -32,10 +38,11 @@ export default async function handler(req, res) {
         return {
           ...recipe,
           id: recipe.id || row.id, // Use JSON id or fallback to database id
-          userEmail: userEmail,
+          userEmail: recipe.userEmail || row.user_email, // Use recipe's actual owner
           dateAdded: recipe.dateAdded || row.created,
-          personalNotes: recipe.personalNotes || "",
-          isFavorite: recipe.isFavorite || false,
+          personalNotes: userEmail ? (recipe.personalNotes || "") : "", // Only show personal notes to the owner
+          isFavorite: userEmail === row.user_email ? (recipe.isFavorite || false) : false, // Only show favorite status to owner
+          isPublic: row.is_public, // Add public status for frontend
         };
       });
 
@@ -116,9 +123,10 @@ export default async function handler(req, res) {
       };
 
       // Insert into database
-      await pool.query("INSERT INTO recipes (user_email, json) VALUES (?, ?)", [
+      await pool.query("INSERT INTO recipes (user_email, json, is_public) VALUES (?, ?, ?)", [
         userEmail,
         JSON.stringify(recipeData),
+        isPublic || false,
       ]);
 
       // Return the full recipe data for the response
@@ -206,8 +214,9 @@ export default async function handler(req, res) {
       };
 
       // Update in database
-      await pool.query("UPDATE recipes SET json = ? WHERE id = ?", [
+      await pool.query("UPDATE recipes SET json = ?, is_public = ? WHERE id = ?", [
         JSON.stringify(updatedRecipe),
+        isPublic || false,
         row.id,
       ]);
 

@@ -10,15 +10,21 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: "Missing slug parameter" });
       }
 
-      if (!userEmail) {
-        return res.status(400).json({ error: "User email required" });
+      let query;
+      let params;
+
+      if (userEmail) {
+        // Logged in user: can access their own recipes or public recipes
+        query = "SELECT * FROM recipes WHERE (user_email = ? OR is_public = TRUE) AND JSON_EXTRACT(json, '$.slug') = ?";
+        params = [userEmail, slug];
+      } else {
+        // Not logged in: can only access public recipes
+        query = "SELECT * FROM recipes WHERE is_public = TRUE AND JSON_EXTRACT(json, '$.slug') = ?";
+        params = [slug];
       }
 
       // Get the recipe from database by slug
-      const [rows] = await pool.query(
-        "SELECT * FROM recipes WHERE user_email = ? AND JSON_EXTRACT(json, '$.slug') = ?",
-        [userEmail, slug]
-      );
+      const [rows] = await pool.query(query, params);
 
       if (rows.length === 0) {
         return res.status(404).json({ error: "Recipe not found" });
@@ -29,13 +35,17 @@ export default async function handler(req, res) {
           ? JSON.parse(rows[0].json)
           : rows[0].json;
 
+      const row = rows[0];
+      const isOwner = userEmail && userEmail === row.user_email;
+
       // Ensure compatibility with frontend expectations
       const responseData = {
         ...recipe,
-        userEmail: userEmail,
-        dateAdded: recipe.dateAdded || rows[0].created,
-        personalNotes: recipe.personalNotes || "",
-        isFavorite: recipe.isFavorite || false,
+        userEmail: recipe.userEmail || row.user_email,
+        dateAdded: recipe.dateAdded || row.created,
+        personalNotes: isOwner ? (recipe.personalNotes || "") : "", // Only show personal notes to owner
+        isFavorite: isOwner ? (recipe.isFavorite || false) : false, // Only show favorite status to owner
+        isPublic: row.is_public, // Include public status
       };
 
       return res.status(200).json(responseData);

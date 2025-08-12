@@ -187,12 +187,12 @@ const RecipeViewer: React.FC = () => {
             `/api/recipes?userEmail=${encodeURIComponent(session.user.email)}`
           );
           const data = await res.json();
-          setRecipes(data);
+          setRecipes(Array.isArray(data) ? data : []);
         } else {
           // Fetch public recipes when not logged in
-          const res = await fetch("/api/recipes/public");
+          const res = await fetch("/api/recipes");
           const data = await res.json();
-          setRecipes(data);
+          setRecipes(Array.isArray(data) ? data : []);
         }
       } catch (error) {
         console.error("Error fetching recipes:", error);
@@ -240,8 +240,8 @@ const RecipeViewer: React.FC = () => {
     }
   };
 
-  // Filter recipes
-  const filteredRecipes = recipes.filter((recipe) => {
+  // Filter recipes - ensure recipes is always an array
+  const filteredRecipes = (Array.isArray(recipes) ? recipes : []).filter((recipe) => {
     const categoryMatch =
       activeCategory === "All" || recipe.categories.includes(activeCategory);
     const cookingTypeMatch =
