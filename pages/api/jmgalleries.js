@@ -26,6 +26,21 @@ export default async function handler(req, res) {
 
     res.status(500).json({
       error: errorMessage,
+      database: "jmgalusa_website",
+      connectionInfo:
+        process.env.NODE_ENV === "development"
+          ? {
+              host:
+                process.env.NODE_ENV === "development"
+                  ? "127.0.0.1"
+                  : process.env.DB_HOST,
+              database: "jmgalusa_website",
+              user:
+                process.env.NODE_ENV === "development"
+                  ? "root"
+                  : process.env.DB_USER,
+            }
+          : undefined,
       details:
         process.env.NODE_ENV === "development" ? error.message : undefined,
     });

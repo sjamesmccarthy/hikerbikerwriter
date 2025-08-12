@@ -40,7 +40,15 @@ const JmGalleries: React.FC = () => {
   const [photos, setPhotos] = useState<{ title: string; file_name: string }[]>(
     []
   );
-  const [dbError, setDbError] = useState<string | null>(null);
+  const [dbError, setDbError] = useState<{
+    message: string;
+    database?: string;
+    connectionInfo?: {
+      host: string;
+      database: string;
+      user: string;
+    };
+  } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -58,15 +66,21 @@ const JmGalleries: React.FC = () => {
 
         // Check if the response contains an error from the API
         if (data.error) {
-          throw new Error(data.error);
+          setDbError({
+            message: data.error,
+            database: data.database,
+            connectionInfo: data.connectionInfo,
+          });
+          return;
         }
 
         setPhotos(data);
       } catch (error) {
         console.error("Database connection failed:", error);
-        setDbError(
-          error instanceof Error ? error.message : "Unknown database error"
-        );
+        setDbError({
+          message:
+            error instanceof Error ? error.message : "Unknown database error",
+        });
         setPhotos([]);
       } finally {
         setIsLoading(false);
@@ -182,8 +196,26 @@ const JmGalleries: React.FC = () => {
                   Unable to load gallery images. Please try again later.
                 </p>
                 <p className="text-xs text-red-600 mt-2 font-mono">
-                  Error: {dbError}
+                  Error: {dbError.message}
                 </p>
+                {dbError.database && (
+                  <p className="text-xs text-red-600 mt-1">
+                    <span className="font-semibold">Database:</span>{" "}
+                    {dbError.database}
+                  </p>
+                )}
+                {dbError.connectionInfo && (
+                  <div className="text-xs text-red-600 mt-2">
+                    <p>
+                      <span className="font-semibold">Connection Details:</span>
+                    </p>
+                    <p className="ml-2">Host: {dbError.connectionInfo.host}</p>
+                    <p className="ml-2">
+                      Database: {dbError.connectionInfo.database}
+                    </p>
+                    <p className="ml-2">User: {dbError.connectionInfo.user}</p>
+                  </div>
+                )}
               </div>
             </div>
           )}
