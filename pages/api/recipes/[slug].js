@@ -13,14 +13,26 @@ export default async function handler(req, res) {
       let query;
       let params;
 
-      if (userEmail && userEmail !== 'undefined' && userEmail !== '' && userEmail !== 'null') {
+      if (
+        userEmail &&
+        userEmail !== "undefined" &&
+        userEmail !== "" &&
+        userEmail !== "null"
+      ) {
         // Logged in user: can access their own recipes or public recipes
-        query = "SELECT * FROM recipes WHERE (user_email = ? OR is_public = TRUE) AND JSON_EXTRACT(json, '$.slug') = ?";
+        query =
+          "SELECT * FROM recipes WHERE (user_email = ? OR is_public = TRUE) AND JSON_EXTRACT(json, '$.slug') = ?";
         params = [userEmail, slug];
-        console.log("Using authenticated query for user:", userEmail, "slug:", slug);
+        console.log(
+          "Using authenticated query for user:",
+          userEmail,
+          "slug:",
+          slug
+        );
       } else {
         // Not logged in: can only access public recipes
-        query = "SELECT * FROM recipes WHERE is_public = TRUE AND JSON_EXTRACT(json, '$.slug') = ?";
+        query =
+          "SELECT * FROM recipes WHERE is_public = TRUE AND JSON_EXTRACT(json, '$.slug') = ?";
         params = [slug];
         console.log("Using public-only query for slug:", slug);
       }
@@ -45,8 +57,8 @@ export default async function handler(req, res) {
         ...recipe,
         userEmail: recipe.userEmail || row.user_email,
         dateAdded: recipe.dateAdded || row.created,
-        personalNotes: isOwner ? (recipe.personalNotes || "") : "", // Only show personal notes to owner
-        isFavorite: isOwner ? (recipe.isFavorite || false) : false, // Only show favorite status to owner
+        personalNotes: isOwner ? recipe.personalNotes || "" : "", // Only show personal notes to owner
+        isFavorite: isOwner ? recipe.isFavorite || false : false, // Only show favorite status to owner
         isPublic: row.is_public, // Include public status
       };
 

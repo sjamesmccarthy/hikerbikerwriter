@@ -15,19 +15,31 @@ export default async function handler(req, res) {
       const { userEmail } = req.query;
 
       // Add some debugging for production
-      console.log("GET /api/recipes - userEmail:", userEmail, "type:", typeof userEmail);
+      console.log(
+        "GET /api/recipes - userEmail:",
+        userEmail,
+        "type:",
+        typeof userEmail
+      );
 
       let query;
       let params;
 
-      if (userEmail && userEmail !== 'undefined' && userEmail !== '' && userEmail !== 'null') {
+      if (
+        userEmail &&
+        userEmail !== "undefined" &&
+        userEmail !== "" &&
+        userEmail !== "null"
+      ) {
         // Logged in user: get their recipes + public recipes
-        query = "SELECT * FROM recipes WHERE user_email = ? OR is_public = TRUE ORDER BY created DESC";
+        query =
+          "SELECT * FROM recipes WHERE user_email = ? OR is_public = TRUE ORDER BY created DESC";
         params = [userEmail];
         console.log("Using authenticated query for user:", userEmail);
       } else {
         // Not logged in: only get public recipes
-        query = "SELECT * FROM recipes WHERE is_public = TRUE ORDER BY created DESC";
+        query =
+          "SELECT * FROM recipes WHERE is_public = TRUE ORDER BY created DESC";
         params = [];
         console.log("Using public-only query");
       }
@@ -45,8 +57,9 @@ export default async function handler(req, res) {
           id: recipe.id || row.id, // Use JSON id or fallback to database id
           userEmail: recipe.userEmail || row.user_email, // Use recipe's actual owner
           dateAdded: recipe.dateAdded || row.created,
-          personalNotes: userEmail ? (recipe.personalNotes || "") : "", // Only show personal notes to the owner
-          isFavorite: userEmail === row.user_email ? (recipe.isFavorite || false) : false, // Only show favorite status to owner
+          personalNotes: userEmail ? recipe.personalNotes || "" : "", // Only show personal notes to the owner
+          isFavorite:
+            userEmail === row.user_email ? recipe.isFavorite || false : false, // Only show favorite status to owner
           isPublic: row.is_public, // Add public status for frontend
         };
       });
@@ -130,11 +143,10 @@ export default async function handler(req, res) {
       };
 
       // Insert into database
-      await pool.query("INSERT INTO recipes (user_email, json, is_public) VALUES (?, ?, ?)", [
-        userEmail,
-        JSON.stringify(recipeData),
-        isPublic || false,
-      ]);
+      await pool.query(
+        "INSERT INTO recipes (user_email, json, is_public) VALUES (?, ?, ?)",
+        [userEmail, JSON.stringify(recipeData), isPublic || false]
+      );
 
       // Return the full recipe data for the response
       const responseData = {
@@ -221,11 +233,10 @@ export default async function handler(req, res) {
       };
 
       // Update in database
-      await pool.query("UPDATE recipes SET json = ?, is_public = ? WHERE id = ?", [
-        JSON.stringify(updatedRecipe),
-        isPublic || false,
-        row.id,
-      ]);
+      await pool.query(
+        "UPDATE recipes SET json = ?, is_public = ? WHERE id = ?",
+        [JSON.stringify(updatedRecipe), isPublic || false, row.id]
+      );
 
       // Return the full recipe data for the response
       const responseData = {

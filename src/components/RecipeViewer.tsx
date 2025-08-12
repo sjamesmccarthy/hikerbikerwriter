@@ -241,28 +241,30 @@ const RecipeViewer: React.FC = () => {
   };
 
   // Filter recipes - ensure recipes is always an array
-  const filteredRecipes = (Array.isArray(recipes) ? recipes : []).filter((recipe) => {
-    const categoryMatch =
-      activeCategory === "All" || recipe.categories.includes(activeCategory);
-    const cookingTypeMatch =
-      activeCookingType === "All" || recipe.type === activeCookingType;
-    const totalTime = recipe.prepTime + recipe.cookTime;
-    const cookTimeMatch =
-      activeCookTime === "All" ||
-      getCookTimeCategory(totalTime) === activeCookTime;
-    const searchMatch =
-      recipe.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      recipe.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const favoriteMatch = !showFavoritesOnly || recipe.favorite;
+  const filteredRecipes = (Array.isArray(recipes) ? recipes : []).filter(
+    (recipe) => {
+      const categoryMatch =
+        activeCategory === "All" || recipe.categories.includes(activeCategory);
+      const cookingTypeMatch =
+        activeCookingType === "All" || recipe.type === activeCookingType;
+      const totalTime = recipe.prepTime + recipe.cookTime;
+      const cookTimeMatch =
+        activeCookTime === "All" ||
+        getCookTimeCategory(totalTime) === activeCookTime;
+      const searchMatch =
+        recipe.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        recipe.description.toLowerCase().includes(searchTerm.toLowerCase());
+      const favoriteMatch = !showFavoritesOnly || recipe.favorite;
 
-    return (
-      categoryMatch &&
-      cookingTypeMatch &&
-      cookTimeMatch &&
-      searchMatch &&
-      favoriteMatch
-    );
-  });
+      return (
+        categoryMatch &&
+        cookingTypeMatch &&
+        cookTimeMatch &&
+        searchMatch &&
+        favoriteMatch
+      );
+    }
+  );
 
   const getTotalTime = (recipe: Recipe) => {
     return recipe.prepTime + recipe.cookTime;
