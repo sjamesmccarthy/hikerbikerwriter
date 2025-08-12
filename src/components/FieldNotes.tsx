@@ -230,7 +230,7 @@ const FieldNotes: React.FC = () => {
             if (!session) {
               return (
                 <div className="flex items-center gap-2">
-                  <Link 
+                  <Link
                     href="/auth/signup"
                     className="px-4 py-2 rounded bg-gray-600 text-white font-mono text-sm hover:bg-gray-700 transition"
                   >

@@ -26,8 +26,8 @@ export default async function handler(req, res) {
     );
 
     if (Array.isArray(existingUser) && existingUser.length > 0) {
-      return res.status(409).json({ 
-        error: "An account with this email already exists" 
+      return res.status(409).json({
+        error: "An account with this email already exists",
       });
     }
 
@@ -38,8 +38,8 @@ export default async function handler(req, res) {
     );
 
     if (Array.isArray(existingSignup) && existingSignup.length > 0) {
-      return res.status(409).json({ 
-        error: "A signup request with this email is already pending" 
+      return res.status(409).json({
+        error: "A signup request with this email is already pending",
       });
     }
 
@@ -53,17 +53,17 @@ export default async function handler(req, res) {
       message: "Signup request submitted successfully",
       requestId: result.insertId,
     });
-
   } catch (error) {
     console.error("Signup API error:", error);
-    
+
     // Check if it's a database table error
-    if (error.code === 'ER_NO_SUCH_TABLE') {
-      return res.status(500).json({ 
-        error: "Signup functionality is not yet available. Please contact the administrator." 
+    if (error.code === "ER_NO_SUCH_TABLE") {
+      return res.status(500).json({
+        error:
+          "Signup functionality is not yet available. Please contact the administrator.",
       });
     }
-    
+
     return res.status(500).json({ error: "Internal server error" });
   }
 }

@@ -24,7 +24,7 @@ export default function AdminSignupRequests() {
 
   useEffect(() => {
     if (status === "loading") return;
-    
+
     if (!session) {
       router.push("/auth/signin");
       return;
@@ -47,7 +47,11 @@ export default function AdminSignupRequests() {
     }
   };
 
-  const handleAction = async (requestId: number, action: "approve" | "reject", notes?: string) => {
+  const handleAction = async (
+    requestId: number,
+    action: "approve" | "reject",
+    notes?: string
+  ) => {
     setProcessing(requestId);
     try {
       const response = await fetch("/api/signup-requests", {
@@ -92,8 +96,8 @@ export default function AdminSignupRequests() {
     return null;
   }
 
-  const pendingRequests = requests.filter(r => r.status === "pending");
-  const processedRequests = requests.filter(r => r.status !== "pending");
+  const pendingRequests = requests.filter((r) => r.status === "pending");
+  const processedRequests = requests.filter((r) => r.status !== "pending");
 
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -108,7 +112,7 @@ export default function AdminSignupRequests() {
             <h2 className="text-xl font-semibold text-gray-800 mb-4">
               Pending Requests ({pendingRequests.length})
             </h2>
-            
+
             {pendingRequests.length === 0 ? (
               <p className="text-gray-500">No pending requests</p>
             ) : (
@@ -145,7 +149,9 @@ export default function AdminSignupRequests() {
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                           <div className="flex space-x-2">
                             <button
-                              onClick={() => handleAction(request.id, "approve")}
+                              onClick={() =>
+                                handleAction(request.id, "approve")
+                              }
                               disabled={processing === request.id}
                               className="bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700 disabled:opacity-50"
                             >
@@ -153,7 +159,9 @@ export default function AdminSignupRequests() {
                             </button>
                             <button
                               onClick={() => {
-                                const notes = prompt("Rejection reason (optional):");
+                                const notes = prompt(
+                                  "Rejection reason (optional):"
+                                );
                                 if (notes !== null) {
                                   handleAction(request.id, "reject", notes);
                                 }
@@ -178,7 +186,7 @@ export default function AdminSignupRequests() {
             <h2 className="text-xl font-semibold text-gray-800 mb-4">
               Processed Requests ({processedRequests.length})
             </h2>
-            
+
             {processedRequests.length === 0 ? (
               <p className="text-gray-500">No processed requests</p>
             ) : (
@@ -213,16 +221,22 @@ export default function AdminSignupRequests() {
                           {request.email}
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                            request.status === "approved" 
-                              ? "bg-green-100 text-green-800" 
-                              : "bg-red-100 text-red-800"
-                          }`}>
+                          <span
+                            className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                              request.status === "approved"
+                                ? "bg-green-100 text-green-800"
+                                : "bg-red-100 text-red-800"
+                            }`}
+                          >
                             {request.status}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                          {request.processed_at ? new Date(request.processed_at).toLocaleDateString() : "-"}
+                          {request.processed_at
+                            ? new Date(
+                                request.processed_at
+                              ).toLocaleDateString()
+                            : "-"}
                         </td>
                         <td className="px-6 py-4 text-sm text-gray-500">
                           {request.notes || "-"}

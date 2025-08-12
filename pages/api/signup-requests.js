@@ -41,7 +41,9 @@ export default async function handler(req, res) {
         const { action, requestId, notes } = req.body;
 
         if (!action || !requestId) {
-          return res.status(400).json({ error: "Action and requestId are required" });
+          return res
+            .status(400)
+            .json({ error: "Action and requestId are required" });
         }
 
         if (!["approve", "reject"].includes(action)) {
@@ -55,7 +57,9 @@ export default async function handler(req, res) {
         );
 
         if (!Array.isArray(requests) || requests.length === 0) {
-          return res.status(404).json({ error: "Signup request not found or already processed" });
+          return res
+            .status(404)
+            .json({ error: "Signup request not found or already processed" });
         }
 
         const signupRequest = requests[0];
@@ -78,17 +82,24 @@ export default async function handler(req, res) {
         // Update signup request status
         await pool.execute(
           "UPDATE signup_requests SET status = ?, processed_at = NOW(), processed_by = ?, notes = ? WHERE id = ?",
-          [action === "approve" ? "approved" : "rejected", authResult.user.email, notes || null, requestId]
+          [
+            action === "approve" ? "approved" : "rejected",
+            authResult.user.email,
+            notes || null,
+            requestId,
+          ]
         );
 
-        return res.status(200).json({ 
-          message: `Signup request ${action}d successfully`
+        return res.status(200).json({
+          message: `Signup request ${action}d successfully`,
         });
       }
 
       default:
         res.setHeader("Allow", ["GET", "POST"]);
-        return res.status(405).json({ error: `Method ${req.method} not allowed` });
+        return res
+          .status(405)
+          .json({ error: `Method ${req.method} not allowed` });
     }
   } catch (error) {
     console.error("Signup requests API error:", error);
