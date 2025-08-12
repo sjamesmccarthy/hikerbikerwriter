@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -18,6 +18,19 @@ import WeatherWidget from "./WeatherWidget";
 
 const Homepage: React.FC = () => {
   const [showAllButtons, setShowAllButtons] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
+
+  // Check screen size on mount and resize
+  useEffect(() => {
+    const checkScreenSize = () => {
+      setIsDesktop(window.innerWidth >= 640); // sm breakpoint
+    };
+
+    checkScreenSize();
+    window.addEventListener("resize", checkScreenSize);
+
+    return () => window.removeEventListener("resize", checkScreenSize);
+  }, []);
 
   const buttons = [
     {
@@ -52,7 +65,12 @@ const Homepage: React.FC = () => {
     },
   ];
 
-  const visibleButtons = showAllButtons ? buttons : buttons.slice(0, 4);
+  const getVisibleButtons = () => {
+    if (showAllButtons) return buttons;
+    return isDesktop ? buttons : buttons.slice(0, 4);
+  };
+
+  const visibleButtons = getVisibleButtons();
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-teal-700 via-teal-500 to-blue-300 flex flex-col">
@@ -89,8 +107,8 @@ const Homepage: React.FC = () => {
               ))}
             </div>
 
-            {/* Toggle Button */}
-            {buttons.length > 4 && (
+            {/* Toggle Button - Only show on mobile when there are more than 4 buttons */}
+            {!isDesktop && buttons.length > 4 && (
               <div className="flex justify-center mt-4">
                 <button
                   onClick={() => setShowAllButtons(!showAllButtons)}
