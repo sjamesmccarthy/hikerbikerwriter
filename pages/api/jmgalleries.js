@@ -7,6 +7,27 @@ export default async function handler(req, res) {
     );
     res.status(200).json(rows);
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    console.error("Database error in jmgalleries API:", error);
+
+    // Provide more specific error messages based on error type
+    let errorMessage = "Database connection failed";
+
+    if (error.code === "ECONNREFUSED") {
+      errorMessage = "Database server is unavailable";
+    } else if (error.code === "ER_ACCESS_DENIED_ERROR") {
+      errorMessage = "Database authentication failed";
+    } else if (error.code === "ER_BAD_DB_ERROR") {
+      errorMessage = "Database not found";
+    } else if (error.code === "ENOTFOUND") {
+      errorMessage = "Database host not found";
+    } else if (error.message) {
+      errorMessage = error.message;
+    }
+
+    res.status(500).json({
+      error: errorMessage,
+      details:
+        process.env.NODE_ENV === "development" ? error.message : undefined,
+    });
   }
 }

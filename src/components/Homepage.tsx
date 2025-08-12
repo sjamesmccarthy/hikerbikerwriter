@@ -41,18 +41,18 @@ const Homepage: React.FC = () => {
       label: "Field Notes",
     },
     {
-      href: "/jmgalleries",
-      icon: <PhotoCameraIcon sx={{ fontSize: 18 }} />,
-      label: "jM Galleries",
-    },
-    {
       href: "/recipes",
       icon: <RestaurantIcon sx={{ fontSize: 18 }} />,
       label: "Recipes",
     },
+    {
+      href: "/jmgalleries",
+      icon: <PhotoCameraIcon sx={{ fontSize: 18 }} />,
+      label: "jM Galleries",
+    },
   ];
 
-  const visibleButtons = showAllButtons ? buttons : buttons.slice(0, 3);
+  const visibleButtons = showAllButtons ? buttons : buttons.slice(0, 4);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-teal-700 via-teal-500 to-blue-300 flex flex-col">
@@ -90,7 +90,7 @@ const Homepage: React.FC = () => {
             </div>
 
             {/* Toggle Button */}
-            {buttons.length > 3 && (
+            {buttons.length > 4 && (
               <div className="flex justify-center mt-4">
                 <button
                   onClick={() => setShowAllButtons(!showAllButtons)}
