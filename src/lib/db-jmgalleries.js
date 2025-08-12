@@ -1,6 +1,6 @@
 import mysql from "mysql2/promise";
 
-const isDev = process.env.NODE_ENV === "production";
+const isDev = process.env.NODE_ENV === "development";
 
 const jmGalleriesPool = mysql.createPool({
   host: isDev ? "127.0.0.1" : process.env.DB_HOST,
