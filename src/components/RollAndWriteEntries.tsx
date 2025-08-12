@@ -9,7 +9,6 @@ import {
   Apps as AppsIcon,
   Casino as CasinoIcon,
   Delete as DeleteIcon,
-  Edit as EditIcon,
   Public as PublicIcon,
   Home as HomeIcon,
   EditNote as EditNoteIcon,

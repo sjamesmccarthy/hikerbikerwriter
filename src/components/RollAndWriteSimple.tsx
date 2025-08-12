@@ -200,14 +200,6 @@ const RollAndWrite: React.FC = () => {
     return "text-green-500";
   };
 
-  const getWordCountDisplayText = (text: string) => {
-    const remaining = getRemainingWords(text);
-    if (remaining < 0) {
-      return `${Math.abs(remaining)} over`;
-    }
-    return `${remaining} remaining`;
-  };
-
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <div className="max-xl bg-white flex flex-1">
