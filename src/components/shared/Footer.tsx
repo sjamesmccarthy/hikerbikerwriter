@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import Link from "next/link";
 
 interface FooterProps {
   containerClassName?: string;
@@ -19,7 +20,17 @@ const Footer: React.FC<FooterProps> = ({
     <div className={containerClassName}>
       {hrClassName !== "hidden" && <hr className={hrClassName} />}
       <div className={textClassName}>
-        <div className="mb-1">©/™ {currentYear} hikerbikerwriter</div>
+        <div className="mb-1">
+          ©/™ {currentYear} hikerbikerwriter /{" "}
+          <Link
+            href="https://github.com/sjamesmccarthy/hikerbikerwriter"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:underline"
+          >
+            v1.0
+          </Link>
+        </div>
         <div>
           This project was entirely generated using Co-Pilot AI with Claude
           Sonnet 4 model and the Tempest Weather Station API

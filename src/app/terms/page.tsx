@@ -39,10 +39,10 @@ export default function Terms() {
 
             <h2>3. Disclaimer</h2>
             <p>
-              The materials in this application are provided on an &apos;as is&apos;
-              basis. The application makes no warranties, expressed or implied,
-              and hereby disclaims and negates all other warranties including
-              without limitation, implied warranties or conditions of
+              The materials in this application are provided on an &apos;as
+              is&apos; basis. The application makes no warranties, expressed or
+              implied, and hereby disclaims and negates all other warranties
+              including without limitation, implied warranties or conditions of
               merchantability, fitness for a particular purpose, or
               non-infringement of intellectual property or other violation of
               rights.
