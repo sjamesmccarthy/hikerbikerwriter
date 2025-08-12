@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
   ArrowBack as ArrowBackIcon,
@@ -998,6 +999,25 @@ const BrewDayLog: React.FC = () => {
 
         {/* Basic Info */}
         <div className="py-6 px-6">
+          {/* Centered Image Above Brew Sessions */}
+          <div className="flex justify-center mb-6">
+            <a
+              href="https://thunderstruckbrewing.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:opacity-80 transition-opacity"
+            >
+              <Image
+                src="/images/thunderstruckbrewing.png"
+                alt="Thunderstruck Brewing"
+                width={200}
+                height={200}
+                className="object-contain"
+                style={{ maxWidth: "200px", maxHeight: "200px" }}
+              />
+            </a>
+          </div>
+
           {/* Brew Sessions */}
           <div className="mb-6">
             <div className="flex items-center">
