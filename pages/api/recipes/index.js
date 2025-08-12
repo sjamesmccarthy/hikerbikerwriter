@@ -14,17 +14,22 @@ export default async function handler(req, res) {
     try {
       const { userEmail } = req.query;
 
+      // Add some debugging for production
+      console.log("GET /api/recipes - userEmail:", userEmail, "type:", typeof userEmail);
+
       let query;
       let params;
 
-      if (userEmail) {
+      if (userEmail && userEmail !== 'undefined' && userEmail !== '' && userEmail !== 'null') {
         // Logged in user: get their recipes + public recipes
         query = "SELECT * FROM recipes WHERE user_email = ? OR is_public = TRUE ORDER BY created DESC";
         params = [userEmail];
+        console.log("Using authenticated query for user:", userEmail);
       } else {
         // Not logged in: only get public recipes
         query = "SELECT * FROM recipes WHERE is_public = TRUE ORDER BY created DESC";
         params = [];
+        console.log("Using public-only query");
       }
 
       // Get recipes from database
@@ -46,10 +51,12 @@ export default async function handler(req, res) {
         };
       });
 
+      console.log("Returning", recipes.length, "recipes");
       return res.status(200).json(recipes);
     } catch (error) {
       console.error("Error reading recipes:", error);
-      return res.status(500).json({ error: "Failed to read recipes" });
+      // Always return an array, even on error, to prevent frontend issues
+      return res.status(200).json([]);
     }
   } else if (req.method === "POST") {
     try {
