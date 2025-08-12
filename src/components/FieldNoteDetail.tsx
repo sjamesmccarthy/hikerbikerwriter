@@ -35,6 +35,7 @@ type FieldNote = {
   tags?: string;
   mood?: string;
   images?: string[];
+  is_public?: boolean;
 };
 
 interface FieldNoteDetailProps {

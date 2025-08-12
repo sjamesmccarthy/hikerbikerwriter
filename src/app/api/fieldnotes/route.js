@@ -6,18 +6,22 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const userEmail = searchParams.get("userEmail");
 
-    if (!userEmail) {
-      return NextResponse.json(
-        { error: "User email is required" },
-        { status: 400 }
-      );
+    let query, params;
+
+    if (userEmail) {
+      // Logged in user - get their fieldnotes only
+      query =
+        "SELECT * FROM fieldnotes WHERE user_email = ? ORDER BY created DESC";
+      params = [userEmail];
+    } else {
+      // Not logged in - get public fieldnotes only
+      query =
+        "SELECT * FROM fieldnotes WHERE is_public = 1 ORDER BY created DESC";
+      params = [];
     }
 
-    // Get all fieldnotes for the user from database
-    const [rows] = await pool.execute(
-      "SELECT * FROM fieldnotes WHERE user_email = ? ORDER BY created DESC",
-      [userEmail]
-    );
+    // Get fieldnotes from database based on login status
+    const [rows] = await pool.execute(query, params);
 
     // Parse the JSON data and add any missing fields for frontend compatibility
     const fieldnotes = rows.map((row) => {
@@ -27,6 +31,9 @@ export async function GET(request) {
       return {
         ...fieldnote,
         id: fieldnote.id || row.id, // Use JSON id or fallback to database id
+        is_public: Boolean(row.is_public), // Add is_public from database column
+        author:
+          fieldnote.by || fieldnote.author || row.user_email || "Anonymous", // Map 'by' field to 'author'
       };
     });
 
@@ -79,8 +86,12 @@ export async function POST(request) {
 
     // Insert into database
     await pool.execute(
-      "INSERT INTO fieldnotes (user_email, json) VALUES (?, ?)",
-      [userEmail, JSON.stringify(fullFieldNoteData)]
+      "INSERT INTO fieldnotes (user_email, is_public, json) VALUES (?, ?, ?)",
+      [
+        userEmail,
+        fieldNoteData.is_public || false,
+        JSON.stringify(fullFieldNoteData),
+      ]
     );
 
     return NextResponse.json(fullFieldNoteData, { status: 201 });
@@ -143,10 +154,14 @@ export async function PUT(request) {
     };
 
     // Update in database
-    await pool.execute("UPDATE fieldnotes SET json = ? WHERE id = ?", [
-      JSON.stringify(updatedFieldNote),
-      row.id,
-    ]);
+    await pool.execute(
+      "UPDATE fieldnotes SET json = ?, is_public = ? WHERE id = ?",
+      [
+        JSON.stringify(updatedFieldNote),
+        updates.is_public !== undefined ? updates.is_public : row.is_public,
+        row.id,
+      ]
+    );
 
     return NextResponse.json(updatedFieldNote);
   } catch (error) {

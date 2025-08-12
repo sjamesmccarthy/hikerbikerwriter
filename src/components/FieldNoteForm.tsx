@@ -15,6 +15,8 @@ import {
   Box,
   Typography,
   IconButton,
+  FormControlLabel,
+  Switch,
 } from "@mui/material";
 import { renderMoodMenuItems } from "./shared/moodHelpers";
 
@@ -28,6 +30,7 @@ type FieldNote = {
   tags?: string;
   mood?: string;
   images?: string[];
+  is_public?: boolean;
 };
 
 interface FieldNoteFormProps {
@@ -52,6 +55,7 @@ const FieldNoteForm: React.FC<FieldNoteFormProps> = ({
   const [tags, setTags] = useState(initialData?.tags || "");
   const [mood, setMood] = useState(initialData?.mood || "");
   const [images, setImages] = useState<string[]>(initialData?.images || []);
+  const [makePublic, setMakePublic] = useState(initialData?.is_public || false);
 
   // Update form when initialData changes
   useEffect(() => {
@@ -61,6 +65,7 @@ const FieldNoteForm: React.FC<FieldNoteFormProps> = ({
       setTags(initialData.tags || "");
       setMood(initialData.mood || "");
       setImages(initialData.images || []);
+      setMakePublic(initialData.is_public || false);
     }
   }, [initialData]);
 
@@ -116,22 +121,36 @@ const FieldNoteForm: React.FC<FieldNoteFormProps> = ({
       tags,
       mood,
       images,
+      is_public: makePublic,
     });
   };
 
   return (
     <div className="p-4 pt-12 max-w-4xl mx-auto">
       <form onSubmit={handleSubmit} style={{ width: "100%" }}>
-        <TextField
-          fullWidth
-          label="Title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          variant="outlined"
-          required
-          placeholder="Enter field note title..."
-          sx={{ mb: 2 }}
-        />
+        {/* Title and Make Public Toggle */}
+        <div className="flex gap-4 items-end mb-4">
+          <TextField
+            fullWidth
+            label="Title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            variant="outlined"
+            required
+            placeholder="Enter field note title..."
+          />
+          <FormControlLabel
+            control={
+              <Switch
+                checked={makePublic}
+                onChange={(e) => setMakePublic(e.target.checked)}
+                color="primary"
+              />
+            }
+            label="Make Public"
+            sx={{ minWidth: "160px", mb: 0.5 }}
+          />
+        </div>
 
         <TextField
           fullWidth

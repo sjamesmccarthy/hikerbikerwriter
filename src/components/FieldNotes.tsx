@@ -16,6 +16,7 @@ import {
   MenuBook as FieldNotesIcon,
   Delete as DeleteIcon,
   CloudUpload as CloudUploadIcon,
+  Public as PublicIcon,
 } from "@mui/icons-material";
 import EditNoteOutlinedIcon from "@mui/icons-material/EditNoteOutlined";
 import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
@@ -28,6 +29,8 @@ import {
   Chip,
   IconButton,
   Button,
+  FormControlLabel,
+  Switch,
 } from "@mui/material";
 import { renderFooter } from "./shared/footerHelpers";
 import { useSession, signIn, signOut } from "next-auth/react";
@@ -46,6 +49,7 @@ type Note = {
   tags?: string;
   mood?: string;
   images?: string[];
+  is_public?: boolean;
 };
 
 const FieldNotes: React.FC = () => {
@@ -96,6 +100,7 @@ const FieldNotes: React.FC = () => {
   const [editTags, setEditTags] = useState("");
   const [editMood, setEditMood] = useState("");
   const [editImages, setEditImages] = useState<string[]>([]);
+  const [editMakePublic, setEditMakePublic] = useState(false);
   const { data: session, status } = useSession();
   const [notes, setNotes] = useState<Note[]>([]);
   const [loadingNotes, setLoadingNotes] = useState(true);
@@ -124,22 +129,30 @@ const FieldNotes: React.FC = () => {
 
   useEffect(() => {
     async function fetchNotes() {
-      if (!session?.user?.email) return;
-
       setLoadingNotes(true);
-      const res = await fetch(
-        `/api/fieldnotes?userEmail=${encodeURIComponent(session.user.email)}`
-      );
-      const data = await res.json();
-      setNotes(data);
-      setLoadingNotes(false);
+
+      let url = "/api/fieldnotes";
+      if (session?.user?.email) {
+        // Logged in user - fetch their notes
+        url += `?userEmail=${encodeURIComponent(session.user.email)}`;
+      }
+      // If not logged in, fetch public notes (no userEmail parameter)
+
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        setNotes(data);
+      } catch (error) {
+        console.error("Error fetching fieldnotes:", error);
+        setNotes([]);
+      } finally {
+        setLoadingNotes(false);
+      }
     }
 
-    if (session?.user?.email) {
+    // Always fetch notes once we know the session status
+    if (status !== "loading") {
       fetchNotes();
-    } else if (status !== "loading") {
-      // If not loading and no session, stop showing loading notes
-      setLoadingNotes(false);
     }
   }, [session, status]);
 
@@ -429,7 +442,7 @@ const FieldNotes: React.FC = () => {
                   <div className="text-center text-gray-400 font-mono py-8">
                     Loading notes...
                   </div>
-                ) : !session ? (
+                ) : !session && filteredNotes.length === 0 ? (
                   <div className="text-center py-12">
                     <div className="flex justify-center mb-4">
                       <FieldNotesIcon sx={{ fontSize: 48, color: "#9CA3AF" }} />
@@ -444,7 +457,9 @@ const FieldNotes: React.FC = () => {
                   </div>
                 ) : filteredNotes.length === 0 ? (
                   <div className="text-center text-gray-400 font-mono py-8">
-                    No field notes yet.
+                    {session
+                      ? "No field notes yet."
+                      : "No public field notes available."}
                   </div>
                 ) : (
                   filteredNotes.map((note) => (
@@ -454,12 +469,29 @@ const FieldNotes: React.FC = () => {
                     >
                       {editId === note.id ? (
                         <div className="flex flex-col h-full w-full">
-                          <input
-                            type="text"
-                            value={editTitle}
-                            onChange={(e) => setEditTitle(e.target.value)}
-                            className="w-full font-bold text-gray-900 font-mono mb-3 px-2 py-1 border border-gray-300 rounded"
-                          />
+                          {/* Title and Make Public Toggle */}
+                          <div className="flex gap-4 items-center mb-3">
+                            <input
+                              type="text"
+                              value={editTitle}
+                              onChange={(e) => setEditTitle(e.target.value)}
+                              className="flex-1 font-bold text-gray-900 font-mono px-2 py-1 border border-gray-300 rounded"
+                            />
+                            <FormControlLabel
+                              control={
+                                <Switch
+                                  checked={editMakePublic}
+                                  onChange={(e) =>
+                                    setEditMakePublic(e.target.checked)
+                                  }
+                                  color="primary"
+                                  size="small"
+                                />
+                              }
+                              label="Make Public"
+                              sx={{ minWidth: "140px", fontSize: "0.875rem" }}
+                            />
+                          </div>
                           <textarea
                             value={editContent}
                             onChange={(e) => setEditContent(e.target.value)}
@@ -595,6 +627,7 @@ const FieldNotes: React.FC = () => {
                                     tags: editTags,
                                     mood: editMood,
                                     images: editImages,
+                                    is_public: editMakePublic,
                                     userEmail: session?.user?.email,
                                   });
 
@@ -610,6 +643,7 @@ const FieldNotes: React.FC = () => {
                                       tags: editTags,
                                       mood: editMood,
                                       images: editImages,
+                                      is_public: editMakePublic,
                                       userEmail: session?.user?.email,
                                       userName: session?.user?.name,
                                     }),
@@ -638,6 +672,7 @@ const FieldNotes: React.FC = () => {
                                     setEditTags("");
                                     setEditMood("");
                                     setEditImages([]);
+                                    setEditMakePublic(false);
                                     console.log(
                                       "State cleared, exiting edit mode"
                                     );
@@ -667,6 +702,7 @@ const FieldNotes: React.FC = () => {
                                 setEditTags("");
                                 setEditMood("");
                                 setEditImages([]);
+                                setEditMakePublic(false);
                               }}
                             >
                               Cancel
@@ -677,9 +713,14 @@ const FieldNotes: React.FC = () => {
                         <>
                           <Link
                             href={`/fieldnotes/${note.slug}`}
-                            className="block rounded-lg p-2 -m-2 mb-2 transition-colors"
+                            className="block rounded-lg transition-colors"
                           >
-                            <h3 className="font-bold text-gray-900 font-mono mb-3 hover:text-blue-600 transition-colors">
+                            <h3 className="font-bold text-gray-900 font-mono mb-1 hover:text-blue-600 transition-colors flex items-center gap-2">
+                              {note.is_public && (
+                                <PublicIcon
+                                  sx={{ fontSize: 16, color: "gray" }}
+                                />
+                              )}
                               {note.title}
                             </h3>
                           </Link>
@@ -712,6 +753,11 @@ const FieldNotes: React.FC = () => {
                           <hr className="border-gray-300 mb-4" />
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
+                              {note.author && (
+                                <span className="text-sm text-gray-500 font-mono">
+                                  By {note.author}
+                                </span>
+                              )}
                               {note.mood && (
                                 <span className="text-xl" title={note.mood}>
                                   {getMoodEmoji(note.mood)}
@@ -742,6 +788,7 @@ const FieldNotes: React.FC = () => {
                                     setEditTags(note.tags || "");
                                     setEditMood(note.mood || "");
                                     setEditImages(note.images || []);
+                                    setEditMakePublic(note.is_public || false);
                                   }}
                                 >
                                   <EditNoteOutlinedIcon />
@@ -797,10 +844,14 @@ const FieldNotes: React.FC = () => {
                       href={`/fieldnotes/${note.slug}`}
                       className="bg-white border border-gray-200 rounded-xl p-4 text-left mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between transition-colors"
                     >
-                      <span className="font-bold text-gray-900 font-mono text-base hover:text-blue-600 transition-colors">
+                      <span className="font-bold text-gray-900 font-mono text-base hover:text-blue-600 transition-colors flex items-center gap-2">
+                        {note.is_public && (
+                          <PublicIcon sx={{ fontSize: 16, color: "gray" }} />
+                        )}
                         {note.title}
                       </span>
                       <span className="text-sm text-gray-500 font-mono">
+                        {note.author && `By ${note.author} • `}
                         {new Date(note.date).toLocaleDateString("en-US", {
                           weekday: "long",
                           year: "numeric",
