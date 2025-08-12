@@ -1,9 +1,19 @@
 import NextAuth from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
+import pool from "../../../src/lib/db";
 
-// Get allowed emails from environment variable
-const ALLOWED_EMAILS =
-  process.env.ALLOWED_EMAILS?.split(",").map((email) => email.trim()) || [];
+// Function to check if user is allowed
+async function isUserAllowed(email: string): Promise<boolean> {
+  try {
+    const [rows] = await pool.execute("SELECT id FROM users WHERE email = ?", [
+      email,
+    ]);
+    return Array.isArray(rows) && rows.length > 0;
+  } catch (error) {
+    console.error("Error checking user permission:", error);
+    return false;
+  }
+}
 
 export default NextAuth({
   providers: [
@@ -21,8 +31,8 @@ export default NextAuth({
   },
   callbacks: {
     async signIn({ user }) {
-      // Check if the user's email is in the allowed list
-      if (user.email && ALLOWED_EMAILS.includes(user.email)) {
+      // Check if the user's email is in the users table
+      if (user.email && (await isUserAllowed(user.email))) {
         return true;
       }
       // Redirect to custom error page with user email
