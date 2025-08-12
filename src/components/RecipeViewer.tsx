@@ -353,12 +353,21 @@ const RecipeViewer: React.FC = () => {
             }
             if (!session) {
               return (
-                <button
-                  onClick={() => signIn("google")}
-                  className="px-4 py-2 rounded bg-blue-600 text-white font-mono text-sm hover:bg-blue-700 transition"
-                >
-                  Sign in with Google
-                </button>
+                <div className="flex items-center gap-2">
+                  <Link 
+                    href="/auth/signup"
+                    className="px-4 py-2 rounded bg-gray-600 text-white font-mono text-sm hover:bg-gray-700 transition"
+                  >
+                    Sign Up
+                  </Link>
+                  <span className="text-gray-400">|</span>
+                  <button
+                    onClick={() => signIn("google")}
+                    className="px-4 py-2 rounded bg-blue-600 text-white font-mono text-sm hover:bg-blue-700 transition"
+                  >
+                    Sign in with Google
+                  </button>
+                </div>
               );
             }
             return (
@@ -390,12 +399,21 @@ const RecipeViewer: React.FC = () => {
             }
             if (!session) {
               return (
-                <button
-                  onClick={() => signIn("google")}
-                  className="px-4 py-2 rounded bg-blue-600 text-white font-mono text-sm hover:bg-blue-700 transition"
-                >
-                  Sign in with Google
-                </button>
+                <div className="flex items-center gap-2">
+                  <Link 
+                    href="/auth/signup"
+                    className="px-4 py-2 rounded bg-gray-600 text-white font-mono text-sm hover:bg-gray-700 transition"
+                  >
+                    Sign Up
+                  </Link>
+                  <span className="text-gray-400">|</span>
+                  <button
+                    onClick={() => signIn("google")}
+                    className="px-4 py-2 rounded bg-blue-600 text-white font-mono text-sm hover:bg-blue-700 transition"
+                  >
+                    Sign in with Google
+                  </button>
+                </div>
               );
             }
             return (

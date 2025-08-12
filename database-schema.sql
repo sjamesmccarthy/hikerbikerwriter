@@ -8,6 +8,21 @@ CREATE TABLE IF NOT EXISTS users (
   INDEX idx_email (email)
 );
 
+-- Create signup_requests table
+CREATE TABLE IF NOT EXISTS signup_requests (
+  id INT AUTO_INCREMENT PRIMARY KEY,
+  name VARCHAR(255) NOT NULL,
+  email VARCHAR(255) NOT NULL UNIQUE,
+  status ENUM('pending', 'approved', 'rejected') DEFAULT 'pending',
+  requested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  processed_at TIMESTAMP NULL,
+  processed_by VARCHAR(255) NULL,
+  notes TEXT NULL,
+  INDEX idx_email (email),
+  INDEX idx_status (status),
+  INDEX idx_requested_at (requested_at)
+);
+
 -- Create recipes table
 CREATE TABLE IF NOT EXISTS recipes (
   id INT AUTO_INCREMENT PRIMARY KEY,
