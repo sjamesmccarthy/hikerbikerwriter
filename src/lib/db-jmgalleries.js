@@ -7,7 +7,7 @@ const jmGalleriesPool = mysql.createPool({
   port: isDev ? 3306 : parseInt(process.env.DB_PORT || "3306"),
   user: isDev ? "root" : process.env.DB_USER_JMG,
   password: isDev ? "root" : process.env.DB_PASSWORD_JMG,
-  database: isDev ? "jmgalusa_website" : process_env_DB_NAME_JMG,
+  database: isDev ? "jmgalusa_website" : process_env.DB_NAME_JMG,
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
