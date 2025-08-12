@@ -67,7 +67,7 @@ const Homepage: React.FC = () => {
 
   const getVisibleButtons = () => {
     if (showAllButtons) return buttons;
-    return isDesktop ? buttons : buttons.slice(0, 4);
+    return isDesktop ? buttons : buttons.slice(0, 5);
   };
 
   const visibleButtons = getVisibleButtons();
@@ -75,7 +75,7 @@ const Homepage: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-teal-700 via-teal-500 to-blue-300 flex flex-col">
       {/* Main Content */}
-      <div className="flex-1 flex flex-col items-center justify-center p-8">
+      <div className="flex-1 flex flex-col items-center justify-center pt-16 px-8 pb-8 sm:p-8">
         <div className="w-[80vw] max-w-4xl flex flex-col items-center space-y-8">
           {/* Weather Widget - Centered Above Logo */}
           <div className="flex justify-center mb-4">
@@ -83,7 +83,7 @@ const Homepage: React.FC = () => {
           </div>
 
           {/* Centered Image */}
-          <div className="relative w-3/4 max-w-2xl">
+          <div className="relative w-full max-w-3xl">
             <Image
               src="/images/hikerbikerwriter.png?v=2"
               alt="Hiker Biker Writer"
@@ -107,8 +107,8 @@ const Homepage: React.FC = () => {
               ))}
             </div>
 
-            {/* Toggle Button - Only show on mobile when there are more than 4 buttons */}
-            {!isDesktop && buttons.length > 4 && (
+            {/* Toggle Button - Only show on mobile when there are more than 5 buttons */}
+            {!isDesktop && buttons.length > 5 && (
               <div className="flex justify-center mt-4">
                 <button
                   onClick={() => setShowAllButtons(!showAllButtons)}
