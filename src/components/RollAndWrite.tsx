@@ -21,8 +21,9 @@ import {
   Menu as MenuIcon,
   Close as CloseIcon,
 } from "@mui/icons-material";
-import { Button, TextField } from "@mui/material";
+import { Button, TextField, FormControlLabel, Switch } from "@mui/material";
 import { renderFooter } from "./shared/footerHelpers";
+import { useSession, signIn, signOut } from "next-auth/react";
 
 interface Entry {
   id: string;
@@ -65,6 +66,11 @@ const RollAndWrite: React.FC = () => {
   const [colorsSwapped, setColorsSwapped] = useState(false);
   const [hasLoadedFromStorage, setHasLoadedFromStorage] = useState(false);
   const [showBackupWarning, setShowBackupWarning] = useState(false);
+  const [loadingEntries, setLoadingEntries] = useState(true);
+  const [makePublic, setMakePublic] = useState(false);
+
+  // Add authentication
+  const { data: session, status } = useSession();
 
   // Check if it's been more than a week since last export
   const checkBackupStatus = useCallback(() => {
@@ -85,22 +91,58 @@ const RollAndWrite: React.FC = () => {
     }
   }, [entries]);
 
-  // Load entries from localStorage on component mount
+  // Load entries from database when session is available
   useEffect(() => {
-    try {
-      const savedEntries = localStorage.getItem("rollAndWriteEntries");
-      if (savedEntries) {
-        const parsedEntries: Entry[] = JSON.parse(savedEntries);
-        setEntries(parsedEntries);
-      }
-      setHasLoadedFromStorage(true);
-    } catch (error) {
-      console.log("Failed to load entries:", error);
-      setHasLoadedFromStorage(true);
-    }
-  }, []);
+    async function fetchEntries() {
+      try {
+        setLoadingEntries(true);
+        const params = new URLSearchParams();
+        if (session?.user?.email) {
+          params.set("userEmail", session.user.email);
+        }
+        const queryString = params.toString();
+        let url = "/api/rollnwrite";
+        if (queryString) {
+          url += `?${queryString}`;
+        }
 
-  // Save entries to localStorage whenever entries change (but only after initial load)
+        const res = await fetch(url);
+        if (res.ok) {
+          const data = await res.json();
+          setEntries(data);
+        } else {
+          console.error("Failed to fetch entries:", res.status);
+          // Fallback to localStorage for backward compatibility
+          const savedEntries = localStorage.getItem("rollAndWriteEntries");
+          if (savedEntries) {
+            const parsedEntries: Entry[] = JSON.parse(savedEntries);
+            setEntries(parsedEntries);
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching entries:", error);
+        // Fallback to localStorage
+        try {
+          const savedEntries = localStorage.getItem("rollAndWriteEntries");
+          if (savedEntries) {
+            const parsedEntries: Entry[] = JSON.parse(savedEntries);
+            setEntries(parsedEntries);
+          }
+        } catch (localError) {
+          console.log("Failed to load entries from localStorage:", localError);
+        }
+      } finally {
+        setLoadingEntries(false);
+        setHasLoadedFromStorage(true);
+      }
+    }
+
+    if (status !== "loading") {
+      fetchEntries();
+    }
+  }, [session, status]);
+
+  // Save entries to localStorage whenever entries change (but only after initial load) - keeping as backup
   useEffect(() => {
     if (!hasLoadedFromStorage) return;
 
@@ -139,42 +181,104 @@ const RollAndWrite: React.FC = () => {
     }, 100);
   };
 
-  const saveEntry = () => {
+  const saveEntry = async () => {
     if (!content.trim()) {
       alert("Please enter content for your story.");
       return;
     }
 
-    // Truncate content to maximum allowed words
-    const words = content.trim().split(/\s+/);
-    const maxWords = getMaxWords();
-    const truncatedWords = words.slice(0, maxWords);
-    const truncatedContent = truncatedWords.join(" ");
+    if (!session?.user?.email) {
+      alert("Please sign in to save your entries.");
+      return;
+    }
 
-    const newEntry: Entry = {
-      id: Date.now().toString(),
-      content: truncatedContent,
-      dice1: currentDice1,
-      dice2: currentDice2,
-      createdAt: new Date().toISOString(),
-    };
+    try {
+      // Truncate content to maximum allowed words
+      const words = content.trim().split(/\s+/);
+      const maxWords = getMaxWords();
+      const truncatedWords = words.slice(0, maxWords);
+      const truncatedContent = truncatedWords.join(" ");
 
-    setEntries((prev) => [newEntry, ...prev]);
-    setContent("");
-    setShowForm(false);
-    setJustSaved(true);
+      const entryData = {
+        content: truncatedContent,
+        dice1: currentDice1,
+        dice2: currentDice2,
+        userEmail: session.user.email,
+        userName: session.user.name,
+        is_public: makePublic,
+      };
+
+      const res = await fetch("/api/rollnwrite", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(entryData),
+      });
+
+      if (res.ok) {
+        const savedEntry = await res.json();
+
+        // Map to the Entry interface format
+        const newEntry: Entry = {
+          id: savedEntry.id.toString(),
+          content: savedEntry.content,
+          dice1: savedEntry.dice1,
+          dice2: savedEntry.dice2,
+          createdAt: savedEntry.createdAt || savedEntry.date,
+        };
+
+        setEntries((prev) => [newEntry, ...prev]);
+        setContent("");
+        setMakePublic(false);
+        setShowForm(false);
+        setJustSaved(true);
+      } else {
+        console.error("Failed to save entry:", res.status);
+        alert("Failed to save entry. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error saving entry:", error);
+      alert("Failed to save entry. Please try again.");
+    }
   };
 
   const rollAgain = () => {
     setJustSaved(false);
+    setMakePublic(false);
     rollDice();
   };
 
-  const deleteEntry = (id: string) => {
+  const deleteEntry = async (id: string) => {
     if (confirm("Delete this entry?")) {
-      setEntries((prev) => prev.filter((entry) => entry.id !== id));
-      if (selectedEntry === id) {
-        setSelectedEntry(null);
+      if (!session) {
+        // For unauthenticated users, still handle localStorage
+        setEntries((prev) => prev.filter((entry) => entry.id !== id));
+        if (selectedEntry === id) {
+          setSelectedEntry(null);
+        }
+        return;
+      }
+
+      try {
+        const response = await fetch(`/api/rollnwrite?id=${id}`, {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json",
+          },
+        });
+
+        if (response.ok) {
+          setEntries((prev) => prev.filter((entry) => entry.id !== id));
+          if (selectedEntry === id) {
+            setSelectedEntry(null);
+          }
+        } else {
+          alert("Failed to delete entry");
+        }
+      } catch (error) {
+        console.error("Error deleting entry:", error);
+        alert("Failed to delete entry");
       }
     }
   };
@@ -339,7 +443,107 @@ const RollAndWrite: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 flex flex-col relative">
+      {/* Sidebar - positioned absolutely under header */}
+      {isSidebarOpen && (
+        <div
+          className="w-4/5 sm:w-64 sm:border-r border-gray-200 bg-gray-50 flex flex-col absolute left-0 z-50"
+          style={{
+            top: "105px", // 61px header + ~44px auth section
+            bottom: "0",
+            height: "calc(100vh - 105px)",
+          }}
+        >
+          <div className="p-3 border-b border-gray-200">
+            <div className="flex flex-row sm:flex-col items-center justify-between sm:justify-center">
+              {entries.length > 0 && (
+                <button
+                  onClick={exportToPDF}
+                  className="flex items-center gap-1 px-2 py-1 text-xs text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded transition-colors"
+                  title="Export to PDF"
+                >
+                  <FileDownloadIcon sx={{ fontSize: 16 }} />
+                  Export
+                </button>
+              )}
+
+              {/* Mobile close button */}
+              <button
+                className="sm:hidden p-1 text-gray-500 hover:text-gray-700"
+                onClick={() => setIsSidebarOpen(false)}
+                aria-label="Close sidebar"
+              >
+                <CloseIcon sx={{ fontSize: 16 }} />
+              </button>
+            </div>
+          </div>
+
+          <div className="flex-1 overflow-y-auto bg-gray-200">
+            {loadingEntries ? (
+              <div className="p-3 text-sm text-gray-500 text-center">
+                Loading entries...
+              </div>
+            ) : entries.length === 0 ? (
+              <div className="p-3 text-sm text-gray-500 text-center">
+                No entries yet.
+                <br />
+                {session
+                  ? "Roll the dice to get started!"
+                  : "Sign in to save your stories!"}
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-200">
+                {entries.map((entry) => (
+                  <div
+                    key={entry.id}
+                    className={`w-full p-3 hover:bg-gray-100 transition-colors cursor-pointer ${
+                      selectedEntry === entry.id
+                        ? "bg-blue-50 border-l-4 border-l-blue-500"
+                        : ""
+                    }`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <button
+                        className="flex-1 min-w-0 text-left p-0 bg-transparent border-none cursor-pointer"
+                        onClick={() => selectEntry(entry.id)}
+                      >
+                        <h5 className="text-sm font-medium text-gray-900 truncate">
+                          {formatDate(entry.createdAt)}
+                        </h5>
+                        <p className="text-xs text-gray-600 mt-1 line-clamp-3">
+                          {entry.content.trim().split(/\s+/).length > 5
+                            ? entry.content
+                                .trim()
+                                .split(/\s+/)
+                                .slice(0, 5)
+                                .join(" ") + "..."
+                            : entry.content.trim()}
+                        </p>
+                        <div className="flex items-center gap-2 mt-2">
+                          <div className="flex items-center gap-1">
+                            <CasinoIcon sx={{ fontSize: 14 }} />
+                            <span className="text-xs text-gray-500">
+                              {entry.dice1} & {entry.dice2}
+                            </span>
+                          </div>
+                        </div>
+                      </button>
+                      <button
+                        onClick={() => deleteEntry(entry.id)}
+                        className="ml-2 p-1 text-gray-400 hover:text-red-500 transition-colors"
+                        title="Delete entry"
+                      >
+                        <DeleteIcon sx={{ fontSize: 16 }} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       <div className="max-xl bg-white flex flex-1">
         {/* Header */}
         <div className="flex flex-col w-full">
@@ -414,6 +618,52 @@ const RollAndWrite: React.FC = () => {
             </h3>
           </div>
 
+          {/* Auth UI - moved outside of centered content */}
+          <div className="flex justify-center sm:justify-end px-3 py-2">
+            {(() => {
+              if (status === "loading") {
+                return (
+                  <span className="font-mono text-gray-500 text-sm">
+                    Loading...
+                  </span>
+                );
+              }
+              if (!session) {
+                return (
+                  <div className="flex items-center gap-2">
+                    <Link
+                      href="/auth/signup"
+                      className="px-4 py-2 rounded bg-gray-600 text-white font-mono text-sm hover:bg-gray-700 transition"
+                    >
+                      Sign Up
+                    </Link>
+                    <span className="text-gray-400">|</span>
+                    <button
+                      onClick={() => signIn("google")}
+                      className="px-4 py-2 rounded bg-blue-600 text-white font-mono text-sm hover:bg-blue-700 transition"
+                    >
+                      Sign In With Google
+                    </button>
+                  </div>
+                );
+              }
+              return (
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-blue-600 text-sm">
+                    Signed in as {session.user?.name}
+                  </span>
+                  <span className="h-4 w-px bg-gray-300 mx-2" />
+                  <button
+                    onClick={() => signOut()}
+                    className="px-3 py-1 rounded bg-gray-200 text-gray-800 font-mono text-sm hover:bg-gray-300 transition cursor-pointer"
+                  >
+                    Sign out
+                  </button>
+                </div>
+              );
+            })()}
+          </div>
+
           {/* Mobile Entries Toggle - Only visible on mobile */}
           <div className="sm:hidden px-3 py-2 border-b border-gray-200">
             <button
@@ -426,10 +676,10 @@ const RollAndWrite: React.FC = () => {
             </button>
           </div>
 
-          <div className="flex flex-1">
+          <div className="flex flex-1 relative">
             {/* Sidebar */}
             {isSidebarOpen && (
-              <div className="w-4/5 sm:w-64 sm:border-r border-gray-200 bg-gray-50 flex flex-col sm:relative absolute sm:z-auto z-50 h-full">
+              <div className="w-4/5 sm:w-64 sm:border-r border-gray-200 bg-gray-50 flex flex-col absolute top-0 bottom-0 left-0 sm:relative sm:z-auto z-50">
                 <div className="p-3 border-b border-gray-200">
                   <div className="flex flex-row sm:flex-col items-center justify-between sm:justify-center">
                     {entries.length > 0 && (
@@ -459,11 +709,17 @@ const RollAndWrite: React.FC = () => {
                 </div>
 
                 <div className="flex-1 overflow-y-auto bg-gray-200">
-                  {entries.length === 0 ? (
+                  {loadingEntries ? (
+                    <div className="p-3 text-sm text-gray-500 text-center">
+                      Loading entries...
+                    </div>
+                  ) : entries.length === 0 ? (
                     <div className="p-3 text-sm text-gray-500 text-center">
                       No entries yet.
                       <br />
-                      Roll the dice to get started!
+                      {session
+                        ? "Roll the dice to get started!"
+                        : "Sign in to save your stories!"}
                     </div>
                   ) : (
                     <div className="divide-y divide-gray-200">
@@ -683,6 +939,27 @@ const RollAndWrite: React.FC = () => {
                   </div>
 
                   <div className="space-y-4">
+                    {session && (
+                      <div className="flex items-center justify-between">
+                        <FormControlLabel
+                          control={
+                            <Switch
+                              checked={makePublic}
+                              onChange={(e) => setMakePublic(e.target.checked)}
+                              size="small"
+                            />
+                          }
+                          label="Make Public"
+                          sx={{
+                            "& .MuiFormControlLabel-label": {
+                              fontSize: "0.875rem",
+                              color: "#374151",
+                            },
+                          }}
+                        />
+                      </div>
+                    )}
+
                     <div className="relative">
                       <TextField
                         label="Roll And Write ..."
@@ -761,12 +1038,19 @@ const RollAndWrite: React.FC = () => {
                         <Button
                           variant="contained"
                           onClick={saveEntry}
+                          disabled={!session}
                           sx={{
                             height: "48px",
                             minWidth: { xs: "100%", sm: "120px" },
                             width: { xs: "100%", sm: "auto" },
-                            backgroundColor: "#1976d2",
-                            "&:hover": { backgroundColor: "#115293" },
+                            backgroundColor: session ? "#1976d2" : "#d1d5db",
+                            "&:hover": {
+                              backgroundColor: session ? "#115293" : "#d1d5db",
+                            },
+                            "&:disabled": {
+                              backgroundColor: "#d1d5db",
+                              color: "#ffffff",
+                            },
                             textTransform: "none",
                           }}
                           startIcon={<SaveIcon />}
@@ -775,6 +1059,13 @@ const RollAndWrite: React.FC = () => {
                         </Button>
                       </div>
                     </div>
+
+                    {!session && (
+                      <div className="text-center text-sm text-green-600 mt-4 pt-2 border-t border-gray-200">
+                        To save your entry you will need to Sign Up and Sign In
+                        With Google
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

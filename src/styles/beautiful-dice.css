@@ -1,0 +1,143 @@
+/* 
+ * Beautiful 8-Sided Dice with Gradient Fills
+ * Saved from previous Roll & Write implementation
+ * 
+ * Usage: Apply these classes to dice elements
+ */
+
+/* Dark Red to White Gradient Dice */
+.dice-8sided-red {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(
+    135deg,
+    #8b0000 0%,
+    #dc143c 25%,
+    #ff6b6b 50%,
+    #ffb3b3 75%,
+    #ffffff 100%
+  );
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: bold;
+  color: white;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.7);
+  box-shadow: 0 4px 12px rgba(139, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  position: relative;
+  overflow: hidden;
+}
+
+.dice-8sided-red::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    45deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.1) 50%,
+    transparent 70%
+  );
+}
+
+/* Midnight Blue to Black Gradient Dice */
+.dice-8sided-blue {
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(
+    135deg,
+    #000000 0%,
+    #1a1a2e 25%,
+    #16213e 50%,
+    #0f3460 75%,
+    #191970 100%
+  );
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: bold;
+  color: white;
+  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.9);
+  box-shadow: 0 4px 12px rgba(25, 25, 112, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.dice-8sided-blue::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(
+    45deg,
+    transparent 30%,
+    rgba(255, 255, 255, 0.05) 50%,
+    transparent 70%
+  );
+}
+
+/* Rolling Animation */
+.dice-rolling {
+  animation: diceRoll 1s ease-in-out;
+}
+
+@keyframes diceRoll {
+  0% {
+    transform: rotate(0deg) scale(1);
+  }
+  25% {
+    transform: rotate(90deg) scale(1.1);
+  }
+  50% {
+    transform: rotate(180deg) scale(1.2);
+  }
+  75% {
+    transform: rotate(270deg) scale(1.1);
+  }
+  100% {
+    transform: rotate(360deg) scale(1);
+  }
+}
+
+/* Hover Effects */
+.dice-8sided-red:hover,
+.dice-8sided-blue:hover {
+  transform: scale(1.05);
+  transition: transform 0.2s ease;
+}
+
+/* React/Tailwind Compatible Classes */
+.dice-container {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Alternative Tailwind-friendly implementation */
+/*
+For use with Tailwind CSS, you can apply these as style objects:
+
+const redDiceStyle = {
+  background: 'linear-gradient(135deg, #8B0000 0%, #DC143C 25%, #FF6B6B 50%, #FFB3B3 75%, #FFFFFF 100%)',
+  boxShadow: '0 4px 12px rgba(139, 0, 0, 0.3)',
+  textShadow: '1px 1px 2px rgba(0,0,0,0.7)'
+};
+
+const blueDiceStyle = {
+  background: 'linear-gradient(135deg, #000000 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #191970 100%)',
+  boxShadow: '0 4px 12px rgba(25, 25, 112, 0.4)',
+  textShadow: '1px 1px 2px rgba(0,0,0,0.9)'
+};
+*/
