@@ -243,9 +243,24 @@ const JmGalleries: React.FC = () => {
         </div>
 
         <div className="max-xl bg-white flex-1 flex flex-col justify-center items-center">
-          <h1 className="text-3xl font-bold text-center mt-12 mb-4">
+          <h1 className="text-3xl font-bold text-center mt-12 mb-0">
             jM Galleries
           </h1>
+
+          <div className="max-w-4xl mx-auto px-6 mb-8">
+            <p className="text-gray-700 text-center leading-relaxed text-lg">
+              Take a moment and explore why I create.
+            </p>
+            <p className="text-gray-700 text-center leading-relaxed text-lg mt-4">
+              My color and black and white photography portrays my journey as an
+              artist in photography over the past 10 years and how I have
+              adjusted my style and perspective of fine-art photography from
+              being a simple photograph to an art form that will inspire your
+              curiosity and share a story that your memory awakens, or take you
+              on a journey to a place you have never been until now.
+            </p>
+          </div>
+
           <h2 className="text-lg text-gray-600 text-center mb-8">
             <a
               href="https://jmgalleries.com/fineart"
@@ -254,9 +269,9 @@ const JmGalleries: React.FC = () => {
               className="text-blue-600 hover:underline inline-flex items-center gap-1"
             >
               Everyday Fine Art
-              <OpenInNewOutlinedIcon sx={{ fontSize: 16, color: "#d1d5db" }} />
-            </a>
-            ,{" "}
+              {/* <OpenInNewOutlinedIcon sx={{ fontSize: 16, color: "#d1d5db" }} /> */}{" "}
+            </a>{" "}
+            &mdash;{" "}
             <a
               href="http://nvrealestatemedia.com"
               target="_blank"
@@ -264,9 +279,9 @@ const JmGalleries: React.FC = () => {
               className="text-blue-600 hover:underline inline-flex items-center gap-1"
             >
               Real Estate
-              <OpenInNewOutlinedIcon sx={{ fontSize: 16, color: "#d1d5db" }} />
-            </a>
-            ,{" "}
+              {/* <OpenInNewOutlinedIcon sx={{ fontSize: 16, color: "#d1d5db" }} /> */}
+            </a>{" "}
+            &mdash;{" "}
             <a
               href="https://jmportraits.com"
               target="_blank"
@@ -274,20 +289,9 @@ const JmGalleries: React.FC = () => {
               className="text-blue-600 hover:underline inline-flex items-center gap-1"
             >
               Portraits, Weddings and Lifestyle Photography
-              <OpenInNewOutlinedIcon sx={{ fontSize: 16, color: "#d1d5db" }} />
+              {/* <OpenInNewOutlinedIcon sx={{ fontSize: 16, color: "#d1d5db" }} /> */}
             </a>
           </h2>
-          <div className="hidden mb-8">
-            <a
-              href="https://jmgalleries.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-blue-600 hover:underline text-base text-center flex items-center justify-center gap-2"
-            >
-              visit jM Galleries.com
-              <OpenInNewOutlinedIcon sx={{ fontSize: 18 }} />
-            </a>
-          </div>
 
           {/* Database Error Display */}
           {dbError && (
@@ -351,31 +355,49 @@ const JmGalleries: React.FC = () => {
 
           {/* Gallery Grid */}
           {!isLoading && !dbError && photos.length > 0 && (
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 w-full max-w-5xl mx-auto mb-8">
-              {photos.map((photo) => (
-                <div
-                  key={photo.file_name}
-                  className="flex flex-col items-center"
-                >
-                  <Link
-                    href={`https://jmgalleries.com/image/${photo.file_name}`}
+            <>
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 w-full max-w-5xl mx-auto mb-8">
+                {photos.map((photo) => (
+                  <div
+                    key={photo.file_name}
+                    className="flex flex-col items-center"
+                  >
+                    <Link
+                      href={`https://jmgalleries.com/image/${photo.file_name}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Image
+                        src={`https://jmgalleries.com/view/__catalog/__thumbnail/${photo.file_name}.jpg`}
+                        alt={photo.title}
+                        width={400}
+                        height={300}
+                        className="w-full h-48 object-cover rounded-lg shadow transition-transform duration-300 ease-in-out hover:scale-105"
+                      />
+                    </Link>
+                    <span className="mt-2 text-sm text-gray-700 text-center">
+                      {photo.title}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Link to Fine Art Gallery */}
+              <div className="text-center mt-0 mb-8">
+                <p className="text-gray-700">
+                  To view more Everyday Fine Art or to purchase prints visit{" "}
+                  <a
+                    href="https://jmgalleries.com/fineart"
                     target="_blank"
                     rel="noopener noreferrer"
+                    className="text-blue-600 hover:text-blue-800 hover:underline font-medium"
                   >
-                    <Image
-                      src={`https://jmgalleries.com/view/__catalog/__thumbnail/${photo.file_name}.jpg`}
-                      alt={photo.title}
-                      width={400}
-                      height={300}
-                      className="w-full h-48 object-cover rounded-lg shadow"
-                    />
-                  </Link>
-                  <span className="mt-2 text-sm text-gray-700 text-center">
-                    {photo.title}
-                  </span>
-                </div>
-              ))}
-            </div>
+                    jM Galleries
+                  </a>
+                  <OpenInNewOutlinedIcon sx={{ fontSize: 14 }} />
+                </p>
+              </div>
+            </>
           )}
 
           {/* No Photos State */}

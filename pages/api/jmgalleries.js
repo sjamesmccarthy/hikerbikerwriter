@@ -3,7 +3,7 @@ import jmGalleriesPool from "../../src/lib/db-jmgalleries";
 export default async function handler(req, res) {
   try {
     const [rows] = await jmGalleriesPool.query(
-      "SELECT title, file_name FROM catalog_photo WHERE status='ACTIVE' LIMIT 24"
+      "SELECT title, file_name FROM catalog_photo WHERE status='ACTIVE' ORDER BY RAND() LIMIT 24"
     );
     res.status(200).json(rows);
   } catch (error) {
