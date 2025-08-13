@@ -801,38 +801,39 @@ const RecipeViewer: React.FC = () => {
                                   />
                                 )}
 
-                                {/* Public icon overlay - show for public recipes */}
-                                {recipe.public && (
-                                  <div className="absolute top-2 right-2 w-8 h-8 rounded-full bg-white/80 flex items-center justify-center">
-                                    <PublicIcon
-                                      sx={{ fontSize: 20, color: "gray" }}
-                                    />
-                                  </div>
-                                )}
-
-                                {/* Favorite button overlay - only show for logged in users */}
-                                {session?.user?.email && (
-                                  <button
-                                    onClick={(e) => {
-                                      e.preventDefault();
-                                      e.stopPropagation();
-                                      toggleFavorite(recipe.id);
-                                    }}
-                                    className={`absolute ${
-                                      recipe.public ? "top-11" : "top-2"
-                                    } right-2 w-8 h-8 rounded-full bg-white/80 hover:bg-white transition-colors cursor-pointer flex items-center justify-center`}
-                                  >
-                                    {recipe.favorite ? (
-                                      <FavoriteIcon
-                                        sx={{ fontSize: 20, color: "red" }}
-                                      />
-                                    ) : (
-                                      <FavoriteBorderIcon
+                                {/* Icons overlay - public and favorite */}
+                                <div className="absolute top-2 right-2 flex items-center gap-1">
+                                  {/* Public icon - show for public recipes */}
+                                  {recipe.public && (
+                                    <div className="w-8 h-8 rounded-full bg-white/80 flex items-center justify-center">
+                                      <PublicIcon
                                         sx={{ fontSize: 20, color: "gray" }}
                                       />
-                                    )}
-                                  </button>
-                                )}
+                                    </div>
+                                  )}
+
+                                  {/* Favorite button - only show for logged in users */}
+                                  {session?.user?.email && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        toggleFavorite(recipe.id);
+                                      }}
+                                      className="w-8 h-8 rounded-full bg-white/80 hover:bg-white transition-colors cursor-pointer flex items-center justify-center"
+                                    >
+                                      {recipe.favorite ? (
+                                        <FavoriteIcon
+                                          sx={{ fontSize: 20, color: "red" }}
+                                        />
+                                      ) : (
+                                        <FavoriteBorderIcon
+                                          sx={{ fontSize: 20, color: "gray" }}
+                                        />
+                                      )}
+                                    </button>
+                                  )}
+                                </div>
                               </div>
 
                               {/* Recipe Info */}
