@@ -414,7 +414,7 @@ const FieldNotes: React.FC = () => {
           </div>
 
           {/* Outer container for filter icon, filter bar, and entry container */}
-          <div className="w-3/4 mx-auto">
+          <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             {/* Filter Icon Row - 75% width, filter icon always visible, add button only if logged in */}
             <div className="w-full flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">

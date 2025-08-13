@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -46,6 +46,7 @@ interface IPInfo {
   org?: string;
   asn?: string;
   postal?: string;
+  offline?: boolean;
 }
 
 interface BrowserInfo {
@@ -102,6 +103,29 @@ interface WhoisInfo {
   nameservers?: string[];
 }
 
+interface NSLookupInfo {
+  domain?: string;
+  error?: string;
+  a_records?: string[];
+  aaaa_records?: string[];
+  mx_records?: Array<{ priority: number; exchange: string }>;
+  ns_records?: string[];
+  txt_records?: string[];
+  cname_record?: string;
+  soa_record?: {
+    mname: string;
+    rname: string;
+    serial: number;
+    refresh: number;
+    retry: number;
+    expire: number;
+    minimum: number;
+  };
+  corsInfo?: boolean;
+  cliInstructions?: string[];
+  webAlternatives?: string[];
+}
+
 interface NetworkResult {
   ipv4?: IPInfo;
   ipv6?: IPInfo;
@@ -113,18 +137,20 @@ interface NetworkResult {
     error?: string;
   };
   whois?: WhoisInfo;
+  nslookup?: NSLookupInfo;
 }
 
 const NetworkTools: React.FC = () => {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<
-    "ip" | "dns" | "headers" | "whois"
+    "ip" | "dns" | "nslookup" | "headers" | "whois"
   >("ip");
   const [copySuccess, setCopySuccess] = useState<string>("");
   const [results, setResults] = useState<NetworkResult>({});
   const [loading, setLoading] = useState(false);
   const [headerUrl, setHeaderUrl] = useState<string>("");
   const [whoisDomain, setWhoisDomain] = useState<string>("");
+  const [nslookupDomain, setNslookupDomain] = useState<string>("");
   const [isAppsMenuOpen, setIsAppsMenuOpen] = useState(false);
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
 
@@ -177,13 +203,10 @@ const NetworkTools: React.FC = () => {
     }
   };
 
-  // Auto-load IP information when component mounts
-  useEffect(() => {
-    getIpInfo();
-  }, []);
-
   // Handle tab switching with automatic data loading
-  const handleTabSwitch = (tab: "ip" | "dns" | "headers" | "whois") => {
+  const handleTabSwitch = (
+    tab: "ip" | "dns" | "nslookup" | "headers" | "whois"
+  ) => {
     setActiveTab(tab);
 
     // Clear previous results for the new tab
@@ -197,6 +220,9 @@ const NetworkTools: React.FC = () => {
       case "dns":
         getBrowserInfo();
         break;
+      case "nslookup":
+        // No auto-loading - user must manually enter domain and click Lookup
+        break;
       case "headers":
         // No auto-loading - user must manually enter URL and click Analyze
         break;
@@ -207,9 +233,26 @@ const NetworkTools: React.FC = () => {
   };
 
   // Get user's IP information
-  const getIpInfo = async () => {
+  const getIpInfo = useCallback(async () => {
     setLoading(true);
     try {
+      // Check if user is online
+      if (!navigator.onLine) {
+        // Try to get local IP using WebRTC when offline
+        const localIP = await getLocalIP();
+        setResults({
+          ip: {
+            ipv4: {
+              ip: localIP || "Unable to detect IP (offline)",
+              error: "Device is offline - showing local IP if available",
+              offline: true,
+            },
+          },
+        });
+        setLoading(false);
+        return;
+      }
+
       // Fetch IPv4 information specifically
       const ipv4Response = await fetch("https://ipapi.co/json/");
       let ipv4Data = await ipv4Response.json();
@@ -270,9 +313,88 @@ const NetworkTools: React.FC = () => {
         },
       });
     } catch {
-      setResults({ ip: { error: "Failed to fetch IP information" } });
+      // If all external APIs fail, try to get local IP
+      const localIP = await getLocalIP();
+      setResults({
+        ip: {
+          ipv4: {
+            ip: localIP || "Unable to detect IP",
+            error: localIP
+              ? "External IP services unavailable - showing local IP"
+              : "Failed to fetch IP information",
+            offline: !navigator.onLine,
+          },
+        },
+      });
     }
     setLoading(false);
+  }, []);
+
+  // Auto-load IP information when component mounts
+  useEffect(() => {
+    getIpInfo();
+  }, [getIpInfo]);
+
+  // Function to get local IP using WebRTC
+  const getLocalIP = (): Promise<string | null> => {
+    return new Promise((resolve) => {
+      try {
+        const RTCPeerConnection: typeof window.RTCPeerConnection =
+          window.RTCPeerConnection ||
+          (
+            window as unknown as {
+              webkitRTCPeerConnection?: typeof window.RTCPeerConnection;
+            }
+          ).webkitRTCPeerConnection ||
+          (
+            window as unknown as {
+              mozRTCPeerConnection?: typeof window.RTCPeerConnection;
+            }
+          ).mozRTCPeerConnection ||
+          window.RTCPeerConnection;
+
+        if (!RTCPeerConnection) {
+          resolve(null);
+          return;
+        }
+
+        const pc = new RTCPeerConnection({ iceServers: [] });
+
+        pc.createDataChannel("");
+        pc.createOffer().then((sdp: RTCSessionDescriptionInit) =>
+          pc.setLocalDescription(sdp)
+        );
+
+        pc.onicecandidate = (ice: RTCPeerConnectionIceEvent) => {
+          if (!ice || !ice.candidate || !ice.candidate.candidate) return;
+
+          const candidateString = ice.candidate.candidate;
+          const ipRegex = /([0-9]{1,3}(\.[0-9]{1,3}){3})/;
+          const match = candidateString.match(ipRegex);
+
+          if (match && match[1]) {
+            const ip = match[1];
+            // Filter out common non-routable IPs
+            if (
+              !ip.startsWith("127.") &&
+              !ip.startsWith("169.254.") &&
+              ip !== "0.0.0.0"
+            ) {
+              pc.close();
+              resolve(ip);
+            }
+          }
+        };
+
+        // Timeout after 3 seconds
+        setTimeout(() => {
+          pc.close();
+          resolve(null);
+        }, 3000);
+      } catch {
+        resolve(null);
+      }
+    });
   };
 
   // Get user's browser/device information
@@ -296,6 +418,76 @@ const NetworkTools: React.FC = () => {
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     };
     setResults({ browser: info });
+  };
+
+  // Perform DNS lookup (NSLookup/Dig simulation)
+  const performNSLookup = async (domain?: string) => {
+    setLoading(true);
+    const targetDomain = domain || nslookupDomain;
+
+    try {
+      // Clean the domain input
+      const cleanDomain = targetDomain
+        .toLowerCase()
+        .replace(/^https?:\/\//, "")
+        .replace(/^www\./, "")
+        .replace(/\/.*$/, "")
+        .trim();
+
+      if (!cleanDomain) {
+        setResults({
+          nslookup: {
+            error: "Please enter a valid domain name",
+          },
+        });
+        setLoading(false);
+        return;
+      }
+
+      // Browser limitations prevent direct DNS queries due to security restrictions
+      // Provide CLI instructions and web alternatives instead
+      setResults({
+        nslookup: {
+          domain: cleanDomain,
+          corsInfo: true,
+          error: "Direct DNS lookup not available in browser",
+          cliInstructions: [
+            `nslookup ${cleanDomain}`,
+            `dig ${cleanDomain}`,
+            `dig ${cleanDomain} A`,
+            `dig ${cleanDomain} AAAA`,
+            `dig ${cleanDomain} MX`,
+            `dig ${cleanDomain} NS`,
+            `dig ${cleanDomain} TXT`,
+            `dig ${cleanDomain} CNAME`,
+            `dig ${cleanDomain} SOA`,
+          ],
+          webAlternatives: [
+            `https://www.nslookup.io/domains/${cleanDomain}/dns-records/`,
+            `https://dnschecker.org/#A/${cleanDomain}`,
+            `https://mxtoolbox.com/SuperTool.aspx?action=a&run=toolpage&txtinput=${cleanDomain}`,
+            `https://www.whatsmydns.net/#A/${cleanDomain}`,
+          ],
+        },
+      });
+    } catch {
+      const cleanDomain = targetDomain
+        .toLowerCase()
+        .replace(/^https?:\/\//, "")
+        .replace(/^www\./, "")
+        .replace(/\/.*$/, "")
+        .trim();
+
+      setResults({
+        nslookup: {
+          domain: cleanDomain,
+          error: "DNS lookup failed",
+          corsInfo: true,
+          cliInstructions: [`nslookup ${cleanDomain}`, `dig ${cleanDomain} A`],
+        },
+      });
+    }
+    setLoading(false);
   };
 
   // Get HTTP headers from a URL
@@ -695,6 +887,139 @@ const NetworkTools: React.FC = () => {
               </div>
             </div>
           </div>
+        </div>
+      )}
+    </div>
+  );
+
+  const renderNSLookupTab = () => (
+    <div className="space-y-4">
+      {/* Domain Input Section */}
+      <div className="bg-white rounded-lg border p-4">
+        <h3 className="font-semibold mb-3">DNS Lookup (NSLookup/Dig)</h3>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={nslookupDomain}
+            onChange={(e) => setNslookupDomain(e.target.value)}
+            placeholder="Enter domain (e.g., google.com)"
+            className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            onKeyPress={(e) => {
+              if (e.key === "Enter") {
+                performNSLookup();
+              }
+            }}
+          />
+          <button
+            onClick={() => performNSLookup()}
+            disabled={loading}
+            className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          >
+            <DnsIcon sx={{ fontSize: 18 }} />
+            {loading ? "Looking up..." : "Lookup"}
+          </button>
+        </div>
+        <p className="text-sm text-gray-500 mt-2">
+          Enter a domain name to get DNS record information
+        </p>
+      </div>
+
+      {/* DNS Results */}
+      {results.nslookup && (
+        <div className="bg-gray-50 rounded-md p-4">
+          <h3 className="font-semibold mb-3">DNS Lookup Results</h3>
+
+          {results.nslookup.error && (
+            <div className="mb-4 p-3 bg-amber-50 border border-amber-200 rounded-md">
+              <div className="flex items-center mb-2">
+                <svg
+                  className="h-5 w-5 text-amber-400 mr-2"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+                <strong>Browser Limitation</strong>
+              </div>
+              <p className="text-sm mb-3">{results.nslookup.error}</p>
+              <p className="text-sm text-gray-600">
+                Web browsers cannot perform direct DNS queries due to security
+                restrictions (CORS policy). Use the command line tools or
+                web-based DNS lookup services below.
+              </p>
+            </div>
+          )}
+
+          {results.nslookup.domain && (
+            <div className="mb-4">
+              <strong>Domain:</strong> {results.nslookup.domain}
+            </div>
+          )}
+
+          {/* CLI Instructions */}
+          {results.nslookup.cliInstructions && (
+            <div className="mb-4">
+              <h4 className="font-semibold mb-2">Command Line Instructions:</h4>
+              <div className="bg-gray-900 text-green-400 p-4 rounded-md font-mono text-sm space-y-1">
+                {results.nslookup.cliInstructions.map((cmd, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center justify-between group"
+                  >
+                    <span>$ {cmd}</span>
+                    <button
+                      onClick={() => copyToClipboard(cmd, `cli-${index}`)}
+                      className={`ml-2 px-2 py-1 text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity ${
+                        copySuccess === `cli-${index}`
+                          ? "bg-green-600 text-white"
+                          : "bg-gray-700 text-gray-300 hover:bg-gray-600"
+                      }`}
+                    >
+                      {copySuccess === `cli-${index}` ? "Copied!" : "Copy"}
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <p className="text-sm text-gray-500 mt-2">
+                Copy and paste these commands into your terminal/command prompt
+              </p>
+            </div>
+          )}
+
+          {/* Web Alternatives */}
+          {results.nslookup.webAlternatives && (
+            <div>
+              <h4 className="font-semibold mb-2">
+                Web-based DNS Lookup Tools:
+              </h4>
+              <div className="space-y-2">
+                {results.nslookup.webAlternatives.map((url, index) => (
+                  <div key={index}>
+                    <a
+                      href={url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 hover:underline text-sm flex items-center gap-1"
+                    >
+                      {url}
+                      <svg
+                        className="h-3 w-3"
+                        fill="currentColor"
+                        viewBox="0 0 20 20"
+                      >
+                        <path d="M11 3a1 1 0 100 2h2.586l-6.293 6.293a1 1 0 101.414 1.414L15 6.414V9a1 1 0 102 0V4a1 1 0 00-1-1h-5z" />
+                        <path d="M5 5a2 2 0 00-2 2v6a2 2 0 002 2h6a2 2 0 002-2v-3a1 1 0 10-2 0v3H5V7h3a1 1 0 000-2H5z" />
+                      </svg>
+                    </a>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -1235,6 +1560,19 @@ const NetworkTools: React.FC = () => {
                   <span className="hidden md:inline">Browser Info</span>
                 </button>
                 <button
+                  onClick={() => handleTabSwitch("nslookup")}
+                  className={`py-4 text-sm font-medium border-b-2 transition-colors ${
+                    activeTab === "nslookup"
+                      ? "border-purple-500 text-purple-600"
+                      : "border-transparent text-gray-500 hover:text-gray-700"
+                  }`}
+                >
+                  <DomainIcon
+                    sx={{ fontSize: 16, marginRight: { xs: 0, md: 1 } }}
+                  />
+                  <span className="hidden md:inline">DNS Lookup</span>
+                </button>
+                <button
                   onClick={() => handleTabSwitch("headers")}
                   className={`py-4 text-sm font-medium border-b-2 transition-colors ${
                     activeTab === "headers"
@@ -1266,6 +1604,7 @@ const NetworkTools: React.FC = () => {
             <div className="p-6">
               {activeTab === "ip" && renderIpTab()}
               {activeTab === "dns" && renderDnsTab()}
+              {activeTab === "nslookup" && renderNSLookupTab()}
               {activeTab === "headers" && renderHeadersTab()}
               {activeTab === "whois" && renderWhoisTab()}
             </div>

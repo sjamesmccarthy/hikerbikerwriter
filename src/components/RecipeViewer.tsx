@@ -551,7 +551,7 @@ const RecipeViewer: React.FC = () => {
           </div>
 
           {/* Filter and Add Section */}
-          <div className="w-3/4 mx-auto">
+          <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             {/* Filter Icon Row */}
             <div className="w-full flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">

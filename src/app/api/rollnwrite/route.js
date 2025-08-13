@@ -33,6 +33,7 @@ export async function GET(request) {
         id: row.id.toString(),
         createdAt: row.created,
         is_public: row.is_public,
+        favorite: row.favorite || 0,
       };
     });
 
@@ -195,6 +196,52 @@ export async function DELETE(request) {
     console.error("Error in DELETE /api/rollnwrite:", error);
     return NextResponse.json(
       { error: "Failed to delete roll & write entry" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function PATCH(request) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const id = searchParams.get("id");
+    const { favorite } = await request.json();
+
+    if (!id) {
+      return NextResponse.json(
+        { error: "Entry ID is required" },
+        { status: 400 }
+      );
+    }
+
+    if (favorite === undefined) {
+      return NextResponse.json(
+        { error: "Favorite count is required" },
+        { status: 400 }
+      );
+    }
+
+    // Update the favorite count in the database
+    const [result] = await pool.execute(
+      "UPDATE rollnwrite SET favorite = ? WHERE id = ?",
+      [favorite, id]
+    );
+
+    if (result.affectedRows === 0) {
+      return NextResponse.json(
+        { error: "Roll & Write entry not found" },
+        { status: 404 }
+      );
+    }
+
+    return NextResponse.json({
+      message: "Favorite count updated successfully",
+      favorite: favorite,
+    });
+  } catch (error) {
+    console.error("Error in PATCH /api/rollnwrite:", error);
+    return NextResponse.json(
+      { error: "Failed to update favorite count" },
       { status: 500 }
     );
   }

@@ -28,6 +28,7 @@ import {
   ColorLens as ColorIcon,
   TextFields as TextIcon,
   NetworkCheck as NetworkIcon,
+  UploadFile as UploadFileIcon,
 } from "@mui/icons-material";
 import {
   FormControl,
@@ -192,6 +193,7 @@ const BrewDayLog: React.FC = () => {
   const [showSessions, setShowSessions] = useState(false);
   const [savedSessions, setSavedSessions] = useState<BrewSession[]>([]);
   const [sessionJustSaved, setSessionJustSaved] = useState(false);
+  const [xmlJustImported, setXmlJustImported] = useState(false);
   const [logEntries, setLogEntries] = useState<LogEntry[]>([]);
   const [newLogText, setNewLogText] = useState("");
   const [selectedTimer, setSelectedTimer] = useState<string>("");
@@ -980,6 +982,169 @@ const BrewDayLog: React.FC = () => {
     doc.save(fileName);
   };
 
+  // Import from BeerXML
+  const importFromBeerXML = (file: File) => {
+    console.log("importFromBeerXML called with file:", file.name);
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      console.log("FileReader onload triggered");
+      try {
+        const xmlText = e.target?.result as string;
+        console.log("XML text length:", xmlText?.length);
+
+        const parser = new DOMParser();
+        const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+
+        // Check for parsing errors
+        const parseError = xmlDoc.querySelector("parsererror");
+        if (parseError) {
+          console.log("Parse error found:", parseError);
+          alert("Error parsing XML file. Please check the file format.");
+          return;
+        }
+
+        // Extract recipe data from BeerXML
+        const recipe = xmlDoc.querySelector("RECIPE");
+        if (!recipe) {
+          console.log("No recipe found in XML");
+          alert("No recipe found in the BeerXML file.");
+          return;
+        }
+
+        console.log("Recipe found, processing data...");
+
+        // Helper function to get text content safely
+        const getTextContent = (
+          selector: string,
+          parent: Element = recipe
+        ): string => {
+          const element = parent.querySelector(selector);
+          return element?.textContent?.trim() || "";
+        };
+
+        // Helper function to convert liters to gallons (if needed)
+        const litersToGallons = (liters: string): string => {
+          const num = parseFloat(liters);
+          return isNaN(num) ? liters : (num * 0.264172).toFixed(2);
+        };
+
+        // Helper function to find beer style by category number and style letter
+        const findBeerStyleByCategory = (
+          categoryNumber: string,
+          styleLetter: string
+        ): string => {
+          if (!categoryNumber || !styleLetter) return "";
+
+          const targetStyle = `${categoryNumber}${styleLetter}`;
+          const foundStyle = beerStylesData.beer_style_names.find((style) =>
+            style.includes(`(${targetStyle})`)
+          );
+
+          return foundStyle || "";
+        };
+
+        // Extract style information
+        const styleElement = xmlDoc.querySelector("STYLE");
+        let beerStyleFromCategory = "";
+        if (styleElement) {
+          const categoryNumber = getTextContent(
+            "CATEGORY_NUMBER",
+            styleElement
+          );
+          const styleLetter = getTextContent("STYLE_LETTER", styleElement);
+          beerStyleFromCategory = findBeerStyleByCategory(
+            categoryNumber,
+            styleLetter
+          );
+        }
+
+        // Extract and populate brew data
+        const importedData: Partial<BrewData> = {
+          beerName: getTextContent("NAME"),
+          beerStyle:
+            beerStyleFromCategory ||
+            getTextContent("STYLE NAME") ||
+            getTextContent("TYPE"),
+          batchSize: litersToGallons(getTextContent("BATCH_SIZE")),
+          targetOG: getTextContent("OG"),
+          targetFG: getTextContent("FG"),
+          boilVolume: litersToGallons(getTextContent("BOIL_SIZE")),
+          notes: getTextContent("NOTES") || getTextContent("TASTE_NOTES"),
+        };
+
+        // Extract equipment/brew system information
+        const equipment = xmlDoc.querySelector("EQUIPMENT");
+        if (equipment) {
+          const equipmentName = getTextContent("NAME", equipment);
+          if (equipmentName) {
+            importedData.brewSystem = equipmentName;
+          }
+        }
+
+        // Extract yeast information
+        const yeast = xmlDoc.querySelector("YEAST");
+        if (yeast) {
+          const yeastName = getTextContent("NAME", yeast);
+          const yeastLab = getTextContent("LABORATORY", yeast);
+          const yeastId = getTextContent("PRODUCT_ID", yeast);
+
+          let yeastString = yeastName;
+          if (yeastLab) yeastString += ` (${yeastLab}`;
+          if (yeastId)
+            yeastString += yeastLab ? ` ${yeastId})` : ` (${yeastId})`;
+          else if (yeastLab) yeastString += ")";
+
+          importedData.yeastStrain = yeastString;
+        }
+
+        // Update the form with imported data
+        console.log("Setting brew data:", importedData);
+        setBrewData((prev) => ({
+          ...prev,
+          ...importedData,
+          // Keep existing date and other fields that shouldn't be overwritten
+          brewDate: prev.brewDate,
+        }));
+
+        // Set import success state
+        console.log("Setting xmlJustImported to true");
+        setXmlJustImported(true);
+      } catch (error) {
+        console.error("Error parsing BeerXML:", error);
+        alert("Error reading the BeerXML file. Please check the file format.");
+      }
+    };
+
+    reader.readAsText(file);
+  };
+
+  // Handle file input
+  const handleBeerXMLImport = () => {
+    console.log(
+      "handleBeerXMLImport called, xmlJustImported:",
+      xmlJustImported
+    );
+
+    // Don't allow import if one just completed
+    if (xmlJustImported) {
+      console.log("Import blocked - already imported");
+      return;
+    }
+
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".xml,.beerxml";
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      console.log("File selected:", file?.name);
+      if (file) {
+        importFromBeerXML(file);
+      }
+    };
+    input.click();
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <div ref={logRef} className="max-xl bg-white">
@@ -1184,7 +1349,7 @@ const BrewDayLog: React.FC = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 mt-6">
-            <div>
+            <div className="flex gap-2">
               <TextField
                 fullWidth
                 label="Beer Name"
@@ -1193,6 +1358,26 @@ const BrewDayLog: React.FC = () => {
                 onChange={(e) => updateBrewData("beerName", e.target.value)}
                 placeholder="e.g., Thunderhop IPA"
               />
+              <Button
+                variant="outlined"
+                onClick={handleBeerXMLImport}
+                sx={{
+                  height: "56px",
+                  minWidth: "140px",
+                  backgroundColor: xmlJustImported ? "#4caf50" : "#f5f5f5",
+                  "&:hover": {
+                    backgroundColor: xmlJustImported ? "#45a049" : "#e0e0e0",
+                  },
+                  borderColor: xmlJustImported ? "#4caf50" : "#ccc",
+                  color: xmlJustImported ? "white" : "#666",
+                  textTransform: "none",
+                  whiteSpace: "nowrap",
+                  transition: "all 0.3s ease",
+                }}
+                startIcon={xmlJustImported ? <CheckIcon /> : <UploadFileIcon />}
+              >
+                {xmlJustImported ? "Done" : "Import XML"}
+              </Button>
             </div>
             <div className="flex gap-2">
               <TextField

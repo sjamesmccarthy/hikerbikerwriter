@@ -22,6 +22,8 @@ import {
   ColorLens as ColorIcon,
   TextFields as TextIcon,
   NetworkCheck as NetworkIcon,
+  FavoriteBorder as FavoriteBorderIcon,
+  Favorite as FavoriteIcon,
 } from "@mui/icons-material";
 
 interface RollAndWriteEntry {
@@ -32,6 +34,7 @@ interface RollAndWriteEntry {
   createdAt: string;
   is_public?: boolean;
   by?: string;
+  favorite: number;
 }
 
 interface AppMenuItem {
@@ -51,6 +54,7 @@ const RollAndWriteEntries: React.FC = () => {
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
   const [entries, setEntries] = useState<RollAndWriteEntry[]>([]);
   const [loadingEntries, setLoadingEntries] = useState(true);
+  const [userFavorites, setUserFavorites] = useState<Set<string>>(new Set());
   const { data: session, status } = useSession();
   const router = useRouter();
 
@@ -129,6 +133,18 @@ const RollAndWriteEntries: React.FC = () => {
     }
   }, [session, status]);
 
+  // Load user favorites from localStorage
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(`rollnwrite_favorites`);
+      if (saved) {
+        setUserFavorites(new Set(JSON.parse(saved)));
+      }
+    } catch (error) {
+      console.error("Error loading favorites from localStorage:", error);
+    }
+  }, []);
+
   // Delete entry
   const deleteEntry = async (id: string) => {
     if (confirm("Delete this entry?")) {
@@ -153,6 +169,56 @@ const RollAndWriteEntries: React.FC = () => {
         console.error("Error deleting entry:", error);
         alert("Failed to delete entry");
       }
+    }
+  };
+
+  // Toggle favorite
+  const toggleFavorite = async (id: string, currentFavorites: number) => {
+    try {
+      // Check if user has already favorited this entry
+      const userHasFavorited = userFavorites.has(id);
+      const newFavoriteCount = userHasFavorited
+        ? currentFavorites - 1
+        : currentFavorites + 1;
+
+      const response = await fetch(`/api/rollnwrite?id=${id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          favorite: newFavoriteCount,
+        }),
+      });
+
+      if (response.ok) {
+        // Update the entry in the local state
+        setEntries((prev) =>
+          prev.map((entry) =>
+            entry.id === id ? { ...entry, favorite: newFavoriteCount } : entry
+          )
+        );
+
+        // Update user favorites tracking
+        const newUserFavorites = new Set(userFavorites);
+        if (userHasFavorited) {
+          newUserFavorites.delete(id);
+        } else {
+          newUserFavorites.add(id);
+        }
+        setUserFavorites(newUserFavorites);
+
+        // Store in localStorage to persist across sessions
+        localStorage.setItem(
+          `rollnwrite_favorites`,
+          JSON.stringify(Array.from(newUserFavorites))
+        );
+      } else {
+        alert("Failed to update favorite");
+      }
+    } catch (error) {
+      console.error("Error toggling favorite:", error);
+      alert("Failed to update favorite");
     }
   };
 
@@ -340,8 +406,8 @@ const RollAndWriteEntries: React.FC = () => {
 
             {/* Create New Entry Button - Only show when there are entries */}
             {!loadingEntries && entries.length > 0 && (
-              <div className="w-3/4 mx-auto mb-6">
-                <div className="w-full flex items-center justify-end">
+              <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
+                <div className="w-full flex items-center justify-center sm:justify-end">
                   <Link
                     href="/rollandwrite/roll?autoroll=true"
                     className="px-4 py-2 rounded bg-blue-600 text-white font-mono text-sm hover:bg-blue-700 transition"
@@ -353,7 +419,7 @@ const RollAndWriteEntries: React.FC = () => {
             )}
 
             {/* Entries List */}
-            <div className="w-3/4 mx-auto">
+            <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               {loadingEntries ? (
                 <div className="text-center text-gray-500 font-mono py-8">
                   Loading stories...
@@ -397,48 +463,70 @@ const RollAndWriteEntries: React.FC = () => {
                 entries.map((entry) => (
                   <div
                     key={entry.id}
-                    className="bg-white border border-gray-200 rounded-xl p-3 text-left mb-4"
+                    className="bg-white border border-gray-200 rounded-xl p-3 text-left mb-4 relative"
                   >
+                    {/* Favorite heart icon in upper-right corner */}
+                    <button
+                      onClick={() => toggleFavorite(entry.id, entry.favorite)}
+                      className="absolute top-2 right-2 p-1 text-gray-400 hover:text-red-500 transition-colors touch-manipulation flex items-center gap-1"
+                      title="Add to favorites"
+                      style={{ minWidth: "40px", minHeight: "32px" }}
+                    >
+                      {userFavorites.has(entry.id) ? (
+                        <FavoriteIcon sx={{ fontSize: 16 }} />
+                      ) : (
+                        <FavoriteBorderIcon sx={{ fontSize: 16 }} />
+                      )}
+                      {entry.favorite > 0 && (
+                        <span className="text-xs font-mono text-gray-500">
+                          {entry.favorite}
+                        </span>
+                      )}
+                    </button>
+
+                    {/* Header with dice only */}
+<div className="flex items-center gap-1 mb-3 pr-12">
+                      <CasinoIcon sx={{ fontSize: 16, color: "#6b7280" }} />
+                      <span className="text-sm text-gray-500 font-mono">
+                        {entry.dice1} & {entry.dice2} / {entry.dice1}{entry.dice2} Words
+                      </span>
+                    </div>
+
+                    {/* Content */}
                     <p className="text-gray-700 leading-relaxed whitespace-pre-wrap mb-0">
                       {entry.content}
                     </p>
 
-                    {entry.by && (
+                    {/* Footer with author info and/or delete button */}
+                    {(entry.by || session) && (
                       <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">
-                        <div className="flex items-center gap-2">
-                          {Boolean(entry.is_public) && (
-                            <PublicIcon sx={{ fontSize: 16, color: "gray" }} />
-                          )}
-                          <span className="text-xs text-gray-500 font-mono">
-                            By {entry.by}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="flex items-center gap-1">
-                            <CasinoIcon
-                              sx={{ fontSize: 16, color: "#6b7280" }}
-                            />
-                            <span className="text-sm text-gray-500 font-mono">
-                              {entry.dice1} & {entry.dice2}
+                        {entry.by ? (
+                          <div className="flex items-center gap-3">
+                            {Boolean(entry.is_public) && (
+                              <PublicIcon
+                                sx={{ fontSize: 16, color: "gray" }}
+                              />
+                            )}
+                            <span className="text-xs text-gray-500 font-mono">
+                              By {entry.by}
+                            </span>
+                            <span className="text-xs text-gray-500 font-mono">
+                              on {formatDate(entry.createdAt)}
                             </span>
                           </div>
-                          <span className="text-gray-300">•</span>
-                          <span className="text-sm text-gray-500 font-mono">
-                            {formatDate(entry.createdAt)}
-                          </span>
-                          {session && (
-                            <>
-                              <span className="text-gray-300">•</span>
-                              <button
-                                onClick={() => deleteEntry(entry.id)}
-                                className="p-1 text-gray-400 hover:text-red-500 transition-colors"
-                                title="Delete story"
-                              >
-                                <DeleteIcon sx={{ fontSize: 16 }} />
-                              </button>
-                            </>
-                          )}
-                        </div>
+                        ) : (
+                          <div></div>
+                        )}
+                        {session && (
+                          <button
+                            onClick={() => deleteEntry(entry.id)}
+                            className="flex-shrink-0 p-2 text-gray-400 hover:text-red-500 transition-colors touch-manipulation"
+                            title="Delete story"
+                            style={{ minWidth: "40px", minHeight: "40px" }}
+                          >
+                            <DeleteIcon sx={{ fontSize: 16 }} />
+                          </button>
+                        )}
                       </div>
                     )}
                   </div>
