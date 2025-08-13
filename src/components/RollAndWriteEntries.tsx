@@ -485,10 +485,11 @@ const RollAndWriteEntries: React.FC = () => {
                     </button>
 
                     {/* Header with dice only */}
-<div className="flex items-center gap-1 mb-3 pr-12">
+                    <div className="flex items-center gap-1 mb-3 pr-12">
                       <CasinoIcon sx={{ fontSize: 16, color: "#6b7280" }} />
                       <span className="text-sm text-gray-500 font-mono">
-                        {entry.dice1} & {entry.dice2} / {entry.dice1}{entry.dice2} Words
+                        {entry.dice1} & {entry.dice2} / {entry.dice1}
+                        {entry.dice2} Words
                       </span>
                     </div>
 

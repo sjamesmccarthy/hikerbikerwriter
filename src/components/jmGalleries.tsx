@@ -242,7 +242,7 @@ const JmGalleries: React.FC = () => {
           <h3 className="text-lg font-semibold text-gray-800">jM Galleries</h3>
         </div>
 
-        <div className="max-xl bg-white flex-1 flex flex-col justify-center items-center">
+        <div className="max-xl bg-white flex-1 flex flex-col justify-center items-center px-4">
           <h1 className="text-3xl font-bold text-center mt-12 mb-0">
             jM Galleries
           </h1>
@@ -252,12 +252,12 @@ const JmGalleries: React.FC = () => {
               Take a moment and explore why I create.
             </p>
             <p className="text-gray-700 text-center leading-relaxed text-lg mt-4">
-              My color and black and white photography portrays my journey as an
-              artist in photography over the past 10 years and how I have
-              adjusted my style and perspective of fine-art photography from
-              being a simple photograph to an art form that will inspire your
-              curiosity and share a story that your memory awakens, or take you
-              on a journey to a place you have never been until now.
+              My body of work in color and black‑and‑white represents a decade
+              of evolving artistic exploration. Over this period, my approach
+              has shifted from straightforward image‑making to creating fine‑art
+              photographs intended to inspire curiosity, evoke personal
+              reflection, and transport viewers to unfamiliar yet resonant
+              places.
             </p>
           </div>
 
@@ -356,7 +356,7 @@ const JmGalleries: React.FC = () => {
           {/* Gallery Grid */}
           {!isLoading && !dbError && photos.length > 0 && (
             <>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 w-full max-w-5xl mx-auto mb-8">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 w-full max-w-5xl mx-auto mb-8">
                 {photos.map((photo) => (
                   <div
                     key={photo.file_name}
