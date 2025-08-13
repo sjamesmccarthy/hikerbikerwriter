@@ -35,7 +35,7 @@ import { renderFooter } from "./shared/footerHelpers";
 interface AppMenuItem {
   name: string;
   path: string;
-  icon: React.ComponentType<any>;
+  icon: React.ComponentType<{ sx?: object }>;
   submenu?: AppMenuItem[];
 }
 

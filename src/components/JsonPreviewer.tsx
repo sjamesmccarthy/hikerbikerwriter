@@ -13,7 +13,6 @@ import {
   AccountTree as TreeIcon,
   Description as TextIcon,
   Apps as AppsIcon,
-  EditNote as EditNoteIcon,
   Assignment as LogIcon,
   Casino as RollIcon,
   Restaurant as RestaurantIcon,
@@ -31,7 +30,7 @@ import { renderFooter } from "./shared/footerHelpers";
 interface AppMenuItem {
   name: string;
   path: string;
-  icon: React.ComponentType<any>;
+  icon: React.ComponentType<{ sx?: object }>;
   submenu?: AppMenuItem[];
 }
 

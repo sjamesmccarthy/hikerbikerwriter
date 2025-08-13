@@ -10,7 +10,6 @@ import {
   Language as DnsIcon,
   Domain as DomainIcon,
   Apps as AppsIcon,
-  EditNote as EditNoteIcon,
   Assignment as LogIcon,
   Casino as RollIcon,
   Restaurant as RestaurantIcon,
@@ -29,17 +28,91 @@ import { renderFooter } from "./shared/footerHelpers";
 interface AppMenuItem {
   name: string;
   path: string;
-  icon: React.ComponentType<any>;
+  icon: React.ComponentType<{ sx?: object }>;
   submenu?: AppMenuItem[];
 }
 
+interface IPInfo {
+  ip?: string;
+  error?: string;
+  city?: string;
+  region?: string;
+  country?: string;
+  country_name?: string;
+  country_code?: string;
+  latitude?: number;
+  longitude?: number;
+  timezone?: string;
+  org?: string;
+  asn?: string;
+  postal?: string;
+}
+
+interface BrowserInfo {
+  platform?: string;
+  language?: string;
+  timezone?: string;
+  userAgent?: string;
+  onLine?: boolean;
+  cookieEnabled?: boolean;
+  screen?: {
+    width?: number;
+    height?: number;
+    colorDepth?: number;
+  };
+  viewport?: {
+    width?: number;
+    height?: number;
+  };
+}
+
+interface HeadersInfo {
+  error?: string;
+  note?: string;
+  requestHeaders?: Record<string, string>;
+  responseHeaders?: Record<string, string>;
+  responseInfo?: Record<string, string>;
+  targetUrl?: string;
+}
+
+interface WhoisInfo {
+  error?: string;
+  domain?: string;
+  registrar?: string;
+  status?: string;
+  registrationDate?: string;
+  expirationDate?: string;
+  lastUpdated?: string;
+  commandLine?: string;
+  reasons?: string[];
+  cliInstructions?: string[];
+  suggestion?: string;
+  suggestions?: string[];
+  dnssec?: string;
+  corsInfo?: boolean;
+  fallbackInfo?: Record<string, unknown>;
+  domainStatus?: string;
+  webAlternatives?: string[];
+  basicInfo?: Record<string, unknown>;
+  registrant?: {
+    name?: string;
+    organization?: string;
+    country?: string;
+  };
+  nameservers?: string[];
+}
+
 interface NetworkResult {
-  ipv4?: any;
-  ipv6?: any;
-  browser?: any;
-  headers?: any;
-  ip?: any; // For backward compatibility
-  whois?: any;
+  ipv4?: IPInfo;
+  ipv6?: IPInfo;
+  browser?: BrowserInfo;
+  headers?: HeadersInfo;
+  ip?: {
+    ipv4?: IPInfo;
+    ipv6?: IPInfo;
+    error?: string;
+  };
+  whois?: WhoisInfo;
 }
 
 const NetworkTools: React.FC = () => {
@@ -114,7 +187,7 @@ const NetworkTools: React.FC = () => {
     setActiveTab(tab);
 
     // Clear previous results for the new tab
-    setResults((prev: any) => ({ ...prev, [tab]: undefined }));
+    setResults((prev: NetworkResult) => ({ ...prev, [tab]: undefined }));
 
     // Automatically load data for the selected tab (only for IP and DNS)
     switch (tab) {
@@ -150,13 +223,13 @@ const NetworkTools: React.FC = () => {
           const ipv4OnlyData = await ipv4OnlyResponse.json();
           // Keep the location data from ipapi but use the IPv4 address from ipify
           ipv4Data = { ...ipv4Data, ip: ipv4OnlyData.ip };
-        } catch (ipv4Error) {
+        } catch {
           // If that fails, try another IPv4 service
           try {
             const altIpv4Response = await fetch("https://v4.ident.me/");
             const altIpv4Address = await altIpv4Response.text();
             ipv4Data = { ...ipv4Data, ip: altIpv4Address.trim() };
-          } catch (altError) {
+          } catch {
             // Keep original data
           }
         }
@@ -172,7 +245,7 @@ const NetworkTools: React.FC = () => {
           const ipv6Address = await ipv6Response.text();
           ipv6Data = { ip: ipv6Address.trim() };
         }
-      } catch (ipv6Error) {
+      } catch {
         // IPv6 not available or blocked
         ipv6Data = { error: "IPv6 not available" };
       }
@@ -185,7 +258,7 @@ const NetworkTools: React.FC = () => {
             const ipv6AltData = await ipv6Alt.json();
             ipv6Data = { ip: ipv6AltData.ip };
           }
-        } catch (altError) {
+        } catch {
           // Keep original error
         }
       }
@@ -193,10 +266,10 @@ const NetworkTools: React.FC = () => {
       setResults({
         ip: {
           ipv4: ipv4Data,
-          ipv6: ipv6Data,
+          ipv6: ipv6Data || undefined,
         },
       });
-    } catch (error) {
+    } catch {
       setResults({ ip: { error: "Failed to fetch IP information" } });
     }
     setLoading(false);
@@ -275,7 +348,7 @@ const NetworkTools: React.FC = () => {
           note: "Request headers shown above. Response headers may be limited due to CORS policy.",
         },
       });
-    } catch (error) {
+    } catch {
       // Fallback to showing just request headers
       const requestHeaders = {
         Accept:
@@ -579,16 +652,18 @@ const NetworkTools: React.FC = () => {
               <strong>Timezone:</strong> {results.browser.timezone}
             </div>
             <div>
-              <strong>Screen Resolution:</strong> {results.browser.screen.width}{" "}
-              x {results.browser.screen.height}
+              <strong>Screen Resolution:</strong>{" "}
+              {results.browser.screen?.width || "N/A"} x{" "}
+              {results.browser.screen?.height || "N/A"}
             </div>
             <div>
-              <strong>Viewport:</strong> {results.browser.viewport.width} x{" "}
-              {results.browser.viewport.height}
+              <strong>Viewport:</strong>{" "}
+              {results.browser.viewport?.width || "N/A"} x{" "}
+              {results.browser.viewport?.height || "N/A"}
             </div>
             <div>
-              <strong>Color Depth:</strong> {results.browser.screen.colorDepth}{" "}
-              bits
+              <strong>Color Depth:</strong>{" "}
+              {results.browser.screen?.colorDepth || "N/A"} bits
             </div>
             <div>
               <strong>Online Status:</strong>{" "}
@@ -604,7 +679,10 @@ const NetworkTools: React.FC = () => {
                 {results.browser.userAgent}
                 <button
                   onClick={() =>
-                    copyToClipboard(results.browser.userAgent, "userAgent")
+                    copyToClipboard(
+                      results.browser?.userAgent || "",
+                      "userAgent"
+                    )
                   }
                   className={`ml-2 px-2 py-1 text-xs rounded ${
                     copySuccess === "userAgent"
@@ -659,39 +737,38 @@ const NetworkTools: React.FC = () => {
             </div>
           )}
 
-          {/* Request Headers */}
-          {results.headers.requestHeaders && (
+          {results.headers.requestHeaders ? (
             <div className="bg-gray-50 rounded-md p-4">
               <h4 className="font-semibold mb-3 text-green-700">
                 📤 Request Headers
               </h4>
               <div className="space-y-2">
-                {Object.entries(results.headers.requestHeaders).map(
-                  ([key, value]) => (
-                    <div
-                      key={key}
-                      className="flex items-center justify-between p-2 bg-white rounded border"
-                    >
-                      <div className="font-mono text-sm">
-                        <strong className="text-green-600">{key}:</strong>{" "}
-                        {value as string}
-                      </div>
-                      <button
-                        onClick={() => copyToClipboard(`${key}: ${value}`, key)}
-                        className={`ml-2 px-2 py-1 text-xs rounded ${
-                          copySuccess === key
-                            ? "bg-green-500 text-white"
-                            : "bg-gray-200 hover:bg-gray-300"
-                        }`}
-                      >
-                        {copySuccess === key ? "Copied!" : "Copy"}
-                      </button>
+                {Object.entries(
+                  results.headers.requestHeaders as Record<string, string>
+                ).map(([key, value]) => (
+                  <div
+                    key={key}
+                    className="flex items-center justify-between p-2 bg-white rounded border"
+                  >
+                    <div className="font-mono text-sm">
+                      <strong className="text-green-600">{key}:</strong>{" "}
+                      {value as string}
                     </div>
-                  )
-                )}
+                    <button
+                      onClick={() => copyToClipboard(`${key}: ${value}`, key)}
+                      className={`ml-2 px-2 py-1 text-xs rounded ${
+                        copySuccess === key
+                          ? "bg-green-500 text-white"
+                          : "bg-gray-200 hover:bg-gray-300"
+                      }`}
+                    >
+                      {copySuccess === key ? "Copied!" : "Copy"}
+                    </button>
+                  </div>
+                ))}
               </div>
             </div>
-          )}
+          ) : null}
 
           {/* Response Info */}
           {results.headers.responseInfo && (
@@ -802,19 +879,19 @@ const NetworkTools: React.FC = () => {
       {results.whois && (
         <div className="space-y-4">
           {/* Error Message */}
-          {results.whois.error && (
+          {results.whois.error && typeof results.whois.error === "string" && (
             <div className="bg-yellow-50 border border-yellow-200 rounded-md p-4">
               <h4 className="font-semibold text-yellow-800 mb-2">
                 ⚠️ WHOIS Lookup Failed
               </h4>
               <p className="text-yellow-700 text-sm mb-3">
-                {results.whois.error}
+                {results.whois.error as string}
               </p>
 
               {results.whois.commandLine && (
                 <div className="bg-blue-50 border border-blue-200 rounded p-3 mb-3">
                   <p className="text-blue-700 text-sm">
-                    {results.whois.commandLine}
+                    {results.whois.commandLine as string}
                   </p>
                 </div>
               )}

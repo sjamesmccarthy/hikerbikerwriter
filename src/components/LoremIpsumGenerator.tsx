@@ -9,7 +9,6 @@ import {
   Clear as ClearIcon,
   Refresh as RefreshIcon,
   Apps as AppsIcon,
-  EditNote as EditNoteIcon,
   Assignment as LogIcon,
   Casino as RollIcon,
   Restaurant as RestaurantIcon,
@@ -28,7 +27,7 @@ import { renderFooter } from "./shared/footerHelpers";
 interface AppMenuItem {
   name: string;
   path: string;
-  icon: React.ComponentType<any>;
+  icon: React.ComponentType<{ sx?: object }>;
   submenu?: AppMenuItem[];
 }
 
@@ -286,6 +285,7 @@ const LoremIpsumGenerator: React.FC = () => {
   // Generate initial text
   React.useEffect(() => {
     generateText();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

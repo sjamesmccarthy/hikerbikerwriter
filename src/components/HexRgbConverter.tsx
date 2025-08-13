@@ -8,7 +8,6 @@ import {
   ContentCopy as CopyIcon,
   ColorLens as ColorIcon,
   Apps as AppsIcon,
-  EditNote as EditNoteIcon,
   Assignment as LogIcon,
   Casino as RollIcon,
   Restaurant as RestaurantIcon,
@@ -26,7 +25,7 @@ import { renderFooter } from "./shared/footerHelpers";
 interface AppMenuItem {
   name: string;
   path: string;
-  icon: React.ComponentType<any>;
+  icon: React.ComponentType<{ sx?: object }>;
   submenu?: AppMenuItem[];
 }
 
@@ -178,17 +177,6 @@ const HexRgbConverter: React.FC = () => {
       console.error("Failed to copy:", err);
     }
   };
-
-  const predefinedColors = [
-    { name: "Red", hex: "#FF6B6B" },
-    { name: "Blue", hex: "#4ECDC4" },
-    { name: "Green", hex: "#45B7D1" },
-    { name: "Purple", hex: "#A569BD" },
-    { name: "Orange", hex: "#F39C12" },
-    { name: "Pink", hex: "#E91E63" },
-    { name: "Teal", hex: "#1ABC9C" },
-    { name: "Gray", hex: "#95A5A6" },
-  ];
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">

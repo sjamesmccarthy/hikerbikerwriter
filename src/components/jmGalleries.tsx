@@ -6,7 +6,6 @@ import { renderFooter } from "./shared/footerHelpers";
 import {
   ArrowBack as ArrowBackIcon,
   Apps as AppsIcon,
-  EditNote as EditNoteIcon,
   Assignment as LogIcon,
   Casino as RollIcon,
   MenuBook as FieldNotesIcon,
@@ -27,7 +26,7 @@ import OpenInNewOutlinedIcon from "@mui/icons-material/OpenInNewOutlined";
 interface AppMenuItem {
   name: string;
   path: string;
-  icon: React.ComponentType<any>;
+  icon: React.ComponentType<{ sx?: object }>;
   submenu?: AppMenuItem[];
 }
 
