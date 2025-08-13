@@ -790,14 +790,16 @@ const MarkdownEditor: React.FC = () => {
                 )}
               </button>
             )}
-            <button
-              onClick={handleSaveMarkdown}
-              className="ml-6 px-4 py-2 bg-gray-100 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-200 hover:text-gray-800 transition-colors flex items-center gap-2"
-              title="Save as Markdown file"
-            >
-              <FileDownloadIcon sx={{ fontSize: 18 }} />
-              Save MD
-            </button>
+            {viewMode === "preview" && (
+              <button
+                onClick={handleSaveMarkdown}
+                className="ml-6 px-4 py-2 bg-gray-100 text-gray-700 rounded-md text-sm font-medium hover:bg-gray-200 hover:text-gray-800 transition-colors flex items-center gap-2"
+                title="Save as Markdown file"
+              >
+                <FileDownloadIcon sx={{ fontSize: 18 }} />
+                Save MD
+              </button>
+            )}
             {/* Export PDF button - only shown in preview mode */}
             {viewMode === "preview" && (
               <button
@@ -922,7 +924,7 @@ const MarkdownEditor: React.FC = () => {
             </button>
           )}
 
-          {viewMode !== "text" && (
+          {viewMode === "preview" && (
             <button
               onClick={handleSaveMarkdown}
               className="px-3 py-1 bg-gray-100 text-gray-700 rounded text-sm font-medium hover:bg-gray-200 hover:text-gray-800 transition-colors flex items-center gap-1"
@@ -1100,7 +1102,7 @@ const MarkdownEditor: React.FC = () => {
             value={displayContent}
             onChange={handleContentChange}
             onFocus={handleTextareaFocus}
-            className="w-full p-6 resize-none border-none outline-none font-mono text-sm leading-6 text-black h-[95vh]"
+            className="w-full p-6 resize-none border-none outline-none font-mono text-sm leading-6 text-black h-[75vh]"
             placeholder="Type your markdown here..."
             spellCheck={true}
           />
