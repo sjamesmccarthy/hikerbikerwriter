@@ -4,13 +4,13 @@ import React, { useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import {
   Apps as AppsIcon,
-  EditNote as EditNoteIcon,
   Assignment as LogIcon,
   Casino as RollIcon,
   MenuBook as FieldNotesIcon,
   Restaurant as RestaurantIcon,
   PhotoCamera as PhotoCameraIcon,
   Home as HomeIcon,
+  DeveloperMode as DevToolsIcon,
 } from "@mui/icons-material";
 
 interface AppItem {
@@ -21,8 +21,8 @@ interface AppItem {
 
 const apps: AppItem[] = [
   { name: "Home", path: "/", icon: HomeIcon },
-  { name: "Md Editor", path: "/markdown", icon: EditNoteIcon },
-  { name: "Brew Log", path: "/brewday", icon: LogIcon },
+  { name: "Dev Tools", path: "/utilities", icon: DevToolsIcon },
+  { name: "Brew Log AppsMenu", path: "/brewday", icon: LogIcon },
   { name: "Roll&Write", path: "/rollandwrite", icon: RollIcon },
   { name: "Field Notes", path: "/fieldnotes", icon: FieldNotesIcon },
   { name: "Recipes", path: "/recipes", icon: RestaurantIcon },

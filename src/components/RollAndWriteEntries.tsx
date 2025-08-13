@@ -12,10 +12,16 @@ import {
   Public as PublicIcon,
   Home as HomeIcon,
   EditNote as EditNoteIcon,
-  LocalBar as LogIcon,
+  Assignment as LogIcon,
   StickyNote2 as FieldNotesIcon,
   Restaurant as RestaurantIcon,
   PhotoCamera as PhotoCameraIcon,
+  IntegrationInstructions as DevToolsIcon,
+  ExpandMore as ExpandMoreIcon,
+  Code as CodeIcon,
+  ColorLens as ColorIcon,
+  TextFields as TextIcon,
+  NetworkCheck as NetworkIcon,
 } from "@mui/icons-material";
 
 interface RollAndWriteEntry {
@@ -28,17 +34,54 @@ interface RollAndWriteEntry {
   by?: string;
 }
 
+interface AppMenuItem {
+  name: string;
+  path: string;
+  icon?: React.ComponentType<{ sx?: { fontSize: number } }>;
+  hasSubmenu?: boolean;
+  submenu?: Array<{
+    name: string;
+    path: string;
+    icon?: React.ComponentType<{ sx?: { fontSize: number } }>;
+  }>;
+}
+
 const RollAndWriteEntries: React.FC = () => {
   const [isAppsMenuOpen, setIsAppsMenuOpen] = useState(false);
+  const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
   const [entries, setEntries] = useState<RollAndWriteEntry[]>([]);
   const [loadingEntries, setLoadingEntries] = useState(true);
   const { data: session, status } = useSession();
   const router = useRouter();
 
   // Apps menu configuration
-  const apps = [
+  const apps: AppMenuItem[] = [
     { name: "Home", path: "/", icon: HomeIcon },
-    { name: "Md Editor", path: "/markdown", icon: EditNoteIcon },
+    {
+      name: "Dev Tools",
+      path: "/utilities",
+      icon: DevToolsIcon,
+      hasSubmenu: true,
+      submenu: [
+        { name: "Md Editor", path: "/markdown", icon: EditNoteIcon },
+        {
+          name: "JSON Previewer",
+          path: "/utilities/json-previewer",
+          icon: CodeIcon,
+        },
+        {
+          name: "Hex/RGB Code",
+          path: "/utilities/hex-rgb-converter",
+          icon: ColorIcon,
+        },
+        { name: "Lorem Ipsum", path: "/utilities/lorem-ipsum", icon: TextIcon },
+        {
+          name: "Network Utilities",
+          path: "/utilities/network-tools",
+          icon: NetworkIcon,
+        },
+      ],
+    },
     { name: "Brew Log", path: "/brewday", icon: LogIcon },
     { name: "Field Notes", path: "/fieldnotes", icon: FieldNotesIcon },
     { name: "Recipes", path: "/recipes", icon: RestaurantIcon },
@@ -49,6 +92,7 @@ const RollAndWriteEntries: React.FC = () => {
   const handleAppSelect = (path: string) => {
     router.push(path);
     setIsAppsMenuOpen(false);
+    setOpenSubmenu(null);
   };
 
   // Fetch entries from API
@@ -154,24 +198,72 @@ const RollAndWriteEntries: React.FC = () => {
                 <>
                   <button
                     className="fixed inset-0 -z-10 cursor-default"
-                    onClick={() => setIsAppsMenuOpen(false)}
+                    onClick={() => {
+                      setIsAppsMenuOpen(false);
+                      setOpenSubmenu(null);
+                    }}
                     aria-label="Close menu"
                     tabIndex={-1}
                   />
                   <div className="absolute top-full left-0 mt-2 bg-white/95 backdrop-blur-sm rounded-md shadow-xl border border-white/30 min-w-[200px] overflow-hidden z-50">
                     {apps.map((app) => {
                       const IconComponent = app.icon;
+                      const hasSubmenu = app.hasSubmenu && app.submenu;
+                      const isSubmenuOpen = openSubmenu === app.name;
+
                       return (
-                        <button
-                          key={app.path}
-                          onClick={() => handleAppSelect(app.path)}
-                          className="w-full px-4 py-3 text-left flex items-center gap-3 transition-all duration-200 text-gray-700 hover:bg-gray-100 hover:text-gray-800 cursor-pointer"
-                        >
-                          <IconComponent sx={{ fontSize: 20 }} />
-                          <span className="text-sm font-medium">
-                            {app.name}
-                          </span>
-                        </button>
+                        <div key={app.path}>
+                          <button
+                            onClick={() => {
+                              if (hasSubmenu) {
+                                setOpenSubmenu(isSubmenuOpen ? null : app.name);
+                              } else {
+                                handleAppSelect(app.path);
+                              }
+                            }}
+                            className="w-full px-4 py-3 text-left flex items-center gap-3 transition-all duration-200 text-gray-700 hover:bg-gray-100 hover:text-gray-800 cursor-pointer"
+                          >
+                            {IconComponent && (
+                              <IconComponent sx={{ fontSize: 20 }} />
+                            )}
+                            <span className="text-sm font-medium flex-1">
+                              {app.name}
+                            </span>
+                            {hasSubmenu && (
+                              <ExpandMoreIcon
+                                sx={{
+                                  fontSize: 16,
+                                  transform: isSubmenuOpen
+                                    ? "rotate(180deg)"
+                                    : "rotate(0deg)",
+                                  transition: "transform 0.2s ease",
+                                }}
+                              />
+                            )}
+                          </button>
+
+                          {hasSubmenu && isSubmenuOpen && (
+                            <div className="bg-gray-50 border-t border-gray-200">
+                              {app.submenu?.map((subItem, index) => {
+                                const SubIconComponent = subItem.icon;
+                                return (
+                                  <button
+                                    key={`${app.name}-${index}`}
+                                    onClick={() =>
+                                      handleAppSelect(subItem.path)
+                                    }
+                                    className="w-full px-8 py-2 text-left text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-800 transition-all duration-200 cursor-pointer flex items-center gap-2"
+                                  >
+                                    {SubIconComponent && (
+                                      <SubIconComponent sx={{ fontSize: 16 }} />
+                                    )}
+                                    {subItem.name}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
                       );
                     })}
                   </div>

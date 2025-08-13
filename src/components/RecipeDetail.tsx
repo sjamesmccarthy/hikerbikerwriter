@@ -24,6 +24,19 @@ import {
   Public as PublicIcon,
   ArrowCircleLeft as ArrowCircleLeftIcon,
   ArrowCircleRight as ArrowCircleRightIcon,
+  Apps as AppsIcon,
+  Home as HomeIcon,
+  EditNote as EditNoteIcon,
+  Assignment as LogIcon,
+  MenuBook as FieldNotesIcon,
+  Restaurant as RestaurantIcon,
+  PhotoCamera as PhotoCameraIcon,
+  IntegrationInstructions as DevToolsIcon,
+  Code as CodeIcon,
+  ColorLens as ColorIcon,
+  TextFields as TextIcon,
+  NetworkCheck as NetworkIcon,
+  Casino as RollIcon,
 } from "@mui/icons-material";
 import {
   Accordion,
@@ -74,6 +87,18 @@ interface RecipeDetailProps {
   slug: string;
 }
 
+interface AppMenuItem {
+  name: string;
+  path: string;
+  icon?: React.ComponentType<{ sx?: { fontSize: number } }>;
+  hasSubmenu?: boolean;
+  submenu?: Array<{
+    name: string;
+    path: string;
+    icon?: React.ComponentType<{ sx?: { fontSize: number } }>;
+  }>;
+}
+
 const RecipeDetail: React.FC<RecipeDetailProps> = ({ slug }) => {
   const router = useRouter();
   const [recipe, setRecipe] = useState<Recipe | null>(null);
@@ -83,7 +108,51 @@ const RecipeDetail: React.FC<RecipeDetailProps> = ({ slug }) => {
   const [currentStep, setCurrentStep] = useState(0);
   const [showCopiedMessage, setShowCopiedMessage] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [isAppsMenuOpen, setIsAppsMenuOpen] = useState(false);
+  const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
   const { data: session } = useSession();
+
+  // Apps menu configuration
+  const apps: AppMenuItem[] = [
+    { name: "Home", path: "/", icon: HomeIcon },
+    {
+      name: "Dev Tools",
+      path: "/utilities",
+      icon: DevToolsIcon,
+      hasSubmenu: true,
+      submenu: [
+        { name: "Md Editor", path: "/markdown", icon: EditNoteIcon },
+        {
+          name: "JSON Previewer",
+          path: "/utilities/json-previewer",
+          icon: CodeIcon,
+        },
+        {
+          name: "Hex/RGB Code",
+          path: "/utilities/hex-rgb-converter",
+          icon: ColorIcon,
+        },
+        { name: "Lorem Ipsum", path: "/utilities/lorem-ipsum", icon: TextIcon },
+        {
+          name: "Network Utilities",
+          path: "/utilities/network-tools",
+          icon: NetworkIcon,
+        },
+      ],
+    },
+    { name: "Roll&Write", path: "/rollandwrite", icon: RollIcon },
+    { name: "Brew Log", path: "/brewday", icon: LogIcon },
+    { name: "Field Notes", path: "/fieldnotes", icon: FieldNotesIcon },
+    { name: "Recipes", path: "/recipes", icon: RestaurantIcon },
+    { name: "jM Galleries", path: "/jmgalleries", icon: PhotoCameraIcon },
+  ];
+
+  // Handle app selection from menu
+  const handleAppSelect = (path: string) => {
+    router.push(path);
+    setIsAppsMenuOpen(false);
+    setOpenSubmenu(null);
+  };
 
   // Function to convert decimal to fraction with Unicode characters
   const formatAmountAsFraction = (amount: number): string => {
@@ -459,6 +528,98 @@ const RecipeDetail: React.FC<RecipeDetailProps> = ({ slug }) => {
                 Back to Recipes
               </button>
             </Link>
+
+            <div className="h-4 w-px bg-gray-300" />
+
+            {/* Apps Menu */}
+            <div className="relative">
+              <button
+                onClick={() => setIsAppsMenuOpen(!isAppsMenuOpen)}
+                className="px-3 py-1 rounded text-sm font-medium transition-colors flex items-center gap-1 text-gray-600 hover:text-gray-800 hover:bg-gray-100 cursor-pointer"
+                aria-label="Apps Menu"
+                aria-expanded={isAppsMenuOpen}
+              >
+                <AppsIcon sx={{ fontSize: 16 }} />
+                Apps
+              </button>
+
+              {/* Apps Dropdown */}
+              {isAppsMenuOpen && (
+                <>
+                  <button
+                    className="fixed inset-0 -z-10 cursor-default"
+                    onClick={() => {
+                      setIsAppsMenuOpen(false);
+                      setOpenSubmenu(null);
+                    }}
+                    aria-label="Close menu"
+                    tabIndex={-1}
+                  />
+                  <div className="absolute top-full left-0 mt-2 bg-white/95 backdrop-blur-sm rounded-md shadow-xl border border-white/30 min-w-[200px] overflow-hidden z-50">
+                    {apps.map((app) => {
+                      const IconComponent = app.icon;
+                      const hasSubmenu = app.hasSubmenu && app.submenu;
+                      const isSubmenuOpen = openSubmenu === app.name;
+
+                      return (
+                        <div key={app.path}>
+                          <button
+                            onClick={() => {
+                              if (hasSubmenu) {
+                                setOpenSubmenu(isSubmenuOpen ? null : app.name);
+                              } else {
+                                handleAppSelect(app.path);
+                              }
+                            }}
+                            className="w-full px-4 py-3 text-left flex items-center gap-3 transition-all duration-200 text-gray-700 hover:bg-gray-100 hover:text-gray-800 cursor-pointer"
+                          >
+                            {IconComponent && (
+                              <IconComponent sx={{ fontSize: 20 }} />
+                            )}
+                            <span className="text-sm font-medium flex-1">
+                              {app.name}
+                            </span>
+                            {hasSubmenu && (
+                              <ExpandMoreIcon
+                                sx={{
+                                  fontSize: 16,
+                                  transform: isSubmenuOpen
+                                    ? "rotate(180deg)"
+                                    : "rotate(0deg)",
+                                  transition: "transform 0.2s ease",
+                                }}
+                              />
+                            )}
+                          </button>
+
+                          {hasSubmenu && isSubmenuOpen && (
+                            <div className="bg-gray-50 border-t border-gray-200">
+                              {app.submenu?.map((subItem, index) => {
+                                const SubIconComponent = subItem.icon;
+                                return (
+                                  <button
+                                    key={`${app.name}-${index}`}
+                                    onClick={() =>
+                                      handleAppSelect(subItem.path)
+                                    }
+                                    className="w-full px-8 py-2 text-left text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-800 transition-all duration-200 cursor-pointer flex items-center gap-2"
+                                  >
+                                    {SubIconComponent && (
+                                      <SubIconComponent sx={{ fontSize: 16 }} />
+                                    )}
+                                    {subItem.name}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+            </div>
           </div>
 
           {/* Action buttons */}

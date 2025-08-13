@@ -22,9 +22,22 @@ import {
   Restaurant as RestaurantIcon,
   PhotoCamera as PhotoCameraIcon,
   Home as HomeIcon,
+  IntegrationInstructions as DevToolsIcon,
+  ExpandMore as ExpandMoreIcon,
+  Code as CodeIcon,
+  ColorLens as ColorIcon,
+  TextFields as TextIcon,
+  NetworkCheck as NetworkIcon,
 } from "@mui/icons-material";
 import { Select, MenuItem, FormControl } from "@mui/material";
 import { renderFooter } from "./shared/footerHelpers";
+
+interface AppMenuItem {
+  name: string;
+  path: string;
+  icon: React.ComponentType<any>;
+  submenu?: AppMenuItem[];
+}
 
 const MarkdownEditor: React.FC = () => {
   const [content, setContent] = useState("");
@@ -34,13 +47,38 @@ const MarkdownEditor: React.FC = () => {
   const [previewStyle, setPreviewStyle] = useState("default");
   const [hasUserInteracted, setHasUserInteracted] = useState(false);
   const [isAppsMenuOpen, setIsAppsMenuOpen] = useState(false);
+  const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
   const previewRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const router = useRouter();
 
   // Apps menu configuration
-  const apps = [
+  const apps: AppMenuItem[] = [
     { name: "Home", path: "/", icon: HomeIcon },
+    {
+      name: "Dev Tools",
+      path: "/utilities",
+      icon: DevToolsIcon,
+      submenu: [
+        { name: "Md Editor", path: "/markdown", icon: CodeIcon },
+        {
+          name: "JSON Previewer",
+          path: "/utilities/json-previewer",
+          icon: CodeIcon,
+        },
+        {
+          name: "Hex/RGB Code",
+          path: "/utilities/hex-rgb-converter",
+          icon: ColorIcon,
+        },
+        { name: "Lorem Ipsum", path: "/utilities/lorem-ipsum", icon: TextIcon },
+        {
+          name: "Network Utilities",
+          path: "/utilities/network-tools",
+          icon: NetworkIcon,
+        },
+      ],
+    },
     { name: "Brew Log", path: "/brewday", icon: LogIcon },
     { name: "Roll&Write", path: "/rollandwrite", icon: RollIcon },
     { name: "Field Notes", path: "/fieldnotes", icon: FieldNotesIcon },
@@ -49,9 +87,18 @@ const MarkdownEditor: React.FC = () => {
   ];
 
   // Handle app selection from menu
-  const handleAppSelect = (path: string) => {
-    router.push(path);
-    setIsAppsMenuOpen(false);
+  const handleAppSelect = (
+    path: string,
+    hasSubmenu: boolean = false,
+    appName?: string
+  ) => {
+    if (hasSubmenu && appName) {
+      setOpenSubmenu(openSubmenu === appName ? null : appName);
+    } else {
+      router.push(path);
+      setIsAppsMenuOpen(false);
+      setOpenSubmenu(null);
+    }
   };
 
   // Placeholder content that shows when empty
@@ -507,24 +554,67 @@ const MarkdownEditor: React.FC = () => {
                 <>
                   <button
                     className="fixed inset-0 -z-10 cursor-default"
-                    onClick={() => setIsAppsMenuOpen(false)}
+                    onClick={() => {
+                      setIsAppsMenuOpen(false);
+                      setOpenSubmenu(null);
+                    }}
                     aria-label="Close menu"
                     tabIndex={-1}
                   />
                   <div className="absolute top-full left-0 mt-2 bg-white/95 backdrop-blur-sm rounded-md shadow-xl border border-white/30 min-w-[200px] overflow-hidden z-50">
                     {apps.map((app) => {
                       const IconComponent = app.icon;
+                      const hasSubmenu = app.submenu && app.submenu.length > 0;
+                      const isSubmenuOpen = openSubmenu === app.name;
+
                       return (
-                        <button
-                          key={app.path}
-                          onClick={() => handleAppSelect(app.path)}
-                          className="w-full px-4 py-3 text-left flex items-center gap-3 transition-all duration-200 text-gray-700 hover:bg-gray-100 hover:text-gray-800 cursor-pointer"
-                        >
-                          <IconComponent sx={{ fontSize: 20 }} />
-                          <span className="text-sm font-medium">
-                            {app.name}
-                          </span>
-                        </button>
+                        <div key={app.path}>
+                          <button
+                            onClick={() =>
+                              handleAppSelect(app.path, hasSubmenu, app.name)
+                            }
+                            className="w-full px-4 py-3 text-left flex items-center justify-between transition-all duration-200 text-gray-700 hover:bg-gray-100 hover:text-gray-800 cursor-pointer"
+                          >
+                            <div className="flex items-center gap-3">
+                              <IconComponent sx={{ fontSize: 20 }} />
+                              <span className="text-sm font-medium">
+                                {app.name}
+                              </span>
+                            </div>
+                            {hasSubmenu && (
+                              <ExpandMoreIcon
+                                sx={{
+                                  fontSize: 16,
+                                  transform: isSubmenuOpen
+                                    ? "rotate(180deg)"
+                                    : "rotate(0deg)",
+                                  transition: "transform 0.2s ease-in-out",
+                                }}
+                              />
+                            )}
+                          </button>
+                          {hasSubmenu && isSubmenuOpen && app.submenu && (
+                            <div className="bg-gray-50/90 backdrop-blur-sm border-t border-gray-200/50">
+                              {app.submenu.map((subItem) => {
+                                const SubIconComponent = subItem.icon;
+                                return (
+                                  <button
+                                    key={subItem.path}
+                                    onClick={() =>
+                                      handleAppSelect(subItem.path)
+                                    }
+                                    className="w-full px-6 py-2 text-left flex items-center gap-3 transition-all duration-200 text-gray-600 hover:bg-gray-100 hover:text-gray-700 cursor-pointer"
+                                  >
+                                    <SubIconComponent sx={{ fontSize: 16 }} />
+                                    <span className="text-sm">
+                                      {subItem.name}
+                                    </span>
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
                       );
                     })}
                   </div>
