@@ -147,6 +147,7 @@ const FieldNotes: React.FC = () => {
   const { data: session, status } = useSession();
   const [notes, setNotes] = useState<Note[]>([]);
   const [loadingNotes, setLoadingNotes] = useState(true);
+  const [databaseError, setDatabaseError] = useState<string | null>(null);
   const [activeTag, setActiveTag] = useState<string>("All");
   const [minimized, setMinimized] = useState(false);
   const [filterMood, setFilterMood] = useState("any");
@@ -173,6 +174,7 @@ const FieldNotes: React.FC = () => {
   useEffect(() => {
     async function fetchNotes() {
       setLoadingNotes(true);
+      setDatabaseError(null); // Clear any previous errors
 
       let url = "/api/fieldnotes";
       if (session?.user?.email) {
@@ -183,10 +185,34 @@ const FieldNotes: React.FC = () => {
 
       try {
         const res = await fetch(url);
+
+        if (!res.ok) {
+          // Handle HTTP errors (like 500 for database connection issues)
+          if (res.status === 500) {
+            setDatabaseError(
+              "Database connection error - Please check if the database is running"
+            );
+            setNotes([]);
+            return;
+          }
+          throw new Error(`HTTP error! status: ${res.status}`);
+        }
+
         const data = await res.json();
-        setNotes(data);
+
+        // Ensure data is an array before setting it
+        if (Array.isArray(data)) {
+          setNotes(data);
+          setDatabaseError(null); // Clear error on success
+        } else {
+          setDatabaseError("Invalid data format received from server");
+          setNotes([]);
+        }
       } catch (error) {
         console.error("Error fetching fieldnotes:", error);
+        setDatabaseError(
+          "Failed to connect to server - Please try again later"
+        );
         setNotes([]);
       } finally {
         setLoadingNotes(false);
@@ -199,20 +225,23 @@ const FieldNotes: React.FC = () => {
     }
   }, [session, status]);
 
-  // Filter notes by activeTag before rendering
-  const filteredNotes = notes.filter((note) => {
-    const tagMatch =
-      activeTag === "All"
-        ? true
-        : note.tags
-        ? note.tags
-            .toLowerCase()
-            .split(/[ ,]+/)
-            .includes(activeTag.toLowerCase())
-        : false;
-    const moodMatch = filterMood === "any" ? true : note.mood === filterMood;
-    return tagMatch && moodMatch;
-  });
+  // Filter notes by activeTag before rendering - ensure notes is an array
+  const filteredNotes = Array.isArray(notes)
+    ? notes.filter((note) => {
+        const tagMatch =
+          activeTag === "All"
+            ? true
+            : note.tags
+            ? note.tags
+                .toLowerCase()
+                .split(/[ ,]+/)
+                .includes(activeTag.toLowerCase())
+            : false;
+        const moodMatch =
+          filterMood === "any" ? true : note.mood === filterMood;
+        return tagMatch && moodMatch;
+      })
+    : [];
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -533,6 +562,32 @@ const FieldNotes: React.FC = () => {
                   <div className="text-center text-gray-400 font-mono py-8">
                     Loading notes...
                   </div>
+                ) : databaseError ? (
+                  <div className="mx-4 mb-6 p-4 bg-red-50 border border-red-200 rounded-md">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0">
+                        <svg
+                          className="h-5 w-5 text-red-400"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </div>
+                      <div className="ml-3">
+                        <h3 className="text-sm font-medium text-red-800">
+                          Database Connection Error
+                        </h3>
+                        <div className="mt-1 text-sm text-red-700">
+                          {databaseError}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 ) : !session && filteredNotes.length === 0 ? (
                   <div className="text-center py-12">
                     <div className="flex justify-center mb-4">
@@ -768,17 +823,29 @@ const FieldNotes: React.FC = () => {
                                       "State cleared, exiting edit mode"
                                     );
                                   } else {
-                                    const errorData = await res.json();
+                                    const errorData = await res
+                                      .json()
+                                      .catch(() => ({
+                                        error: "Connection error",
+                                      }));
                                     console.error("Update error:", errorData);
-                                    alert(
-                                      `Error updating fieldnote: ${
-                                        errorData.error || "Unknown error"
-                                      }`
-                                    );
+                                    if (res.status === 500) {
+                                      setDatabaseError(
+                                        "Database connection error during update - Please check if the database is running"
+                                      );
+                                    } else {
+                                      alert(
+                                        `Error updating fieldnote: ${
+                                          errorData.error || "Unknown error"
+                                        }`
+                                      );
+                                    }
                                   }
                                 } catch (error) {
                                   console.error("Update error:", error);
-                                  alert("Error updating fieldnote");
+                                  setDatabaseError(
+                                    "Failed to connect to server during update"
+                                  );
                                 }
                               }}
                             >
@@ -889,20 +956,45 @@ const FieldNotes: React.FC = () => {
                                   color="error"
                                   aria-label="Delete Entry"
                                   onClick={async () => {
-                                    const res = await fetch("/api/fieldnotes", {
-                                      method: "DELETE",
-                                      headers: {
-                                        "Content-Type": "application/json",
-                                      },
-                                      body: JSON.stringify({
-                                        id: note.id,
-                                        slug: note.slug,
-                                        userEmail: session?.user?.email,
-                                      }),
-                                    });
-                                    if (res.ok) {
-                                      setNotes(
-                                        notes.filter((n) => n.id !== note.id)
+                                    try {
+                                      const res = await fetch(
+                                        "/api/fieldnotes",
+                                        {
+                                          method: "DELETE",
+                                          headers: {
+                                            "Content-Type": "application/json",
+                                          },
+                                          body: JSON.stringify({
+                                            id: note.id,
+                                            slug: note.slug,
+                                            userEmail: session?.user?.email,
+                                          }),
+                                        }
+                                      );
+                                      if (res.ok) {
+                                        setNotes(
+                                          notes.filter((n) => n.id !== note.id)
+                                        );
+                                      } else if (res.status === 500) {
+                                        setDatabaseError(
+                                          "Database connection error during delete - Please check if the database is running"
+                                        );
+                                      } else {
+                                        const errorData = await res
+                                          .json()
+                                          .catch(() => ({
+                                            error: "Delete failed",
+                                          }));
+                                        alert(
+                                          `Error deleting fieldnote: ${
+                                            errorData.error || "Unknown error"
+                                          }`
+                                        );
+                                      }
+                                    } catch (error) {
+                                      console.error("Delete error:", error);
+                                      setDatabaseError(
+                                        "Failed to connect to server during delete"
                                       );
                                     }
                                   }}
