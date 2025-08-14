@@ -154,13 +154,6 @@ export default function AdminLayout({
             }}
           >
             {(() => {
-              if (status === "loading") {
-                return (
-                  <span className="font-mono text-gray-500 text-sm">
-                    Loading...
-                  </span>
-                );
-              }
               if (!session) {
                 return (
                   <div className="flex items-center gap-2">
@@ -245,7 +238,7 @@ export default function AdminLayout({
 
           {/* Mobile Auth UI */}
           {(() => {
-            if (status === "loading") {
+            if (!session) {
               return (
                 <Box
                   sx={{

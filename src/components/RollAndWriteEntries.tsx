@@ -22,7 +22,6 @@ import {
   ColorLens as ColorIcon,
   TextFields as TextIcon,
   NetworkCheck as NetworkIcon,
-  FavoriteBorder as FavoriteBorderIcon,
   Favorite as FavoriteIcon,
 } from "@mui/icons-material";
 import { FormControl, InputLabel, Select, MenuItem } from "@mui/material";

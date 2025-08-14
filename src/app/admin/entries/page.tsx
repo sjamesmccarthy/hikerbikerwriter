@@ -37,7 +37,7 @@ interface Entry {
   isPublic: boolean;
   user_email?: string;
   slug?: string;
-  json?: any;
+  json?: Record<string, unknown>;
 }
 
 // Generate URL for different entry types
@@ -47,7 +47,7 @@ const getEntryUrl = (entry: Entry): string => {
       // For recipes, try to extract slug from JSON or use a fallback
       if (entry.json && typeof entry.json === "object") {
         const slug = entry.json.slug || entry.slug;
-        if (slug) {
+        if (slug && typeof slug === "string") {
           return `/recipes/${slug}`;
         }
       }
@@ -58,7 +58,7 @@ const getEntryUrl = (entry: Entry): string => {
       // For field notes, try to extract slug from JSON or use a fallback
       if (entry.json && typeof entry.json === "object") {
         const slug = entry.json.slug || entry.slug;
-        if (slug) {
+        if (slug && typeof slug === "string") {
           return `/fieldnotes/${slug}`;
         }
       }

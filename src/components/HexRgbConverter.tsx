@@ -192,7 +192,7 @@ const HexRgbConverter: React.FC = () => {
       setSwatchTooltip({ hex, idx });
       if (swatchTimeoutRef.current) clearTimeout(swatchTimeoutRef.current);
       swatchTimeoutRef.current = setTimeout(() => setSwatchTooltip(null), 3000);
-    } catch (err) {
+    } catch {
       // fallback: no tooltip
       setSwatchTooltip(null);
     }

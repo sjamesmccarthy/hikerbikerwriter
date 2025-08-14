@@ -67,9 +67,6 @@ export default function AdminUserManagement() {
   const [activeTab, setActiveTab] = useState(0); // 0 = Users, 1 = Signup Requests
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const [selectedRequest, setSelectedRequest] = useState<SignupRequest | null>(
-    null
-  );
   const [updating, setUpdating] = useState<number | null>(null);
   const [processing, setProcessing] = useState<number | null>(null);
 
@@ -281,6 +278,12 @@ export default function AdminUserManagement() {
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString();
+  };
+
+  const getStatusColor = (status: string) => {
+    if (status === "pending") return "warning";
+    if (status === "approved") return "success";
+    return "error";
   };
 
   if (loading) {
@@ -607,13 +610,7 @@ export default function AdminUserManagement() {
                           <Chip
                             label={request.status}
                             size="small"
-                            color={
-                              request.status === "pending"
-                                ? "warning"
-                                : request.status === "approved"
-                                ? "success"
-                                : "error"
-                            }
+                            color={getStatusColor(request.status)}
                             variant="outlined"
                           />
                         </TableCell>
