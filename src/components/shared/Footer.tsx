@@ -38,7 +38,7 @@ const Footer: React.FC<FooterProps> = ({
             href="https://github.com/sjamesmccarthy/hikerbikerwriter/blob/main/README.md"
             target="_blank"
             rel="noopener noreferrer"
-            className="underline hover:underline font-medium text-blue-200 inline-flex items-center gap-0.5 align-baseline"
+            className="underline hover:underline font-medium text-black inline-flex items-center gap-0.5 align-baseline"
             style={{ lineHeight: 1, whiteSpace: "nowrap" }}
           >
             <span style={{ display: "inline" }}>

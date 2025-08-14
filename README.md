@@ -1,8 +1,8 @@
 ## The Story
 
-In a way, this kind of feels like cheating, but I wanted to see how far I could get with developing a web-app using AI tools and frameworks. The result is a fully functional application that showcases the power of modern web development.
+In a way, this kind of feels like cheating, but I wanted to see how far I could get with developing a web-app using AI tools and frameworks with only conversational based development. The result is a fully functional application that showcases the power of modern web development .
 
-# Technology Stack
+## Technology Stack
 
 - Next.js
 - React
@@ -14,7 +14,7 @@ In a way, this kind of feels like cheating, but I wanted to see how far I could 
 - oAuth using Google Sign-in
 - Vercel
 
-# Next Steps With This Project
+## Next Steps With This Project
 
 - Code Review
 - Optimizations and code efficiency improvements
