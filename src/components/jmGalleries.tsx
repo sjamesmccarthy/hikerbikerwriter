@@ -295,42 +295,29 @@ const JmGalleries: React.FC = () => {
 
           {/* Database Error Display */}
           {dbError && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-6 mb-8 max-w-2xl mx-auto">
-              <div className="flex items-center mb-3">
-                <div className="flex-shrink-0">
-                  <svg
-                    className="h-5 w-5 text-red-400"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
-                  >
-                    <path
-                      fillRule="evenodd"
-                      d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </div>
-                <div className="ml-3">
-                  <h3 className="text-sm font-medium text-red-800">
+            <div className="w-3/4 text-center bg-gray-50 border border-gray-200 rounded-lg p-6 mb-8 mx-auto">
+              <div className="text-center flex items-center mb-3">
+                <div className="w-full flex justify-center">
+                  <p className="text-lg text-gray-800 text-center">
                     Database Connection Error
-                  </h3>
+                  </p>
                 </div>
               </div>
-              <div className="ml-8">
-                <p className="text-sm text-red-700">
+              <div>
+                <p className="text-center text-sm text-gray-700">
                   Unable to load gallery images. Please try again later.
                 </p>
-                <p className="text-xs text-red-600 mt-2 font-mono">
+                <p className="hidden text-center text-xs text-gray-600 mt-2 font-mono">
                   Error: {dbError.message}
                 </p>
                 {dbError.database && (
-                  <p className="text-xs text-red-600 mt-1">
+                  <p className="text-xs text-gray-600 mt-1">
                     <span className="font-semibold">Database:</span>{" "}
                     {dbError.database}
                   </p>
                 )}
                 {dbError.connectionInfo && (
-                  <div className="text-xs text-red-600 mt-2">
+                  <div className="hidden text-xs text-gray-600 mt-2">
                     <p>
                       <span className="font-semibold">Connection Details:</span>
                     </p>

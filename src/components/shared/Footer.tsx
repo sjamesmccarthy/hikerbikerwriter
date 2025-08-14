@@ -38,14 +38,22 @@ const Footer: React.FC<FooterProps> = ({
             href="https://github.com/sjamesmccarthy/hikerbikerwriter/blob/main/README.md"
             target="_blank"
             rel="noopener noreferrer"
-            className="underline hover:underline font-medium text-blue-200 inline-flex items-center gap-1"
+            className="underline hover:underline font-medium text-blue-200 inline-flex items-center gap-0.5 align-baseline"
+            style={{ lineHeight: 1, whiteSpace: "nowrap" }}
           >
-            generated using Co-Pilot AI with Claude Sonnet 4 mode
+            <span style={{ display: "inline" }}>
+              generated using Co-Pilot AI with Claude Sonnet 4 mode
+            </span>
             <OpenInNewIcon
-              sx={{ fontSize: 14, marginLeft: "2px", verticalAlign: "middle" }}
+              sx={{
+                fontSize: 13,
+                marginLeft: "1.5px",
+                verticalAlign: "text-bottom",
+                minWidth: 0,
+              }}
             />
           </Link>
-          , mysql, Tempest Weather Station API and hosted by Vercel.
+          , mysql, Tempest Weather Station API and hosted at Vercel.
         </div>
       </div>
     </div>

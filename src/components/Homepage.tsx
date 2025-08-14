@@ -49,9 +49,9 @@ const Homepage: React.FC = () => {
       const midBlue = Math.round(blue1 + (blue2 - blue1) * ratio);
 
       return `linear-gradient(135deg, rgb(${red1}, ${green1}, ${blue1}), rgb(${midRed}, ${midGreen}, ${midBlue}))`;
-    } else if (temp <= 85) {
+    } else if (temp <= 90) {
       // Moderate temps: dramatic gradient from royal blue to bright orange
-      const ratio = (temp - 60) / 25; // normalize to 0-1
+      const ratio = (temp - 60) / 30; // normalize to 0-1
       const red1 = 30,
         green1 = 50,
         blue1 = 200; // Royal blue
