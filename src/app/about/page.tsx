@@ -1,0 +1,294 @@
+"use client";
+import React, { useState } from "react";
+import Link from "next/link";
+import { renderFooter } from "@/components/shared/footerHelpers";
+import {
+  ArrowBack as ArrowBackIcon,
+  Apps as AppsIcon,
+  Home as HomeIcon,
+  IntegrationInstructions as DevToolsIcon,
+  Assignment as LogIcon,
+  Casino as RollIcon,
+  Restaurant as RestaurantIcon,
+  PhotoCamera as PhotoCameraIcon,
+  ExpandMore as ExpandMoreIcon,
+  Code as CodeIcon,
+  ColorLens as ColorIcon,
+  TextFields as TextIcon,
+  NetworkCheck as NetworkIcon,
+} from "@mui/icons-material";
+
+export default function AboutPage() {
+  const [isAppsMenuOpen, setIsAppsMenuOpen] = useState(false);
+  const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
+
+  const apps = [
+    { name: "Home", path: "/", icon: HomeIcon },
+    {
+      name: "Dev Tools",
+      path: "/utilities",
+      icon: DevToolsIcon,
+      hasSubmenu: true,
+      submenu: [
+        { name: "Md Editor", path: "/markdown", icon: TextIcon },
+        {
+          name: "JSON Previewer",
+          path: "/utilities/json-previewer",
+          icon: CodeIcon,
+        },
+        {
+          name: "Hex/RGB Code",
+          path: "/utilities/hex-rgb-converter",
+          icon: ColorIcon,
+        },
+        { name: "Lorem Ipsum", path: "/utilities/lorem-ipsum", icon: TextIcon },
+        {
+          name: "Network Utilities",
+          path: "/utilities/network-tools",
+          icon: NetworkIcon,
+        },
+      ],
+    },
+    { name: "Brew Log", path: "/brewday", icon: LogIcon },
+    { name: "Roll&Write", path: "/rollandwrite", icon: RollIcon },
+    { name: "Recipes", path: "/recipes", icon: RestaurantIcon },
+    { name: "jM Galleries", path: "/jmgalleries", icon: PhotoCameraIcon },
+  ];
+
+  const handleAppSelect = (path: string) => {
+    window.location.href = path;
+    setIsAppsMenuOpen(false);
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="max-xl bg-white flex-1">
+        {/* Header */}
+        <div className="flex items-center space-x-2 h-[61px] border-b border-gray-200 px-3">
+          <Link href="/">
+            <button className="px-3 py-1 rounded text-sm font-medium transition-colors flex items-center gap-1 text-gray-600 hover:text-gray-800 hover:bg-gray-100 cursor-pointer">
+              <ArrowBackIcon sx={{ fontSize: 16 }} />
+              <span className="hidden sm:inline">Back to Home</span>
+            </button>
+          </Link>
+          <div className="h-4 w-px bg-gray-300" />
+          {/* Apps Menu */}
+          <div className="relative">
+            <button
+              onClick={() => setIsAppsMenuOpen(!isAppsMenuOpen)}
+              className="px-3 py-1 rounded text-sm font-medium transition-colors flex items-center gap-1 text-gray-600 hover:text-gray-800 hover:bg-gray-100 cursor-pointer"
+              aria-label="Apps Menu"
+              aria-expanded={isAppsMenuOpen}
+            >
+              <AppsIcon sx={{ fontSize: 16 }} />
+              Apps
+            </button>
+            {/* Apps Dropdown */}
+            {isAppsMenuOpen && (
+              <>
+                <button
+                  className="fixed inset-0 -z-10 cursor-default"
+                  onClick={() => {
+                    setIsAppsMenuOpen(false);
+                    setOpenSubmenu(null);
+                  }}
+                  aria-label="Close menu"
+                  tabIndex={-1}
+                />
+                <div className="absolute top-full left-0 mt-2 bg-white/95 backdrop-blur-sm rounded-md shadow-xl border border-white/30 min-w-[200px] overflow-hidden z-50">
+                  {apps.map((app) => {
+                    const IconComponent = app.icon;
+                    const hasSubmenu = app.hasSubmenu && app.submenu;
+                    const isSubmenuOpen = openSubmenu === app.name;
+                    return (
+                      <div key={app.path}>
+                        <button
+                          onClick={() => {
+                            if (hasSubmenu) {
+                              setOpenSubmenu(isSubmenuOpen ? null : app.name);
+                            } else {
+                              handleAppSelect(app.path);
+                            }
+                          }}
+                          className="w-full px-4 py-3 text-left flex items-center gap-3 transition-all duration-200 text-gray-700 hover:bg-gray-100 hover:text-gray-800 cursor-pointer"
+                        >
+                          {IconComponent && (
+                            <IconComponent sx={{ fontSize: 20 }} />
+                          )}
+                          <span className="text-sm font-medium flex-1">
+                            {app.name}
+                          </span>
+                          {hasSubmenu && (
+                            <ExpandMoreIcon
+                              sx={{
+                                fontSize: 16,
+                                transform: isSubmenuOpen
+                                  ? "rotate(180deg)"
+                                  : "rotate(0deg)",
+                                transition: "transform 0.2s ease",
+                              }}
+                            />
+                          )}
+                        </button>
+                        {hasSubmenu && isSubmenuOpen && (
+                          <div className="bg-gray-50 border-t border-gray-200">
+                            {app.submenu?.map((subItem) => {
+                              const SubIconComponent = subItem.icon;
+                              return (
+                                <button
+                                  key={subItem.path}
+                                  onClick={() => handleAppSelect(subItem.path)}
+                                  className="w-full px-8 py-2 text-left flex items-center gap-2 text-gray-600 hover:bg-gray-100 hover:text-gray-800 text-sm"
+                                >
+                                  {SubIconComponent && (
+                                    <SubIconComponent sx={{ fontSize: 16 }} />
+                                  )}
+                                  {subItem.name}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+        {/* End Header */}
+        <main className="w-full md:w-3/4 mx-auto">
+          <div className="py-6 px-6">
+            <h1 className="text-3xl font-bold mb-4 text-center">The Story</h1>
+            <p className="text-2xl">
+              In a way, this kind of feels like cheating, but I wanted to see
+              how far I could get with developing a web-app using AI tools and
+              frameworks with only conversational based development. The result
+              is a fully functional application that showcases the power of
+              modern web development.
+            </p>
+            <h2 className="text-xl font-semibold mt-6 mb-2">The Case Study</h2>
+            <p>It all started with the prompt.</p>
+            <p className="bg-gray-100 rounded p-3 text-sm overflow-x-auto mb-4 mt-4 font-mono">
+              I have an extra domain, hikerbikerwriter, and I want you to create
+              a website that represents those three words. They will include the
+              following apps. 1) Roll And Write: a creative writing prompt
+              generator based on two 8 sided dice, 2) Field Notes: a digital
+              notebook for hikers and bikers to record their thoughts,
+              experiences and moods and 3) jM Galleries which will show a
+              thumbnail gallery of fine-art images hosted at jmgalleries.com
+            </p>
+            <p>
+              It built upon this foundation so well that I couldn&apos;t stop
+              telling what to build next. The next morning while sitting at the
+              fire-pit enjoying a cup of coffee and watching the finches play in
+              the fountain I wrote my next prompt.
+            </p>
+            <p className="bg-gray-100 rounded p-3 text-sm overflow-x-auto mb-4 mt-4 font-mono">
+              Recipe Builder: i want a button on the homepage similar to the
+              fieldNotes button that will link to the viewer page titled
+              Recipes”. there will be 2 routes: 1) viewer and 2) builder. For
+              both view and builder use the layout structure in FieldNotes
+              page.tsx file. the viewer will have public access and the builder
+              route will need a google auth password to use. see FieldNotes for
+              existing google auth context. Make the Sign-in/Logout the same as
+              FieldNotes. when logged recipes in the viewer mode will have an
+              edit button and when clicked show the recipe in the builder mode
+              for editing. the default view for the viewer will will include a
+              filter bar by category and favorites as well as search. if there
+              are no recipes than the viewer will show a “no recipes” box with a
+              button to add one. the recipes will be shown in a grid format with
+              the photo thumbnail (if not available use a generic box with a
+              material ui icon) the title below and then below the title the
+              total time which includes the prep time + cook time. when you
+              click the tile or thumbnail a detailed view will appear. it will
+              show the thumbnail and then a large bold title with the prep time
+              | cook time below it. overlayed in the top right of the thumbnail
+              will be an icon for marking it favorite an sharing. when clicking
+              the sharing it copy the url to the clip board. So the URL will
+              need to be a friendly url using the title (spaces turned into
+              dashes) Next line under the thumbnail will be the author and
+              description. the next section will be accordions for ingredients,
+              steps and my notes. when viewing ingredients there will be a
+              serving size which can be adjusted and then the ingredients will
+              scale to that size using imperial measurements. Steps will be
+              outlined as Step1, Step2, etc. if smoker is the category there
+              will be icons for temp, time and super smoke. There will also be a
+              button for “Make Now” which will change the display into a
+              slideshow card for each step. The last step will say “Bon
+              Apetite!” centered with some cool icon. I don’t want to use a
+              database so either flat files in JSON may be the best option. I
+              would prefer storing the images as base64 in the JSON if possible
+              if not alongside the JSON file. Store the data in a folder at
+              /src/data/recipes
+            </p>
+            <p>
+              And it built it, and before I knew it this app was becoming
+              something real. So I added some authentication using Google&apos;s
+              oAuth. Claude took care of all the Next/react stuff but I had to
+              create the API keys and tokens in my Google Cloud Admin console.
+              Once that was complete it just worked. And what was more
+              astonishing is that I accomplished that task by talking to Claude
+              in about 30 minutes. So I asked myself what&apos;s next.
+            </p>
+            <h2 className="text-xl font-semibold mt-6 mb-2">
+              Technology Stack
+            </h2>
+            <ul className="list-disc ml-6 mb-4">
+              <li>Next.js</li>
+              <li>React</li>
+              <li>TypeScript</li>
+              <li>Material-UI</li>
+              <li>Tailwind CSS</li>
+              <li>MySQL</li>
+              <li>Tempest Weather Station API</li>
+              <li>oAuth using Google Sign-in</li>
+              <li>Vercel</li>
+              <li>
+                VS Code using GitHub Copilot with primarily Claude Sonnet 4
+                model and some GPT4.1 model.
+              </li>
+            </ul>
+            <h2 className="text-xl font-semibold mt-6 mb-2">Next Steps</h2>
+            <ul className="list-disc ml-6 mb-4">
+              <li>Code Review</li>
+              <li>Optimizations and code efficiency improvements</li>
+            </ul>
+            <h2 className="text-xl font-semibold mt-6 mb-2">Changelog</h2>
+            <h3 className="font-semibold mt-4 mb-1">v1.5.0</h3>
+            <ul className="list-disc ml-6 mb-2">
+              <li>
+                Updated temperature thresholds for background color gradients.
+              </li>
+              <li>
+                Added content management features for user-generated recipes,
+                roll and write, and users.
+              </li>
+            </ul>
+            <h3 className="font-semibold mt-4 mb-1">v1.4.0</h3>
+            <ul className="list-disc ml-6 mb-2">
+              <li>Added new utility components for Network Tool.</li>
+              <li>Enhanced responsiveness for mobile devices.</li>
+            </ul>
+            <h3 className="font-semibold mt-4 mb-1">v1.3.0</h3>
+            <ul className="list-disc ml-6 mb-2">
+              <li>Added MySQL database support for Roll And Write.</li>
+              <li>Added new user registration and management page.</li>
+            </ul>
+            <h3 className="font-semibold mt-4 mb-1">v1.2.0</h3>
+            <ul className="list-disc ml-6 mb-2">
+              <li>Added new features for user authentication.</li>
+              <li>Added MySQL database support for Recipes.</li>
+            </ul>
+            <h3 className="font-semibold mt-4 mb-1">v1.0.0</h3>
+            <ul className="list-disc ml-6 mb-2">
+              <li>Initial release with basic features.</li>
+            </ul>
+          </div>
+        </main>
+      </div>
+      {renderFooter("integrated")}
+    </div>
+  );
+}

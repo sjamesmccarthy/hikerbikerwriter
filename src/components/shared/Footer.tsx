@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import OpenInNewIcon from "@mui/icons-material/OpenInNew";
 import Link from "next/link";
 
 interface FooterProps {
@@ -33,8 +32,7 @@ const Footer: React.FC<FooterProps> = ({
           </Link>
         </div>
         <Link
-          href="https://github.com/sjamesmccarthy/hikerbikerwriter/blob/main/README.md"
-          target="_blank"
+          href="/about"
           rel="noopener noreferrer"
           className="hover:underline"
         >
