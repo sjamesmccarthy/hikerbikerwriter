@@ -32,27 +32,59 @@ const Homepage: React.FC = () => {
 
   // Function to calculate background color based on temperature
   const getTemperatureBackground = (temp: number): string => {
-    if (temp <= 45) {
-      // -60 to 45: gradient from #0D47A1 to white
-      const ratio = Math.max(0, Math.min(1, (temp + 60) / 105)); // normalize to 0-1
-      const blue = Math.round(13 + (255 - 13) * ratio);
-      const green = Math.round(71 + (255 - 71) * ratio);
-      const redBlue = Math.round(161 + (255 - 161) * ratio);
-      return `linear-gradient(135deg, rgb(${blue}, ${green}, ${redBlue}), rgb(255, 255, 255))`;
+    console.log("Temperature received:", temp); // Debug log
+
+    if (temp <= 64) {
+      // Cold temps: dramatic gradient from deep blue to icy cyan
+      const ratio = Math.max(0, Math.min(1, (temp + 60) / 119)); // normalize to 0-1
+      const red1 = 0,
+        green1 = 50,
+        blue1 = 150; // Deep blue
+      const red2 = 0,
+        green2 = 200,
+        blue2 = 255; // Bright cyan
+
+      const midRed = Math.round(red1 + (red2 - red1) * ratio);
+      const midGreen = Math.round(green1 + (green2 - green1) * ratio);
+      const midBlue = Math.round(blue1 + (blue2 - blue1) * ratio);
+
+      return `linear-gradient(135deg, rgb(${red1}, ${green1}, ${blue1}), rgb(${midRed}, ${midGreen}, ${midBlue}))`;
     } else if (temp <= 85) {
-      // 46-85: gradient from #EF6C00 to #0D47A1
-      const ratio = (temp - 46) / 39; // normalize to 0-1
-      const red = Math.round(239 - (239 - 13) * ratio);
-      const green = Math.round(108 - (108 - 71) * ratio);
-      const blue = Math.round(0 + (161 - 0) * ratio);
-      return `linear-gradient(135deg, rgb(${red}, ${green}, ${blue}), rgb(13, 71, 161))`;
+      // Moderate temps: dramatic gradient from royal blue to bright orange
+      const ratio = (temp - 60) / 25; // normalize to 0-1
+      const red1 = 30,
+        green1 = 50,
+        blue1 = 200; // Royal blue
+      const red2 = 255,
+        green2 = 100,
+        blue2 = 0; // Bright orange
+
+      const midRed = Math.round(red1 + (red2 - red1) * ratio);
+      const midGreen = Math.round(green1 + (green2 - green1) * ratio);
+      const midBlue = Math.round(blue1 + (blue2 - blue1) * ratio);
+
+      console.log(
+        `Temp: ${temp}, Ratio: ${ratio}, Colors: rgb(${red1},${green1},${blue1}) to rgb(${midRed},${midGreen},${midBlue})`
+      );
+      return `linear-gradient(135deg, rgb(${red1}, ${green1}, ${blue1}), rgb(${midRed}, ${midGreen}, ${midBlue}))`;
     } else {
-      // 86-120: gradient from #B71C1C to #EF6C00
-      const ratio = Math.min(1, (temp - 86) / 34); // normalize to 0-1
-      const red = Math.round(183 + (239 - 183) * ratio);
-      const green = Math.round(28 + (108 - 28) * ratio);
-      const blue = Math.round(28 + (0 - 28) * ratio);
-      return `linear-gradient(135deg, rgb(${red}, ${green}, ${blue}), rgb(239, 108, 0))`;
+      // Hot temps: dramatic gradient from bright red to bright yellow
+      const ratio = Math.min(1, (temp - 86) / 14); // normalize to 0-1 over smaller range for more visible gradient
+      const red1 = 255,
+        green1 = 0,
+        blue1 = 0; // Bright red
+      const red2 = 255,
+        green2 = 255,
+        blue2 = 0; // Bright yellow
+
+      const midRed = Math.round(red1 + (red2 - red1) * ratio);
+      const midGreen = Math.round(green1 + (green2 - green1) * ratio);
+      const midBlue = Math.round(blue1 + (blue2 - blue1) * ratio);
+
+      console.log(
+        `HOT TEMP: ${temp}, Ratio: ${ratio}, Start: rgb(${red1},${green1},${blue1}), End: rgb(${midRed},${midGreen},${midBlue})`
+      );
+      return `linear-gradient(135deg, rgb(${red1}, ${green1}, ${blue1}), rgb(${midRed}, ${midGreen}, ${midBlue}))`;
     }
   };
 
@@ -167,22 +199,21 @@ const Homepage: React.FC = () => {
 
   const visibleButtons = getVisibleButtons();
 
-  // Get dynamic background style
+  // Get dynamic background style based on current temperature
   const backgroundStyle =
     currentTemperature !== null
       ? { background: getTemperatureBackground(currentTemperature) }
-      : {};
+      : {
+          background:
+            "linear-gradient(135deg, rgb(30, 50, 200), rgb(100, 150, 255))",
+        }; // Default gradient
+  console.log("Background style being applied:", backgroundStyle);
 
   return (
     <div
       className="min-h-screen flex flex-col transition-all duration-1000"
-      style={currentTemperature !== null ? backgroundStyle : {}}
+      style={backgroundStyle}
     >
-      {/* Fallback gradient for when temperature is not available */}
-      {currentTemperature === null && (
-        <div className="absolute inset-0 bg-gradient-to-br from-teal-700 via-teal-500 to-black -z-10" />
-      )}
-
       {/* Main Content */}
       <div className="flex-1 flex flex-col items-center justify-center pt-16 px-8 pb-8 sm:p-8">
         <div className="w-[80vw] max-w-4xl flex flex-col items-center space-y-8">
