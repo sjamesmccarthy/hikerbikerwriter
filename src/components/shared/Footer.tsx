@@ -53,7 +53,7 @@ const Footer: React.FC<FooterProps> = ({
               }}
             />
           </Link>
-          , mysql, Tempest Weather Station API and hosted at Vercel.
+          MySQL, Tempest Weather Station API and hosted at Vercel.
         </div>
       </div>
     </div>
