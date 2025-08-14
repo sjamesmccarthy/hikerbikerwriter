@@ -471,40 +471,48 @@ const RollAndWriteEntries: React.FC = () => {
                   Loading stories...
                 </div>
               ) : entries.length === 0 ? (
-                !session ? (
-                  <div className="text-center py-12">
-                    <div className="mb-6">
-                      <CasinoIcon sx={{ fontSize: 64, color: "#9ca3af" }} />
-                    </div>
-                    <div className="text-gray-400 font-mono text-lg mb-2">
-                      Sorry, there are no public stories right now.
-                    </div>
-                    <div className="text-gray-400 font-mono text-lg mb-6">
-                      Sign in to create and view your own stories.
-                    </div>
-                    <Link
-                      href="/rollandwrite/roll?autoroll=true"
-                      className="inline-block px-4 py-2 rounded bg-blue-600 text-white font-mono text-sm hover:bg-blue-700 transition"
-                    >
-                      Roll Them Dice
-                    </Link>
-                  </div>
-                ) : (
-                  <div className="text-center py-12">
-                    <div className="mb-6">
-                      <CasinoIcon sx={{ fontSize: 64, color: "#9ca3af" }} />
-                    </div>
-                    <div className="text-gray-400 font-mono text-lg mb-6">
-                      No stories yet. Create your first one!
-                    </div>
-                    <Link
-                      href="/rollandwrite/roll?autoroll=true"
-                      className="inline-block px-4 py-2 rounded bg-blue-600 text-white font-mono text-sm hover:bg-blue-700 transition"
-                    >
-                      Roll Them Dice
-                    </Link>
-                  </div>
-                )
+                (() => {
+                  let noEntriesContent;
+                  if (!session) {
+                    noEntriesContent = (
+                      <div className="text-center py-12">
+                        <div className="mb-6">
+                          <CasinoIcon sx={{ fontSize: 64, color: "#9ca3af" }} />
+                        </div>
+                        <div className="text-gray-400 font-mono text-lg mb-2">
+                          Sorry, there are no public stories right now.
+                        </div>
+                        <div className="text-gray-400 font-mono text-lg mb-6">
+                          Sign in to create and view your own stories.
+                        </div>
+                        <Link
+                          href="/rollandwrite/roll?autoroll=true"
+                          className="inline-block px-4 py-2 rounded bg-blue-600 text-white font-mono text-sm hover:bg-blue-700 transition"
+                        >
+                          Roll Them Dice
+                        </Link>
+                      </div>
+                    );
+                  } else {
+                    noEntriesContent = (
+                      <div className="text-center py-12">
+                        <div className="mb-6">
+                          <CasinoIcon sx={{ fontSize: 64, color: "#9ca3af" }} />
+                        </div>
+                        <div className="text-gray-400 font-mono text-lg mb-6">
+                          No stories yet. Create your first one!
+                        </div>
+                        <Link
+                          href="/rollandwrite/roll?autoroll=true"
+                          className="inline-block px-4 py-2 rounded bg-blue-600 text-white font-mono text-sm hover:bg-blue-700 transition"
+                        >
+                          Roll Them Dice
+                        </Link>
+                      </div>
+                    );
+                  }
+                  return noEntriesContent;
+                })()
               ) : (
                 (() => {
                   // Sort entries based on selected sort option
@@ -534,25 +542,16 @@ const RollAndWriteEntries: React.FC = () => {
                       {/* Favorite heart icon in upper-right corner */}
                       <button
                         onClick={() => toggleFavorite(entry.id, entry.favorite)}
-                        className="absolute top-2 right-2 p-1 text-gray-400 hover:text-red-500 transition-colors touch-manipulation flex items-center gap-1"
+                        className="absolute top-2 right-2 p-1 text-gray-400 hover:text-red-500 transition-colors touch-manipulation flex items-center gap-1 cursor-pointer"
                         title="Add to favorites"
                         style={{ minWidth: "40px", minHeight: "32px" }}
                       >
-                        {userFavorites.has(entry.id) ? (
-                          <FavoriteIcon
-                            sx={{
-                              fontSize: 16,
-                              color: entry.favorite > 0 ? "red" : "inherit",
-                            }}
-                          />
-                        ) : (
-                          <FavoriteBorderIcon
-                            sx={{
-                              fontSize: 16,
-                              color: entry.favorite > 0 ? "red" : "inherit",
-                            }}
-                          />
-                        )}
+                        <FavoriteIcon
+                          sx={{
+                            fontSize: 16,
+                            color: entry.favorite > 0 ? "red" : "gray",
+                          }}
+                        />
                         {entry.favorite > 0 && (
                           <span className="text-xs font-mono text-gray-500">
                             {entry.favorite}
@@ -614,7 +613,7 @@ const RollAndWriteEntries: React.FC = () => {
           </div>
         </div>
       </div>
-      
+
       {/* Footer */}
       {renderFooter("integrated")}
     </div>

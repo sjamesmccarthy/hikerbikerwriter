@@ -25,7 +25,41 @@ const Homepage: React.FC = () => {
   const [showAllButtons, setShowAllButtons] = useState(false);
   const [isDesktop, setIsDesktop] = useState(false);
   const [showUtilitiesDropdown, setShowUtilitiesDropdown] = useState(false);
+  const [currentTemperature, setCurrentTemperature] = useState<number | null>(
+    null
+  );
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Function to calculate background color based on temperature
+  const getTemperatureBackground = (temp: number): string => {
+    if (temp <= 45) {
+      // -60 to 45: gradient from #0D47A1 to white
+      const ratio = Math.max(0, Math.min(1, (temp + 60) / 105)); // normalize to 0-1
+      const blue = Math.round(13 + (255 - 13) * ratio);
+      const green = Math.round(71 + (255 - 71) * ratio);
+      const redBlue = Math.round(161 + (255 - 161) * ratio);
+      return `linear-gradient(135deg, rgb(${blue}, ${green}, ${redBlue}), rgb(255, 255, 255))`;
+    } else if (temp <= 85) {
+      // 46-85: gradient from #EF6C00 to #0D47A1
+      const ratio = (temp - 46) / 39; // normalize to 0-1
+      const red = Math.round(239 - (239 - 13) * ratio);
+      const green = Math.round(108 - (108 - 71) * ratio);
+      const blue = Math.round(0 + (161 - 0) * ratio);
+      return `linear-gradient(135deg, rgb(${red}, ${green}, ${blue}), rgb(13, 71, 161))`;
+    } else {
+      // 86-120: gradient from #B71C1C to #EF6C00
+      const ratio = Math.min(1, (temp - 86) / 34); // normalize to 0-1
+      const red = Math.round(183 + (239 - 183) * ratio);
+      const green = Math.round(28 + (108 - 28) * ratio);
+      const blue = Math.round(28 + (0 - 28) * ratio);
+      return `linear-gradient(135deg, rgb(${red}, ${green}, ${blue}), rgb(239, 108, 0))`;
+    }
+  };
+
+  // Handle temperature change from WeatherWidget
+  const handleTemperatureChange = React.useCallback((temperature: number) => {
+    setCurrentTemperature(temperature);
+  }, []);
 
   // Check screen size on mount and resize
   useEffect(() => {
@@ -133,14 +167,28 @@ const Homepage: React.FC = () => {
 
   const visibleButtons = getVisibleButtons();
 
+  // Get dynamic background style
+  const backgroundStyle =
+    currentTemperature !== null
+      ? { background: getTemperatureBackground(currentTemperature) }
+      : {};
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-teal-700 via-teal-500 to-blue-300 flex flex-col">
+    <div
+      className="min-h-screen flex flex-col transition-all duration-1000"
+      style={currentTemperature !== null ? backgroundStyle : {}}
+    >
+      {/* Fallback gradient for when temperature is not available */}
+      {currentTemperature === null && (
+        <div className="absolute inset-0 bg-gradient-to-br from-teal-700 via-teal-500 to-black -z-10" />
+      )}
+
       {/* Main Content */}
       <div className="flex-1 flex flex-col items-center justify-center pt-16 px-8 pb-8 sm:p-8">
         <div className="w-[80vw] max-w-4xl flex flex-col items-center space-y-8">
           {/* Weather Widget - Centered Above Logo */}
           <div className="flex justify-center mb-4">
-            <WeatherWidget />
+            <WeatherWidget onTemperatureChange={handleTemperatureChange} />
           </div>
 
           {/* Centered Image */}

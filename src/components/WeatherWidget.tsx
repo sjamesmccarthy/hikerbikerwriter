@@ -19,7 +19,13 @@ interface WeatherData {
   icon: string;
 }
 
-const WeatherWidget: React.FC = () => {
+interface WeatherWidgetProps {
+  onTemperatureChange?: (temperature: number) => void;
+}
+
+const WeatherWidget: React.FC<WeatherWidgetProps> = ({
+  onTemperatureChange,
+}) => {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
@@ -118,6 +124,11 @@ const WeatherWidget: React.FC = () => {
             icon: icon,
           });
 
+          // Notify parent component of temperature change
+          if (onTemperatureChange) {
+            onTemperatureChange(tempFahrenheit);
+          }
+
           setError(false);
         } else {
           throw new Error("No observation data available");
@@ -126,12 +137,19 @@ const WeatherWidget: React.FC = () => {
         console.error("Error fetching Tempest weather:", err);
         // Use mock data as fallback
         console.log("Using mock weather data as fallback");
+        const fallbackTemp = 72;
         setWeather({
-          temperature: 72,
+          temperature: fallbackTemp,
           condition: "Clear",
           description: "clear sky",
           icon: "01d",
         });
+
+        // Notify parent component of fallback temperature
+        if (onTemperatureChange) {
+          onTemperatureChange(fallbackTemp);
+        }
+
         setError(false);
       } finally {
         setLoading(false);
@@ -144,7 +162,7 @@ const WeatherWidget: React.FC = () => {
     const interval = setInterval(fetchWeather, 5 * 60 * 1000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [onTemperatureChange]);
   if (loading) {
     return (
       <div className="flex items-center justify-center gap-2 px-4 py-2 bg-white/20 backdrop-blur-sm rounded-lg text-white text-sm">

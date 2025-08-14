@@ -37,6 +37,12 @@ const HexRgbConverter: React.FC = () => {
   const [copySuccess, setCopySuccess] = useState<string>("");
   const [isAppsMenuOpen, setIsAppsMenuOpen] = useState(false);
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
+  // Tooltip state for swatch copy
+  const [swatchTooltip, setSwatchTooltip] = useState<{
+    hex: string;
+    idx: number;
+  } | null>(null);
+  const swatchTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
   // Apps menu configuration
   const apps: AppMenuItem[] = [
@@ -175,6 +181,20 @@ const HexRgbConverter: React.FC = () => {
       setTimeout(() => setCopySuccess(""), 2000);
     } catch (err) {
       console.error("Failed to copy:", err);
+    }
+  };
+
+  // Swatch click handler with tooltip
+  const handleSwatchClick = async (hex: string, idx: number) => {
+    updateFromHex(hex);
+    try {
+      await navigator.clipboard.writeText(hex);
+      setSwatchTooltip({ hex, idx });
+      if (swatchTimeoutRef.current) clearTimeout(swatchTimeoutRef.current);
+      swatchTimeoutRef.current = setTimeout(() => setSwatchTooltip(null), 3000);
+    } catch (err) {
+      // fallback: no tooltip
+      setSwatchTooltip(null);
     }
   };
 
@@ -405,8 +425,9 @@ const HexRgbConverter: React.FC = () => {
           </div>
 
           {/* Material Design Color Palette */}
+
           <div className="mt-8 bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div className="grid grid-cols-5 sm:grid-cols-10">
+            <div className="grid grid-cols-5 sm:grid-cols-10 relative">
               {/* Red Colors */}
               {[
                 { shade: "50", hex: "#FFEBEE" },
@@ -419,14 +440,25 @@ const HexRgbConverter: React.FC = () => {
                 { shade: "700", hex: "#D32F2F" },
                 { shade: "800", hex: "#C62828" },
                 { shade: "900", hex: "#B71C1C" },
-              ].map((color) => (
-                <button
+              ].map((color, idx) => (
+                <div
                   key={`red-${color.shade}`}
-                  onClick={() => updateFromHex(color.hex)}
-                  className="h-12 transition-all hover:scale-105"
-                  style={{ backgroundColor: color.hex }}
-                  title={`Red ${color.shade} - ${color.hex}`}
-                />
+                  className="relative flex items-center justify-center"
+                >
+                  <button
+                    onClick={() => handleSwatchClick(color.hex, idx)}
+                    className="h-12 w-full transition-all hover:scale-105"
+                    style={{ backgroundColor: color.hex }}
+                    title={`Red ${color.shade} - ${color.hex}`}
+                  />
+                  {swatchTooltip &&
+                    swatchTooltip.hex === color.hex &&
+                    swatchTooltip.idx === idx && (
+                      <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black text-white text-xs rounded px-2 py-1 shadow z-50 whitespace-nowrap pointer-events-none animate-fade-in">
+                        {color.hex} <span className="ml-1">Copied</span>
+                      </div>
+                    )}
+                </div>
               ))}
 
               {/* Pink Colors */}
@@ -441,14 +473,25 @@ const HexRgbConverter: React.FC = () => {
                 { shade: "700", hex: "#C2185B" },
                 { shade: "800", hex: "#AD1457" },
                 { shade: "900", hex: "#880E4F" },
-              ].map((color) => (
-                <button
+              ].map((color, idx) => (
+                <div
                   key={`pink-${color.shade}`}
-                  onClick={() => updateFromHex(color.hex)}
-                  className="h-12 transition-all hover:scale-105"
-                  style={{ backgroundColor: color.hex }}
-                  title={`Pink ${color.shade} - ${color.hex}`}
-                />
+                  className="relative flex items-center justify-center"
+                >
+                  <button
+                    onClick={() => handleSwatchClick(color.hex, idx + 10)}
+                    className="h-12 w-full transition-all hover:scale-105"
+                    style={{ backgroundColor: color.hex }}
+                    title={`Pink ${color.shade} - ${color.hex}`}
+                  />
+                  {swatchTooltip &&
+                    swatchTooltip.hex === color.hex &&
+                    swatchTooltip.idx === idx + 10 && (
+                      <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black text-white text-xs rounded px-2 py-1 shadow z-50 whitespace-nowrap pointer-events-none animate-fade-in">
+                        {color.hex} <span className="ml-1">Copied</span>
+                      </div>
+                    )}
+                </div>
               ))}
 
               {/* Purple Colors */}
@@ -463,14 +506,25 @@ const HexRgbConverter: React.FC = () => {
                 { shade: "700", hex: "#7B1FA2" },
                 { shade: "800", hex: "#6A1B9A" },
                 { shade: "900", hex: "#4A148C" },
-              ].map((color) => (
-                <button
+              ].map((color, idx) => (
+                <div
                   key={`purple-${color.shade}`}
-                  onClick={() => updateFromHex(color.hex)}
-                  className="h-12 transition-all hover:scale-105"
-                  style={{ backgroundColor: color.hex }}
-                  title={`Purple ${color.shade} - ${color.hex}`}
-                />
+                  className="relative flex items-center justify-center"
+                >
+                  <button
+                    onClick={() => handleSwatchClick(color.hex, idx + 20)}
+                    className="h-12 w-full transition-all hover:scale-105"
+                    style={{ backgroundColor: color.hex }}
+                    title={`Purple ${color.shade} - ${color.hex}`}
+                  />
+                  {swatchTooltip &&
+                    swatchTooltip.hex === color.hex &&
+                    swatchTooltip.idx === idx + 20 && (
+                      <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black text-white text-xs rounded px-2 py-1 shadow z-50 whitespace-nowrap pointer-events-none animate-fade-in">
+                        {color.hex} <span className="ml-1">Copied</span>
+                      </div>
+                    )}
+                </div>
               ))}
 
               {/* Indigo Colors */}
@@ -485,14 +539,25 @@ const HexRgbConverter: React.FC = () => {
                 { shade: "700", hex: "#303F9F" },
                 { shade: "800", hex: "#283593" },
                 { shade: "900", hex: "#1A237E" },
-              ].map((color) => (
-                <button
+              ].map((color, idx) => (
+                <div
                   key={`indigo-${color.shade}`}
-                  onClick={() => updateFromHex(color.hex)}
-                  className="h-12 transition-all hover:scale-105"
-                  style={{ backgroundColor: color.hex }}
-                  title={`Indigo ${color.shade} - ${color.hex}`}
-                />
+                  className="relative flex items-center justify-center"
+                >
+                  <button
+                    onClick={() => handleSwatchClick(color.hex, idx + 30)}
+                    className="h-12 w-full transition-all hover:scale-105"
+                    style={{ backgroundColor: color.hex }}
+                    title={`Indigo ${color.shade} - ${color.hex}`}
+                  />
+                  {swatchTooltip &&
+                    swatchTooltip.hex === color.hex &&
+                    swatchTooltip.idx === idx + 30 && (
+                      <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black text-white text-xs rounded px-2 py-1 shadow z-50 whitespace-nowrap pointer-events-none animate-fade-in">
+                        {color.hex} <span className="ml-1">Copied</span>
+                      </div>
+                    )}
+                </div>
               ))}
 
               {/* Blue Colors */}
@@ -507,14 +572,25 @@ const HexRgbConverter: React.FC = () => {
                 { shade: "700", hex: "#1976D2" },
                 { shade: "800", hex: "#1565C0" },
                 { shade: "900", hex: "#0D47A1" },
-              ].map((color) => (
-                <button
+              ].map((color, idx) => (
+                <div
                   key={`blue-${color.shade}`}
-                  onClick={() => updateFromHex(color.hex)}
-                  className="h-12 transition-all hover:scale-105"
-                  style={{ backgroundColor: color.hex }}
-                  title={`Blue ${color.shade} - ${color.hex}`}
-                />
+                  className="relative flex items-center justify-center"
+                >
+                  <button
+                    onClick={() => handleSwatchClick(color.hex, idx + 40)}
+                    className="h-12 w-full transition-all hover:scale-105"
+                    style={{ backgroundColor: color.hex }}
+                    title={`Blue ${color.shade} - ${color.hex}`}
+                  />
+                  {swatchTooltip &&
+                    swatchTooltip.hex === color.hex &&
+                    swatchTooltip.idx === idx + 40 && (
+                      <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black text-white text-xs rounded px-2 py-1 shadow z-50 whitespace-nowrap pointer-events-none animate-fade-in">
+                        {color.hex} <span className="ml-1">Copied</span>
+                      </div>
+                    )}
+                </div>
               ))}
 
               {/* Teal Colors */}
@@ -529,14 +605,25 @@ const HexRgbConverter: React.FC = () => {
                 { shade: "700", hex: "#00796B" },
                 { shade: "800", hex: "#00695C" },
                 { shade: "900", hex: "#004D40" },
-              ].map((color) => (
-                <button
+              ].map((color, idx) => (
+                <div
                   key={`teal-${color.shade}`}
-                  onClick={() => updateFromHex(color.hex)}
-                  className="h-12 transition-all hover:scale-105"
-                  style={{ backgroundColor: color.hex }}
-                  title={`Teal ${color.shade} - ${color.hex}`}
-                />
+                  className="relative flex items-center justify-center"
+                >
+                  <button
+                    onClick={() => handleSwatchClick(color.hex, idx + 50)}
+                    className="h-12 w-full transition-all hover:scale-105"
+                    style={{ backgroundColor: color.hex }}
+                    title={`Teal ${color.shade} - ${color.hex}`}
+                  />
+                  {swatchTooltip &&
+                    swatchTooltip.hex === color.hex &&
+                    swatchTooltip.idx === idx + 50 && (
+                      <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black text-white text-xs rounded px-2 py-1 shadow z-50 whitespace-nowrap pointer-events-none animate-fade-in">
+                        {color.hex} <span className="ml-1">Copied</span>
+                      </div>
+                    )}
+                </div>
               ))}
 
               {/* Green Colors */}
@@ -551,14 +638,25 @@ const HexRgbConverter: React.FC = () => {
                 { shade: "700", hex: "#388E3C" },
                 { shade: "800", hex: "#2E7D32" },
                 { shade: "900", hex: "#1B5E20" },
-              ].map((color) => (
-                <button
+              ].map((color, idx) => (
+                <div
                   key={`green-${color.shade}`}
-                  onClick={() => updateFromHex(color.hex)}
-                  className="h-12 transition-all hover:scale-105"
-                  style={{ backgroundColor: color.hex }}
-                  title={`Green ${color.shade} - ${color.hex}`}
-                />
+                  className="relative flex items-center justify-center"
+                >
+                  <button
+                    onClick={() => handleSwatchClick(color.hex, idx + 60)}
+                    className="h-12 w-full transition-all hover:scale-105"
+                    style={{ backgroundColor: color.hex }}
+                    title={`Green ${color.shade} - ${color.hex}`}
+                  />
+                  {swatchTooltip &&
+                    swatchTooltip.hex === color.hex &&
+                    swatchTooltip.idx === idx + 60 && (
+                      <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black text-white text-xs rounded px-2 py-1 shadow z-50 whitespace-nowrap pointer-events-none animate-fade-in">
+                        {color.hex} <span className="ml-1">Copied</span>
+                      </div>
+                    )}
+                </div>
               ))}
 
               {/* Orange Colors */}
@@ -573,14 +671,25 @@ const HexRgbConverter: React.FC = () => {
                 { shade: "700", hex: "#F57C00" },
                 { shade: "800", hex: "#EF6C00" },
                 { shade: "900", hex: "#E65100" },
-              ].map((color) => (
-                <button
+              ].map((color, idx) => (
+                <div
                   key={`orange-${color.shade}`}
-                  onClick={() => updateFromHex(color.hex)}
-                  className="h-12 transition-all hover:scale-105"
-                  style={{ backgroundColor: color.hex }}
-                  title={`Orange ${color.shade} - ${color.hex}`}
-                />
+                  className="relative flex items-center justify-center"
+                >
+                  <button
+                    onClick={() => handleSwatchClick(color.hex, idx + 70)}
+                    className="h-12 w-full transition-all hover:scale-105"
+                    style={{ backgroundColor: color.hex }}
+                    title={`Orange ${color.shade} - ${color.hex}`}
+                  />
+                  {swatchTooltip &&
+                    swatchTooltip.hex === color.hex &&
+                    swatchTooltip.idx === idx + 70 && (
+                      <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black text-white text-xs rounded px-2 py-1 shadow z-50 whitespace-nowrap pointer-events-none animate-fade-in">
+                        {color.hex} <span className="ml-1">Copied</span>
+                      </div>
+                    )}
+                </div>
               ))}
 
               {/* Gray Colors */}
@@ -595,14 +704,25 @@ const HexRgbConverter: React.FC = () => {
                 { shade: "700", hex: "#616161" },
                 { shade: "800", hex: "#424242" },
                 { shade: "900", hex: "#212121" },
-              ].map((color) => (
-                <button
+              ].map((color, idx) => (
+                <div
                   key={`gray-${color.shade}`}
-                  onClick={() => updateFromHex(color.hex)}
-                  className="h-12 transition-all hover:scale-105"
-                  style={{ backgroundColor: color.hex }}
-                  title={`Gray ${color.shade} - ${color.hex}`}
-                />
+                  className="relative flex items-center justify-center"
+                >
+                  <button
+                    onClick={() => handleSwatchClick(color.hex, idx + 80)}
+                    className="h-12 w-full transition-all hover:scale-105"
+                    style={{ backgroundColor: color.hex }}
+                    title={`Gray ${color.shade} - ${color.hex}`}
+                  />
+                  {swatchTooltip &&
+                    swatchTooltip.hex === color.hex &&
+                    swatchTooltip.idx === idx + 80 && (
+                      <div className="absolute -top-8 left-1/2 -translate-x-1/2 bg-black text-white text-xs rounded px-2 py-1 shadow z-50 whitespace-nowrap pointer-events-none animate-fade-in">
+                        {color.hex} <span className="ml-1">Copied</span>
+                      </div>
+                    )}
+                </div>
               ))}
             </div>
 
