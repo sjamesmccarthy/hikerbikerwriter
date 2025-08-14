@@ -151,6 +151,7 @@ const FieldNotes: React.FC = () => {
   const [activeTag, setActiveTag] = useState<string>("All");
   const [minimized, setMinimized] = useState(false);
   const [filterMood, setFilterMood] = useState("any");
+  const [sortBy, setSortBy] = useState("DESC"); // ASC, DESC, FAVORITE
 
   // Set minimized state based on screen size on initial load
   useEffect(() => {
@@ -225,22 +226,37 @@ const FieldNotes: React.FC = () => {
     }
   }, [session, status]);
 
-  // Filter notes by activeTag before rendering - ensure notes is an array
+  // Filter and sort notes by activeTag before rendering - ensure notes is an array
   const filteredNotes = Array.isArray(notes)
-    ? notes.filter((note) => {
-        const tagMatch =
-          activeTag === "All"
-            ? true
-            : note.tags
-            ? note.tags
-                .toLowerCase()
-                .split(/[ ,]+/)
-                .includes(activeTag.toLowerCase())
-            : false;
-        const moodMatch =
-          filterMood === "any" ? true : note.mood === filterMood;
-        return tagMatch && moodMatch;
-      })
+    ? notes
+        .filter((note) => {
+          const tagMatch =
+            activeTag === "All"
+              ? true
+              : note.tags
+              ? note.tags
+                  .toLowerCase()
+                  .split(/[ ,]+/)
+                  .includes(activeTag.toLowerCase())
+              : false;
+          const moodMatch =
+            filterMood === "any" ? true : note.mood === filterMood;
+          return tagMatch && moodMatch;
+        })
+        .sort((a, b) => {
+          switch (sortBy) {
+            case "ASC":
+              return new Date(a.date).getTime() - new Date(b.date).getTime();
+            case "DESC":
+              return new Date(b.date).getTime() - new Date(a.date).getTime();
+            case "FAVORITE":
+              // TODO: Add favorites functionality to fieldnotes
+              // For now, just sort by date descending
+              return new Date(b.date).getTime() - new Date(a.date).getTime();
+            default:
+              return new Date(b.date).getTime() - new Date(a.date).getTime();
+          }
+        })
     : [];
 
   return (
@@ -451,7 +467,7 @@ const FieldNotes: React.FC = () => {
             {showFilters && (
               <div className="w-full bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4 text-left">
                 <div className="flex flex-col gap-3">
-                  {/* Date and Mood Filters */}
+                  {/* Date, Mood, and Sort Filters */}
                   <div className="flex flex-wrap gap-4 items-center">
                     <FormControl size="small" sx={{ minWidth: 120 }}>
                       <InputLabel
@@ -521,6 +537,43 @@ const FieldNotes: React.FC = () => {
                           { fontFamily: "monospace", fontSize: "0.875rem" },
                           false
                         )}
+                      </Select>
+                    </FormControl>
+
+                    <FormControl size="small" sx={{ minWidth: 120 }}>
+                      <InputLabel
+                        sx={{ fontFamily: "monospace", fontSize: "0.875rem" }}
+                      >
+                        Sort By
+                      </InputLabel>
+                      <Select
+                        value={sortBy}
+                        label="Sort By"
+                        onChange={(e) => setSortBy(e.target.value)}
+                        sx={{
+                          fontFamily: "monospace",
+                          fontSize: "0.875rem",
+                          "& .MuiSelect-select": { fontFamily: "monospace" },
+                        }}
+                      >
+                        <MenuItem
+                          value="DESC"
+                          sx={{ fontFamily: "monospace", fontSize: "0.875rem" }}
+                        >
+                          Newest First
+                        </MenuItem>
+                        <MenuItem
+                          value="ASC"
+                          sx={{ fontFamily: "monospace", fontSize: "0.875rem" }}
+                        >
+                          Oldest First
+                        </MenuItem>
+                        <MenuItem
+                          value="FAVORITE"
+                          sx={{ fontFamily: "monospace", fontSize: "0.875rem" }}
+                        >
+                          Favorites First
+                        </MenuItem>
                       </Select>
                     </FormControl>
                   </div>
@@ -909,19 +962,101 @@ const FieldNotes: React.FC = () => {
                           )}
 
                           <hr className="border-gray-300 mb-4" />
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              {note.author && (
-                                <span className="text-sm text-gray-500 font-mono">
-                                  By {note.author}
-                                </span>
+                          <div className="flex flex-col">
+                            {/* Top line: name + mood + edit/delete icons (right justified) */}
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                {note.author && (
+                                  <span className="text-sm text-gray-500 font-mono">
+                                    By {note.author}
+                                  </span>
+                                )}
+                                {note.mood && (
+                                  <span className="text-xl" title={note.mood}>
+                                    {getMoodEmoji(note.mood)}
+                                  </span>
+                                )}
+                              </div>
+                              {session && (
+                                <div className="flex gap-2">
+                                  <IconButton
+                                    size="small"
+                                    color="primary"
+                                    aria-label="Edit Entry"
+                                    onClick={() => {
+                                      setEditId(note.id);
+                                      setEditTitle(note.title);
+                                      setEditContent(note.content);
+                                      setEditTags(note.tags || "");
+                                      setEditMood(note.mood || "");
+                                      setEditImages(note.images || []);
+                                      setEditMakePublic(
+                                        note.is_public || false
+                                      );
+                                    }}
+                                  >
+                                    <EditNoteOutlinedIcon />
+                                  </IconButton>
+                                  <IconButton
+                                    size="small"
+                                    aria-label="Delete Entry"
+                                    sx={{ color: "gray" }}
+                                    onClick={async () => {
+                                      try {
+                                        const res = await fetch(
+                                          "/api/fieldnotes",
+                                          {
+                                            method: "DELETE",
+                                            headers: {
+                                              "Content-Type":
+                                                "application/json",
+                                            },
+                                            body: JSON.stringify({
+                                              id: note.id,
+                                              slug: note.slug,
+                                              userEmail: session?.user?.email,
+                                            }),
+                                          }
+                                        );
+                                        if (res.ok) {
+                                          setNotes(
+                                            notes.filter(
+                                              (n) => n.id !== note.id
+                                            )
+                                          );
+                                        } else if (res.status === 500) {
+                                          setDatabaseError(
+                                            "Database connection error during delete - Please check if the database is running"
+                                          );
+                                        } else {
+                                          const errorData = await res
+                                            .json()
+                                            .catch(() => ({
+                                              error: "Delete failed",
+                                            }));
+                                          alert(
+                                            `Error deleting fieldnote: ${
+                                              errorData.error || "Unknown error"
+                                            }`
+                                          );
+                                        }
+                                      } catch (error) {
+                                        console.error("Delete error:", error);
+                                        setDatabaseError(
+                                          "Failed to connect to server during delete"
+                                        );
+                                      }
+                                    }}
+                                  >
+                                    <DeleteIcon sx={{ fontSize: 16 }} />
+                                  </IconButton>
+                                </div>
                               )}
-                              {note.mood && (
-                                <span className="text-xl" title={note.mood}>
-                                  {getMoodEmoji(note.mood)}
-                                </span>
-                              )}
-                              <p className="text-sm text-gray-500 font-mono">
+                            </div>
+
+                            {/* Bottom line: date */}
+                            <div>
+                              <p className="text-sm text-gray-500 font-mono mt-0 mb-0">
                                 {new Date(note.date).toLocaleDateString(
                                   "en-US",
                                   {
@@ -933,80 +1068,6 @@ const FieldNotes: React.FC = () => {
                                 )}
                               </p>
                             </div>
-                            {session && (
-                              <div className="flex gap-2">
-                                <IconButton
-                                  size="small"
-                                  color="primary"
-                                  aria-label="Edit Entry"
-                                  onClick={() => {
-                                    setEditId(note.id);
-                                    setEditTitle(note.title);
-                                    setEditContent(note.content);
-                                    setEditTags(note.tags || "");
-                                    setEditMood(note.mood || "");
-                                    setEditImages(note.images || []);
-                                    setEditMakePublic(note.is_public || false);
-                                  }}
-                                >
-                                  <EditNoteOutlinedIcon />
-                                </IconButton>
-                                <IconButton
-                                  size="small"
-                                  color="error"
-                                  aria-label="Delete Entry"
-                                  onClick={async () => {
-                                    try {
-                                      const res = await fetch(
-                                        "/api/fieldnotes",
-                                        {
-                                          method: "DELETE",
-                                          headers: {
-                                            "Content-Type": "application/json",
-                                          },
-                                          body: JSON.stringify({
-                                            id: note.id,
-                                            slug: note.slug,
-                                            userEmail: session?.user?.email,
-                                          }),
-                                        }
-                                      );
-                                      if (res.ok) {
-                                        setNotes(
-                                          notes.filter((n) => n.id !== note.id)
-                                        );
-                                      } else if (res.status === 500) {
-                                        setDatabaseError(
-                                          "Database connection error during delete - Please check if the database is running"
-                                        );
-                                      } else {
-                                        const errorData = await res
-                                          .json()
-                                          .catch(() => ({
-                                            error: "Delete failed",
-                                          }));
-                                        alert(
-                                          `Error deleting fieldnote: ${
-                                            errorData.error || "Unknown error"
-                                          }`
-                                        );
-                                      }
-                                    } catch (error) {
-                                      console.error("Delete error:", error);
-                                      setDatabaseError(
-                                        "Failed to connect to server during delete"
-                                      );
-                                    }
-                                  }}
-                                >
-                                  <span
-                                    style={{ fontSize: 18, fontWeight: "bold" }}
-                                  >
-                                    ×
-                                  </span>
-                                </IconButton>
-                              </div>
-                            )}
                           </div>
                         </>
                       )}

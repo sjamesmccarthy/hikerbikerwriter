@@ -28,12 +28,13 @@ const Footer: React.FC<FooterProps> = ({
             rel="noopener noreferrer"
             className="hover:underline"
           >
-            v1.1
+            v1.3.0
           </Link>
         </div>
         <div>
-          This project was entirely generated using Co-Pilot AI with Claude
-          Sonnet 4 model and the Tempest Weather Station API
+          This project is entirely generated using Co-Pilot AI with Claude
+          Sonnet 4 model, mysql, Tempest Weather Station API and hosted by
+          Vercel.
         </div>
       </div>
     </div>
