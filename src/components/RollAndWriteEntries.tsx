@@ -26,6 +26,7 @@ import {
   Favorite as FavoriteIcon,
 } from "@mui/icons-material";
 import { FormControl, InputLabel, Select, MenuItem } from "@mui/material";
+import { renderFooter } from "./shared/footerHelpers";
 
 interface RollAndWriteEntry {
   id: string;
@@ -613,6 +614,9 @@ const RollAndWriteEntries: React.FC = () => {
           </div>
         </div>
       </div>
+      
+      {/* Footer */}
+      {renderFooter("integrated")}
     </div>
   );
 };
