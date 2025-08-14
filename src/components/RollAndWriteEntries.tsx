@@ -25,6 +25,12 @@ import {
   FavoriteBorder as FavoriteBorderIcon,
   Favorite as FavoriteIcon,
 } from "@mui/icons-material";
+import { 
+  FormControl, 
+  InputLabel, 
+  Select, 
+  MenuItem 
+} from "@mui/material";
 
 interface RollAndWriteEntry {
   id: string;
@@ -55,6 +61,7 @@ const RollAndWriteEntries: React.FC = () => {
   const [entries, setEntries] = useState<RollAndWriteEntry[]>([]);
   const [loadingEntries, setLoadingEntries] = useState(true);
   const [userFavorites, setUserFavorites] = useState<Set<string>>(new Set());
+  const [sortBy, setSortBy] = useState("newest"); // newest, oldest, favorited
   const { data: session, status } = useSession();
   const router = useRouter();
 
@@ -404,16 +411,59 @@ const RollAndWriteEntries: React.FC = () => {
               </p>
             </div>
 
-            {/* Create New Entry Button - Only show when there are entries */}
+            {/* Filter and Create New Entry Button - Only show when there are entries */}
             {!loadingEntries && entries.length > 0 && (
               <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
-                <div className="w-full flex items-center justify-center sm:justify-end">
-                  <Link
-                    href="/rollandwrite/roll?autoroll=true"
-                    className="px-4 py-2 rounded bg-blue-600 text-white font-mono text-sm hover:bg-blue-700 transition"
-                  >
-                    Roll Them Dice
-                  </Link>
+                <div className="w-full flex items-center justify-between">
+                  {/* Filter dropdown on the left */}
+                  <div className="flex items-center">
+                    <FormControl size="small" sx={{ minWidth: 140 }}>
+                      <InputLabel
+                        sx={{ fontFamily: "monospace", fontSize: "0.875rem" }}
+                      >
+                        Sort By
+                      </InputLabel>
+                      <Select
+                        value={sortBy}
+                        label="Sort By"
+                        onChange={(e) => setSortBy(e.target.value)}
+                        sx={{
+                          fontFamily: "monospace",
+                          fontSize: "0.875rem",
+                          "& .MuiSelect-select": { fontFamily: "monospace" },
+                        }}
+                      >
+                        <MenuItem
+                          value="newest"
+                          sx={{ fontFamily: "monospace", fontSize: "0.875rem" }}
+                        >
+                          Newest
+                        </MenuItem>
+                        <MenuItem
+                          value="oldest"
+                          sx={{ fontFamily: "monospace", fontSize: "0.875rem" }}
+                        >
+                          Oldest
+                        </MenuItem>
+                        <MenuItem
+                          value="favorited"
+                          sx={{ fontFamily: "monospace", fontSize: "0.875rem" }}
+                        >
+                          Most Favorited
+                        </MenuItem>
+                      </Select>
+                    </FormControl>
+                  </div>
+                  
+                  {/* Roll Them Dice button on the right */}
+                  <div>
+                    <Link
+                      href="/rollandwrite/roll?autoroll=true"
+                      className="px-4 py-2 rounded bg-blue-600 text-white font-mono text-sm hover:bg-blue-700 transition"
+                    >
+                      Roll Them Dice
+                    </Link>
+                  </div>
                 </div>
               </div>
             )}
@@ -460,11 +510,25 @@ const RollAndWriteEntries: React.FC = () => {
                   </div>
                 )
               ) : (
-                entries.map((entry) => (
-                  <div
-                    key={entry.id}
-                    className="bg-white border border-gray-200 rounded-xl p-3 text-left mb-4 relative"
-                  >
+                (() => {
+                  // Sort entries based on selected sort option
+                  const sortedEntries = [...entries].sort((a, b) => {
+                    switch (sortBy) {
+                      case "oldest":
+                        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+                      case "favorited":
+                        return b.favorite - a.favorite;
+                      case "newest":
+                      default:
+                        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+                    }
+                  });
+
+                  return sortedEntries.map((entry) => (
+                    <div
+                      key={entry.id}
+                      className="bg-white border border-gray-200 rounded-xl p-3 text-left mb-4 relative"
+                    >
                     {/* Favorite heart icon in upper-right corner */}
                     <button
                       onClick={() => toggleFavorite(entry.id, entry.favorite)}
@@ -473,9 +537,19 @@ const RollAndWriteEntries: React.FC = () => {
                       style={{ minWidth: "40px", minHeight: "32px" }}
                     >
                       {userFavorites.has(entry.id) ? (
-                        <FavoriteIcon sx={{ fontSize: 16 }} />
+                        <FavoriteIcon 
+                          sx={{ 
+                            fontSize: 16, 
+                            color: entry.favorite > 0 ? "red" : "inherit" 
+                          }} 
+                        />
                       ) : (
-                        <FavoriteBorderIcon sx={{ fontSize: 16 }} />
+                        <FavoriteBorderIcon 
+                          sx={{ 
+                            fontSize: 16, 
+                            color: entry.favorite > 0 ? "red" : "inherit" 
+                          }} 
+                        />
                       )}
                       {entry.favorite > 0 && (
                         <span className="text-xs font-mono text-gray-500">
@@ -531,7 +605,8 @@ const RollAndWriteEntries: React.FC = () => {
                       </div>
                     )}
                   </div>
-                ))
+                  ));
+                })()
               )}
             </div>
           </div>
