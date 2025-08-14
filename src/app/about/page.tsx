@@ -161,7 +161,7 @@ export default function AboutPage() {
         <main className="w-full md:w-3/4 mx-auto">
           <div className="py-6 px-6">
             <h1 className="text-3xl font-bold mb-4 text-center">The Story</h1>
-            <p className="text-2xl">
+            <p className="text-xl text-center lg:text-left">
               In a way, this kind of feels like cheating, but I wanted to see
               how far I could get with developing a web-app using AI tools and
               frameworks with only conversational based development. The result
