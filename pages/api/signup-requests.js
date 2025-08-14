@@ -9,14 +9,19 @@ async function checkAdminAuth(req, res) {
     return { error: "Unauthorized", status: 401 };
   }
 
-  // Check if user is admin (for now, just checking if they're in the users table)
+  // Check if user is admin (checking if they're in the users table AND is_admin = 1)
   const [adminCheck] = await pool.execute(
-    'SELECT id FROM users WHERE email = ? AND oauth = "GOOGLE"',
+    'SELECT id, is_admin FROM users WHERE email = ? AND oauth = "GOOGLE"',
     [session.user.email]
   );
 
   if (!Array.isArray(adminCheck) || adminCheck.length === 0) {
     return { error: "Access denied", status: 403 };
+  }
+
+  // Check if user has admin privileges
+  if (adminCheck[0].is_admin !== 1) {
+    return { error: "Admin access required", status: 403 };
   }
 
   return { user: session.user };
