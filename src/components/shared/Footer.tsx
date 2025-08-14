@@ -42,7 +42,7 @@ const Footer: React.FC<FooterProps> = ({
             style={{ lineHeight: 1, whiteSpace: "nowrap" }}
           >
             <span style={{ display: "inline" }}>
-              generated using Co-Pilot AI with Claude Sonnet 4 mode
+              generated using Co-Pilot AI with Claude Sonnet 4 model
             </span>
             <OpenInNewIcon
               sx={{

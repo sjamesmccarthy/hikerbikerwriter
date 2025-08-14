@@ -13,7 +13,7 @@ In a way, this kind of feels like cheating, but I wanted to see how far I could 
 - Tempest Weather Station API
 - oAuth using Google Sign-in
 - Vercel
-- VS CODE using GitHub Copilot with primarily Claude Sonnet 4 model and some GPT4.1 model.
+- VS Code using GitHub Copilot with primarily Claude Sonnet 4 model and some GPT4.1 model.
 
 ## Next Steps
 
