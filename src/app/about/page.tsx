@@ -186,7 +186,8 @@ export default function AboutPage() {
             </p>
             <p className="py-4 text-center text-blue-500">
               <a href="#casestudy">Case Study</a> |{" "}
-              <a href="#nextsteps">Next Steps</a> | Challenges |{" "}
+              <a href="#nextsteps">Next Steps</a> |
+              <a href="#challenges">Challenges</a> |
               <a href="#changelog">Changelog</a>
             </p>
             <h2 id="casestudy" className="text-xl font-semibold mt-6 mb-2">
@@ -212,7 +213,6 @@ export default function AboutPage() {
               with chatGPT centered in the browser as well as vertically aligned
               middle. There should be two buttons linking to the apps.
             </p>
-
             <div className="flex justify-center py-6 w-full">
               <img
                 src="/images/case-study-image1.png"
@@ -220,7 +220,6 @@ export default function AboutPage() {
                 className="rounded shadow-lg w-full h-auto max-w-full"
               />
             </div>
-
             <p className="py-4">
               I watched Claude work in the CoPilot chat panel creating and
               responding to its own prompts. After about 10 minutes he prompted
@@ -243,7 +242,6 @@ export default function AboutPage() {
               another slightly more technical prompt to help Claude clear
               everything up - fingers crossed.
             </p>
-
             <p className="bg-gray-100 rounded p-3 text-sm overflow-x-auto font-mono text-orange-500 py-8 px-8 mt-4 mb-4">
               prompt:
               <br />
@@ -277,7 +275,6 @@ export default function AboutPage() {
               syntax, as well as another reference to the Material UI library
               and the term &ldquo;label&ldquo; to describe the icon location.
             </p>
-
             <p className="py-4">
               While looking at the homepage I felt it would be cool to show the
               weather conditions and temperature from my personal weather
@@ -303,7 +300,6 @@ export default function AboutPage() {
               functions for each log entry - nice touch Claude - time for bed.
               We will continue this tomorrow.
             </p>
-
             <div className="flex justify-center py-6 w-full">
               <img
                 src="/images/case-study-image2.png"
@@ -311,7 +307,6 @@ export default function AboutPage() {
                 className="rounded shadow-lg w-full h-auto max-w-full"
               />
             </div>
-
             <p className="py-4">
               The next morning while sitting at the fire-pit enjoying a cup of
               coffee and watching the finches play in the fountain I wrote my
@@ -357,18 +352,30 @@ export default function AboutPage() {
               the JSON if possible if not alongside the JSON file. Store the
               data in a folder at /src/data/recipes
             </p>
-
             <p className="py-4">
               It wasn&apos;t too long and the Recipe Builder app was ready.
+              Claude did it all from creating an index viewer and editor page to
+              supporting PDF export and image uploads. I was amazed at how
+              quickly it was able to put all this together so I thought about my
+              next apps: FieldNotes and Roll And Write.
             </p>
 
             <p className="py-4">
-              A little addicted at this point, I couldn&apos;t stop telling
-              Claude what to build next and watch him build it. Like a crazed
-              hacker in a typing feud, before I knew it this app was becoming
-              something that I could legit use and share with others, so I added
-              some authentication using Google&apos;s oAuth simply by chatting
-              with Claude about my ideas and what I wanted.
+              I could already envision the features I wanted in these apps so
+              having Claude build them was a no-brainer. I wrote the prompts for
+              each app similar to the Recipe Builder and watched as Claude
+              created the initial layouts and components.
+              <br />
+              <br />
+              [image: case-study-image3.png]
+            </p>
+
+            <p className="py-4">
+              A little addicted at this point and like a crazed hacker in a
+              hackathon I knew this app was becoming something that I could
+              legit use and share with others, so I added some authentication
+              using Google&apos;s oAuth simply by chatting with Claude about my
+              ideas and what I wanted.
             </p>
             <p className="py-4">
               Claude took care of all the Next/react stuff but I had to create
@@ -381,9 +388,46 @@ export default function AboutPage() {
             </p>
 
             <p className="py-4">
-              ... to be continued as I have ran my premium requests for this
-              month dry.
+              However in order to host this on Vercel and to scale this project
+              to a place where it can accommodate multiple users I knew it was
+              time to ditch the JSON flat file architecture and move to a more
+              robust database solution. This was really going to test how well
+              Claude has context of the workspace but also the overall
+              architecture of the app which should be high since he has so far
+              written 100% of the code. To make it easier for Claude to
+              understand the data model I designed a simple MySQL database
+              schema which used the current JSON structure inside a JSON typed
+              column and then asked Claude to help me implement it.
             </p>
+
+            <p className="bg-gray-100 rounded p-3 text-sm overflow-x-auto font-mono text-orange-500 py-8 px-8 mt-4 mb-4">
+              prompt:
+              <br />
+              so I have an issue with vercel and using flat files so I have
+              created a database on my local mysql and want to change the API to
+              use it. First, we will keep the current JSON structre and isntead
+              of writing it to the file system we simply insert and update the
+              row in the new database. The schema for both tables looks like
+              this: `CREATE TABLE `fieldnotes` ( `id` int(11) NOT NULL
+              AUTO_INCREMENT, `user_email` varchar(255) DEFAULT NULL, `json`
+              json DEFAULT NULL, `created` datetime DEFAULT CURRENT_TIMESTAMP,
+              PRIMARY KEY (`id`) ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 CREATE
+              TABLE `recipes` ( `id` int(11) NOT NULL AUTO_INCREMENT,
+              `user_email` varchar(255) DEFAULT NULL, `json` json DEFAULT NULL,
+              `created` datetime DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (`id`) )
+              ENGINE=InnoDB DEFAULT CHARSET=utf8mb4` Can you make the changes to
+              the API so that everything is read and written to this database:
+              hikerbikerwriter. The database credentials for local are alrady in
+              the /lib/db.ts file.
+            </p>
+
+            <p className="py-4">
+              Mission accomplished in 1 prompt. Claude created the necessary API
+              endpoints to interact with the MySQL database as well as
+              completely tested the functionality of the app.
+            </p>
+
+            <p className="py-4">If you can dream it, Claude can build it</p>
 
             <h2 id="nextsteps" className="text-xl font-semibold mt-6 mb-2">
               Next Steps
@@ -391,6 +435,16 @@ export default function AboutPage() {
             <ul className="list-disc ml-6 mb-4">
               <li>Code Review</li>
               <li>Optimizations and code efficiency improvements</li>
+            </ul>
+            <h2 id="challenges" className="text-xl font-semibold mt-6 mb-2">
+              Challenges
+            </h2>
+            <ul className="list-disc ml-6 mb-4">
+              <li>Creating a consistent UI and UX experience across apps</li>
+              <li>
+                Had to make additional requests to Claude for mobile
+                Optimizations
+              </li>
             </ul>
             <h2 id="changelog" className="text-xl font-semibold mt-6 mb-2">
               Changelog &mdash;{" "}
