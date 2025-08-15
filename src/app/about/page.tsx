@@ -177,7 +177,7 @@ export default function AboutPage() {
               evolving AI landscape using Microsoft&apos;s VS Code with GitHub
               Copilot and Claude Sonnet 4 model.
             </p>
-            <p className="py-8">
+            <p className="py-8 text-center lg:text-left">
               Technologies used included: Next.js, React, TypeScript,
               Material-UI, Tailwind CSS, MySQL, Tempest Weather Station API,
               oAuth using Google Sign-in, VS Code using GitHub Copilot with
@@ -215,14 +215,15 @@ export default function AboutPage() {
             <p className="py-4">
               I watched Claude work in the CoPilot chat panel creating and
               responding to its own prompts. After about 10 minutes he prompted
-              with permission to "Start a Development Server". I clicked the
-              continue button and he opened the VS Code Terminal panel and the
-              words "npm run dev" appeared and executed. I was shocked, amazed,
-              impressed and a little panicked. Claude interpretted this first
-              prompt so well that it even decided on its own to use the Next App
-              router vs Page router. It decided to use Tailwindcss for styling
-              and had made every major architectural decision for the app and
-              executed it until the build was without error.
+              with permission to &ldquo;Start a Development Server&ldquo;. I
+              clicked the continue button and he opened the VS Code Terminal
+              panel and the words &ldquo;npm run dev&ldquo; appeared and
+              executed. I was shocked, amazed, impressed and a little panicked.
+              Claude interpretted this first prompt so well that it even decided
+              on its own to use the Next App router vs Page router. It decided
+              to use Tailwindcss for styling and had made every major
+              architectural decision for the app and executed it until the build
+              was without error.
               <br />
               <br />
               [image][image]
@@ -242,32 +243,33 @@ export default function AboutPage() {
               <br />
               the headers could use some cleanup. I like the header in the
               fieldnotes app, so please use that as a reference. Also, change
-              the "Back Home" link to use Material UIs back arrow icon. Also,
-              add an "Apps" menu to the right of the back home link separated
-              with a "|". The apps link should be a dropdown menu with the
-              following items: 1) Roll And Write, 2) Field Notes, 3) jM
-              Galleries. Each menu item also wil have an icon to the left of the
-              label. The dropdown should be styled using Material UI components.
-              After this men separate with another "|" and include the title of
-              the page in bold.
+              the &ldquo;Back Home&ldquo; link to use Material UIs back arrow
+              icon. Also, add an &ldquo;Apps&ldquo; menu to the right of the
+              back home link separated with a &ldquo;|&ldquo;. The apps link
+              should be a dropdown menu with the following items: 1) Roll And
+              Write, 2) Field Notes, 3) jM Galleries. Each menu item also wil
+              have an icon to the left of the label. The dropdown should be
+              styled using Material UI components. After this men separate with
+              another &ldquo;|&ldquo; and include the title of the page in bold.
               <br />
               <br />
               prompt:
               <br />
               Great job. Can you now also do this to the other component pages
               so they all look the same? And, can you add a global footer to the
-              pages that have the basic Copyright information "©/™
-              hikerbikerwriter" and below that a line that reads "This project
-              is entirely generated using Co-Pilot AI with Claude Sonnet 4 model
-              and Tempest Weather Station API, hosted at Vercel."
+              pages that have the basic Copyright information &ldquo;©/™
+              hikerbikerwriter&ldquo; and below that a line that reads
+              &ldquo;This project is entirely generated using Co-Pilot AI with
+              Claude Sonnet 4 model and Tempest Weather Station API, hosted at
+              Vercel.&ldquo;
             </p>
             <p className="py-4">
               Claude did a great job with the header and footer, but I had to
               use some terminology that I know the non-technical-developer
-              person I'm not sure would have thought to use. These included
+              person I am not sure would have thought to use. These included
               references to tailwindcss and manual editing of their class
               syntax, as well as another reference to the Material UI library
-              and the term "label" to describe the icon location.
+              and the term &ldquo;label&ldquo; to describe the icon location.
               <br />
               <br />
               [image]
@@ -283,8 +285,8 @@ export default function AboutPage() {
               <br />
               Recipe Builder: i want a button on the homepage similar to the
               fieldNotes button that will link to the viewer page titled
-              Recipes”. there will be 2 routes: 1) viewer and 2) builder. For
-              both view and builder use the layout structure in FieldNotes
+              Recipes&ldquo;. there will be 2 routes: 1) viewer and 2) builder.
+              For both view and builder use the layout structure in FieldNotes
               page.tsx file. the viewer will have public access and the builder
               route will need a google auth password to use. see FieldNotes for
               existing google auth context. Make the Sign-in/Logout the same as
@@ -292,31 +294,31 @@ export default function AboutPage() {
               edit button and when clicked show the recipe in the builder mode
               for editing. the default view for the viewer will will include a
               filter bar by category and favorites as well as search. if there
-              are no recipes than the viewer will show a “no recipes” box with a
-              button to add one. the recipes will be shown in a grid format with
-              the photo thumbnail (if not available use a generic box with a
-              material ui icon) the title below and then below the title the
-              total time which includes the prep time + cook time. when you
-              click the tile or thumbnail a detailed view will appear. it will
-              show the thumbnail and then a large bold title with the prep time
-              | cook time below it. overlayed in the top right of the thumbnail
-              will be an icon for marking it favorite an sharing. when clicking
-              the sharing it copy the url to the clip board. So the URL will
-              need to be a friendly url using the title (spaces turned into
-              dashes) Next line under the thumbnail will be the author and
-              description. the next section will be accordions for ingredients,
-              steps and my notes. when viewing ingredients there will be a
-              serving size which can be adjusted and then the ingredients will
-              scale to that size using imperial measurements. Steps will be
-              outlined as Step1, Step2, etc. if smoker is the category there
-              will be icons for temp, time and super smoke. There will also be a
-              button for “Make Now” which will change the display into a
-              slideshow card for each step. The last step will say “Bon
-              Apetite!” centered with some cool icon. I don’t want to use a
-              database so either flat files in JSON may be the best option. I
-              would prefer storing the images as base64 in the JSON if possible
-              if not alongside the JSON file. Store the data in a folder at
-              /src/data/recipes
+              are no recipes than the viewer will show a &ldquo;no
+              recipes&ldquo; box with a button to add one. the recipes will be
+              shown in a grid format with the photo thumbnail (if not available
+              use a generic box with a material ui icon) the title below and
+              then below the title the total time which includes the prep time +
+              cook time. when you click the tile or thumbnail a detailed view
+              will appear. it will show the thumbnail and then a large bold
+              title with the prep time | cook time below it. overlayed in the
+              top right of the thumbnail will be an icon for marking it favorite
+              an sharing. when clicking the sharing it copy the url to the clip
+              board. So the URL will need to be a friendly url using the title
+              (spaces turned into dashes) Next line under the thumbnail will be
+              the author and description. the next section will be accordions
+              for ingredients, steps and my notes. when viewing ingredients
+              there will be a serving size which can be adjusted and then the
+              ingredients will scale to that size using imperial measurements.
+              Steps will be outlined as Step1, Step2, etc. if smoker is the
+              category there will be icons for temp, time and super smoke. There
+              will also be a button for &ldquo;Make Now&ldquo; which will change
+              the display into a slideshow card for each step. The last step
+              will say &ldquo;Bon Apetite!&ldquo; centered with some cool icon.
+              I don’t want to use a database so either flat files in JSON may be
+              the best option. I would prefer storing the images as base64 in
+              the JSON if possible if not alongside the JSON file. Store the
+              data in a folder at /src/data/recipes
             </p>
 
             <p className="py-4">
@@ -335,9 +337,9 @@ export default function AboutPage() {
               the API keys and tokens in my Google Cloud Admin console. Once
               that was complete it just worked. And what was more astonishing is
               that I (with my coding friend Claude) accomplished that task by in
-              about 30 minutes. I couldn't help but think about how much time,
-              google searchines and effort this would have taken me to do on my
-              own.
+              about 30 minutes. I couldn&apos;t help but think about how much
+              time, google searchines and effort this would have taken me to do
+              on my own.
             </p>
 
             <p className="py-4">... to be continued</p>
