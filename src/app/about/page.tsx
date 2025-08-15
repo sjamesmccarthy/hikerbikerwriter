@@ -159,52 +159,128 @@ export default function AboutPage() {
         </div>
         {/* End Header */}
         <main className="w-full md:w-3/4 mx-auto">
-          <div className="py-6 px-6">
-            <h1 className="text-3xl font-bold mb-4 text-center">The Story</h1>
+          <div className="py-8 px-6">
+            <h1 className="text-3xl font-bold mb-2 text-center">
+              Conversational AI Based Web Development
+              <br />
+              Using GitHub CoPilot and Claude Sonnet 4 Model
+            </h1>
+            <p className="py-6 text-center">By James McCarthy</p>
             <p className="text-xl text-center lg:text-left">
               In a way, this kind of feels like cheating, but I wanted to see
               how far I could get with developing a web-app using AI tools and
-              frameworks with only conversational AI based development. The
-              result is a fully functional application that showcases the power
-              of modern web development in a rapidly evolving AI landscape.
+              frameworks with only conversational AI based development. The word
+              conversational is being defined as using a{" "}
+              <i>casual, know enough to break things</i> tone of voice when
+              composing prompts. The result is a fully functional application
+              that showcases the power of modern web development in a rapidly
+              evolving AI landscape using Microsoft&apos;s VS Code with GitHub
+              Copilot and Claude Sonnet 4 model.
             </p>
-            <p className="py-4">
+            <p className="py-8">
               Technologies used included: Next.js, React, TypeScript,
               Material-UI, Tailwind CSS, MySQL, Tempest Weather Station API,
               oAuth using Google Sign-in, VS Code using GitHub Copilot with
               primarily Claude Sonnet 4 model and some GPT4.1 model and hosted
               at Vercel.
             </p>
-            <h2 className="text-xl font-semibold mt-6 mb-2">The Case Study</h2>
-            <p>It all started with the ideaprompt.</p>
+            <p className="py-4 text-center text-blue-500">
+              <a href="#casestudy">Case Study</a> |{" "}
+              <a href="#nextsteps">Next Steps</a> |{" "}
+              <a href="#changelog">Changelog</a>
+            </p>
+            <h2 id="casestudy" className="text-xl font-semibold mt-6 mb-2">
+              Case Study
+            </h2>
+            <p>It all started with an idea prompt.</p>
+            <p className="py-4">
+              I intentionally created the prompt to be written in a casual tone
+              with the minimal amount of technical jargon, but enough to be
+              dangerous. At first this worked well, but as I iterated
+              overinstructions I did find that more technical and specific I was
+              the better Claude performed on the first pass. Lets get started
+              and you will see how my prompts had to evolve over time in order
+              to accomplish the goal.
+            </p>
             <p className="bg-gray-100 rounded p-3 text-sm overflow-x-auto font-mono text-orange-500 py-8 px-8 mt-4 mb-4">
-              I have an extra domain, hikerbikerwriter, and I want you to create
-              a website that represents those three words. They will include the
-              following apps. 1) Roll And Write: a creative writing prompt
-              generator based on two 8 sided dice, 2) Field Notes: a digital
-              notebook for hikers and bikers to record their thoughts,
+              prompt:
+              <br />I have an extra domain, hikerbikerwriter, and I want you to
+              create a website that represents those three words. They will
+              include the following apps. 1) Roll And Write: a creative writing
+              prompt generator based on two 8 sided dice, 2) Field Notes: a
+              digital notebook for hikers and bikers to record their thoughts,
               experiences and moods and 3) jM Galleries which will show a
               thumbnail gallery of fine-art images hosted at jmgalleries.com
             </p>
-            <p>
-              It built upon this foundation so well that I couldn&apos;t stop
-              telling what to build next. And it built it, and before I knew it
-              this app was becoming something real. So I added some
-              authentication using Google&apos;s oAuth. Claude took care of all
-              the Next/react stuff but I had to create the API keys and tokens
-              in my Google Cloud Admin console. Once that was complete it just
-              worked. And what was more astonishing is that I accomplished that
-              task by talking to Claude in about 30 minutes. To completely
-              finish the first idea prompt took about 8 hours of telling Claude
-              what to do, what to fix and what to make prettier. So I asked
-              myself what&apos;s next.
+            <p className="py-4">
+              I watched Claude work in the CoPilot chat panel creating and
+              responding to its own prompts. After about 10 minutes he prompted
+              with permission to "Start a Development Server". I clicked the
+              continue button and he opened the VS Code Terminal panel and the
+              words "npm run dev" appeared and executed. I was shocked, amazed,
+              impressed and a little panicked. Claude interpretted this first
+              prompt so well that it even decided on its own to use the Next App
+              router vs Page router. It decided to use Tailwindcss for styling
+              and had made every major architectural decision for the app and
+              executed it until the build was without error.
+              <br />
+              <br />
+              [image][image]
             </p>
+            <p className="py-4">
+              The only part it had it trouble with was the UX. For example,
+              while it created the initial scaffolding of pages, components and
+              css Claude had difficulty creating consistent design elements like
+              headers and footers across the first 3 components. So I found the
+              header I liked most and cleaned up the tailwindcss then used
+              another slightly more technical prompt to help Claude clear
+              everything up - fingers crossed.
+            </p>
+
+            <p className="bg-gray-100 rounded p-3 text-sm overflow-x-auto font-mono text-orange-500 py-8 px-8 mt-4 mb-4">
+              prompt:
+              <br />
+              the headers could use some cleanup. I like the header in the
+              fieldnotes app, so please use that as a reference. Also, change
+              the "Back Home" link to use Material UIs back arrow icon. Also,
+              add an "Apps" menu to the right of the back home link separated
+              with a "|". The apps link should be a dropdown menu with the
+              following items: 1) Roll And Write, 2) Field Notes, 3) jM
+              Galleries. Each menu item also wil have an icon to the left of the
+              label. The dropdown should be styled using Material UI components.
+              After this men separate with another "|" and include the title of
+              the page in bold.
+              <br />
+              <br />
+              prompt:
+              <br />
+              Great job. Can you now also do this to the other component pages
+              so they all look the same? And, can you add a global footer to the
+              pages that have the basic Copyright information "©/™
+              hikerbikerwriter" and below that a line that reads "This project
+              is entirely generated using Co-Pilot AI with Claude Sonnet 4 model
+              and Tempest Weather Station API, hosted at Vercel."
+            </p>
+            <p className="py-4">
+              Claude did a great job with the header and footer, but I had to
+              use some terminology that I know the non-technical-developer
+              person I'm not sure would have thought to use. These included
+              references to tailwindcss and manual editing of their class
+              syntax, as well as another reference to the Material UI library
+              and the term "label" to describe the icon location.
+              <br />
+              <br />
+              [image]
+            </p>
+
             <p className="py-4">
               The next morning while sitting at the fire-pit enjoying a cup of
               coffee and watching the finches play in the fountain I wrote my
               next prompt.
             </p>
             <p className="bg-gray-100 rounded p-3 text-sm overflow-x-auto font-mono text-orange-500 py-8 px-8 mt-4 mb-4">
+              prompt:
+              <br />
               Recipe Builder: i want a button on the homepage similar to the
               fieldNotes button that will link to the viewer page titled
               Recipes”. there will be 2 routes: 1) viewer and 2) builder. For
@@ -243,12 +319,47 @@ export default function AboutPage() {
               /src/data/recipes
             </p>
 
-            <h2 className="text-xl font-semibold mt-6 mb-2">Next Steps</h2>
+            <p className="py-4">
+              A little addicted at this point, I couldn&apos;t stop telling
+              Claude what to build next. And watch him build it. Like a crazed
+              hacker in a typing feud, before I knew it this app was becoming
+              something that I could legit use and share with others, so I added
+              some authentication using Google&apos;s oAuth simply by talking to
+              Claude about it.
+              <br />
+              <br />
+              [image]
+            </p>
+            <p className="py-4">
+              Claude took care of all the Next/react stuff but I had to create
+              the API keys and tokens in my Google Cloud Admin console. Once
+              that was complete it just worked. And what was more astonishing is
+              that I (with my coding friend Claude) accomplished that task by in
+              about 30 minutes. I couldn't help but think about how much time,
+              google searchines and effort this would have taken me to do on my
+              own.
+            </p>
+
+            <p className="py-4">... to be continued</p>
+
+            <h2 id="nextsteps" className="text-xl font-semibold mt-6 mb-2">
+              Next Steps
+            </h2>
             <ul className="list-disc ml-6 mb-4">
               <li>Code Review</li>
               <li>Optimizations and code efficiency improvements</li>
             </ul>
-            <h2 className="text-xl font-semibold mt-6 mb-2">Changelog</h2>
+            <h2 id="changelog" className="text-xl font-semibold mt-6 mb-2">
+              Changelog &mdash;{" "}
+              <a
+                className="text-blue-500"
+                target="_blank"
+                rel="noopener noreferrer"
+                href="https://github.com/sjamesmccarthy/hikerbikerwriter"
+              >
+                view on GitHub
+              </a>
+            </h2>
             <h3 className="font-semibold mt-4 mb-1">v1.5.0</h3>
             <ul className="list-disc ml-6 mb-2">
               <li>
