@@ -372,16 +372,13 @@ export default function AboutPage() {
               hackathon I knew this app was becoming something that I could
               legit use and share with others, so I added some authentication
               using Google&apos;s oAuth simply by chatting with Claude about my
-              ideas and what I wanted.
-            </p>
-            <p className="py-4">
-              Claude took care of all the Next/react stuff but I had to create
-              the API keys and tokens in my Google Cloud Admin console. Once
-              that was complete it just worked. And what was more astonishing is
-              that I (with my coding friend Claude) accomplished that task in
-              about 30 minutes. I couldn&apos;t help but think about how much
-              time, google searches and effort this would have taken me to do on
-              my own.
+              ideas and what I wanted. Claude took care of all the Next/react
+              stuff but I had to create the API keys and tokens in my Google
+              Cloud Admin console. Once that was complete it just worked. And
+              what was more astonishing is that I (with my coding friend Claude)
+              accomplished that task in about 30 minutes. I couldn&apos;t help
+              but think about how much time, google searches and effort this
+              would have taken me to do on my own.
             </p>
 
             <p className="py-4">
