@@ -164,13 +164,20 @@ export default function AboutPage() {
             <p className="text-xl text-center lg:text-left">
               In a way, this kind of feels like cheating, but I wanted to see
               how far I could get with developing a web-app using AI tools and
-              frameworks with only conversational based development. The result
-              is a fully functional application that showcases the power of
-              modern web development.
+              frameworks with only conversational AI based development. The
+              result is a fully functional application that showcases the power
+              of modern web development in a rapidly evolving AI landscape.
+            </p>
+            <p className="py-4">
+              Technologies used included: Next.js, React, TypeScript,
+              Material-UI, Tailwind CSS, MySQL, Tempest Weather Station API,
+              oAuth using Google Sign-in, VS Code using GitHub Copilot with
+              primarily Claude Sonnet 4 model and some GPT4.1 model and hosted
+              at Vercel.
             </p>
             <h2 className="text-xl font-semibold mt-6 mb-2">The Case Study</h2>
-            <p>It all started with the prompt.</p>
-            <p className="bg-gray-100 rounded p-3 text-sm overflow-x-auto mb-4 mt-4 font-mono">
+            <p>It all started with the ideaprompt.</p>
+            <p className="bg-gray-100 rounded p-3 text-sm overflow-x-auto font-mono text-orange-500 py-8 px-8 mt-4 mb-4">
               I have an extra domain, hikerbikerwriter, and I want you to create
               a website that represents those three words. They will include the
               following apps. 1) Roll And Write: a creative writing prompt
@@ -181,11 +188,23 @@ export default function AboutPage() {
             </p>
             <p>
               It built upon this foundation so well that I couldn&apos;t stop
-              telling what to build next. The next morning while sitting at the
-              fire-pit enjoying a cup of coffee and watching the finches play in
-              the fountain I wrote my next prompt.
+              telling what to build next. And it built it, and before I knew it
+              this app was becoming something real. So I added some
+              authentication using Google&apos;s oAuth. Claude took care of all
+              the Next/react stuff but I had to create the API keys and tokens
+              in my Google Cloud Admin console. Once that was complete it just
+              worked. And what was more astonishing is that I accomplished that
+              task by talking to Claude in about 30 minutes. To completely
+              finish the first idea prompt took about 8 hours of telling Claude
+              what to do, what to fix and what to make prettier. So I asked
+              myself what&apos;s next.
             </p>
-            <p className="bg-gray-100 rounded p-3 text-sm overflow-x-auto mb-4 mt-4 font-mono">
+            <p className="py-4">
+              The next morning while sitting at the fire-pit enjoying a cup of
+              coffee and watching the finches play in the fountain I wrote my
+              next prompt.
+            </p>
+            <p className="bg-gray-100 rounded p-3 text-sm overflow-x-auto font-mono text-orange-500 py-8 px-8 mt-4 mb-4">
               Recipe Builder: i want a button on the homepage similar to the
               fieldNotes button that will link to the viewer page titled
               Recipes”. there will be 2 routes: 1) viewer and 2) builder. For
@@ -223,33 +242,7 @@ export default function AboutPage() {
               if not alongside the JSON file. Store the data in a folder at
               /src/data/recipes
             </p>
-            <p>
-              And it built it, and before I knew it this app was becoming
-              something real. So I added some authentication using Google&apos;s
-              oAuth. Claude took care of all the Next/react stuff but I had to
-              create the API keys and tokens in my Google Cloud Admin console.
-              Once that was complete it just worked. And what was more
-              astonishing is that I accomplished that task by talking to Claude
-              in about 30 minutes. So I asked myself what&apos;s next.
-            </p>
-            <h2 className="text-xl font-semibold mt-6 mb-2">
-              Technology Stack
-            </h2>
-            <ul className="list-disc ml-6 mb-4">
-              <li>Next.js</li>
-              <li>React</li>
-              <li>TypeScript</li>
-              <li>Material-UI</li>
-              <li>Tailwind CSS</li>
-              <li>MySQL</li>
-              <li>Tempest Weather Station API</li>
-              <li>oAuth using Google Sign-in</li>
-              <li>Vercel</li>
-              <li>
-                VS Code using GitHub Copilot with primarily Claude Sonnet 4
-                model and some GPT4.1 model.
-              </li>
-            </ul>
+
             <h2 className="text-xl font-semibold mt-6 mb-2">Next Steps</h2>
             <ul className="list-disc ml-6 mb-4">
               <li>Code Review</li>
