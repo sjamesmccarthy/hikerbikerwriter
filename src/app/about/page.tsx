@@ -186,8 +186,8 @@ export default function AboutPage() {
             </p>
             <p className="py-4 text-center text-blue-500">
               <a href="#casestudy">Case Study</a> |{" "}
-              <a href="#nextsteps">Next Steps</a> |
-              <a href="#challenges">Challenges</a> |
+              <a href="#nextsteps">Next Steps</a> |{" "}
+              <a href="#challenges">Challenges</a> |{" "}
               <a href="#changelog">Changelog</a>
             </p>
             <h2 id="casestudy" className="text-xl font-semibold mt-6 mb-2">
@@ -357,14 +357,11 @@ export default function AboutPage() {
               Claude did it all from creating an index viewer and editor page to
               supporting PDF export and image uploads. I was amazed at how
               quickly it was able to put all this together so I thought about my
-              next apps: FieldNotes and Roll And Write.
-            </p>
-
-            <p className="py-4">
-              I could already envision the features I wanted in these apps so
-              having Claude build them was a no-brainer. I wrote the prompts for
-              each app similar to the Recipe Builder and watched as Claude
-              created the initial layouts and components.
+              next apps: FieldNotes and Roll And Write. I could already envision
+              the features I wanted in these apps so having Claude build them
+              was a no-brainer. I wrote the prompts for each app similar to the
+              Recipe Builder and watched as Claude created the initial layouts
+              and components.
               <br />
               <br />
               [image: case-study-image3.png]
