@@ -359,7 +359,7 @@ export default function AboutPage() {
             </p>
 
             <p className="py-4">
-              It wasn't too long and the Recipe Builder app was ready.
+              It wasn&apos;t too long and the Recipe Builder app was ready.
             </p>
 
             <p className="py-4">
