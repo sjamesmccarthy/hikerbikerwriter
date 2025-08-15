@@ -186,7 +186,7 @@ export default function AboutPage() {
             </p>
             <p className="py-4 text-center text-blue-500">
               <a href="#casestudy">Case Study</a> |{" "}
-              <a href="#nextsteps">Next Steps</a> |{" "}
+              <a href="#nextsteps">Next Steps</a> | Challenges |{" "}
               <a href="#changelog">Changelog</a>
             </p>
             <h2 id="casestudy" className="text-xl font-semibold mt-6 mb-2">
@@ -206,12 +206,21 @@ export default function AboutPage() {
               prompt:
               <br />I have an extra domain, hikerbikerwriter, and I want you to
               create a website that represents those three words. They will
-              include the following apps. 1) Roll And Write: a creative writing
-              prompt generator based on two 8 sided dice, 2) Field Notes: a
-              digital notebook for hikers and bikers to record their thoughts,
-              experiences and moods and 3) jM Galleries which will show a
-              thumbnail gallery of fine-art images hosted at jmgalleries.com
+              include the following apps. 1) Markdown Editor: with PDF Export,
+              2) Brew Day Log: a digital logbook for tracking beer brewing
+              sessions. For the homepage I want to include the logo I just made
+              with chatGPT centered in the browser as well as vertically aligned
+              middle. There should be two buttons linking to the apps.
             </p>
+
+            <div className="flex justify-center py-6 w-full">
+              <img
+                src="/images/case-study-image1.png"
+                alt="Screenshot of the development process"
+                className="rounded shadow-lg w-full h-auto max-w-full"
+              />
+            </div>
+
             <p className="py-4">
               I watched Claude work in the CoPilot chat panel creating and
               responding to its own prompts. After about 10 minutes he prompted
@@ -224,9 +233,6 @@ export default function AboutPage() {
               to use Tailwindcss for styling and had made every major
               architectural decision for the app and executed it until the build
               was without error.
-              <br />
-              <br />
-              [image][image]
             </p>
             <p className="py-4">
               The only part it had it trouble with was the UX. For example,
@@ -246,11 +252,11 @@ export default function AboutPage() {
               the &ldquo;Back Home&ldquo; link to use Material UIs back arrow
               icon. Also, add an &ldquo;Apps&ldquo; menu to the right of the
               back home link separated with a &ldquo;|&ldquo;. The apps link
-              should be a dropdown menu with the following items: 1) Roll And
-              Write, 2) Field Notes, 3) jM Galleries. Each menu item also wil
-              have an icon to the left of the label. The dropdown should be
-              styled using Material UI components. After this men separate with
-              another &ldquo;|&ldquo; and include the title of the page in bold.
+              should be a dropdown menu with the following items: 1) Markdown
+              Editor, 2) Brew Day Log. Each menu item also wil have an icon to
+              the left of the label. The dropdown should be styled using
+              Material UI components. After separate with another
+              &ldquo;|&ldquo; and include the title of the page in bold.
               <br />
               <br />
               prompt:
@@ -270,10 +276,41 @@ export default function AboutPage() {
               references to tailwindcss and manual editing of their class
               syntax, as well as another reference to the Material UI library
               and the term &ldquo;label&ldquo; to describe the icon location.
-              <br />
-              <br />
-              [image]
             </p>
+
+            <p className="py-4">
+              While looking at the homepage I felt it would be cool to show the
+              weather conditions and temperature from my personal weather
+              station in the backyard. After a quick gogole search I discovered
+              the Tempest Weather Station API and was able to get an API key. I
+              then asked Claude to integrate it into the homepage and that was
+              that I had weather above the mountain peaks and fancy teal to
+              white gradient background that claude himself decided would look
+              nice.
+            </p>
+            <p className="py-4">
+              One of the things I experimented with was taking a PDF file and
+              asking Claude to create an app based on it. I put the PDF into an
+              /assets folder so Claude could access it easily and simply asked
+              him to create an app based on the PDF. I was surprised at how well
+              it worked, but it did take a few iterations to get it right and
+              eventually I used shorter prompts to get the desired result. I
+              even suggested to use local storage to save the data, which Claude
+              did. Another interpretation of the PDF file which Claude created
+              on his own was water calculator and how the brew day data is
+              entered and displayed. Not only did he create a dynamic form that
+              creates individual logging fields but also added optional timer
+              functions for each log entry - nice touch Claude - time for bed.
+              We will continue this tomorrow.
+            </p>
+
+            <div className="flex justify-center py-6 w-full">
+              <img
+                src="/images/case-study-image2.png"
+                alt="Screenshot of the development process"
+                className="rounded shadow-lg w-full h-auto max-w-full"
+              />
+            </div>
 
             <p className="py-4">
               The next morning while sitting at the fire-pit enjoying a cup of
@@ -322,15 +359,16 @@ export default function AboutPage() {
             </p>
 
             <p className="py-4">
+              It wasn't too long and the Recipe Builder app was ready.
+            </p>
+
+            <p className="py-4">
               A little addicted at this point, I couldn&apos;t stop telling
-              Claude what to build next. And watch him build it. Like a crazed
+              Claude what to build next and watch him build it. Like a crazed
               hacker in a typing feud, before I knew it this app was becoming
               something that I could legit use and share with others, so I added
-              some authentication using Google&apos;s oAuth simply by talking to
-              Claude about it.
-              <br />
-              <br />
-              [image]
+              some authentication using Google&apos;s oAuth simply by chatting
+              with Claude about my ideas and what I wanted.
             </p>
             <p className="py-4">
               Claude took care of all the Next/react stuff but I had to create
@@ -343,7 +381,7 @@ export default function AboutPage() {
             </p>
 
             <p className="py-4">
-              ... to be continued as I have ranmy premium requests for this
+              ... to be continued as I have ran my premium requests for this
               month dry.
             </p>
 
