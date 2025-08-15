@@ -336,13 +336,16 @@ export default function AboutPage() {
               Claude took care of all the Next/react stuff but I had to create
               the API keys and tokens in my Google Cloud Admin console. Once
               that was complete it just worked. And what was more astonishing is
-              that I (with my coding friend Claude) accomplished that task by in
+              that I (with my coding friend Claude) accomplished that task in
               about 30 minutes. I couldn&apos;t help but think about how much
-              time, google searchines and effort this would have taken me to do
-              on my own.
+              time, google searches and effort this would have taken me to do on
+              my own.
             </p>
 
-            <p className="py-4">... to be continued</p>
+            <p className="py-4">
+              ... to be continued as I have ranmy premium requests for this
+              month dry.
+            </p>
 
             <h2 id="nextsteps" className="text-xl font-semibold mt-6 mb-2">
               Next Steps
