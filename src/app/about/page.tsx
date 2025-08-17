@@ -362,10 +362,15 @@ export default function AboutPage() {
               was a no-brainer. I wrote the prompts for each app similar to the
               Recipe Builder and watched as Claude created the initial layouts
               and components.
-              <br />
-              <br />
-              [image: case-study-image3.png]
             </p>
+
+            <div className="flex justify-center py-6 w-full">
+              <img
+                src="/images/case-study-image3.png"
+                alt="Screenshot of the development process"
+                className="rounded shadow-lg w-full h-auto max-w-full"
+              />
+            </div>
 
             <p className="py-4">
               A little addicted at this point and like a crazed hacker in a
@@ -399,7 +404,7 @@ export default function AboutPage() {
               <br />
               so I have an issue with vercel and using flat files so I have
               created a database on my local mysql and want to change the API to
-              use it. First, we will keep the current JSON structre and isntead
+              use it. First, we will keep the current JSON structure and instead
               of writing it to the file system we simply insert and update the
               row in the new database. The schema for both tables looks like
               this: `CREATE TABLE `fieldnotes` ( `id` int(11) NOT NULL
@@ -411,25 +416,39 @@ export default function AboutPage() {
               `created` datetime DEFAULT CURRENT_TIMESTAMP, PRIMARY KEY (`id`) )
               ENGINE=InnoDB DEFAULT CHARSET=utf8mb4` Can you make the changes to
               the API so that everything is read and written to this database:
-              hikerbikerwriter. The database credentials for local are alrady in
-              the /lib/db.ts file.
+              hikerbikerwriter. The database credentials for local are already
+              in the /lib/db.ts file.
             </p>
 
             <p className="py-4">
-              Mission accomplished in 1 prompt. Claude created the necessary API
-              endpoints to interact with the MySQL database as well as
-              completely tested the functionality of the app.
+              Mission accomplished. In just a single prompt Claude updated the
+              existing API using flat files and created the necessary API
+              updates to interact with the MySQL database as well as completely
+              tested the functionality of the app. He did all of this with
+              minimal guidance on my part outside of the initial prompt.
             </p>
 
-            <p className="py-4">If you can dream it, Claude can build it</p>
+            <p className="py-4">
+              Now that Claude had the app working with the database and we added
+              Users, including a user registration and authentication system, we
+              needed a way to management al the content from Roll And Write
+              entries and Field Notes to Recipes. I asked Claude to create a
+              content management system that would allow me to manage all the
+              data in one place. This included creating a new admin page that
+              would allow me to view, edit and delete entries from all the apps
+              as well as approve new user requests.
+            </p>
 
-            <h2 id="nextsteps" className="text-xl font-semibold mt-6 mb-2">
-              Next Steps
-            </h2>
-            <ul className="list-disc ml-6 mb-4">
-              <li>Code Review</li>
-              <li>Optimizations and code efficiency improvements</li>
-            </ul>
+            <div className="flex justify-center py-6 w-full">
+              <img
+                src="/images/case-study-image4.png"
+                alt="Screenshot of the development process"
+                className="rounded shadow-lg w-full h-auto max-w-full"
+              />
+            </div>
+
+            <p className="py-4">If you can dream it, Claude can build it.</p>
+
             <h2 id="challenges" className="text-xl font-semibold mt-6 mb-2">
               Challenges
             </h2>
@@ -437,9 +456,30 @@ export default function AboutPage() {
               <li>Creating a consistent UI and UX experience across apps</li>
               <li>
                 Had to make additional requests to Claude for mobile
-                Optimizations
+                optimizations
+              </li>
+              <li>
+                Once I ran out of premium requests to use Claude, I switched to
+                GPT-4.1 and found this model to be less effective at
+                understanding the context of the app and the codebase.
               </li>
             </ul>
+
+            <h2 id="nextsteps" className="text-xl font-semibold mt-6 mb-2">
+              Next Steps - Development
+            </h2>
+            <ul className="list-disc ml-6 mb-4">
+              <li>Code Review</li>
+              <li>Optimizations and code efficiency improvements</li>
+            </ul>
+            <h2 id="nextsteps" className="text-xl font-semibold mt-6 mb-2">
+              Next Steps - Product
+            </h2>
+            <ul className="list-disc ml-6 mb-4">
+              <li>Adding User profiles</li>
+              <li>Adding Recipe sharing features that include with Family</li>
+            </ul>
+
             <h2 id="changelog" className="text-xl font-semibold mt-6 mb-2">
               Changelog &mdash;{" "}
               <a
