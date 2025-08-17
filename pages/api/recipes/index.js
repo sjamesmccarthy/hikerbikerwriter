@@ -36,6 +36,7 @@ export default async function handler(req, res) {
           "SELECT * FROM recipes WHERE user_email = ? OR is_public = TRUE ORDER BY created DESC";
         params = [userEmail];
         console.log("Using authenticated query for user:", userEmail);
+        console.log("Query:", query);
       } else {
         // Not logged in: only get public recipes
         query =
@@ -65,6 +66,7 @@ export default async function handler(req, res) {
       });
 
       console.log("Returning", recipes.length, "recipes");
+      recipes.forEach((recipe) => console.log("Recipe title:", recipe.title));
       return res.status(200).json(recipes);
     } catch (error) {
       console.error("Error reading recipes:", error);

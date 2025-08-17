@@ -461,7 +461,15 @@ export default function AboutPage() {
               <li>
                 Once I ran out of premium requests to use Claude, I switched to
                 GPT-4.1 and found this model to be less effective at
-                understanding the context of the app and the codebase.
+                understanding the context of the app and the codebase. In some
+                cases GPT-4.1 would change things that Claude had already done
+                and break functionality. More often than not I had to revert the
+                changes and ask Claude to fix it.
+              </li>
+              <li>
+                For unknown reasons, Claude used both page and app router for
+                the Next.js app so this will need to be refactored in the future
+                to use just the app router for better performance.
               </li>
             </ul>
 
