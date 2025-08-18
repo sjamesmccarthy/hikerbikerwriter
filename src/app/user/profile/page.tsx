@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import PublicIcon from "@mui/icons-material/Public";
 import { useSession, signIn, signOut } from "next-auth/react";
+import { Session } from "next-auth";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -20,6 +21,8 @@ import ColorLensIcon from "@mui/icons-material/ColorLens";
 import TextFieldsIcon from "@mui/icons-material/TextFields";
 import NetworkCheckIcon from "@mui/icons-material/NetworkCheck";
 import CasinoIcon from "@mui/icons-material/Casino";
+import PersonAddIcon from "@mui/icons-material/PersonAdd";
+import { Button } from "@mui/material";
 import { renderFooter } from "@/components/shared/footerHelpers";
 
 export default function UserProfilePage() {
@@ -247,7 +250,7 @@ export default function UserProfilePage() {
             })()}
           </div>
           {/* Main profile content */}
-          <main className="max-w-2xl mx-auto p-8">
+          <main className="w-full mx-auto p-8">
             <div className="flex flex-col items-center">
               {session?.user?.image && (
                 <Image
@@ -263,7 +266,10 @@ export default function UserProfilePage() {
               </h1>
               <p className="text-gray-600 mb-2">{session?.user?.email ?? ""}</p>
             </div>
-            <AppSummaries userEmail={session?.user?.email ?? ""} />
+            <AppSummaries
+              userEmail={session?.user?.email ?? ""}
+              session={session}
+            />
           </main>
         </div>
       </div>
@@ -274,7 +280,13 @@ export default function UserProfilePage() {
 }
 
 // AppSummaries component fetches and displays counts for each app
-function AppSummaries({ userEmail }: { userEmail: string }) {
+function AppSummaries({
+  userEmail,
+  session,
+}: {
+  readonly userEmail: string;
+  readonly session: Session | null;
+}) {
   const [rollCounts, setRollCounts] = useState<{
     total: number;
     public: number;
@@ -472,7 +484,7 @@ function AppSummaries({ userEmail }: { userEmail: string }) {
           >
             Recipes
           </Link>
-          <div className="flex flex-col gap-1 items-start mt-1 w-full">
+          <div className="flex flex-col gap-1 items-center justify-center mt-1 w-full">
             <div className="flex items-center gap-3">
               <span className="flex items-center gap-1 text-xs text-black">
                 <span className="font-bold text-lg">{recipeCounts.total}</span>{" "}
@@ -504,18 +516,36 @@ function AppSummaries({ userEmail }: { userEmail: string }) {
               <span className="font-bold text-lg">{brewLogTotal}</span> Entries
             </span>
           </div>
+          <p>
+            <span className="text-[10px]">
+              *Stored in local storage and may not appear on all devices
+            </span>
+          </p>
         </div>
       </div>
       <hr className="border-t border-gray-200 my-8 w-full" />
       <div className="flex flex-col items-start w-full mb-8">
-        <h2 className="text-xl font-bold text-gray-800 mb-6 text-center w-full">
+        <h2 className="text-xl font-bold text-gray-800 mb-4 text-center w-full">
           {(() => {
             if (familyLoading) return "My Family";
-            if (familyInfo && familyInfo.name)
-              return `${familyInfo.name}'s People`;
+            if (familyInfo?.name) return `${familyInfo.name}'s People`;
             return "My Family";
           })()}
         </h2>
+        <div className="w-full flex justify-end mb-6">
+          <Button
+            variant="contained"
+            startIcon={<PersonAddIcon />}
+            size="small"
+            style={{
+              backgroundColor: "#1976d2",
+              textTransform: "none",
+              boxShadow: "none",
+            }}
+          >
+            Add Person
+          </Button>
+        </div>
         {/* Family People Card List */}
         {!familyLoading &&
           familyInfo &&
@@ -523,6 +553,102 @@ function AppSummaries({ userEmail }: { userEmail: string }) {
           Array.isArray(familyInfo.json.people) &&
           (familyInfo.json.people.length > 0 ? (
             <div className="flex flex-col gap-4 mb-6 w-full">
+              {/* Me Card */}
+              {session?.user && (
+                <div className="flex flex-col sm:flex-row sm:items-center bg-white rounded-lg shadow p-4 w-full">
+                  <div className="flex items-center">
+                    <div className="flex items-center justify-center w-12 h-12 rounded-full mr-4">
+                      {session.user.image ? (
+                        <Image
+                          src={session.user.image}
+                          alt="Me"
+                          width={32}
+                          height={32}
+                          className="rounded-full"
+                        />
+                      ) : (
+                        <svg
+                          width="32"
+                          height="32"
+                          viewBox="0 0 32 32"
+                          fill="none"
+                        >
+                          <circle cx="16" cy="16" r="16" fill="#1976d2" />
+                          <text
+                            x="16"
+                            y="21"
+                            textAnchor="middle"
+                            fontSize="16"
+                            fill="#fff"
+                            fontFamily="Arial"
+                          >
+                            {session.user.name?.[0] || "?"}
+                          </text>
+                        </svg>
+                      )}
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-bold text-lg text-gray-800">
+                        Me ({session.user.name})
+                      </div>
+                      <div className="text-xs text-gray-400">
+                        Primary Account
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Icons section */}
+                  <div className="flex flex-row items-center gap-4 mt-4 sm:mt-0 justify-center sm:justify-end sm:ml-auto">
+                    <div className="relative flex items-center">
+                      <CasinoIcon
+                        fontSize="medium"
+                        style={{ color: "#757575" }}
+                      />
+                      {/* Badge hidden until family share data is available */}
+                    </div>
+                    <div className="relative flex items-center">
+                      <StickyNote2Icon
+                        fontSize="medium"
+                        style={{ color: "#757575" }}
+                      />
+                      {/* Badge hidden until family share data is available */}
+                    </div>
+                    <div className="relative flex items-center">
+                      <RestaurantIcon
+                        fontSize="medium"
+                        style={{ color: "#757575" }}
+                      />
+                      {recipeCounts.sharedWithFamily !== undefined && (
+                        <span
+                          className="absolute -top-1.5 -right-1.5"
+                          style={{
+                            background:
+                              recipeCounts.sharedWithFamily > 0
+                                ? "#dc2626"
+                                : "#000",
+                            color: "#fff",
+                            borderRadius: "50%",
+                            padding: "0 5px",
+                            fontWeight: "bold",
+                            minWidth: "16px",
+                            fontSize: "0.75rem",
+                            height: "18px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            textAlign: "center",
+                            boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
+                          }}
+                        >
+                          {recipeCounts.sharedWithFamily}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Other people */}
               {familyInfo.json.people.map(
                 (person: {
                   person_id: string;
@@ -554,67 +680,67 @@ function AppSummaries({ userEmail }: { userEmail: string }) {
                   return (
                     <div
                       key={person.person_id}
-                      className="flex items-center bg-white rounded-lg shadow p-4 min-h-[90px] w-full"
+                      className="flex flex-col sm:flex-row sm:items-center bg-white rounded-lg shadow p-4 w-full"
                     >
-                      {/* ...existing code for SVG and badges... */}
-                      <div
-                        className={`flex items-center justify-center w-12 h-12 rounded-full mr-4`}
-                        style={{
-                          boxShadow: "0 0 0 0 transparent",
-                          border: "none",
-                          background: "none",
-                        }}
-                      >
-                        <svg
-                          width="32"
-                          height="32"
-                          viewBox="0 0 32 32"
-                          fill="none"
+                      {/* Top row for mobile: Profile, name, and relation */}
+                      <div className="flex items-center">
+                        <div
+                          className={`flex items-center justify-center w-12 h-12 rounded-full mr-4`}
+                          style={{
+                            boxShadow: "0 0 0 0 transparent",
+                            border: "none",
+                            background: "none",
+                          }}
                         >
-                          <circle
-                            cx="16"
-                            cy="16"
-                            r="16"
-                            fill={
-                              iconColor === "bg-blue-500"
-                                ? "#3F51B5"
-                                : iconColor === "bg-pink-400"
-                                ? "#f472b6"
-                                : iconColor
-                                    .replace("bg-", "")
-                                    .replace("-500", "") === "gray"
-                                ? "#9ca3af"
-                                : "#9ca3af"
-                            }
-                          />
-                          <text
-                            x="16"
-                            y="21"
-                            textAnchor="middle"
-                            fontSize="16"
-                            fill="#fff"
-                            fontFamily="Arial"
+                          <svg
+                            width="32"
+                            height="32"
+                            viewBox="0 0 32 32"
+                            fill="none"
                           >
-                            {person.name ? person.name[0] : "?"}
-                          </text>
-                        </svg>
-                      </div>
-                      <div className="flex-1">
-                        <div className="font-bold text-lg text-gray-800">
-                          {person.name}
+                            <circle
+                              cx="16"
+                              cy="16"
+                              r="16"
+                              fill={(() => {
+                                if (iconColor === "bg-blue-500")
+                                  return "#3F51B5";
+                                if (iconColor === "bg-pink-400")
+                                  return "#f472b6";
+                                return "#9ca3af";
+                              })()}
+                            />
+                            <text
+                              x="16"
+                              y="21"
+                              textAnchor="middle"
+                              fontSize="16"
+                              fill="#fff"
+                              fontFamily="Arial"
+                            >
+                              {person.name ? person.name[0] : "?"}
+                            </text>
+                          </svg>
                         </div>
-                        <div className="text-xs text-gray-400 mt-1">
-                          {familyType} ({person.relation})
+                        <div className="flex-1">
+                          <div className="font-bold text-lg text-gray-800">
+                            {person.name}
+                          </div>
+                          <div className="text-xs text-gray-400">
+                            {familyType} ({person.relation})
+                          </div>
                         </div>
                       </div>
-                      <div className="flex flex-row items-center gap-6 min-w-[180px] justify-end">
+
+                      {/* Bottom row for mobile / Right side for desktop: Icons */}
+                      <div className="flex flex-row items-center gap-4 mt-4 sm:mt-0 justify-center sm:justify-end sm:ml-auto">
                         <div className="relative flex items-center">
                           <CasinoIcon
-                            fontSize="large"
+                            fontSize="medium"
                             style={{ color: "#757575" }}
                           />
                           <span
-                            className="absolute -top-1 -right-1"
+                            className="absolute -top-1.5 -right-1.5"
                             style={{
                               background: "#000",
                               color: "#fff",
@@ -636,11 +762,11 @@ function AppSummaries({ userEmail }: { userEmail: string }) {
                         </div>
                         <div className="relative flex items-center">
                           <StickyNote2Icon
-                            fontSize="large"
+                            fontSize="medium"
                             style={{ color: "#757575" }}
                           />
                           <span
-                            className="absolute -top-1 -right-1"
+                            className="absolute -top-1.5 -right-1.5"
                             style={{
                               background: "#000",
                               color: "#fff",
@@ -662,11 +788,11 @@ function AppSummaries({ userEmail }: { userEmail: string }) {
                         </div>
                         <div className="relative flex items-center">
                           <RestaurantIcon
-                            fontSize="large"
+                            fontSize="medium"
                             style={{ color: "#757575" }}
                           />
                           <span
-                            className="absolute -top-1 -right-1"
+                            className="absolute -top-1.5 -right-1.5"
                             style={{
                               background: "#000",
                               color: "#fff",
