@@ -96,7 +96,11 @@ interface AppMenuItem {
   }>;
 }
 
-const RecipeViewer: React.FC = () => {
+interface RecipeViewerProps {
+  headerOnly?: boolean;
+}
+
+const RecipeViewer: React.FC<RecipeViewerProps> = ({}) => {
   const router = useRouter();
   const [isAppsMenuOpen, setIsAppsMenuOpen] = useState(false);
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
@@ -465,7 +469,18 @@ const RecipeViewer: React.FC = () => {
             }
             return (
               <div className="flex items-center gap-2">
-                <span className="font-mono text-blue-600 text-sm">
+                <span className="flex items-center gap-2 font-mono text-blue-600 text-sm">
+                  {session.user?.image && (
+                    <Link href="/user/profile">
+                      <Image
+                        src={session.user.image}
+                        alt={session.user?.name || "User profile"}
+                        width={28}
+                        height={28}
+                        className="rounded-full border border-gray-300 cursor-pointer hover:scale-105 transition"
+                      />
+                    </Link>
+                  )}
                   Signed in as {session.user?.name}
                 </span>
                 <span className="h-4 w-px bg-gray-300 mx-2" />
@@ -511,7 +526,18 @@ const RecipeViewer: React.FC = () => {
             }
             return (
               <div className="flex items-center gap-2">
-                <span className="font-mono text-blue-600 text-sm">
+                <span className="flex items-center gap-2 font-mono text-blue-600 text-sm">
+                  {session.user?.image && (
+                    <Link href="/user/profile">
+                      <Image
+                        src={session.user.image}
+                        alt={session.user?.name || "User profile"}
+                        width={28}
+                        height={28}
+                        className="rounded-full border border-gray-300 cursor-pointer hover:scale-105 transition"
+                      />
+                    </Link>
+                  )}
                   Signed in as {session.user?.name}
                 </span>
                 <span className="h-4 w-px bg-gray-300 mx-2" />

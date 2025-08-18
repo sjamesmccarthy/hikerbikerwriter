@@ -25,6 +25,7 @@ import {
 import { Button, TextField, FormControlLabel, Switch } from "@mui/material";
 import { renderFooter } from "./shared/footerHelpers";
 import { useSession, signIn, signOut } from "next-auth/react";
+import Image from "next/image";
 
 interface AppMenuItem {
   name: string;
@@ -387,7 +388,18 @@ const RollAndWrite: React.FC = () => {
               }
               return (
                 <div className="flex items-center gap-2">
-                  <span className="font-mono text-blue-600 text-sm">
+                  <span className="flex items-center gap-2 font-mono text-blue-600 text-sm">
+                    {session.user?.image && (
+                      <Link href="/user/profile">
+                        <Image
+                          src={session.user.image}
+                          alt={session.user?.name || "User profile"}
+                          width={28}
+                          height={28}
+                          className="rounded-full border border-gray-300 cursor-pointer hover:shadow-md"
+                        />
+                      </Link>
+                    )}
                     Signed in as {session.user?.name}
                   </span>
                   <span className="h-4 w-px bg-gray-300 mx-2" />
@@ -430,6 +442,7 @@ const RollAndWrite: React.FC = () => {
                         : "transform rotate-0 scale-100"
                     }`}
                     style={{
+                      // ...existing style properties...
                       background: colorsSwapped
                         ? "linear-gradient(135deg, #000000 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #191970 100%)"
                         : "linear-gradient(135deg, #8B0000 0%, #DC143C 25%, #FF6B6B 50%, #FFB3B3 75%, #FFFFFF 100%)",

@@ -138,6 +138,10 @@ export default async function handler(req, res) {
         author: userName || userEmail,
         favorite: favorite || false,
         public: isPublic || false,
+        shared_family:
+          req.body.shared_family === 1 || req.body.shared_family === true
+            ? 1
+            : 0,
         date: new Date().toISOString(),
         dateAdded: new Date().toISOString(),
         personalNotes: "",
@@ -146,8 +150,13 @@ export default async function handler(req, res) {
 
       // Insert into database
       await pool.query(
-        "INSERT INTO recipes (user_email, json, is_public) VALUES (?, ?, ?)",
-        [userEmail, JSON.stringify(recipeData), isPublic || false]
+        "INSERT INTO recipes (user_email, json, is_public, shared_family) VALUES (?, ?, ?, ?)",
+        [
+          userEmail,
+          JSON.stringify(recipeData),
+          isPublic || false,
+          recipeData.shared_family,
+        ]
       );
 
       // Return the full recipe data for the response
@@ -229,6 +238,10 @@ export default async function handler(req, res) {
         author: req.body.userName || userEmail,
         favorite: favorite || false,
         public: isPublic || false,
+        shared_family:
+          req.body.shared_family === 1 || req.body.shared_family === true
+            ? 1
+            : 0,
         date: req.body.date || existingRecipe.date,
         personalNotes: personalNotes || "",
         isFavorite: isFavorite || false,
@@ -236,8 +249,13 @@ export default async function handler(req, res) {
 
       // Update in database
       await pool.query(
-        "UPDATE recipes SET json = ?, is_public = ? WHERE id = ?",
-        [JSON.stringify(updatedRecipe), isPublic || false, row.id]
+        "UPDATE recipes SET json = ?, is_public = ?, shared_family = ? WHERE id = ?",
+        [
+          JSON.stringify(updatedRecipe),
+          isPublic || false,
+          updatedRecipe.shared_family,
+          row.id,
+        ]
       );
 
       // Return the full recipe data for the response

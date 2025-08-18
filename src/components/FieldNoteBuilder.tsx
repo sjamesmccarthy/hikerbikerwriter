@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { ArrowBack as ArrowBackIcon } from "@mui/icons-material";
 import { renderFooter } from "./shared/footerHelpers";
 import { useSession } from "next-auth/react";
@@ -65,7 +66,18 @@ const FieldNoteBuilder: React.FC = () => {
           {/* Action buttons */}
           <div className="hidden sm:flex items-center gap-2">
             {session ? (
-              <span className="font-mono text-blue-600 text-sm">
+              <span className="flex items-center gap-2 font-mono text-blue-600 text-sm">
+                {session.user?.image && (
+                  <Link href="/user/profile">
+                    <Image
+                      src={session.user.image}
+                      alt={session.user?.name || "User profile"}
+                      width={28}
+                      height={28}
+                      className="rounded-full border border-gray-300 transition"
+                    />
+                  </Link>
+                )}
                 Signed in as {session.user?.name}
               </span>
             ) : null}

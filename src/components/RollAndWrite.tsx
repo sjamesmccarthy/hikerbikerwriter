@@ -1,4 +1,5 @@
 "use client";
+import Image from "next/image";
 
 import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
@@ -750,7 +751,16 @@ const RollAndWrite: React.FC = () => {
               }
               return (
                 <div className="flex items-center gap-2">
-                  <span className="font-mono text-blue-600 text-sm">
+                  <span className="flex items-center gap-2 font-mono text-blue-600 text-sm">
+                    {session.user?.image && (
+                      <Image
+                        src={session.user.image}
+                        alt={session.user?.name || "User profile"}
+                        width={28}
+                        height={28}
+                        className="rounded-full border border-gray-300"
+                      />
+                    )}
                     Signed in as {session.user?.name}
                   </span>
                   <span className="h-4 w-px bg-gray-300 mx-2" />

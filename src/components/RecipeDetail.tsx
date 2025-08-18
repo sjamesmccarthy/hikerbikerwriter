@@ -81,6 +81,7 @@ type Recipe = {
   favorite: boolean;
   public?: boolean;
   date: string;
+  shared_family?: boolean;
 };
 
 interface RecipeDetailProps {
@@ -625,7 +626,18 @@ const RecipeDetail: React.FC<RecipeDetailProps> = ({ slug }) => {
           {/* Action buttons */}
           <div className="hidden sm:flex items-center gap-2">
             {session ? (
-              <span className="font-mono text-blue-600 text-sm">
+              <span className="flex items-center gap-2 font-mono text-blue-600 text-sm">
+                {session.user?.image && (
+                  <Link href="/user/profile">
+                    <Image
+                      src={session.user.image}
+                      alt={session.user?.name || "User profile"}
+                      width={28}
+                      height={28}
+                      className="rounded-full border border-gray-300 cursor-pointer hover:scale-105 transition"
+                    />
+                  </Link>
+                )}
                 Signed in as {session.user?.name}
               </span>
             ) : null}
@@ -635,7 +647,18 @@ const RecipeDetail: React.FC<RecipeDetailProps> = ({ slug }) => {
         {/* Mobile Auth UI - Only visible on mobile */}
         {session && (
           <div className="sm:hidden px-3 py-2 border-b border-gray-200 flex justify-center">
-            <span className="font-mono text-blue-600 text-sm">
+            <span className="flex items-center gap-2 font-mono text-blue-600 text-sm">
+              {session.user?.image && (
+                <Link href="/user/profile">
+                  <Image
+                    src={session.user.image}
+                    alt={session.user?.name || "User profile"}
+                    width={28}
+                    height={28}
+                    className="rounded-full border border-gray-300 cursor-pointer hover:scale-105 transition"
+                  />
+                </Link>
+              )}
               Signed in as {session.user?.name}
             </span>
           </div>
@@ -782,16 +805,22 @@ const RecipeDetail: React.FC<RecipeDetailProps> = ({ slug }) => {
                 <div className="mt-1">
                   Inspired by{" "}
                   {recipe.source.startsWith("http") ? (
-                    <a
-                      href={recipe.source}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-blue-600 hover:text-blue-800 underline"
-                    >
-                      {recipe.source}
-                    </a>
+                    <>
+                      <a
+                        href={recipe.source}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-800 underline"
+                      >
+                        {recipe.source}
+                      </a>
+                      {recipe.shared_family ? " and shared with family" : ""}
+                    </>
                   ) : (
-                    recipe.source
+                    <>
+                      {recipe.source}
+                      {recipe.shared_family ? " and shared with family" : ""}
+                    </>
                   )}
                 </div>
               )}

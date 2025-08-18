@@ -1,0 +1,730 @@
+"use client";
+
+import React, { useState } from "react";
+import PublicIcon from "@mui/icons-material/Public";
+import { useSession, signIn, signOut } from "next-auth/react";
+import Image from "next/image";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import AppsIcon from "@mui/icons-material/Apps";
+import HomeIcon from "@mui/icons-material/Home";
+import EditNoteIcon from "@mui/icons-material/EditNote";
+import AssignmentIcon from "@mui/icons-material/Assignment";
+import StickyNote2Icon from "@mui/icons-material/StickyNote2";
+import RestaurantIcon from "@mui/icons-material/Restaurant";
+import PhotoCameraIcon from "@mui/icons-material/PhotoCamera";
+import IntegrationInstructionsIcon from "@mui/icons-material/IntegrationInstructions";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import CodeIcon from "@mui/icons-material/Code";
+import ColorLensIcon from "@mui/icons-material/ColorLens";
+import TextFieldsIcon from "@mui/icons-material/TextFields";
+import NetworkCheckIcon from "@mui/icons-material/NetworkCheck";
+import CasinoIcon from "@mui/icons-material/Casino";
+import { renderFooter } from "@/components/shared/footerHelpers";
+
+export default function UserProfilePage() {
+  const { data: session, status } = useSession();
+  const router = useRouter();
+  const [isAppsMenuOpen, setIsAppsMenuOpen] = useState(false);
+  const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
+
+  // Apps menu configuration
+  const apps = [
+    { name: "Home", path: "/", icon: HomeIcon },
+    {
+      name: "Dev Tools",
+      path: "/utilities",
+      icon: IntegrationInstructionsIcon,
+      hasSubmenu: true,
+      submenu: [
+        { name: "Md Editor", path: "/markdown", icon: EditNoteIcon },
+        {
+          name: "JSON Previewer",
+          path: "/utilities/json-previewer",
+          icon: CodeIcon,
+        },
+        {
+          name: "Hex/RGB Code",
+          path: "/utilities/hex-rgb-converter",
+          icon: ColorLensIcon,
+        },
+        {
+          name: "Lorem Ipsum",
+          path: "/utilities/lorem-ipsum",
+          icon: TextFieldsIcon,
+        },
+        {
+          name: "Network Utilities",
+          path: "/utilities/network-tools",
+          icon: NetworkCheckIcon,
+        },
+      ],
+    },
+    { name: "Roll And Write", path: "/rollandwrite", icon: CasinoIcon },
+    { name: "Brew Log", path: "/brewday", icon: AssignmentIcon },
+    { name: "Field Notes", path: "/fieldnotes", icon: StickyNote2Icon },
+    { name: "Recipes", path: "/recipes", icon: RestaurantIcon },
+    { name: "jM Galleries", path: "/jmgalleries", icon: PhotoCameraIcon },
+  ];
+
+  // Handle app selection from menu
+  const handleAppSelect = (path: string) => {
+    router.push(path);
+    setIsAppsMenuOpen(false);
+    setOpenSubmenu(null);
+  };
+
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <span className="text-lg text-gray-500">Loading...</span>
+        </div>
+      </div>
+    );
+  }
+  if (status !== "authenticated" && status !== "unauthenticated") {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-2xl font-bold mb-4">
+            Please sign in to view your profile.
+          </h2>
+          <button
+            onClick={() => signIn("google")}
+            className="px-4 py-2 bg-blue-600 text-white rounded"
+          >
+            Sign In With Google
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="max-xl bg-white flex flex-1">
+        <div className="flex flex-col w-full">
+          {/* Header - copied from RollAndWriteEntries */}
+          <div className="flex items-center space-x-2 h-[61px] border-b border-gray-200 px-3">
+            <Link href="/">
+              <button className="px-3 py-1 rounded text-sm font-medium transition-colors flex items-center gap-1 text-gray-600 hover:text-gray-800 hover:bg-gray-100 cursor-pointer">
+                <HomeIcon sx={{ fontSize: 16 }} />
+                <span className="hidden sm:inline">Home</span>
+              </button>
+            </Link>
+            <div className="h-4 w-px bg-gray-300" />
+            {/* Apps Menu */}
+            <div className="relative">
+              <button
+                onClick={() => setIsAppsMenuOpen(!isAppsMenuOpen)}
+                className="px-3 py-1 rounded text-sm font-medium transition-colors flex items-center gap-1 text-gray-600 hover:text-gray-800 hover:bg-gray-100 cursor-pointer"
+                aria-label="Apps Menu"
+                aria-expanded={isAppsMenuOpen}
+              >
+                <AppsIcon sx={{ fontSize: 16 }} />
+                Apps
+              </button>
+              {/* Apps Dropdown */}
+              {isAppsMenuOpen && (
+                <>
+                  <button
+                    className="fixed inset-0 -z-10 cursor-default"
+                    onClick={() => {
+                      setIsAppsMenuOpen(false);
+                      setOpenSubmenu(null);
+                    }}
+                    aria-label="Close menu"
+                    tabIndex={-1}
+                  />
+                  <div className="absolute top-full left-0 mt-2 bg-white/95 backdrop-blur-sm rounded-md shadow-xl border border-white/30 min-w-[200px] overflow-hidden z-50">
+                    {apps.map((app) => {
+                      const IconComponent = app.icon;
+                      const hasSubmenu = app.hasSubmenu && app.submenu;
+                      const isSubmenuOpen = openSubmenu === app.name;
+                      return (
+                        <div key={app.path}>
+                          <button
+                            onClick={() => {
+                              if (hasSubmenu) {
+                                setOpenSubmenu(isSubmenuOpen ? null : app.name);
+                              } else {
+                                handleAppSelect(app.path);
+                              }
+                            }}
+                            className="w-full px-4 py-3 text-left flex items-center gap-3 transition-all duration-200 text-gray-700 hover:bg-gray-100 hover:text-gray-800 cursor-pointer"
+                          >
+                            {IconComponent && (
+                              <IconComponent sx={{ fontSize: 20 }} />
+                            )}
+                            <span className="text-sm font-medium flex-1">
+                              {app.name}
+                            </span>
+                            {hasSubmenu && (
+                              <ExpandMoreIcon
+                                sx={{
+                                  fontSize: 16,
+                                  transform: isSubmenuOpen
+                                    ? "rotate(180deg)"
+                                    : "rotate(0deg)",
+                                  transition: "transform 0.2s ease",
+                                }}
+                              />
+                            )}
+                          </button>
+                          {hasSubmenu && isSubmenuOpen && (
+                            <div className="bg-gray-50 border-t border-gray-200">
+                              {app.submenu?.map((subItem, index) => {
+                                const SubIconComponent = subItem.icon;
+                                return (
+                                  <button
+                                    key={`${app.name}-${index}`}
+                                    onClick={() =>
+                                      handleAppSelect(subItem.path)
+                                    }
+                                    className="w-full px-8 py-2 text-left text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-800 transition-all duration-200 cursor-pointer flex items-center gap-2"
+                                  >
+                                    {SubIconComponent && (
+                                      <SubIconComponent sx={{ fontSize: 16 }} />
+                                    )}
+                                    {subItem.name}
+                                  </button>
+                                );
+                              })}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+            </div>
+            <div className="h-4 w-px bg-gray-300" />
+            <h3 className="text-lg font-semibold text-gray-800">
+              User Profile
+            </h3>
+          </div>
+          {/* Auth UI - copied from RollAndWriteEntries */}
+          <div className="flex justify-center sm:justify-end px-3 py-2">
+            {(() => {
+              if (status !== "authenticated") {
+                return (
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => signIn("google")}
+                      className="px-4 py-2 rounded bg-blue-600 text-white font-mono text-sm hover:bg-blue-700 transition"
+                    >
+                      Sign In With Google
+                    </button>
+                  </div>
+                );
+              }
+              return (
+                <div className="flex items-center gap-2">
+                  <span className="flex items-center gap-2 font-mono text-blue-600 text-sm">
+                    {session.user?.image && (
+                      <Image
+                        src={session.user.image}
+                        alt={session.user?.name || "User profile"}
+                        width={28}
+                        height={28}
+                        className="rounded-full border border-gray-300 cursor-pointer"
+                        onClick={() => router.push("/user/profile")}
+                      />
+                    )}
+                    Signed in as {session.user?.name}
+                  </span>
+                  <span className="h-4 w-px bg-gray-300 mx-2" />
+                  <button
+                    onClick={() => signOut()}
+                    className="px-3 py-1 rounded bg-gray-200 text-gray-800 font-mono text-sm hover:bg-gray-300 transition cursor-pointer"
+                  >
+                    Sign out
+                  </button>
+                </div>
+              );
+            })()}
+          </div>
+          {/* Main profile content */}
+          <main className="max-w-2xl mx-auto p-8">
+            <div className="flex flex-col items-center">
+              {session?.user?.image && (
+                <Image
+                  src={session.user.image}
+                  alt={session.user.name || "User profile"}
+                  width={96}
+                  height={96}
+                  className="rounded-full border border-gray-300 mb-4"
+                />
+              )}
+              <h1 className="text-2xl font-bold mb-2">
+                {session?.user?.name ?? ""}
+              </h1>
+              <p className="text-gray-600 mb-2">{session?.user?.email ?? ""}</p>
+            </div>
+            <AppSummaries userEmail={session?.user?.email ?? ""} />
+          </main>
+        </div>
+      </div>
+      {/* Footer - global, matches RollAndWrite */}
+      {renderFooter("integrated")}
+    </div>
+  );
+}
+
+// AppSummaries component fetches and displays counts for each app
+function AppSummaries({ userEmail }: { userEmail: string }) {
+  const [rollCounts, setRollCounts] = useState<{
+    total: number;
+    public: number;
+  }>({ total: 0, public: 0 });
+  const [fieldCounts, setFieldCounts] = useState<{
+    total: number;
+    public: number;
+  }>({ total: 0, public: 0 });
+  const [recipeCounts, setRecipeCounts] = useState<{
+    total: number;
+    public: number;
+    sharedWithFamily: number;
+  }>({ total: 0, public: 0, sharedWithFamily: 0 });
+  const [brewLogTotal, setBrewLogTotal] = useState<number>(0);
+  const [loading, setLoading] = useState(true);
+  interface FamilyInfo {
+    name?: string;
+    json?: {
+      people?: Array<{
+        person_id: string;
+        name: string;
+        gender: string;
+        relation: string;
+        network_degree: number;
+        shared_data?: {
+          roll_and_write?: number;
+          field_notes?: number;
+          recipes?: number;
+        };
+      }>;
+      [key: string]: unknown;
+    };
+    [key: string]: unknown;
+  }
+  const [familyInfo, setFamilyInfo] = useState<FamilyInfo | null>(null);
+  const [familyLoading, setFamilyLoading] = useState(true);
+  const [showRawJson, setShowRawJson] = useState(false);
+
+  // Define types for entries
+  interface RollEntry {
+    is_public: boolean;
+    [key: string]: unknown;
+  }
+  interface FieldEntry {
+    is_public: boolean;
+    [key: string]: unknown;
+  }
+  interface RecipeEntry {
+    isPublic: boolean;
+    sharedWithFamily?: boolean;
+    [key: string]: unknown;
+  }
+
+  React.useEffect(() => {
+    async function fetchCounts() {
+      setLoading(true);
+      // Fetch all API data in parallel
+      const [rollRes, fieldRes, recipeRes] = await Promise.all([
+        fetch(`/api/rollnwrite?userEmail=${encodeURIComponent(userEmail)}`),
+        fetch(`/api/fieldnotes?userEmail=${encodeURIComponent(userEmail)}`),
+        fetch(`/api/recipes?userEmail=${encodeURIComponent(userEmail)}`),
+      ]);
+      const [rollRaw, fieldRaw, recipeRaw] = await Promise.all([
+        rollRes.json(),
+        fieldRes.json(),
+        recipeRes.json(),
+      ]);
+      const rollEntries: RollEntry[] = Array.isArray(rollRaw) ? rollRaw : [];
+      const fieldEntries: FieldEntry[] = Array.isArray(fieldRaw)
+        ? fieldRaw
+        : [];
+      const recipeEntries: RecipeEntry[] = Array.isArray(recipeRaw)
+        ? recipeRaw
+        : [];
+      setRollCounts({
+        total: rollEntries.length,
+        public: rollEntries.filter((e) => e.is_public).length,
+      });
+      setFieldCounts({
+        total: fieldEntries.length,
+        public: fieldEntries.filter((e) => e.is_public).length,
+      });
+      setRecipeCounts({
+        total: recipeEntries.length,
+        public: recipeEntries.filter((e) => e.isPublic).length,
+        sharedWithFamily: recipeEntries.filter((e) => e.sharedWithFamily)
+          .length,
+      });
+      // Brew Day Log total from localStorage
+      let brewLogCount = 0;
+      try {
+        const logs = localStorage.getItem("brewSessions");
+        if (logs) {
+          const parsed = JSON.parse(logs);
+          if (Array.isArray(parsed)) {
+            brewLogCount = parsed.length;
+          }
+        }
+      } catch {
+        brewLogCount = 0;
+      }
+      setBrewLogTotal(brewLogCount);
+      setLoading(false);
+    }
+    async function fetchFamily() {
+      setFamilyLoading(true);
+      try {
+        const res = await fetch(
+          `/api/familyline?email=${encodeURIComponent(userEmail)}`
+        );
+        if (res.ok) {
+          const data = await res.json();
+          setFamilyInfo(data);
+        } else {
+          setFamilyInfo(null);
+        }
+      } catch {
+        setFamilyInfo(null);
+      }
+      setFamilyLoading(false);
+    }
+    fetchCounts();
+    fetchFamily();
+  }, [userEmail]);
+
+  if (loading) {
+    return (
+      <div className="mt-8 text-center text-gray-500">
+        Loading app summaries...
+      </div>
+    );
+  }
+
+  // Grid layout for app summaries
+  return (
+    <>
+      <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* ...existing code for app summaries... */}
+        <div className="flex flex-col items-center justify-center rounded-lg bg-gray-100 shadow-sm p-6 transition-all duration-200 hover:shadow-lg hover:-translate-y-1 cursor-pointer min-h-[140px]">
+          <CasinoIcon fontSize="large" className="mb-2 text-gray-700" />
+          <Link
+            href="/rollandwrite"
+            className="font-semibold text-black hover:underline text-lg mb-2"
+          >
+            Roll And Write
+          </Link>
+          <div className="flex items-center gap-3 mt-1">
+            <span className="flex items-center gap-1 text-xs text-black">
+              <span className="font-bold text-lg">{rollCounts.total}</span>{" "}
+              Entries
+            </span>
+            <span className="flex items-center gap-1 text-xs text-black">
+              <PublicIcon fontSize="small" className="text-gray-500" />
+              <span className="font-bold text-lg">
+                {rollCounts.public}
+              </span>{" "}
+              Public
+            </span>
+          </div>
+        </div>
+        <div className="flex flex-col items-center justify-center rounded-lg bg-gray-100 shadow-sm p-6 transition-all duration-200 hover:shadow-lg hover:-translate-y-1 cursor-pointer min-h-[140px]">
+          <StickyNote2Icon fontSize="large" className="mb-2 text-gray-700" />
+          <Link
+            href="/fieldnotes"
+            className="font-semibold text-black hover:underline text-lg mb-2"
+          >
+            Field Notes
+          </Link>
+          <div className="flex items-center gap-3 mt-1">
+            <span className="flex items-center gap-1 text-xs text-black">
+              <span className="font-bold text-lg">{fieldCounts.total}</span>{" "}
+              Entries
+            </span>
+            <span className="flex items-center gap-1 text-xs text-black">
+              <PublicIcon fontSize="small" className="text-gray-500" />
+              <span className="font-bold text-lg">
+                {fieldCounts.public}
+              </span>{" "}
+              Public
+            </span>
+          </div>
+        </div>
+        <div className="flex flex-col items-center justify-center rounded-lg bg-gray-100 shadow-sm p-6 transition-all duration-200 hover:shadow-lg hover:-translate-y-1 cursor-pointer min-h-[140px]">
+          <RestaurantIcon fontSize="large" className="mb-2 text-gray-700" />
+          <Link
+            href="/recipes"
+            className="font-semibold text-black hover:underline text-lg mb-2"
+          >
+            Recipes
+          </Link>
+          <div className="flex flex-col gap-1 items-start mt-1 w-full">
+            <div className="flex items-center gap-3">
+              <span className="flex items-center gap-1 text-xs text-black">
+                <span className="font-bold text-lg">{recipeCounts.total}</span>{" "}
+                Entries
+              </span>
+              <span className="flex items-center gap-1 text-xs text-black">
+                <PublicIcon fontSize="small" className="text-gray-500" />
+                <span className="font-bold text-lg">
+                  {recipeCounts.public}
+                </span>{" "}
+                Public
+              </span>
+            </div>
+            <span className="text-xs text-gray-700 mt-1 w-full text-center block">
+              {recipeCounts.sharedWithFamily ?? 0} Shared With Family
+            </span>
+          </div>
+        </div>
+        <div className="flex flex-col items-center justify-center rounded-lg bg-gray-100 shadow-sm p-6 transition-all duration-200 hover:shadow-lg hover:-translate-y-1 cursor-pointer min-h-[140px]">
+          <AssignmentIcon fontSize="large" className="mb-2 text-gray-700" />
+          <Link
+            href="/brewday"
+            className="font-semibold text-black hover:underline text-lg mb-2"
+          >
+            Brew Day Log
+          </Link>
+          <div className="flex items-center gap-3 mt-1">
+            <span className="flex items-center gap-1 text-xs text-black">
+              <span className="font-bold text-lg">{brewLogTotal}</span> Entries
+            </span>
+          </div>
+        </div>
+      </div>
+      <hr className="border-t border-gray-200 my-8 w-full" />
+      <div className="flex flex-col items-start w-full mb-8">
+        <h2 className="text-xl font-bold text-gray-800 mb-6 text-center w-full">
+          {(() => {
+            if (familyLoading) return "My Family";
+            if (familyInfo && familyInfo.name)
+              return `${familyInfo.name}'s People`;
+            return "My Family";
+          })()}
+        </h2>
+        {/* Family People Card List */}
+        {!familyLoading &&
+          familyInfo &&
+          familyInfo.json &&
+          Array.isArray(familyInfo.json.people) &&
+          (familyInfo.json.people.length > 0 ? (
+            <div className="flex flex-col gap-4 mb-6 w-full">
+              {familyInfo.json.people.map(
+                (person: {
+                  person_id: string;
+                  name: string;
+                  gender: string;
+                  relation: string;
+                  network_degree: number;
+                  shared_data?: {
+                    roll_and_write?: number;
+                    field_notes?: number;
+                    recipes?: number;
+                  };
+                }) => {
+                  // ...existing code for person card...
+                  let iconColor = "bg-gray-400";
+                  if (person.gender === "male") iconColor = "bg-blue-500";
+                  else if (person.gender === "female")
+                    iconColor = "bg-pink-400";
+                  const extendedRelations = ["friend", "co-worker", "neighbor"];
+                  let familyType = "Immediate Family";
+                  if (
+                    extendedRelations.includes(person.relation.toLowerCase())
+                  ) {
+                    familyType = "Extended Family";
+                  } else if (person.network_degree !== 1) {
+                    familyType = "Extended Family";
+                  }
+                  const shared = person.shared_data || {};
+                  return (
+                    <div
+                      key={person.person_id}
+                      className="flex items-center bg-white rounded-lg shadow p-4 min-h-[90px] w-full"
+                    >
+                      {/* ...existing code for SVG and badges... */}
+                      <div
+                        className={`flex items-center justify-center w-12 h-12 rounded-full mr-4`}
+                        style={{
+                          boxShadow: "0 0 0 0 transparent",
+                          border: "none",
+                          background: "none",
+                        }}
+                      >
+                        <svg
+                          width="32"
+                          height="32"
+                          viewBox="0 0 32 32"
+                          fill="none"
+                        >
+                          <circle
+                            cx="16"
+                            cy="16"
+                            r="16"
+                            fill={
+                              iconColor === "bg-blue-500"
+                                ? "#3F51B5"
+                                : iconColor === "bg-pink-400"
+                                ? "#f472b6"
+                                : iconColor
+                                    .replace("bg-", "")
+                                    .replace("-500", "") === "gray"
+                                ? "#9ca3af"
+                                : "#9ca3af"
+                            }
+                          />
+                          <text
+                            x="16"
+                            y="21"
+                            textAnchor="middle"
+                            fontSize="16"
+                            fill="#fff"
+                            fontFamily="Arial"
+                          >
+                            {person.name ? person.name[0] : "?"}
+                          </text>
+                        </svg>
+                      </div>
+                      <div className="flex-1">
+                        <div className="font-bold text-lg text-gray-800">
+                          {person.name}
+                        </div>
+                        <div className="text-xs text-gray-400 mt-1">
+                          {familyType} ({person.relation})
+                        </div>
+                      </div>
+                      <div className="flex flex-row items-center gap-6 min-w-[180px] justify-end">
+                        <div className="relative flex items-center">
+                          <CasinoIcon
+                            fontSize="large"
+                            style={{ color: "#757575" }}
+                          />
+                          <span
+                            className="absolute -top-1 -right-1"
+                            style={{
+                              background: "#000",
+                              color: "#fff",
+                              borderRadius: "50%",
+                              padding: "0 5px",
+                              fontWeight: "bold",
+                              minWidth: "16px",
+                              fontSize: "0.75rem",
+                              height: "18px",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              textAlign: "center",
+                              boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
+                            }}
+                          >
+                            {shared.roll_and_write ?? 0}
+                          </span>
+                        </div>
+                        <div className="relative flex items-center">
+                          <StickyNote2Icon
+                            fontSize="large"
+                            style={{ color: "#757575" }}
+                          />
+                          <span
+                            className="absolute -top-1 -right-1"
+                            style={{
+                              background: "#000",
+                              color: "#fff",
+                              borderRadius: "50%",
+                              padding: "0 5px",
+                              fontWeight: "bold",
+                              minWidth: "16px",
+                              fontSize: "0.75rem",
+                              height: "18px",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              textAlign: "center",
+                              boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
+                            }}
+                          >
+                            {shared.field_notes ?? 0}
+                          </span>
+                        </div>
+                        <div className="relative flex items-center">
+                          <RestaurantIcon
+                            fontSize="large"
+                            style={{ color: "#757575" }}
+                          />
+                          <span
+                            className="absolute -top-1 -right-1"
+                            style={{
+                              background: "#000",
+                              color: "#fff",
+                              borderRadius: "50%",
+                              padding: "0 5px",
+                              fontWeight: "bold",
+                              minWidth: "16px",
+                              fontSize: "0.75rem",
+                              height: "18px",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              textAlign: "center",
+                              boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
+                            }}
+                          >
+                            {shared.recipes ?? 0}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+              )}
+            </div>
+          ) : (
+            <div className="w-full bg-gray-100 rounded px-4 py-3 mb-8 text-center">
+              <span className="text-gray-600 text-sm">
+                Sorry, but we can&apos;t find any people in your Tribe. Why not
+                invite some? Here is a link.{" "}
+              </span>
+            </div>
+          ))}
+        {/* End Family People Card List */}
+        {familyLoading ? (
+          <div className="w-full bg-gray-100 rounded px-4 py-3 mt-2">
+            <span className="text-gray-600 text-sm">
+              Loading family info...
+            </span>
+          </div>
+        ) : familyInfo ? (
+          <>
+            <button
+              className="text-blue-600 text-sm underline mb-2"
+              style={{ alignSelf: "flex-start" }}
+              onClick={() => setShowRawJson((prev) => !prev)}
+            >
+              {showRawJson ? "< hide json raw data" : "> json raw data"}
+            </button>
+            {showRawJson && (
+              <div className="w-full bg-gray-100 rounded px-4 py-3 mt-2">
+                <pre className="text-xs text-gray-600 mt-2 whitespace-pre-wrap">
+                  {JSON.stringify(familyInfo.json, null, 2)}
+                </pre>
+              </div>
+            )}
+          </>
+        ) : (
+          <div className="w-full bg-gray-100 rounded px-4 py-3 mt-2">
+            <span className="text-gray-600 text-sm">
+              No family information found.
+            </span>
+          </div>
+        )}
+      </div>
+    </>
+  );
+}

@@ -453,7 +453,11 @@ export default function AboutPage() {
               Challenges
             </h2>
             <ul className="list-disc ml-6 mb-4">
-              <li>Creating a consistent UI and UX experience across apps</li>
+              <li>
+                Creating a consistent UI and UX experience across apps. Claude
+                had trouble replicating the design system across different
+                applications.
+              </li>
               <li>
                 Had to make additional requests to Claude for mobile
                 optimizations
@@ -471,6 +475,11 @@ export default function AboutPage() {
                 the Next.js app so this will need to be refactored in the future
                 to use just the app router for better performance.
               </li>
+              <li>
+                When trying to implement similar features across apps, I had to
+                use a one-step-at-a-time prompting because each app had its own
+                context and requirements that Claude sometimes became confused.
+              </li>
             </ul>
 
             <h2 id="nextsteps" className="text-xl font-semibold mt-6 mb-2">
@@ -478,7 +487,16 @@ export default function AboutPage() {
             </h2>
             <ul className="list-disc ml-6 mb-4">
               <li>Code Review</li>
-              <li>Optimizations and code efficiency improvements</li>
+              <li>
+                Optimizations and code efficiency improvements for performance,
+                security and code reusability.
+              </li>
+              <li>
+                {" "}
+                I originally planned each component to be a separate app and so
+                the authentication and logged in/out header are independent.
+                These will need to be combined into a single utility class.
+              </li>
             </ul>
             <h2 id="nextsteps" className="text-xl font-semibold mt-6 mb-2">
               Next Steps - Product
@@ -499,6 +517,20 @@ export default function AboutPage() {
                 view on GitHub
               </a>
             </h2>
+            <h3 className="font-semibold mt-4 mb-1">v1.6.0</h3>
+            <ul className="list-disc ml-6 mb-2">
+              <li>
+                Added new user profile page with summaries of Roll And Write,
+                Field Notes, Recipes and Brew Day Logs, as well as family list
+                of people you&apos;re connected with and how they relate you and
+                shared data.
+              </li>
+
+              <li>
+                Added option in Recipes for &quot;Share with Family&quot; which
+                allows users to share recipes with family members.
+              </li>
+            </ul>
             <h3 className="font-semibold mt-4 mb-1">v1.5.0</h3>
             <ul className="list-disc ml-6 mb-2">
               <li>

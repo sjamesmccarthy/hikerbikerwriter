@@ -99,6 +99,9 @@ const RecipeBuilder: React.FC = () => {
   const [isPublic, setIsPublic] = useState(false);
   const [saving, setSaving] = useState(false);
 
+  // New state for family sharing
+  const [sharedFamily, setSharedFamily] = useState(false);
+
   const categoryOptions = ["Dinner", "Side", "Dessert", "Breakfast"];
   const typeOptions = ["smoker", "flat-top", "grill"];
 
@@ -248,6 +251,9 @@ const RecipeBuilder: React.FC = () => {
           setMyNotes(recipe.myNotes || "");
           setFavorite(recipe.favorite || false);
           setIsPublic(recipe.public || false);
+          setSharedFamily(
+            recipe.shared_family === 1 || recipe.shared_family === true
+          );
         }
       } catch (error) {
         console.error("Error loading recipe:", error);
@@ -363,6 +369,7 @@ const RecipeBuilder: React.FC = () => {
         notes: myNotes || "",
         favorite: favorite || false,
         public: isPublic || false,
+        shared_family: sharedFamily ? 1 : 0,
         userEmail: session?.user?.email,
         userName: session?.user?.name,
       };
@@ -374,6 +381,7 @@ const RecipeBuilder: React.FC = () => {
             id: parseInt(editId),
             slug: slug,
             userEmail: session?.user?.email,
+            shared_family: sharedFamily ? 1 : 0,
           }
         : recipeData;
 
@@ -481,7 +489,18 @@ const RecipeBuilder: React.FC = () => {
 
           {/* Auth Info - Desktop only */}
           <div className="hidden sm:flex items-center gap-2">
-            <span className="font-mono text-blue-600 text-sm">
+            <span className="flex items-center gap-2 font-mono text-blue-600 text-sm">
+              {session.user?.image && (
+                <Link href="/user/profile">
+                  <Image
+                    src={session.user.image}
+                    alt={session.user?.name || "User profile"}
+                    width={28}
+                    height={28}
+                    className="rounded-full border border-gray-300 cursor-pointer hover:scale-105 transition"
+                  />
+                </Link>
+              )}
               Signed in as {session.user?.name}
             </span>
             <span className="h-4 w-px bg-gray-300 mx-2" />
@@ -497,7 +516,18 @@ const RecipeBuilder: React.FC = () => {
         {/* Mobile Auth UI - Only visible on mobile */}
         <div className="sm:hidden px-3 py-2 border-b border-gray-200 flex justify-center">
           <div className="flex items-center gap-2">
-            <span className="font-mono text-blue-600 text-sm">
+            <span className="flex items-center gap-2 font-mono text-blue-600 text-sm">
+              {session.user?.image && (
+                <Link href="/user/profile">
+                  <Image
+                    src={session.user.image}
+                    alt={session.user?.name || "User profile"}
+                    width={28}
+                    height={28}
+                    className="rounded-full border border-gray-300 cursor-pointer hover:scale-105 transition"
+                  />
+                </Link>
+              )}
               Signed in as {session.user?.name}
             </span>
             <span className="h-4 w-px bg-gray-300 mx-2" />
@@ -626,6 +656,16 @@ const RecipeBuilder: React.FC = () => {
                         />
                       }
                       label="Mark as Public"
+                      sx={{ mt: 1 }}
+                    />
+                    <FormControlLabel
+                      control={
+                        <Switch
+                          checked={sharedFamily}
+                          onChange={(e) => setSharedFamily(e.target.checked)}
+                        />
+                      }
+                      label="Make Shareable With Family"
                       sx={{ mt: 1 }}
                     />
                   </div>
