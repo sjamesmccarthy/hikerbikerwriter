@@ -387,6 +387,14 @@ function AppSummaries({ userEmail }: { userEmail: string }) {
         );
         if (res.ok) {
           const data = await res.json();
+          // Ensure data.json is always an object, not a string
+          if (data && typeof data.json === "string") {
+            try {
+              data.json = JSON.parse(data.json);
+            } catch {
+              data.json = {};
+            }
+          }
           setFamilyInfo(data);
         } else {
           setFamilyInfo(null);
