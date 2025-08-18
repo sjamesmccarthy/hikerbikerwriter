@@ -360,8 +360,7 @@ function AppSummaries({ userEmail }: { userEmail: string }) {
       setRecipeCounts({
         total: recipeEntries.length,
         public: recipeEntries.filter((e) => e.isPublic).length,
-        sharedWithFamily: recipeEntries.filter((e) => e.sharedWithFamily)
-          .length,
+        sharedWithFamily: recipeEntries.filter((e) => e.shared_family).length,
       });
       // Brew Day Log total from localStorage
       let brewLogCount = 0;
