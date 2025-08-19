@@ -104,11 +104,18 @@ export async function PUT(request) {
       );
     }
 
-    const { requestId, action, notes } = await request.json();
+    const { requestId, action, notes, person_id } = await request.json();
 
     if (!requestId || !action || !["approve", "reject"].includes(action)) {
       return NextResponse.json(
         { error: "Missing requestId or invalid action" },
+        { status: 400 }
+      );
+    }
+
+    if (action === "approve" && !person_id) {
+      return NextResponse.json(
+        { error: "person_id is required when approving a request" },
         { status: 400 }
       );
     }
@@ -134,10 +141,12 @@ export async function PUT(request) {
     // If approving, create user account
     if (action === "approve") {
       try {
+        console.log("Creating new user with:", { name, email, person_id });
         await pool.execute(
-          "INSERT INTO users (name, email, oauth, is_admin) VALUES (?, ?, 'GOOGLE', 0)",
-          [name, email]
+          "INSERT INTO users (name, email, oauth, is_admin, person_id) VALUES (?, ?, 'GOOGLE', 0, ?)",
+          [name, email, person_id]
         );
+        console.log("User created successfully");
       } catch (error) {
         if (error.code === "ER_DUP_ENTRY") {
           return NextResponse.json(
@@ -158,10 +167,9 @@ export async function PUT(request) {
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("Error processing signup request:", error);
-    return NextResponse.json(
-      { error: "Failed to process signup request" },
-      { status: 500 }
-    );
+    // Send back more specific error message
+    const errorMessage = error.message || "Failed to process signup request";
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
 

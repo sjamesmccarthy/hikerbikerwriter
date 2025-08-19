@@ -881,7 +881,7 @@ const RecipeDetail = React.memo(function RecipeDetail({
                         <br />
                         Here Are The Family Secrets
                       </h2>
-                      <div className="flex flex-col md:flex-row gap-6 items-start">
+                      <div className="sm:p-8 flex flex-col md:flex-row gap-6 items-start">
                         {recipe?.familyPhoto && (
                           <div className="md:w-1/3 w-full">
                             <Image

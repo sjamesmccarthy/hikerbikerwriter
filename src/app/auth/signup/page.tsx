@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { v4 as uuidv4 } from "uuid";
 
 export default function SignUp() {
   const [formData, setFormData] = useState({
@@ -45,7 +46,7 @@ export default function SignUp() {
     if (!validateEmail(formData.email)) {
       setMessage({
         type: "error",
-        text: "Email must be a Gmail address (@gmail.com)",
+        text: "For now, e-mail must be a gmail address (@gmail.com)",
       });
       setIsSubmitting(false);
       return;
@@ -61,6 +62,7 @@ export default function SignUp() {
     }
 
     try {
+      const personId = uuidv4();
       const response = await fetch("/api/signup", {
         method: "POST",
         headers: {
@@ -69,6 +71,7 @@ export default function SignUp() {
         body: JSON.stringify({
           name: formData.name.trim(),
           email: formData.email.trim().toLowerCase(),
+          person_id: personId,
         }),
       });
 
@@ -137,7 +140,7 @@ export default function SignUp() {
                 htmlFor="email"
                 className="block text-sm font-medium text-gray-700"
               >
-                Email (Gmail only)
+                E-mail
               </label>
               <div className="mt-1">
                 <input

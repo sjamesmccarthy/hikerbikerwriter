@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { v4 as uuidv4 } from "uuid";
 import {
   Box,
   Paper,
@@ -143,6 +144,7 @@ export default function AdminUserManagement() {
   const handleApproveRequest = async (request: SignupRequest) => {
     setProcessing(request.id);
     try {
+      const personId = uuidv4();
       const response = await fetch("/api/admin/signup-requests", {
         method: "PUT",
         headers: {
@@ -151,6 +153,7 @@ export default function AdminUserManagement() {
         body: JSON.stringify({
           requestId: request.id,
           action: "approve",
+          person_id: personId,
         }),
       });
 
