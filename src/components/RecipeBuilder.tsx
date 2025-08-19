@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -36,7 +36,7 @@ type Recipe = {
   title: string;
   description: string;
   source?: string;
-  type: "smoker" | "flat-top" | "grill";
+  type: "moker" | "flat-top" | "grill";
   recommendedPellets?: string;
   categories: string[];
   photo?: string;
@@ -71,9 +71,9 @@ const RecipeBuilder: React.FC = () => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [source, setSource] = useState("");
-  const [type, setType] = useState<"smoker" | "flat-top" | "grill">("grill");
+  const [type, setType] = useState<"Smoker" | "Flat-top" | "Grill">("Grill");
   const [recommendedPellets, setRecommendedPellets] = useState("");
-  const [categories, setCategories] = useState<string[]>([]);
+  const [category, setCategory] = useState<string>("Dinner");
   const [photo, setPhoto] = useState("");
   const [imageError, setImageError] = useState(false);
   const [prepTime, setPrepTime] = useState(0);
@@ -102,14 +102,14 @@ const RecipeBuilder: React.FC = () => {
   // New state for family sharing
   const [sharedFamily, setSharedFamily] = useState(false);
 
-  const categoryOptions = [
-    "Dinner",
-    "Side",
-    "Dessert",
-    "Breakfast",
-    "Cocktails",
-  ];
-  const typeOptions = ["smoker", "flat-top", "grill"];
+  const categoryOptions = useMemo<string[]>(
+    () => ["Dinner", "Side", "Dessert", "Breakfast", "Cocktails"],
+    []
+  );
+  const typeOptions = useMemo<string[]>(
+    () => ["Smoker", "Flat-top", "Grill"],
+    []
+  );
 
   // Function to parse fractions and decimals to numbers
   const parseFractionToNumber = (value: string): number => {
@@ -213,9 +213,19 @@ const RecipeBuilder: React.FC = () => {
           setTitle(recipe.title || "");
           setDescription(recipe.description || "");
           setSource(recipe.source || "");
-          setType(recipe.type || "grill");
+          // Handle legacy type names ("smoker" -> "Smoker")
+          const loadedType = recipe.type || "Grill";
+          const normalizedType =
+            loadedType.charAt(0).toUpperCase() + loadedType.slice(1);
+          setType(normalizedType as "Smoker" | "Flat-top" | "Grill");
           setRecommendedPellets(recipe.recommendedPellets || "");
-          setCategories(recipe.categories || []);
+          // Match the category case-sensitively with our options
+          const matchedCategory =
+            categoryOptions.find(
+              (cat: string) =>
+                cat.toLowerCase() === (recipe.category || "").toLowerCase()
+            ) || "Dinner";
+          setCategory(matchedCategory);
           setPhoto(recipe.photo || "");
           setImageError(false); // Reset image error when loading recipe
           setPrepTime(recipe.prepTime || 0);
@@ -267,15 +277,7 @@ const RecipeBuilder: React.FC = () => {
     }
 
     loadRecipe();
-  }, [editId, session?.user?.email]);
-
-  const handleCategoryToggle = (category: string) => {
-    setCategories((prev) =>
-      prev.includes(category)
-        ? prev.filter((c) => c !== category)
-        : [...prev, category]
-    );
-  };
+  }, [editId, session?.user?.email, categoryOptions, typeOptions]);
 
   const handleIngredientChange = (
     index: number,
@@ -365,7 +367,7 @@ const RecipeBuilder: React.FC = () => {
         source: source.trim() || undefined,
         type,
         recommendedPellets: recommendedPellets || "",
-        categories: categories || [],
+        category,
         photo: photo || "",
         prepTime: prepTime || 0,
         cookTime: cookTime || 0,
@@ -558,51 +560,117 @@ const RecipeBuilder: React.FC = () => {
                     Basic Information
                   </Typography>
 
+                  {/* Photo Upload */}
                   <div className="mt-4">
-                    <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                      Categories
+                    <Typography variant="subtitle1" gutterBottom>
+                      Recipe Photo
                     </Typography>
-                    <div className="flex flex-wrap gap-2">
-                      {categoryOptions.map((category) => (
-                        <Chip
-                          key={category}
-                          label={category}
-                          onClick={() => handleCategoryToggle(category)}
-                          color={
-                            categories.includes(category)
-                              ? "primary"
-                              : "default"
-                          }
-                          variant={
-                            categories.includes(category)
-                              ? "filled"
-                              : "outlined"
-                          }
-                        />
-                      ))}
+                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                      {photo && !imageError ? (
+                        <div className="space-y-4">
+                          <Image
+                            src={photo}
+                            alt="Recipe preview"
+                            width={400}
+                            height={192}
+                            className="w-full h-48 object-cover rounded-lg"
+                            onError={() => setImageError(true)}
+                          />
+                          <Button
+                            variant="outlined"
+                            startIcon={<PhotoCameraIcon />}
+                            component="label"
+                          >
+                            Change Photo
+                            <input
+                              type="file"
+                              hidden
+                              accept="image/*"
+                              onChange={handlePhotoUpload}
+                            />
+                          </Button>
+                        </div>
+                      ) : photo && imageError ? (
+                        <div className="space-y-4">
+                          <div className="w-full h-48 bg-gray-100 flex items-center justify-center rounded-lg">
+                            <LocalDiningIcon
+                              sx={{ fontSize: 48, color: "#9CA3AF" }}
+                            />
+                          </div>
+                          <Button
+                            variant="outlined"
+                            startIcon={<PhotoCameraIcon />}
+                            component="label"
+                          >
+                            Change Photo
+                            <input
+                              type="file"
+                              hidden
+                              accept="image/*"
+                              onChange={handlePhotoUpload}
+                            />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          <PhotoCameraIcon
+                            sx={{ fontSize: 48, color: "gray" }}
+                          />
+                          <div>
+                            <Button
+                              variant="contained"
+                              startIcon={<PhotoCameraIcon />}
+                              component="label"
+                            >
+                              Upload Photo
+                              <input
+                                type="file"
+                                hidden
+                                accept="image/*"
+                                onChange={handlePhotoUpload}
+                              />
+                            </Button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
 
                   <FormControl fullWidth margin="normal" sx={{ mt: 4 }}>
+                    <InputLabel>Category</InputLabel>
+                    <Select
+                      value={category}
+                      label="Category"
+                      onChange={(e) => setCategory(e.target.value)}
+                    >
+                      {categoryOptions.map((option: string) => (
+                        <MenuItem key={option} value={option}>
+                          {option}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+
+                  <FormControl fullWidth margin="normal" sx={{ mt: 2 }}>
                     <InputLabel>Cooking Type</InputLabel>
                     <Select
                       value={type}
                       label="Cooking Type"
                       onChange={(e) =>
                         setType(
-                          e.target.value as "smoker" | "flat-top" | "grill"
+                          e.target.value as "Smoker" | "Flat-top" | "Grill"
                         )
                       }
                     >
-                      {typeOptions.map((option) => (
+                      {typeOptions.map((option: string) => (
                         <MenuItem key={option} value={option}>
-                          {option.charAt(0).toUpperCase() + option.slice(1)}
+                          {option}
                         </MenuItem>
                       ))}
                     </Select>
                   </FormControl>
 
-                  {type === "smoker" && (
+                  {type === "Smoker" && (
                     <TextField
                       fullWidth
                       label="Recommended Pellets"
@@ -628,7 +696,6 @@ const RecipeBuilder: React.FC = () => {
                     onChange={(e) => setSource(e.target.value)}
                     margin="normal"
                     placeholder="e.g., Food Network, family recipe, cookbook name"
-                    helperText="Optional - where did this recipe come from?"
                   />
 
                   <TextField
@@ -677,83 +744,6 @@ const RecipeBuilder: React.FC = () => {
                   </div>
                 </CardContent>
               </Card>
-
-              {/* Photo Upload */}
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" sx={{ mb: 2 }}>
-                    Recipe Photo
-                  </Typography>
-
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                    {photo && !imageError ? (
-                      <div className="space-y-4">
-                        <Image
-                          src={photo}
-                          alt="Recipe preview"
-                          width={400}
-                          height={192}
-                          className="w-full h-48 object-cover rounded-lg"
-                          onError={() => setImageError(true)}
-                        />
-                        <Button
-                          variant="outlined"
-                          startIcon={<PhotoCameraIcon />}
-                          component="label"
-                        >
-                          Change Photo
-                          <input
-                            type="file"
-                            hidden
-                            accept="image/*"
-                            onChange={handlePhotoUpload}
-                          />
-                        </Button>
-                      </div>
-                    ) : photo && imageError ? (
-                      <div className="space-y-4">
-                        <div className="w-full h-48 bg-gray-100 flex items-center justify-center rounded-lg">
-                          <LocalDiningIcon
-                            sx={{ fontSize: 48, color: "#9CA3AF" }}
-                          />
-                        </div>
-                        <Button
-                          variant="outlined"
-                          startIcon={<PhotoCameraIcon />}
-                          component="label"
-                        >
-                          Change Photo
-                          <input
-                            type="file"
-                            hidden
-                            accept="image/*"
-                            onChange={handlePhotoUpload}
-                          />
-                        </Button>
-                      </div>
-                    ) : (
-                      <div className="space-y-4">
-                        <PhotoCameraIcon sx={{ fontSize: 48, color: "gray" }} />
-                        <div>
-                          <Button
-                            variant="contained"
-                            startIcon={<PhotoCameraIcon />}
-                            component="label"
-                          >
-                            Upload Photo
-                            <input
-                              type="file"
-                              hidden
-                              accept="image/*"
-                              onChange={handlePhotoUpload}
-                            />
-                          </Button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
             </div>
 
             {/* Right Column */}
@@ -773,7 +763,7 @@ const RecipeBuilder: React.FC = () => {
                       onChange={(e) =>
                         setServings(parseInt(e.target.value) || 1)
                       }
-                      inputProps={{ min: 1 }}
+                      sx={{ "& input": { min: 1 } }}
                       size="small"
                     />
                     <TextField
@@ -783,7 +773,7 @@ const RecipeBuilder: React.FC = () => {
                       onChange={(e) =>
                         setPrepTime(parseInt(e.target.value) || 0)
                       }
-                      inputProps={{ min: 0 }}
+                      sx={{ "& input": { min: 0 } }}
                       size="small"
                     />
                     <TextField
@@ -795,7 +785,7 @@ const RecipeBuilder: React.FC = () => {
                         setCookHours(hours);
                         setCookTime(hours * 60 + cookMinutes);
                       }}
-                      inputProps={{ min: 0 }}
+                      sx={{ "& input": { min: 0 } }}
                       size="small"
                     />
                     <TextField
@@ -807,7 +797,7 @@ const RecipeBuilder: React.FC = () => {
                         setCookMinutes(minutes);
                         setCookTime(cookHours * 60 + minutes);
                       }}
-                      inputProps={{ min: 0, max: 59 }}
+                      sx={{ "& input": { min: 0, max: 59 } }}
                       size="small"
                     />
                   </div>
@@ -938,7 +928,7 @@ const RecipeBuilder: React.FC = () => {
                           fullWidth
                         />
 
-                        {type === "smoker" && (
+                        {type === "Smoker" && (
                           <div className="flex gap-4 items-center mt-3 p-3 bg-gray-50 rounded">
                             <TextField
                               placeholder="Temp (°F)"
