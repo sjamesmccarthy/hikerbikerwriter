@@ -136,32 +136,32 @@ export default function UserProfilePage() {
     setOpenSubmenu(null);
   };
 
-  if (status === "loading") {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <span className="text-lg text-gray-500">Loading...</span>
-        </div>
-      </div>
-    );
-  }
-  if (status !== "authenticated" && status !== "unauthenticated") {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold mb-4">
-            Please sign in to view your profile.
-          </h2>
-          <button
-            onClick={() => signIn("google")}
-            className="px-4 py-2 bg-blue-600 text-white rounded"
-          >
-            Sign In With Google
-          </button>
-        </div>
-      </div>
-    );
-  }
+  // if (status === "loading") {
+  //   return (
+  //     <div className="min-h-screen flex items-center justify-center">
+  //       <div className="text-center">
+  //         <span className="text-lg text-gray-500">Loading...</span>
+  //       </div>
+  //     </div>
+  //   );
+  // }
+  // if (status !== "authenticated" && status !== "unauthenticated") {
+  //   return (
+  //     <div className="min-h-screen flex items-center justify-center">
+  //       <div className="text-center">
+  //         <h2 className="text-2xl font-bold mb-4">
+  //           Please sign in to view your profile.
+  //         </h2>
+  //         <button
+  //           onClick={() => signIn("google")}
+  //           className="px-4 py-2 bg-blue-600 text-white rounded"
+  //         >
+  //           Sign In With Google
+  //         </button>
+  //       </div>
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
