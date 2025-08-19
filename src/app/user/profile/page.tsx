@@ -630,7 +630,7 @@ function AppSummaries({
               }}
             >
               <TextField
-                label="Add a new person to your family/tribe"
+                label="Add a new person to your family/tribe by searching name, email, family or person id"
                 variant="outlined"
                 size="small"
                 fullWidth
@@ -662,7 +662,13 @@ function AppSummaries({
                 <CloseIcon />
               </button>
             </form>
-            <div className="pt-8">Maybe you know these people:</div>
+            <div className="pt-4 pl-8 text-sm">
+              Maybe you know these people based on family_id who are not in your
+              people list:
+            </div>
+            <ul className="pt-4 pl-16 text-sm list-disc">
+              <li>Example Name, email@example.com</li>
+            </ul>
           </div>
         )}
         {/* Family People Card List */}
