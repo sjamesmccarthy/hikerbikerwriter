@@ -111,21 +111,6 @@ const LoremIpsumGenerator: React.FC = () => {
     "eiusmod",
     "tempor",
     "incididunt",
-    "ut",
-    "labore",
-    "et",
-    "dolore",
-    "magna",
-    "aliqua",
-    "enim",
-    "ad",
-    "minim",
-    "veniam",
-    "quis",
-    "nostrud",
-    "exercitation",
-    "ullamco",
-    "laboris",
     "nisi",
     "aliquip",
     "ex",
@@ -266,6 +251,33 @@ const LoremIpsumGenerator: React.FC = () => {
     }
 
     setGeneratedText(result);
+  };
+
+  // Discrete slider stops
+  const paragraphStops = [1, 5, 10, 15, 20];
+  const sentenceStops = [1, 2, 3, 4, 5, 10, 15, 20, 25];
+  const wordStops = [
+    5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 100, 150, 200, 250, 350, 500,
+  ];
+
+  const nearestStop = (value: number, stops: number[]) => {
+    let nearest = stops[0];
+    let minDiff = Math.abs(value - nearest);
+    for (let i = 1; i < stops.length; i++) {
+      const diff = Math.abs(value - stops[i]);
+      if (diff < minDiff) {
+        minDiff = diff;
+        nearest = stops[i];
+      }
+    }
+    return nearest;
+  };
+
+  const stopPercent = (stop: number, stops: number[]) => {
+    const min = stops[0];
+    const max = stops[stops.length - 1];
+    if (max === min) return 0;
+    return ((stop - min) / (max - min)) * 100;
   };
 
   const copyToClipboard = async () => {
@@ -456,15 +468,34 @@ const LoremIpsumGenerator: React.FC = () => {
                   </label>
                   <input
                     type="range"
-                    min="1"
-                    max="20"
+                    min={paragraphStops[0]}
+                    max={paragraphStops[paragraphStops.length - 1]}
                     value={paragraphs}
-                    onChange={(e) => setParagraphs(parseInt(e.target.value))}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value);
+                      setParagraphs(nearestStop(val, paragraphStops));
+                    }}
+                    step={1}
+                    list="paragraph-stops"
                     className="w-full"
                   />
-                  <div className="flex justify-between text-xs text-gray-500 mt-1">
-                    <span>1</span>
-                    <span>20</span>
+                  <datalist id="paragraph-stops">
+                    {paragraphStops.map((s) => (
+                      <option key={`p-${s}`} value={s} />
+                    ))}
+                  </datalist>
+                  <div className="relative mt-3 h-6">
+                    {paragraphStops.map((s) => (
+                      <span
+                        key={`pl-${s}`}
+                        style={{ left: `${stopPercent(s, paragraphStops)}%` }}
+                        className={`absolute top-0 transform -translate-x-1/2 text-xs text-gray-500 ${
+                          s === paragraphs ? "bg-gray-200 rounded px-1" : ""
+                        }`}
+                      >
+                        {s}
+                      </span>
+                    ))}
                   </div>
                 </div>
               )}
@@ -476,15 +507,34 @@ const LoremIpsumGenerator: React.FC = () => {
                   </label>
                   <input
                     type="range"
-                    min="1"
-                    max="50"
+                    min={sentenceStops[0]}
+                    max={sentenceStops[sentenceStops.length - 1]}
                     value={sentences}
-                    onChange={(e) => setSentences(parseInt(e.target.value))}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value);
+                      setSentences(nearestStop(val, sentenceStops));
+                    }}
+                    step={1}
+                    list="sentence-stops"
                     className="w-full"
                   />
-                  <div className="flex justify-between text-xs text-gray-500 mt-1">
-                    <span>1</span>
-                    <span>50</span>
+                  <datalist id="sentence-stops">
+                    {sentenceStops.map((s) => (
+                      <option key={`s-${s}`} value={s} />
+                    ))}
+                  </datalist>
+                  <div className="relative mt-3 h-6">
+                    {sentenceStops.map((s) => (
+                      <span
+                        key={`sl-${s}`}
+                        style={{ left: `${stopPercent(s, sentenceStops)}%` }}
+                        className={`absolute top-0 transform -translate-x-1/2 text-xs text-gray-500 ${
+                          s === sentences ? "bg-gray-200 rounded px-1" : ""
+                        }`}
+                      >
+                        {s}
+                      </span>
+                    ))}
                   </div>
                 </div>
               )}
@@ -496,15 +546,34 @@ const LoremIpsumGenerator: React.FC = () => {
                   </label>
                   <input
                     type="range"
-                    min="1"
-                    max="500"
+                    min={wordStops[0]}
+                    max={wordStops[wordStops.length - 1]}
                     value={words}
-                    onChange={(e) => setWords(parseInt(e.target.value))}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value);
+                      setWords(nearestStop(val, wordStops));
+                    }}
+                    step={1}
+                    list="word-stops"
                     className="w-full"
                   />
-                  <div className="flex justify-between text-xs text-gray-500 mt-1">
-                    <span>1</span>
-                    <span>500</span>
+                  <datalist id="word-stops">
+                    {wordStops.map((s) => (
+                      <option key={`w-${s}`} value={s} />
+                    ))}
+                  </datalist>
+                  <div className="relative mt-3 h-6">
+                    {wordStops.map((s) => (
+                      <span
+                        key={`wl-${s}`}
+                        style={{ left: `${stopPercent(s, wordStops)}%` }}
+                        className={`absolute top-0 transform -translate-x-1/2 text-xs text-gray-500 ${
+                          s === words ? "bg-gray-200 rounded px-1" : ""
+                        }`}
+                      >
+                        {s}
+                      </span>
+                    ))}
                   </div>
                 </div>
               )}
@@ -519,33 +588,42 @@ const LoremIpsumGenerator: React.FC = () => {
                   Generate New Text
                 </button>
 
-                <button
-                  onClick={copyToClipboard}
-                  disabled={!generatedText}
-                  className={`w-full flex items-center justify-center gap-2 px-4 py-2 rounded-md transition-colors ${
-                    copySuccess
-                      ? "bg-green-600 text-white"
-                      : generatedText
-                      ? "bg-gray-600 text-white hover:bg-gray-700"
-                      : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  }`}
-                >
-                  <CopyIcon sx={{ fontSize: 16 }} />
-                  {copySuccess ? "Copied!" : "Copy Text"}
-                </button>
+                <div className="flex gap-3">
+                  {(() => {
+                    let copyBtnClasses =
+                      "bg-gray-300 text-gray-500 cursor-not-allowed";
+                    if (copySuccess) {
+                      copyBtnClasses = "bg-green-600 text-white";
+                    } else if (generatedText) {
+                      copyBtnClasses =
+                        "bg-gray-600 text-white hover:bg-gray-700";
+                    }
 
-                <button
-                  onClick={clearText}
-                  disabled={!generatedText}
-                  className={`w-full flex items-center justify-center gap-2 px-4 py-2 rounded-md transition-colors ${
-                    generatedText
-                      ? "bg-red-600 text-white hover:bg-red-700"
-                      : "bg-gray-300 text-gray-500 cursor-not-allowed"
-                  }`}
-                >
-                  <ClearIcon sx={{ fontSize: 16 }} />
-                  Clear Text
-                </button>
+                    return (
+                      <button
+                        onClick={copyToClipboard}
+                        disabled={!generatedText}
+                        className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md transition-colors ${copyBtnClasses}`}
+                      >
+                        <CopyIcon sx={{ fontSize: 16 }} />
+                        {copySuccess ? "Copied!" : "Copy Text"}
+                      </button>
+                    );
+                  })()}
+
+                  <button
+                    onClick={clearText}
+                    disabled={!generatedText}
+                    className={`flex-1 flex items-center justify-center gap-2 px-4 py-2 rounded-md transition-colors ${
+                      generatedText
+                        ? "bg-red-600 text-white hover:bg-red-700"
+                        : "bg-gray-300 text-gray-500 cursor-not-allowed"
+                    }`}
+                  >
+                    <ClearIcon sx={{ fontSize: 16 }} />
+                    Clear Text
+                  </button>
+                </div>
               </div>
             </div>
 
