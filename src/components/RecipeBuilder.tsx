@@ -99,8 +99,11 @@ const RecipeBuilder: React.FC = () => {
   const [isPublic, setIsPublic] = useState(false);
   const [saving, setSaving] = useState(false);
 
-  // New state for family sharing
+  // Family recipe sharing state
   const [sharedFamily, setSharedFamily] = useState(false);
+  const [familyPhoto, setFamilyPhoto] = useState("");
+  const [familyNotes, setFamilyNotes] = useState("");
+  const [familyPhotoError, setFamilyPhotoError] = useState(false);
 
   const categoryOptions = useMemo<string[]>(
     () => ["Dinner", "Side", "Dessert", "Breakfast", "Cocktails"],
@@ -225,6 +228,9 @@ const RecipeBuilder: React.FC = () => {
               (cat: string) =>
                 cat.toLowerCase() === (recipe.category || "").toLowerCase()
             ) || "Dinner";
+          // Load family recipe details
+          setFamilyPhoto(recipe.familyPhoto || "");
+          setFamilyNotes(recipe.familyNotes || "");
           setCategory(matchedCategory);
           setPhoto(recipe.photo || "");
           setImageError(false); // Reset image error when loading recipe
@@ -372,6 +378,8 @@ const RecipeBuilder: React.FC = () => {
         prepTime: prepTime || 0,
         cookTime: cookTime || 0,
         servings: servings || 1,
+        familyPhoto: familyPhoto || "",
+        familyNotes: familyNotes || "",
         ingredients: apiIngredients,
         steps: apiSteps,
         notes: myNotes || "",
@@ -741,6 +749,96 @@ const RecipeBuilder: React.FC = () => {
                       label="Make Shareable With Family"
                       sx={{ mt: 1 }}
                     />
+
+                    {/* Family Recipe Section */}
+                    {sharedFamily && (
+                      <div className="mt-4 space-y-4">
+                        <Typography variant="subtitle1" sx={{ mb: 2 }}>
+                          Family Recipe Details
+                        </Typography>
+
+                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                          {familyPhoto && !familyPhotoError ? (
+                            <div className="space-y-4">
+                              <Image
+                                src={familyPhoto}
+                                alt="Family recipe card"
+                                width={400}
+                                height={192}
+                                className="w-full h-48 object-cover rounded-lg"
+                                onError={() => setFamilyPhotoError(true)}
+                              />
+                              <Button
+                                variant="outlined"
+                                startIcon={<PhotoCameraIcon />}
+                                component="label"
+                              >
+                                Change Family Recipe Photo
+                                <input
+                                  type="file"
+                                  hidden
+                                  accept="image/*"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                      const reader = new FileReader();
+                                      reader.onloadend = () => {
+                                        setFamilyPhoto(reader.result as string);
+                                        setFamilyPhotoError(false);
+                                      };
+                                      reader.readAsDataURL(file);
+                                    }
+                                  }}
+                                />
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="space-y-4">
+                              <PhotoCameraIcon
+                                sx={{ fontSize: 48, color: "gray" }}
+                              />
+                              <div>
+                                <Button
+                                  variant="contained"
+                                  startIcon={<PhotoCameraIcon />}
+                                  component="label"
+                                >
+                                  Upload Family Recipe Photo
+                                  <input
+                                    type="file"
+                                    hidden
+                                    accept="image/*"
+                                    onChange={(e) => {
+                                      const file = e.target.files?.[0];
+                                      if (file) {
+                                        const reader = new FileReader();
+                                        reader.onloadend = () => {
+                                          setFamilyPhoto(
+                                            reader.result as string
+                                          );
+                                          setFamilyPhotoError(false);
+                                        };
+                                        reader.readAsDataURL(file);
+                                      }
+                                    }}
+                                  />
+                                </Button>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+
+                        <TextField
+                          fullWidth
+                          label="Family Recipe Notes"
+                          value={familyNotes}
+                          onChange={(e) => setFamilyNotes(e.target.value)}
+                          multiline
+                          rows={4}
+                          placeholder="Share the story behind this recipe, special memories, or family traditions associated with it..."
+                        />
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>

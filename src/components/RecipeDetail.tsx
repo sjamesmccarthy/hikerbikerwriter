@@ -16,6 +16,7 @@ import {
   Whatshot as WhatshotIcon,
   Close as CloseIcon,
   ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon,
   Print as PrintIcon,
   PictureAsPdf as PictureAsPdfIcon,
   OutdoorGrill as OutdoorGrillIcon,
@@ -82,6 +83,8 @@ type Recipe = {
   public?: boolean;
   date: string;
   shared_family?: boolean;
+  familyPhoto?: string;
+  familyNotes?: string;
 };
 
 interface RecipeDetailProps {
@@ -100,7 +103,9 @@ interface AppMenuItem {
   }>;
 }
 
-const RecipeDetail: React.FC<RecipeDetailProps> = ({ slug }) => {
+const RecipeDetail = React.memo(function RecipeDetail({
+  slug,
+}: Readonly<RecipeDetailProps>): React.ReactElement {
   const router = useRouter();
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [loading, setLoading] = useState(true);
@@ -111,6 +116,7 @@ const RecipeDetail: React.FC<RecipeDetailProps> = ({ slug }) => {
   const [imageError, setImageError] = useState(false);
   const [isAppsMenuOpen, setIsAppsMenuOpen] = useState(false);
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
+  const [showFamilyDetails, setShowFamilyDetails] = useState(false);
   const { data: session } = useSession();
 
   // Apps menu configuration
@@ -720,24 +726,26 @@ const RecipeDetail: React.FC<RecipeDetailProps> = ({ slug }) => {
                     )}
                   </IconButton>
                 )}
-                <IconButton
-                  onClick={handleShare}
-                  sx={{
-                    backgroundColor: "rgba(255,255,255,0.9)",
-                    "&:hover": { backgroundColor: "white" },
-                    borderRadius: showCopiedMessage ? "4px" : "50%",
-                  }}
-                  size="small"
-                  title="Share"
-                >
-                  {showCopiedMessage ? (
-                    <span style={{ fontSize: "12px", fontWeight: "bold" }}>
-                      URL Copied
-                    </span>
-                  ) : (
-                    <ShareIcon />
-                  )}
-                </IconButton>
+                {recipe.public && (
+                  <IconButton
+                    onClick={handleShare}
+                    sx={{
+                      backgroundColor: "rgba(255,255,255,0.9)",
+                      "&:hover": { backgroundColor: "white" },
+                      borderRadius: showCopiedMessage ? "4px" : "50%",
+                    }}
+                    size="small"
+                    title="Share"
+                  >
+                    {showCopiedMessage ? (
+                      <span style={{ fontSize: "12px", fontWeight: "bold" }}>
+                        URL Copied
+                      </span>
+                    ) : (
+                      <ShareIcon />
+                    )}
+                  </IconButton>
+                )}
                 <IconButton
                   onClick={handlePrint}
                   sx={{
@@ -814,12 +822,26 @@ const RecipeDetail: React.FC<RecipeDetailProps> = ({ slug }) => {
                       >
                         {recipe.source}
                       </a>
-                      {recipe.shared_family ? " and shared with family" : ""}
+                      {recipe?.shared_family && (
+                        <button
+                          onClick={() => setShowFamilyDetails((prev) => !prev)}
+                          className="text-blue-600 hover:text-blue-800 hover:underline ml-1 font-medium"
+                        >
+                          and shared with family
+                        </button>
+                      )}
                     </>
                   ) : (
                     <>
-                      {recipe.source}
-                      {recipe.shared_family ? " and shared with family" : ""}
+                      {recipe?.source}
+                      {recipe?.shared_family && (
+                        <button
+                          onClick={() => setShowFamilyDetails((prev) => !prev)}
+                          className="text-blue-600 hover:text-blue-800 hover:underline ml-1 font-medium"
+                        >
+                          and shared with family
+                        </button>
+                      )}
                     </>
                   )}
                 </div>
@@ -828,9 +850,67 @@ const RecipeDetail: React.FC<RecipeDetailProps> = ({ slug }) => {
 
             {/* Description */}
             <p className="text-gray-700 leading-relaxed text-xl text-center">
-              {recipe.description}
+              {recipe?.description}
             </p>
           </div>
+
+          {/* Family Details */}
+          {recipe.shared_family && (
+            <div className="mt-4 relative">
+              {showFamilyDetails && (
+                <div className="space-y-4 p-4 mb-8 bg-gray-50 rounded-lg relative">
+                  {/* X icon to close */}
+                  <IconButton
+                    onClick={() => setShowFamilyDetails(false)}
+                    sx={{
+                      position: "absolute",
+                      top: 8,
+                      right: 8,
+                      zIndex: 10,
+                      backgroundColor: "rgba(255,255,255,0.9)",
+                      "&:hover": { backgroundColor: "white" },
+                    }}
+                    size="small"
+                    title="Close Family Details"
+                  >
+                    <CloseIcon />
+                  </IconButton>
+                  {recipe?.familyPhoto || recipe?.familyNotes ? (
+                    <>
+                      {recipe?.familyPhoto && (
+                        <div>
+                          <h4 className="text-lg font-semibold mb-2">
+                            Family Photo
+                          </h4>
+                          <Image
+                            src={recipe?.familyPhoto}
+                            alt="Family recipe photo"
+                            width={400}
+                            height={300}
+                            className="rounded-lg"
+                          />
+                        </div>
+                      )}
+                      {recipe?.familyNotes && (
+                        <div>
+                          <h4 className="text-lg font-semibold mb-2">
+                            Family Notes
+                          </h4>
+                          <p className="text-gray-700 whitespace-pre-wrap">
+                            {recipe?.familyNotes}
+                          </p>
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="text-gray-500 text-center py-4">
+                      No Family Secrets To Show For Now
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Recipe Content */}
           <div className="space-y-4">
@@ -996,27 +1076,27 @@ const RecipeDetail: React.FC<RecipeDetailProps> = ({ slug }) => {
             <CloseIcon />
           </IconButton>
 
-          {currentStep < recipe.steps.length ? (
+          {recipe && currentStep < (recipe?.steps?.length || 0) ? (
             <div className="p-8 text-center flex flex-col justify-center min-h-[300px]">
               <p className="text-2xl text-gray-700 mb-8 leading-relaxed">
-                {recipe.steps[currentStep].step}
+                {recipe?.steps[currentStep]?.step}
               </p>
 
-              {recipe.type === "smoker" && (
+              {recipe?.type === "smoker" && recipe?.steps[currentStep] && (
                 <div className="flex justify-center gap-6 mb-6">
-                  {recipe.steps[currentStep].temperature && (
+                  {recipe?.steps[currentStep]?.temperature && (
                     <div className="flex items-center gap-2">
                       <ThermostatIcon sx={{ color: "black" }} />
-                      <span>{recipe.steps[currentStep].temperature}°F</span>
+                      <span>{recipe?.steps[currentStep]?.temperature}°F</span>
                     </div>
                   )}
-                  {recipe.steps[currentStep].time && (
+                  {recipe?.steps[currentStep]?.time && (
                     <div className="flex items-center gap-2">
                       <TimerIcon sx={{ color: "black" }} />
-                      <span>{recipe.steps[currentStep].time}m</span>
+                      <span>{recipe?.steps[currentStep]?.time}m</span>
                     </div>
                   )}
-                  {recipe.steps[currentStep].superSmoke && (
+                  {recipe?.steps[currentStep]?.superSmoke && (
                     <div className="flex items-center gap-2">
                       <WhatshotIcon sx={{ color: "black" }} />
                       <span>Super Smoke</span>
@@ -1056,16 +1136,16 @@ const RecipeDetail: React.FC<RecipeDetailProps> = ({ slug }) => {
 
           <div className="text-center">
             <div className="text-lg font-semibold text-gray-700">
-              STEP {currentStep + 1} of {recipe.steps.length}
+              STEP {currentStep + 1} of {recipe?.steps?.length || 0}
             </div>
             <div className="text-sm text-gray-500 mt-1">
-              {currentStep < recipe.steps.length
+              {recipe?.steps && currentStep < (recipe?.steps?.length || 0)
                 ? "Swipe or tap to navigate"
                 : "Recipe complete!"}
             </div>
           </div>
 
-          {currentStep < recipe.steps.length ? (
+          {recipe?.steps && currentStep < (recipe?.steps?.length || 0) ? (
             <IconButton
               onClick={nextStep}
               sx={{
@@ -1103,6 +1183,6 @@ const RecipeDetail: React.FC<RecipeDetailProps> = ({ slug }) => {
       {renderFooter("integrated")}
     </div>
   );
-};
+});
 
 export default RecipeDetail;
