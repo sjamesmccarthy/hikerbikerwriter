@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import Link from "next/link";
 
 interface PersonSuggestion {
   name: string;
@@ -95,7 +96,13 @@ export function PeopleSuggestions({
       <ul className="pl-8 text-sm list-disc space-y-2">
         {suggestions.map((person) => (
           <li key={person.person_id} className="text-gray-600">
-            {person.name} ({person.email}) - ({person.person_id})
+            {person.name} ({person.email}) - ({person.person_id}) &mdash;
+            <Link
+              href={`/user/profile?add=${person.person_id}`}
+              className="text-blue-600 hover:text-blue-800 hover:underline ml-2"
+            >
+              Add Person
+            </Link>
           </li>
         ))}
       </ul>
