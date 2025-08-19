@@ -102,7 +102,13 @@ const RecipeBuilder: React.FC = () => {
   // New state for family sharing
   const [sharedFamily, setSharedFamily] = useState(false);
 
-  const categoryOptions = ["Dinner", "Side", "Dessert", "Breakfast"];
+  const categoryOptions = [
+    "Dinner",
+    "Side",
+    "Dessert",
+    "Breakfast",
+    "Cocktails",
+  ];
   const typeOptions = ["smoker", "flat-top", "grill"];
 
   // Function to parse fractions and decimals to numbers
