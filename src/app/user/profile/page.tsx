@@ -32,7 +32,12 @@ import CloseIcon from "@mui/icons-material/Close";
 console.log("Profile page component mounting...");
 
 export default function UserProfilePage() {
-  const { data: session, status } = useSession();
+  const { data: session, status } = useSession({
+    required: true,
+    onUnauthenticated() {
+      router.push("/");
+    },
+  });
   const [isAdminRemote, setIsAdminRemote] = useState<boolean | null>(null);
   const [personIdRemote, setPersonIdRemote] = useState<string | null>(null);
   const [familylineIdRemote, setFamilylineIdRemote] = useState<string | null>(
@@ -41,7 +46,11 @@ export default function UserProfilePage() {
   const router = useRouter();
   const [isAppsMenuOpen, setIsAppsMenuOpen] = useState(false);
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
-  // Remove unused state
+
+  // Handle loading state
+  if (status === "loading" || !session) {
+    return <div>Loading...</div>;
+  }
 
   React.useEffect(() => {
     let mounted = true;
