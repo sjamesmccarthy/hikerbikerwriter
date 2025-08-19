@@ -1,15 +1,18 @@
 "use client";
 
 import React, { useState } from "react";
-import PublicIcon from "@mui/icons-material/Public";
+import { Button, TextField } from "@mui/material";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { Session } from "next-auth";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import AppsIcon from "@mui/icons-material/Apps";
+import { PeopleSuggestions } from "@/components/PeopleSuggestions";
+import { renderFooter } from "@/components/shared/footerHelpers";
 
-console.log("Profile page component mounting...");
+// MUI Icons
+import PublicIcon from "@mui/icons-material/Public";
+import AppsIcon from "@mui/icons-material/Apps";
 import HomeIcon from "@mui/icons-material/Home";
 import EditNoteIcon from "@mui/icons-material/EditNote";
 import AssignmentIcon from "@mui/icons-material/Assignment";
@@ -24,9 +27,9 @@ import TextFieldsIcon from "@mui/icons-material/TextFields";
 import NetworkCheckIcon from "@mui/icons-material/NetworkCheck";
 import CasinoIcon from "@mui/icons-material/Casino";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
-import { Button, TextField } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import { renderFooter } from "@/components/shared/footerHelpers";
+
+console.log("Profile page component mounting...");
 
 export default function UserProfilePage() {
   const { data: session, status } = useSession();
@@ -38,8 +41,7 @@ export default function UserProfilePage() {
   const router = useRouter();
   const [isAppsMenuOpen, setIsAppsMenuOpen] = useState(false);
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
-  const [showSearch, setShowSearch] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  // Remove unused state
 
   React.useEffect(() => {
     let mounted = true;
@@ -334,6 +336,27 @@ export default function UserProfilePage() {
   );
 }
 
+interface FamilyInfo {
+  name?: string;
+  json?: {
+    people?: Array<{
+      person_id: string;
+      name: string;
+      email: string;
+      gender: string;
+      relation: string;
+      network_degree: number;
+      shared_data?: {
+        roll_and_write?: number;
+        field_notes?: number;
+        recipes?: number;
+      };
+    }>;
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+}
+
 // AppSummaries component fetches and displays counts for each app
 function AppSummaries({
   userEmail,
@@ -363,25 +386,6 @@ function AppSummaries({
   }>({ total: 0, public: 0, sharedWithFamily: 0 });
   const [brewLogTotal, setBrewLogTotal] = useState<number>(0);
   const [loading, setLoading] = useState(true);
-  interface FamilyInfo {
-    name?: string;
-    json?: {
-      people?: Array<{
-        person_id: string;
-        name: string;
-        gender: string;
-        relation: string;
-        network_degree: number;
-        shared_data?: {
-          roll_and_write?: number;
-          field_notes?: number;
-          recipes?: number;
-        };
-      }>;
-      [key: string]: unknown;
-    };
-    [key: string]: unknown;
-  }
   const [familyInfo, setFamilyInfo] = useState<FamilyInfo | null>(null);
   const [familyLoading, setFamilyLoading] = useState(true);
   const [showRawJson, setShowRawJson] = useState(false);
@@ -623,82 +627,269 @@ function AppSummaries({
         {/* Add Person Container - toggled by button */}
         {showAddPerson && (
           <div className="w-full bg-gray-50 border border-gray-200 rounded px-4 py-4 mb-6 flex flex-col items-start">
-            <form
-              className="flex flex-row items-center gap-2 w-full"
-              onSubmit={(e) => {
-                e.preventDefault(); /* handle search here */
-              }}
-            >
-              <TextField
-                label="Add a new person to your family/tribe by searching name, email, family or person id"
-                variant="outlined"
-                size="small"
-                fullWidth
-                sx={{ backgroundColor: "white" }}
-                // Optionally, add value/onChange for controlled input
-              />
-              <Button
-                type="submit"
-                variant="contained"
-                color="primary"
-                style={{ textTransform: "none", boxShadow: "none" }}
-              >
-                Search
-              </Button>
-              <button
-                type="button"
-                className="ml-2 text-black hover:text-blue-900"
-                aria-label="Close"
-                onClick={() => setShowAddPerson(false)}
-                style={{
-                  background: "none",
-                  border: "none",
-                  padding: 0,
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
+            <div className="w-full">
+              <form
+                className="flex flex-row items-center gap-2 w-full"
+                onSubmit={(e) => {
+                  e.preventDefault(); /* handle search here */
                 }}
               >
-                <CloseIcon />
-              </button>
-            </form>
-            <div className="pt-4 pl-8 text-sm">
-              Maybe you know these people based on family_id who are not in your
-              people list:
+                <TextField
+                  label="Add a new person to your family/tribe by searching name, email, family or person id"
+                  variant="outlined"
+                  size="small"
+                  fullWidth
+                  sx={{ backgroundColor: "white" }}
+                  // Optionally, add value/onChange for controlled input
+                />
+                <Button
+                  type="submit"
+                  variant="contained"
+                  color="primary"
+                  style={{ textTransform: "none", boxShadow: "none" }}
+                >
+                  Search
+                </Button>
+                <button
+                  type="button"
+                  className="ml-2 text-black hover:text-blue-900"
+                  aria-label="Close"
+                  onClick={() => setShowAddPerson(false)}
+                  style={{
+                    background: "none",
+                    border: "none",
+                    padding: 0,
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                  }}
+                >
+                  <CloseIcon />
+                </button>
+              </form>
+
+              <div id="peopleyoumayknow">
+                {session?.user?.email && familylineIdRemote && (
+                  <PeopleSuggestions
+                    userEmail={session.user.email}
+                    familylineId={familylineIdRemote}
+                    userPersonId={personIdRemote}
+                    existingFamilyEmails={
+                      familyInfo?.json?.people?.map((p) => p.email) || []
+                    }
+                  />
+                )}
+              </div>
             </div>
-            <ul className="pt-4 pl-16 text-sm list-disc">
-              <li>Example Name, email@example.com</li>
-            </ul>
           </div>
         )}
         {/* Family People Card List */}
         {!familyLoading &&
-          familyInfo &&
-          familyInfo.json &&
-          Array.isArray(familyInfo.json.people) &&
-          (familyInfo.json.people.length > 0 ? (
-            <div className="flex flex-col gap-4 mb-6 w-full">
-              {/* Me Card */}
-              {session?.user && (
-                <div className="flex flex-col sm:flex-row sm:items-center bg-white rounded-lg shadow p-4 w-full">
-                  <div className="flex items-center">
-                    <div className="flex items-center justify-center w-12 h-12 rounded-full mr-4">
-                      {session.user.image ? (
-                        <Image
-                          src={session.user.image}
-                          alt="Me"
-                          width={32}
-                          height={32}
-                          className="rounded-full"
-                        />
-                      ) : (
+        familyInfo?.json?.people &&
+        familyInfo.json.people.length > 0 ? (
+          <div className="flex flex-col gap-4 mb-6 w-full">
+            {/* Me Card */}
+            {session?.user && (
+              <div className="flex flex-col sm:flex-row sm:items-center bg-white rounded-lg shadow p-4 w-full">
+                <div className="flex items-center">
+                  <div className="flex items-center justify-center w-12 h-12 rounded-full mr-4">
+                    {session.user.image ? (
+                      <Image
+                        src={session.user.image}
+                        alt="Me"
+                        width={32}
+                        height={32}
+                        className="rounded-full"
+                      />
+                    ) : (
+                      <svg
+                        width="32"
+                        height="32"
+                        viewBox="0 0 32 32"
+                        fill="none"
+                      >
+                        <circle cx="16" cy="16" r="16" fill="#1976d2" />
+                        <text
+                          x="16"
+                          y="21"
+                          textAnchor="middle"
+                          fontSize="16"
+                          fill="#fff"
+                          fontFamily="Arial"
+                        >
+                          {session.user.name?.[0] || "?"}
+                        </text>
+                      </svg>
+                    )}
+                  </div>
+                  <div className="flex-1">
+                    <div className="font-bold text-lg text-gray-800">
+                      Me ({session.user.name})
+                    </div>
+                    <div className="text-xs text-gray-400">
+                      Primary Account {personIdRemote && `(${personIdRemote})`}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Icons section */}
+                <div className="flex flex-row items-center gap-4 mt-4 sm:mt-0 justify-center sm:justify-end sm:ml-auto">
+                  <div className="relative flex items-center">
+                    <CasinoIcon
+                      fontSize="medium"
+                      style={{ color: "#757575" }}
+                    />
+                    {/* Badge hidden until family share data is available */}
+                    {rollCounts.sharedWithFamily !== undefined && (
+                      <span
+                        className="absolute -top-1.5 -right-1.5"
+                        style={{
+                          background:
+                            rollCounts.sharedWithFamily > 0
+                              ? "#dc2626"
+                              : "#000",
+                          color: "#fff",
+                          borderRadius: "50%",
+                          padding: "0 5px",
+                          fontWeight: "bold",
+                          minWidth: "16px",
+                          fontSize: "0.75rem",
+                          height: "18px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          textAlign: "center",
+                          boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
+                        }}
+                      >
+                        {rollCounts.sharedWithFamily}
+                      </span>
+                    )}
+                  </div>
+                  <div className="relative flex items-center">
+                    <StickyNote2Icon
+                      fontSize="medium"
+                      style={{ color: "#757575" }}
+                    />
+                    {/* Badge hidden until family share data is available */}
+                    {fieldCounts.sharedWithFamily !== undefined && (
+                      <span
+                        className="absolute -top-1.5 -right-1.5"
+                        style={{
+                          background:
+                            fieldCounts.sharedWithFamily > 0
+                              ? "#dc2626"
+                              : "#000",
+                          color: "#fff",
+                          borderRadius: "50%",
+                          padding: "0 5px",
+                          fontWeight: "bold",
+                          minWidth: "16px",
+                          fontSize: "0.75rem",
+                          height: "18px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          textAlign: "center",
+                          boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
+                        }}
+                      >
+                        {fieldCounts.sharedWithFamily}
+                      </span>
+                    )}
+                  </div>
+                  <div className="relative flex items-center">
+                    <RestaurantIcon
+                      fontSize="medium"
+                      style={{ color: "#757575" }}
+                    />
+                    {recipeCounts.sharedWithFamily !== undefined && (
+                      <span
+                        className="absolute -top-1.5 -right-1.5"
+                        style={{
+                          background:
+                            recipeCounts.sharedWithFamily > 0
+                              ? "#dc2626"
+                              : "#000",
+                          color: "#fff",
+                          borderRadius: "50%",
+                          padding: "0 5px",
+                          fontWeight: "bold",
+                          minWidth: "16px",
+                          fontSize: "0.75rem",
+                          height: "18px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          textAlign: "center",
+                          boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
+                        }}
+                      >
+                        {recipeCounts.sharedWithFamily}
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Other people */}
+            {familyInfo.json.people.map(
+              (person: {
+                person_id: string;
+                name: string;
+                gender: string;
+                relation: string;
+                network_degree: number;
+                shared_data?: {
+                  roll_and_write?: number;
+                  field_notes?: number;
+                  recipes?: number;
+                };
+              }) => {
+                // ...existing code for person card...
+                let iconColor = "bg-gray-400";
+                if (person.gender === "male") iconColor = "bg-blue-500";
+                else if (person.gender === "female") iconColor = "bg-pink-400";
+                const extendedRelations = ["friend", "co-worker", "neighbor"];
+                let familyType = "Immediate Family";
+                if (extendedRelations.includes(person.relation.toLowerCase())) {
+                  familyType = "Extended Family";
+                } else if (person.network_degree !== 1) {
+                  familyType = "Extended Family";
+                }
+                const shared = person.shared_data || {};
+                return (
+                  <div
+                    key={person.person_id}
+                    className="flex flex-col sm:flex-row sm:items-center bg-white rounded-lg shadow p-4 w-full"
+                  >
+                    {/* Top row for mobile: Profile, name, and relation */}
+                    <div className="flex items-center">
+                      <div
+                        className={`flex items-center justify-center w-12 h-12 rounded-full mr-4`}
+                        style={{
+                          boxShadow: "0 0 0 0 transparent",
+                          border: "none",
+                          background: "none",
+                        }}
+                      >
                         <svg
                           width="32"
                           height="32"
                           viewBox="0 0 32 32"
                           fill="none"
                         >
-                          <circle cx="16" cy="16" r="16" fill="#1976d2" />
+                          <circle
+                            cx="16"
+                            cy="16"
+                            r="16"
+                            fill={(() => {
+                              if (iconColor === "bg-blue-500") return "#3F51B5";
+                              if (iconColor === "bg-pink-400") return "#f472b6";
+                              return "#9ca3af";
+                            })()}
+                          />
                           <text
                             x="16"
                             y="21"
@@ -707,301 +898,114 @@ function AppSummaries({
                             fill="#fff"
                             fontFamily="Arial"
                           >
-                            {session.user.name?.[0] || "?"}
+                            {person.name ? person.name[0] : "?"}
                           </text>
                         </svg>
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <div className="font-bold text-lg text-gray-800">
-                        Me ({session.user.name})
                       </div>
-                      <div className="text-xs text-gray-400">
-                        Primary Account{" "}
-                        {personIdRemote && `(${personIdRemote})`}
+                      <div className="flex-1">
+                        <div className="font-bold text-lg text-gray-800">
+                          {person.name}
+                        </div>
+                        <div className="text-xs text-gray-400">
+                          {familyType} ({person.relation})
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Bottom row for mobile / Right side for desktop: Icons */}
+                    <div className="flex flex-row items-center gap-4 mt-4 sm:mt-0 justify-center sm:justify-end sm:ml-auto">
+                      <div className="relative flex items-center">
+                        <CasinoIcon
+                          fontSize="medium"
+                          style={{ color: "#757575" }}
+                        />
+                        <span
+                          className="absolute -top-1.5 -right-1.5"
+                          style={{
+                            background: "#000",
+                            color: "#fff",
+                            borderRadius: "50%",
+                            padding: "0 5px",
+                            fontWeight: "bold",
+                            minWidth: "16px",
+                            fontSize: "0.75rem",
+                            height: "18px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            textAlign: "center",
+                            boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
+                          }}
+                        >
+                          {shared.roll_and_write ?? 0}
+                        </span>
+                      </div>
+                      <div className="relative flex items-center">
+                        <StickyNote2Icon
+                          fontSize="medium"
+                          style={{ color: "#757575" }}
+                        />
+                        <span
+                          className="absolute -top-1.5 -right-1.5"
+                          style={{
+                            background: "#000",
+                            color: "#fff",
+                            borderRadius: "50%",
+                            padding: "0 5px",
+                            fontWeight: "bold",
+                            minWidth: "16px",
+                            fontSize: "0.75rem",
+                            height: "18px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            textAlign: "center",
+                            boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
+                          }}
+                        >
+                          {shared.field_notes ?? 0}
+                        </span>
+                      </div>
+                      <div className="relative flex items-center">
+                        <RestaurantIcon
+                          fontSize="medium"
+                          style={{ color: "#757575" }}
+                        />
+                        <span
+                          className="absolute -top-1.5 -right-1.5"
+                          style={{
+                            background: "#000",
+                            color: "#fff",
+                            borderRadius: "50%",
+                            padding: "0 5px",
+                            fontWeight: "bold",
+                            minWidth: "16px",
+                            fontSize: "0.75rem",
+                            height: "18px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            textAlign: "center",
+                            boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
+                          }}
+                        >
+                          {shared.recipes ?? 0}
+                        </span>
                       </div>
                     </div>
                   </div>
-
-                  {/* Icons section */}
-                  <div className="flex flex-row items-center gap-4 mt-4 sm:mt-0 justify-center sm:justify-end sm:ml-auto">
-                    <div className="relative flex items-center">
-                      <CasinoIcon
-                        fontSize="medium"
-                        style={{ color: "#757575" }}
-                      />
-                      {/* Badge hidden until family share data is available */}
-                      {rollCounts.sharedWithFamily !== undefined && (
-                        <span
-                          className="absolute -top-1.5 -right-1.5"
-                          style={{
-                            background:
-                              rollCounts.sharedWithFamily > 0
-                                ? "#dc2626"
-                                : "#000",
-                            color: "#fff",
-                            borderRadius: "50%",
-                            padding: "0 5px",
-                            fontWeight: "bold",
-                            minWidth: "16px",
-                            fontSize: "0.75rem",
-                            height: "18px",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            textAlign: "center",
-                            boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
-                          }}
-                        >
-                          {rollCounts.sharedWithFamily}
-                        </span>
-                      )}
-                    </div>
-                    <div className="relative flex items-center">
-                      <StickyNote2Icon
-                        fontSize="medium"
-                        style={{ color: "#757575" }}
-                      />
-                      {/* Badge hidden until family share data is available */}
-                      {fieldCounts.sharedWithFamily !== undefined && (
-                        <span
-                          className="absolute -top-1.5 -right-1.5"
-                          style={{
-                            background:
-                              fieldCounts.sharedWithFamily > 0
-                                ? "#dc2626"
-                                : "#000",
-                            color: "#fff",
-                            borderRadius: "50%",
-                            padding: "0 5px",
-                            fontWeight: "bold",
-                            minWidth: "16px",
-                            fontSize: "0.75rem",
-                            height: "18px",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            textAlign: "center",
-                            boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
-                          }}
-                        >
-                          {fieldCounts.sharedWithFamily}
-                        </span>
-                      )}
-                    </div>
-                    <div className="relative flex items-center">
-                      <RestaurantIcon
-                        fontSize="medium"
-                        style={{ color: "#757575" }}
-                      />
-                      {recipeCounts.sharedWithFamily !== undefined && (
-                        <span
-                          className="absolute -top-1.5 -right-1.5"
-                          style={{
-                            background:
-                              recipeCounts.sharedWithFamily > 0
-                                ? "#dc2626"
-                                : "#000",
-                            color: "#fff",
-                            borderRadius: "50%",
-                            padding: "0 5px",
-                            fontWeight: "bold",
-                            minWidth: "16px",
-                            fontSize: "0.75rem",
-                            height: "18px",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            textAlign: "center",
-                            boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
-                          }}
-                        >
-                          {recipeCounts.sharedWithFamily}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {/* Other people */}
-              {familyInfo.json.people.map(
-                (person: {
-                  person_id: string;
-                  name: string;
-                  gender: string;
-                  relation: string;
-                  network_degree: number;
-                  shared_data?: {
-                    roll_and_write?: number;
-                    field_notes?: number;
-                    recipes?: number;
-                  };
-                }) => {
-                  // ...existing code for person card...
-                  let iconColor = "bg-gray-400";
-                  if (person.gender === "male") iconColor = "bg-blue-500";
-                  else if (person.gender === "female")
-                    iconColor = "bg-pink-400";
-                  const extendedRelations = ["friend", "co-worker", "neighbor"];
-                  let familyType = "Immediate Family";
-                  if (
-                    extendedRelations.includes(person.relation.toLowerCase())
-                  ) {
-                    familyType = "Extended Family";
-                  } else if (person.network_degree !== 1) {
-                    familyType = "Extended Family";
-                  }
-                  const shared = person.shared_data || {};
-                  return (
-                    <div
-                      key={person.person_id}
-                      className="flex flex-col sm:flex-row sm:items-center bg-white rounded-lg shadow p-4 w-full"
-                    >
-                      {/* Top row for mobile: Profile, name, and relation */}
-                      <div className="flex items-center">
-                        <div
-                          className={`flex items-center justify-center w-12 h-12 rounded-full mr-4`}
-                          style={{
-                            boxShadow: "0 0 0 0 transparent",
-                            border: "none",
-                            background: "none",
-                          }}
-                        >
-                          <svg
-                            width="32"
-                            height="32"
-                            viewBox="0 0 32 32"
-                            fill="none"
-                          >
-                            <circle
-                              cx="16"
-                              cy="16"
-                              r="16"
-                              fill={(() => {
-                                if (iconColor === "bg-blue-500")
-                                  return "#3F51B5";
-                                if (iconColor === "bg-pink-400")
-                                  return "#f472b6";
-                                return "#9ca3af";
-                              })()}
-                            />
-                            <text
-                              x="16"
-                              y="21"
-                              textAnchor="middle"
-                              fontSize="16"
-                              fill="#fff"
-                              fontFamily="Arial"
-                            >
-                              {person.name ? person.name[0] : "?"}
-                            </text>
-                          </svg>
-                        </div>
-                        <div className="flex-1">
-                          <div className="font-bold text-lg text-gray-800">
-                            {person.name}
-                          </div>
-                          <div className="text-xs text-gray-400">
-                            {familyType} ({person.relation})
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Bottom row for mobile / Right side for desktop: Icons */}
-                      <div className="flex flex-row items-center gap-4 mt-4 sm:mt-0 justify-center sm:justify-end sm:ml-auto">
-                        <div className="relative flex items-center">
-                          <CasinoIcon
-                            fontSize="medium"
-                            style={{ color: "#757575" }}
-                          />
-                          <span
-                            className="absolute -top-1.5 -right-1.5"
-                            style={{
-                              background: "#000",
-                              color: "#fff",
-                              borderRadius: "50%",
-                              padding: "0 5px",
-                              fontWeight: "bold",
-                              minWidth: "16px",
-                              fontSize: "0.75rem",
-                              height: "18px",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              textAlign: "center",
-                              boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
-                            }}
-                          >
-                            {shared.roll_and_write ?? 0}
-                          </span>
-                        </div>
-                        <div className="relative flex items-center">
-                          <StickyNote2Icon
-                            fontSize="medium"
-                            style={{ color: "#757575" }}
-                          />
-                          <span
-                            className="absolute -top-1.5 -right-1.5"
-                            style={{
-                              background: "#000",
-                              color: "#fff",
-                              borderRadius: "50%",
-                              padding: "0 5px",
-                              fontWeight: "bold",
-                              minWidth: "16px",
-                              fontSize: "0.75rem",
-                              height: "18px",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              textAlign: "center",
-                              boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
-                            }}
-                          >
-                            {shared.field_notes ?? 0}
-                          </span>
-                        </div>
-                        <div className="relative flex items-center">
-                          <RestaurantIcon
-                            fontSize="medium"
-                            style={{ color: "#757575" }}
-                          />
-                          <span
-                            className="absolute -top-1.5 -right-1.5"
-                            style={{
-                              background: "#000",
-                              color: "#fff",
-                              borderRadius: "50%",
-                              padding: "0 5px",
-                              fontWeight: "bold",
-                              minWidth: "16px",
-                              fontSize: "0.75rem",
-                              height: "18px",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              textAlign: "center",
-                              boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
-                            }}
-                          >
-                            {shared.recipes ?? 0}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                }
-              )}
-            </div>
-          ) : (
-            <div className="w-full bg-gray-100 rounded px-4 py-3 mb-8 text-center">
-              <span className="text-gray-600 text-sm">
-                Sorry, but we can&apos;t find any people in your Tribe. Why not
-                invite some? Here is a link.{" "}
-              </span>
-            </div>
-          ))}
+                );
+              }
+            )}
+          </div>
+        ) : (
+          <div className="w-full bg-gray-100 rounded px-4 py-3 mb-8 text-center">
+            <span className="text-gray-600 text-sm">
+              Sorry, but we can&apos;t find any people in your Tribe. Why not
+              invite some? Here is a link.{" "}
+            </span>
+          </div>
+        )}
         {/* End Family People Card List */}
         {familyLoading ? (
           <div className="w-full bg-gray-100 rounded px-4 py-3 mt-2">
