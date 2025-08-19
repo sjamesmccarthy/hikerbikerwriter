@@ -39,6 +39,25 @@ export default function UserProfilePage() {
   const [familylineIdRemote, setFamilylineIdRemote] = useState<string | null>(
     null
   );
+
+  // Show loading state
+  if (status === "loading") {
+    return <div className="p-8 text-center">Loading...</div>;
+  }
+
+  // If not authenticated, show sign in button
+  if (!session) {
+    return (
+      <div className="p-8 text-center">
+        <p className="mb-4">Please sign in to view your profile</p>
+        <button
+          onClick={() => signIn("google")}
+          className="px-4 py-2 rounded bg-blue-600 text-white font-mono text-sm hover:bg-blue-700 transition"
+        >
+          Sign in with Google
+        </button>
+      </div>
+    );
   const [isAppsMenuOpen, setIsAppsMenuOpen] = useState(false);
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
 
