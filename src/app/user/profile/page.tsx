@@ -24,7 +24,7 @@ import TextFieldsIcon from "@mui/icons-material/TextFields";
 import NetworkCheckIcon from "@mui/icons-material/NetworkCheck";
 import CasinoIcon from "@mui/icons-material/Casino";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
-import { Button, TextField, IconButton } from "@mui/material";
+import { Button, TextField } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import { renderFooter } from "@/components/shared/footerHelpers";
 
@@ -622,7 +622,7 @@ function AppSummaries({
 
         {/* Add Person Container - toggled by button */}
         {showAddPerson && (
-          <div className="w-full bg-gray-50 border border-gray-200 rounded px-4 py-4 mb-6 flex flex-col items-start relative">
+          <div className="w-full bg-gray-50 border border-gray-200 rounded px-4 py-4 mb-6 flex flex-col items-start">
             <form
               className="flex flex-row items-center gap-2 w-full"
               onSubmit={(e) => {
@@ -641,26 +641,28 @@ function AppSummaries({
                 type="submit"
                 variant="contained"
                 color="primary"
-                size="large"
-                sx={{
-                  textTransform: "none",
-                  boxShadow: "none",
-                  height: 40,
-                  minWidth: 90,
-                  padding: "0 20px",
-                }}
+                style={{ textTransform: "none", boxShadow: "none" }}
               >
                 Search
               </Button>
-              <IconButton
+              <button
+                type="button"
+                className="ml-2 text-black hover:text-blue-900"
                 aria-label="Close"
                 onClick={() => setShowAddPerson(false)}
-                size="small"
-                sx={{ color: "black" }}
+                style={{
+                  background: "none",
+                  border: "none",
+                  padding: 0,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                }}
               >
-                <CloseIcon fontSize="small" />
-              </IconButton>
+                <CloseIcon />
+              </button>
             </form>
+            <div className="pt-8">Maybe you know these people:</div>
           </div>
         )}
         {/* Family People Card List */}
