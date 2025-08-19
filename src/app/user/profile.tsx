@@ -2,27 +2,23 @@
 
 import { useSession } from "next-auth/react";
 import Image from "next/image";
-import Link from "next/link";
 import RecipeViewer from "../../components/RecipeViewer";
 
 export default function UserProfilePage() {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
 
-  if (!session) {
+  if (status === "loading") {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-2xl font-bold mb-4">
-            Please sign in to view your profile.
-          </h2>
-          <Link href="/api/auth/signin">
-            <button className="px-4 py-2 bg-blue-600 text-white rounded">
-              Sign In
-            </button>
-          </Link>
+          <span className="text-lg text-gray-500">Loading...</span>
         </div>
       </div>
     );
+  }
+
+  if (!session) {
+    return null;
   }
 
   if (!session.user) {
