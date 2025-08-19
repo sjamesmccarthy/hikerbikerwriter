@@ -9,6 +9,14 @@ function generateSlug(title) {
     .trim("-");
 }
 
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: "4mb",
+    },
+  },
+};
+
 export default async function handler(req, res) {
   if (req.method === "GET") {
     try {
@@ -127,7 +135,7 @@ export default async function handler(req, res) {
         source,
         type: type || "grill",
         recommendedPellets,
-        categories: categories || [],
+        category: req.body.category || "Dinner",
         photo,
         prepTime: prepTime || 0,
         cookTime: cookTime || 0,
@@ -142,6 +150,8 @@ export default async function handler(req, res) {
           req.body.shared_family === 1 || req.body.shared_family === true
             ? 1
             : 0,
+        familyPhoto: req.body.familyPhoto || "",
+        familyNotes: req.body.familyNotes || "",
         date: new Date().toISOString(),
         dateAdded: new Date().toISOString(),
         personalNotes: "",
@@ -180,7 +190,7 @@ export default async function handler(req, res) {
         source,
         type,
         recommendedPellets,
-        categories,
+        category, // Changed from categories to category
         photo,
         prepTime,
         cookTime,
@@ -190,6 +200,8 @@ export default async function handler(req, res) {
         notes,
         favorite,
         public: isPublic,
+        familyPhoto,
+        familyNotes,
         userEmail,
         personalNotes,
         isFavorite,
@@ -227,7 +239,7 @@ export default async function handler(req, res) {
         source,
         type: type || "grill",
         recommendedPellets,
-        categories: categories || [],
+        category: req.body.category || existingRecipe.category || "Dinner",
         photo,
         prepTime: prepTime || 0,
         cookTime: cookTime || 0,
@@ -242,6 +254,8 @@ export default async function handler(req, res) {
           req.body.shared_family === 1 || req.body.shared_family === true
             ? 1
             : 0,
+        familyPhoto: req.body.familyPhoto || existingRecipe.familyPhoto || "",
+        familyNotes: req.body.familyNotes || existingRecipe.familyNotes || "",
         date: req.body.date || existingRecipe.date,
         personalNotes: personalNotes || "",
         isFavorite: isFavorite || false,

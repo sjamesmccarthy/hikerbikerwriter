@@ -19,7 +19,6 @@ import {
   MenuItem,
   TextField,
   Button,
-  Chip,
   Switch,
   FormControlLabel,
   IconButton,
@@ -59,6 +58,9 @@ type Recipe = {
   favorite: boolean;
   public: boolean;
   date: string;
+  shared_family?: number;
+  familyPhoto?: string;
+  familyNotes?: string;
 };
 
 const RecipeBuilder: React.FC = () => {
@@ -378,6 +380,7 @@ const RecipeBuilder: React.FC = () => {
         prepTime: prepTime || 0,
         cookTime: cookTime || 0,
         servings: servings || 1,
+        shared_family: sharedFamily ? 1 : 0,
         familyPhoto: familyPhoto || "",
         familyNotes: familyNotes || "",
         ingredients: apiIngredients,
@@ -385,7 +388,6 @@ const RecipeBuilder: React.FC = () => {
         notes: myNotes || "",
         favorite: favorite || false,
         public: isPublic || false,
-        shared_family: sharedFamily ? 1 : 0,
         userEmail: session?.user?.email,
         userName: session?.user?.name,
       };

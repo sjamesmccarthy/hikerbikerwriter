@@ -16,7 +16,6 @@ import {
   Whatshot as WhatshotIcon,
   Close as CloseIcon,
   ExpandMore as ExpandMoreIcon,
-  ExpandLess as ExpandLessIcon,
   Print as PrintIcon,
   PictureAsPdf as PictureAsPdfIcon,
   OutdoorGrill as OutdoorGrillIcon,
@@ -876,32 +875,33 @@ const RecipeDetail = React.memo(function RecipeDetail({
                     <CloseIcon />
                   </IconButton>
                   {recipe?.familyPhoto || recipe?.familyNotes ? (
-                    <>
-                      {recipe?.familyPhoto && (
-                        <div>
-                          <h4 className="text-lg font-semibold mb-2">
-                            Family Photo
-                          </h4>
-                          <Image
-                            src={recipe?.familyPhoto}
-                            alt="Family recipe photo"
-                            width={400}
-                            height={300}
-                            className="rounded-lg"
-                          />
-                        </div>
-                      )}
-                      {recipe?.familyNotes && (
-                        <div>
-                          <h4 className="text-lg font-semibold mb-2">
-                            Family Notes
-                          </h4>
-                          <p className="text-gray-700 whitespace-pre-wrap">
-                            {recipe?.familyNotes}
-                          </p>
-                        </div>
-                      )}
-                    </>
+                    <div>
+                      <h2 className="py-8 text-lg font-semibold mb-2 text-center">
+                        Shhh ...
+                        <br />
+                        Here Are The Family Secrets
+                      </h2>
+                      <div className="flex flex-col md:flex-row gap-6 items-start">
+                        {recipe?.familyPhoto && (
+                          <div className="md:w-1/3 w-full">
+                            <Image
+                              src={recipe.familyPhoto}
+                              alt="Family recipe photo"
+                              width={400}
+                              height={300}
+                              className="rounded-lg object-cover w-full"
+                            />
+                          </div>
+                        )}
+                        {recipe?.familyNotes && (
+                          <div className="md:w-2/3 w-full">
+                            <p className="text-gray-700 whitespace-pre-wrap text-[18px]">
+                              {recipe.familyNotes}
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   ) : (
                     <div className="text-gray-500 text-center py-4">
                       No Family Secrets To Show For Now
