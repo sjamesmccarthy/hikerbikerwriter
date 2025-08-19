@@ -33,12 +33,7 @@ console.log("Profile page component mounting...");
 
 export default function UserProfilePage() {
   const router = useRouter();
-  const { data: session, status } = useSession({
-    required: true,
-    onUnauthenticated() {
-      router.push("/auth/signin");
-    },
-  });
+  const { data: session, status } = useSession();
   const [isAdminRemote, setIsAdminRemote] = useState<boolean | null>(null);
   const [personIdRemote, setPersonIdRemote] = useState<string | null>(null);
   const [familylineIdRemote, setFamilylineIdRemote] = useState<string | null>(
