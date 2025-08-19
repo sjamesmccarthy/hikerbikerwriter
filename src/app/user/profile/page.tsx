@@ -36,7 +36,7 @@ export default function UserProfilePage() {
   const { data: session, status } = useSession({
     required: true,
     onUnauthenticated() {
-      router.push("/");
+      router.push("/auth/signin");
     },
   });
   const [isAdminRemote, setIsAdminRemote] = useState<boolean | null>(null);
