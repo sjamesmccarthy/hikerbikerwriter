@@ -1,6 +1,7 @@
 "use client";
 import React, { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { renderFooter } from "@/components/shared/footerHelpers";
 import {
   ArrowBack as ArrowBackIcon,
@@ -214,9 +215,11 @@ export default function AboutPage() {
               middle. There should be two buttons linking to the apps.
             </p>
             <div className="flex justify-center py-6 w-full">
-              <img
+              <Image
                 src="/images/case-study-image1.png"
                 alt="Screenshot of the development process"
+                width={800}
+                height={450}
                 className="rounded shadow-lg w-full h-auto max-w-full"
               />
             </div>
@@ -301,9 +304,11 @@ export default function AboutPage() {
               We will continue this tomorrow.
             </p>
             <div className="flex justify-center py-6 w-full">
-              <img
+              <Image
                 src="/images/case-study-image2.png"
                 alt="Screenshot of the development process"
+                width={800}
+                height={450}
                 className="rounded shadow-lg w-full h-auto max-w-full"
               />
             </div>
@@ -365,9 +370,11 @@ export default function AboutPage() {
             </p>
 
             <div className="flex justify-center py-6 w-full">
-              <img
+              <Image
                 src="/images/case-study-image3.png"
                 alt="Screenshot of the development process"
+                width={800}
+                height={450}
                 className="rounded shadow-lg w-full h-auto max-w-full"
               />
             </div>
@@ -440,9 +447,11 @@ export default function AboutPage() {
             </p>
 
             <div className="flex justify-center py-6 w-full">
-              <img
+              <Image
                 src="/images/case-study-image4.png"
                 alt="Screenshot of the development process"
+                width={800}
+                height={450}
                 className="rounded shadow-lg w-full h-auto max-w-full"
               />
             </div>
@@ -509,8 +518,7 @@ export default function AboutPage() {
               Next Steps - Product
             </h2>
             <ul className="list-disc ml-6 mb-4">
-              <li>Adding User profiles</li>
-              <li>Adding Recipe sharing features that include with Family</li>
+              <li>Adding more familyline management features</li>
             </ul>
 
             <h2 id="changelog" className="text-xl font-semibold mt-6 mb-2">

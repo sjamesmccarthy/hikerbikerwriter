@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -36,6 +36,8 @@ const LoremIpsumGenerator: React.FC = () => {
   const [paragraphs, setParagraphs] = useState(3);
   const [sentences, setSentences] = useState(5);
   const [words, setWords] = useState(50);
+  const [editingWords, setEditingWords] = useState(false);
+  const wordsInputRef = useRef<HTMLInputElement | null>(null);
   const [generationType, setGenerationType] = useState<
     "paragraphs" | "sentences" | "words"
   >("paragraphs");
@@ -88,12 +90,12 @@ const LoremIpsumGenerator: React.FC = () => {
     hasSubmenu: boolean = false,
     appName?: string
   ) => {
-    if (hasSubmenu && appName) {
-      setOpenSubmenu(openSubmenu === appName ? null : appName);
+    if (hasSubmenu) {
+      setOpenSubmenu(appName || null);
     } else {
-      router.push(path);
       setIsAppsMenuOpen(false);
       setOpenSubmenu(null);
+      router.push(path);
     }
   };
 
@@ -133,11 +135,9 @@ const LoremIpsumGenerator: React.FC = () => {
     "sint",
     "occaecat",
     "cupidatat",
-    "non",
     "proident",
     "sunt",
     "culpa",
-    "qui",
     "officia",
     "deserunt",
     "mollit",
@@ -256,9 +256,18 @@ const LoremIpsumGenerator: React.FC = () => {
   // Discrete slider stops
   const paragraphStops = [1, 5, 10, 15, 20];
   const sentenceStops = [1, 2, 3, 4, 5, 10, 15, 20, 25];
-  const wordStops = [
+  const baseWordStops = [
     5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 100, 150, 200, 250, 350, 500,
   ];
+
+  // For 'words' mode the user requested labels 1-100 in increments of 3
+  const wordStops =
+    generationType === "words"
+      ? Array.from(
+          { length: Math.floor((61 - 1) / 3) + 1 },
+          (_, i) => 1 + i * 3
+        )
+      : baseWordStops;
 
   const nearestStop = (value: number, stops: number[]) => {
     let nearest = stops[0];
@@ -542,16 +551,62 @@ const LoremIpsumGenerator: React.FC = () => {
               {generationType === "words" && (
                 <div className="mb-6">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Number of Words: {words}
+                    Number of Words:{" "}
+                    {!editingWords ? (
+                      <button
+                        type="button"
+                        onClick={() => setEditingWords(true)}
+                        className="ml-2 underline text-blue-600"
+                        aria-label="Edit number of words"
+                      >
+                        {words}
+                      </button>
+                    ) : (
+                      <input
+                        ref={wordsInputRef}
+                        type="number"
+                        defaultValue={String(words)}
+                        min={1}
+                        onBlur={(e) => {
+                          const v = parseInt(
+                            (e.target as HTMLInputElement).value || "0",
+                            10
+                          );
+                          if (!isNaN(v)) {
+                            // Accept manual values beyond labeled stops
+                            setWords(Math.max(1, Math.floor(v)));
+                          }
+                          setEditingWords(false);
+                        }}
+                        onKeyDown={(
+                          e: React.KeyboardEvent<HTMLInputElement>
+                        ) => {
+                          if (e.key === "Enter") {
+                            (e.target as HTMLInputElement).blur();
+                          } else if (e.key === "Escape") {
+                            setEditingWords(false);
+                          }
+                        }}
+                        className="ml-2 w-24 px-2 py-1 border rounded text-sm"
+                        aria-label="Number of words input"
+                        autoFocus
+                      />
+                    )}
                   </label>
                   <input
                     type="range"
                     min={wordStops[0]}
-                    max={wordStops[wordStops.length - 1]}
+                    max={Math.max(wordStops[wordStops.length - 1], words)}
                     value={words}
                     onChange={(e) => {
-                      const val = parseInt(e.target.value);
-                      setWords(nearestStop(val, wordStops));
+                      const val = parseInt(e.target.value, 10);
+                      const highestStop = wordStops[wordStops.length - 1];
+                      if (val > highestStop) {
+                        // accept manual-like movement beyond labeled stops
+                        setWords(val);
+                      } else {
+                        setWords(nearestStop(val, wordStops));
+                      }
                     }}
                     step={1}
                     list="word-stops"

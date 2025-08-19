@@ -57,6 +57,7 @@ export default function UserProfilePage() {
         setIsAdminRemote(false);
         setPersonIdRemote(null);
         setFamilylineIdRemote(null);
+        console.warn("Error fetching user info:", err);
       }
     }
     fetchUserInfo();

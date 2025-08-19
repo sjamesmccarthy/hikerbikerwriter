@@ -1253,652 +1253,682 @@ const BrewDayLog: React.FC = () => {
         </div>
 
         {/* Basic Info */}
-        <div className="py-6 px-6">
-          {/* Centered Image Above Brew Sessions */}
-          <div className="flex justify-center mb-6">
-            <a
-              href="https://thunderstruckbrewing.com"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:opacity-80 transition-opacity"
-            >
-              <Image
-                src="/images/thunderstruckbrewing.png"
-                alt="Thunderstruck Brewing"
-                width={200}
-                height={200}
-                className="object-contain"
-                style={{ maxWidth: "200px", maxHeight: "200px" }}
-              />
-            </a>
-          </div>
-
-          {/* Brew Sessions */}
-          <div className="mb-6">
-            <div className="flex items-center">
-              <button
-                type="button"
-                onClick={() => setShowSessions(!showSessions)}
-                className="flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium text-sm"
+        <div className="py-6 flex justify-center">
+          <div
+            className="w-full max-w-5xl"
+            style={{
+              width: "100%",
+              paddingLeft: 16,
+              paddingRight: 16,
+              boxSizing: "border-box",
+            }}
+          >
+            {/* Centered Image Above Brew Sessions */}
+            <div className="flex justify-center mb-6">
+              <a
+                href="https://thunderstruckbrewing.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:opacity-80 transition-opacity"
               >
-                <FolderIcon fontSize="small" />
-                Brew Sessions ({savedSessions.length}/12)
-                {showSessions ? (
-                  <ExpandLessIcon fontSize="small" />
-                ) : (
-                  <ExpandMoreIcon fontSize="small" />
-                )}
-              </button>
+                <Image
+                  src="/images/thunderstruckbrewing.png"
+                  alt="Thunderstruck Brewing"
+                  width={200}
+                  height={200}
+                  className="object-contain"
+                  style={{ maxWidth: "200px", maxHeight: "200px" }}
+                />
+              </a>
             </div>
 
-            {showSessions && (
-              <div className="mt-3 border-2 border-blue-200 rounded-lg p-4 bg-blue-50">
-                {savedSessions.length === 0 ? (
-                  <div className="p-4 text-gray-500 text-center text-sm">
-                    No saved sessions yet. Click &quot;Save Session&quot; to
-                    save your first session. All sessions are saved to local
-                    storage and considered temporary data stored in your browser
-                    so if you need to keep this be sure to Export using one of
-                    the options at the bottom of the page.
-                  </div>
-                ) : (
-                  <div className="max-h-60 overflow-y-auto">
-                    {savedSessions.map((session) => (
-                      <div
-                        key={session.id}
-                        className="flex items-center justify-between p-3 border-b border-blue-100 last:border-b-0 hover:bg-blue-100 rounded-md mb-1"
-                      >
+            {/* Brew Sessions */}
+            <div className="mb-6">
+              <div className="flex items-center">
+                <button
+                  type="button"
+                  onClick={() => setShowSessions(!showSessions)}
+                  className="flex items-center gap-2 text-blue-600 hover:text-blue-800 font-medium text-sm"
+                >
+                  <FolderIcon fontSize="small" />
+                  Brew Sessions ({savedSessions.length}/12)
+                  {showSessions ? (
+                    <ExpandLessIcon fontSize="small" />
+                  ) : (
+                    <ExpandMoreIcon fontSize="small" />
+                  )}
+                </button>
+              </div>
+
+              {showSessions && (
+                <div className="mt-3 border-2 border-blue-200 rounded-lg p-4 bg-blue-50">
+                  {/* Small disclaimer at top of the Brew Sessions box */}
+
+                  {savedSessions.length === 0 ? (
+                    <div className="p-4 text-blue-500 text-center text-sm">
+                      <span className="font-bold">NO SAVED SESSIONS YET</span>
+                      <br />
+                      Click <span className="font-bold">Save Session</span> to
+                      save your first session. All sessions are saved to local
+                      storage and may not be available on all devices.
+                    </div>
+                  ) : (
+                    <div className="max-h-60 overflow-y-auto">
+                      {savedSessions.map((session) => (
                         <div
-                          className="flex-1 cursor-pointer"
-                          onClick={() => loadSession(session)}
+                          key={session.id}
+                          className="flex items-center justify-between p-3 border-b border-blue-100 last:border-b-0 hover:bg-blue-100 rounded-md mb-1"
                         >
-                          <div className="font-medium text-sm text-gray-900">
-                            {session.name}
+                          <div
+                            className="flex-1 cursor-pointer"
+                            onClick={() => loadSession(session)}
+                          >
+                            <div className="font-medium text-sm text-gray-900">
+                              {session.name}
+                            </div>
+                            <div className="text-xs text-gray-500">
+                              Saved{" "}
+                              {new Date(session.savedAt).toLocaleDateString()}{" "}
+                              {new Date(session.savedAt).toLocaleTimeString(
+                                "en-US",
+                                {
+                                  hour12: false,
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                  second: "2-digit",
+                                }
+                              )}
+                            </div>
                           </div>
-                          <div className="text-xs text-gray-500">
-                            Saved{" "}
-                            {new Date(session.savedAt).toLocaleDateString()}{" "}
-                            {new Date(session.savedAt).toLocaleTimeString(
-                              "en-US",
-                              {
-                                hour12: false,
-                                hour: "2-digit",
-                                minute: "2-digit",
-                                second: "2-digit",
-                              }
-                            )}
-                          </div>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteSession(session.id, session.name);
+                            }}
+                            className="text-red-500 hover:text-red-700 p-1"
+                            title="Delete session"
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </button>
+                        </div>
+                      ))}
+                      <div className="mt-4 text-xs text-blue-700">
+                        * Brew sessions are stored in local storage and may not
+                        appear on all devices and are not permanently saved.
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 mt-6">
+              <div className="flex gap-2">
+                <TextField
+                  fullWidth
+                  label="Beer Name"
+                  variant="outlined"
+                  value={brewData.beerName}
+                  onChange={(e) => updateBrewData("beerName", e.target.value)}
+                  placeholder="e.g., Thunderhop IPA"
+                />
+                <Button
+                  variant="outlined"
+                  onClick={handleBeerXMLImport}
+                  sx={{
+                    height: "56px",
+                    minWidth: "140px",
+                    backgroundColor: xmlJustImported ? "#4caf50" : "#f5f5f5",
+                    "&:hover": {
+                      backgroundColor: xmlJustImported ? "#45a049" : "#e0e0e0",
+                    },
+                    borderColor: xmlJustImported ? "#4caf50" : "#ccc",
+                    color: xmlJustImported ? "white" : "#666",
+                    textTransform: "none",
+                    whiteSpace: "nowrap",
+                    transition: "all 0.3s ease",
+                  }}
+                  startIcon={
+                    xmlJustImported ? <CheckIcon /> : <UploadFileIcon />
+                  }
+                >
+                  {xmlJustImported ? "Done" : "Import XML"}
+                </Button>
+              </div>
+              <div className="flex gap-2">
+                <TextField
+                  fullWidth
+                  label="Batch No."
+                  variant="outlined"
+                  value={brewData.batchNo}
+                  onChange={(e) => updateBrewData("batchNo", e.target.value)}
+                  placeholder="e.g., 001"
+                />
+                <Button
+                  variant="contained"
+                  onClick={saveCurrentSession}
+                  sx={{
+                    height: "56px",
+                    minWidth: "140px",
+                    backgroundColor: sessionJustSaved ? "#4caf50" : "#1976d2",
+                    "&:hover": {
+                      backgroundColor: sessionJustSaved ? "#45a049" : "#115293",
+                    },
+                    transition: "all 0.3s ease",
+                    whiteSpace: "nowrap",
+                    textTransform: "none",
+                  }}
+                  startIcon={sessionJustSaved ? <CheckIcon /> : <SaveIcon />}
+                >
+                  {sessionJustSaved ? "Saved" : "Save Session"}
+                </Button>
+              </div>
+            </div>
+
+            {/* Beer Style & Batch Size */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <div>
+                <FormControl fullWidth>
+                  <InputLabel id="beer-style-label">Beer Style</InputLabel>
+                  <Select
+                    labelId="beer-style-label"
+                    value={brewData.beerStyle}
+                    label="Beer Style"
+                    onChange={(e) =>
+                      updateBrewData("beerStyle", e.target.value)
+                    }
+                    className="text-left"
+                    sx={{
+                      "& .MuiOutlinedInput-input": {
+                        padding: "16.5px 14px", // Match TextField padding
+                      },
+                      "& .MuiInputBase-root": {
+                        height: "56px", // Match TextField height
+                      },
+                    }}
+                  >
+                    <MenuItem value="None">None</MenuItem>
+                    {beerStylesData.beer_style_names.map((style) => (
+                      <MenuItem key={style} value={style}>
+                        {style}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </div>
+              <div>
+                <TextField
+                  fullWidth
+                  label="Batch Size"
+                  variant="outlined"
+                  value={brewData.batchSize}
+                  onChange={(e) => updateBrewData("batchSize", e.target.value)}
+                  placeholder="e.g., 5 gallons"
+                />
+              </div>
+            </div>
+
+            {/* Brew Supplies & Brew Supplies Cost */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <div>
+                <TextField
+                  fullWidth
+                  label="Brew Supplies"
+                  variant="outlined"
+                  value={brewData.brewSupplies}
+                  onChange={(e) =>
+                    updateBrewData("brewSupplies", e.target.value)
+                  }
+                  placeholder="e.g., Hops, Grain, etc."
+                />
+              </div>
+              <div>
+                <TextField
+                  fullWidth
+                  label="Brew Supplies Cost"
+                  variant="outlined"
+                  value={brewData.brewSuppliesCost}
+                  onChange={(e) =>
+                    updateBrewData("brewSuppliesCost", e.target.value)
+                  }
+                  placeholder="e.g., $45.00"
+                />
+              </div>
+            </div>
+
+            {/* Brew System & Yeast Strain */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+              <div>
+                <TextField
+                  fullWidth
+                  label="Brew System"
+                  variant="outlined"
+                  value={brewData.brewSystem}
+                  onChange={(e) => updateBrewData("brewSystem", e.target.value)}
+                  placeholder="e.g., All Grain, Extract, BIAB"
+                />
+              </div>
+              <div>
+                <TextField
+                  fullWidth
+                  label="Yeast Strain"
+                  variant="outlined"
+                  value={brewData.yeastStrain}
+                  onChange={(e) =>
+                    updateBrewData("yeastStrain", e.target.value)
+                  }
+                  placeholder="e.g., Safale US-05, Wyeast 1056"
+                />
+              </div>
+            </div>
+
+            {/* Target Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+              <div>
+                <TextField
+                  fullWidth
+                  label="Pre-Boil Gravity"
+                  variant="outlined"
+                  value={brewData.preBoilGravity}
+                  onChange={(e) =>
+                    updateBrewData("preBoilGravity", e.target.value)
+                  }
+                  placeholder="e.g., 1.050"
+                />
+              </div>
+              <div>
+                <TextField
+                  fullWidth
+                  label="Target OG"
+                  variant="outlined"
+                  value={brewData.targetOG}
+                  onChange={(e) => updateBrewData("targetOG", e.target.value)}
+                  placeholder="e.g., 1.065"
+                />
+              </div>
+              <div>
+                <TextField
+                  fullWidth
+                  label="Target FG"
+                  variant="outlined"
+                  value={brewData.targetFG}
+                  onChange={(e) => updateBrewData("targetFG", e.target.value)}
+                  placeholder="e.g., 1.012"
+                />
+              </div>
+            </div>
+
+            {/* Water Calculations */}
+            <div>
+              <div className="flex items-center gap-2 mb-4">
+                <h3 className="text-lg font-medium text-gray-900">
+                  Water Calculations
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setShowCalculator(!showCalculator)}
+                  className="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-colors"
+                  title="Open Water Calculator"
+                >
+                  <CalculateIcon fontSize="small" />
+                </button>
+              </div>
+
+              {showCalculator && (
+                <div className="border-2 border-blue-200 rounded-lg p-4 bg-blue-50 mb-4">
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <TextField
+                          fullWidth
+                          label="Grain Weight (lbs)"
+                          variant="outlined"
+                          type="number"
+                          slotProps={{ htmlInput: { step: 0.1 } }}
+                          value={calculator.grainWeight}
+                          onChange={(e) =>
+                            updateCalculator("grainWeight", e.target.value)
+                          }
+                          placeholder="e.g., 12.5"
+                        />
+                      </div>
+                      <div>
+                        <TextField
+                          fullWidth
+                          label="Target Volume (gal)"
+                          variant="outlined"
+                          type="number"
+                          slotProps={{ htmlInput: { step: 0.1 } }}
+                          value={calculator.targetVolume}
+                          onChange={(e) =>
+                            updateCalculator("targetVolume", e.target.value)
+                          }
+                          placeholder="e.g., 5.0"
+                        />
+                      </div>
+                      <div>
+                        <TextField
+                          fullWidth
+                          label="Boil Time (min)"
+                          variant="outlined"
+                          type="number"
+                          value={calculator.boilTime}
+                          onChange={(e) =>
+                            updateCalculator("boilTime", e.target.value)
+                          }
+                          placeholder="60"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div>
+                        <TextField
+                          fullWidth
+                          label="Mash Thickness (qt/lb)"
+                          variant="outlined"
+                          type="number"
+                          slotProps={{ htmlInput: { step: 0.05 } }}
+                          value={calculator.mashThickness}
+                          onChange={(e) =>
+                            updateCalculator("mashThickness", e.target.value)
+                          }
+                          placeholder="1.25"
+                        />
+                      </div>
+                      <div>
+                        <TextField
+                          fullWidth
+                          label="Boil Off Rate (gal/hr)"
+                          variant="outlined"
+                          type="number"
+                          slotProps={{ htmlInput: { step: 0.1 } }}
+                          value={calculator.boilOffRate}
+                          onChange={(e) =>
+                            updateCalculator("boilOffRate", e.target.value)
+                          }
+                          placeholder="1.0"
+                        />
+                      </div>
+                      <div>
+                        <TextField
+                          fullWidth
+                          label="Trub Loss (gal)"
+                          variant="outlined"
+                          type="number"
+                          slotProps={{ htmlInput: { step: 0.1 } }}
+                          value={calculator.trubLoss}
+                          onChange={(e) =>
+                            updateCalculator("trubLoss", e.target.value)
+                          }
+                          placeholder="0.5"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex justify-center">
+                      <button
+                        type="button"
+                        onClick={calculateWaterVolumes}
+                        className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        Calculate Water Volumes
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <TextField
+                    fullWidth
+                    label="Strike Water"
+                    variant="outlined"
+                    value={brewData.strikeWater}
+                    onChange={(e) =>
+                      updateBrewData("strikeWater", e.target.value)
+                    }
+                    placeholder="e.g., 5.0 gal"
+                  />
+                </div>
+                <div>
+                  <TextField
+                    fullWidth
+                    label="Sparge Water"
+                    variant="outlined"
+                    value={brewData.spargeWater}
+                    onChange={(e) =>
+                      updateBrewData("spargeWater", e.target.value)
+                    }
+                    placeholder="e.g., 3.5 gal"
+                  />
+                </div>
+                <div>
+                  <TextField
+                    fullWidth
+                    label="Total Water"
+                    variant="outlined"
+                    value={brewData.totalWater}
+                    onChange={(e) =>
+                      updateBrewData("totalWater", e.target.value)
+                    }
+                    placeholder="e.g., 8.5 gal"
+                  />
+                </div>
+                <div>
+                  <TextField
+                    fullWidth
+                    label="Boil Volume"
+                    variant="outlined"
+                    value={brewData.boilVolume}
+                    onChange={(e) =>
+                      updateBrewData("boilVolume", e.target.value)
+                    }
+                    placeholder="e.g., 6.5 gal"
+                  />
+                </div>
+                <div>
+                  <TextField
+                    fullWidth
+                    label="Fermentor Volume"
+                    variant="outlined"
+                    value={brewData.fermentorVolume}
+                    onChange={(e) =>
+                      updateBrewData("fermentorVolume", e.target.value)
+                    }
+                    placeholder="e.g., 5.0 gal"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Brew Day Log */}
+            <div>
+              <div className="flex items-center justify-between mt-8 mb-2">
+                <h2 className="text-xl font-bold text-gray-900">
+                  Brew Data Log (time, step, etc)
+                </h2>
+              </div>
+
+              <div className="mb-4">
+                <div className="flex gap-2 mb-2">
+                  <TextField
+                    fullWidth
+                    variant="outlined"
+                    multiline
+                    rows={1}
+                    value={newLogText}
+                    onChange={(e) => setNewLogText(e.target.value)}
+                    placeholder="Enter brew day log entry..."
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        addLogEntryWithTimer();
+                      }
+                    }}
+                    sx={{ flexGrow: 1 }}
+                  />
+                  <div className="flex flex-col gap-2 min-w-[120px]">
+                    <FormControl>
+                      <InputLabel id="timer-select-label">
+                        Timer (min)
+                      </InputLabel>
+                      <Select
+                        labelId="timer-select-label"
+                        value={selectedTimer}
+                        onChange={(e) => setSelectedTimer(e.target.value)}
+                        label="Timer (min)"
+                        sx={{
+                          height: "56px", // Match TextField height
+                          "& .MuiOutlinedInput-input": {
+                            padding: "16.5px 14px", // Match TextField padding
+                          },
+                          "& .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "#d1d5db",
+                          },
+                          "&:hover .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "#9ca3af",
+                          },
+                          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+                            borderColor: "#3b82f6",
+                            borderWidth: "2px",
+                          },
+                        }}
+                      >
+                        <MenuItem value="">None</MenuItem>
+                        <MenuItem value="1">1</MenuItem>
+                        <MenuItem value="5">5</MenuItem>
+                        <MenuItem value="10">10</MenuItem>
+                        <MenuItem value="15">15</MenuItem>
+                        <MenuItem value="30">30</MenuItem>
+                        <MenuItem value="60">60</MenuItem>
+                        <MenuItem value="75">75</MenuItem>
+                        <MenuItem value="90">90</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </div>
+                </div>
+
+                {/* Add Log Entry Button */}
+                <button
+                  type="button"
+                  onClick={addLogEntryWithTimer}
+                  disabled={!newLogText.trim() && !selectedTimer}
+                  className="flex items-center gap-1 px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:bg-gray-300 disabled:cursor-not-allowed text-sm"
+                >
+                  {selectedTimer ? (
+                    <TimerIcon fontSize="small" />
+                  ) : (
+                    <AddIcon fontSize="small" />
+                  )}
+                  {selectedTimer
+                    ? `Start ${selectedTimer}min Timer`
+                    : "Add Log Entry"}
+                </button>
+              </div>
+
+              {logEntries.length > 0 && (
+                <div className="space-y-2 mb-4">
+                  {logEntries.map((entry) => {
+                    const activeTimer = activeTimers.find(
+                      (timer) => timer.id === entry.id
+                    );
+                    const hasTimer = entry.timer && activeTimer;
+
+                    return (
+                      <div
+                        key={entry.id}
+                        className={`flex items-center gap-2 p-3 rounded-md ${
+                          hasTimer && activeTimer.isActive
+                            ? "bg-blue-50 border border-blue-200"
+                            : "bg-gray-50"
+                        }`}
+                      >
+                        <span className="font-mono text-sm text-gray-600 min-w-[50px] flex-shrink-0">
+                          {entry.timestamp}
+                        </span>
+                        <div className="flex-1">
+                          <span className="text-sm font-mono block lowercase">
+                            {entry.text}
+                          </span>
+                          {hasTimer && (
+                            <div className="flex items-center gap-2 mt-1">
+                              <TimerIcon
+                                fontSize="small"
+                                className="text-blue-600"
+                              />
+                              <span
+                                className={`text-xs font-mono ${
+                                  activeTimer.isActive
+                                    ? "text-blue-600 font-semibold"
+                                    : "text-gray-500"
+                                }`}
+                              >
+                                {getTimerStatusText(activeTimer)}
+                              </span>
+                            </div>
+                          )}
                         </div>
                         <button
                           type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            deleteSession(session.id, session.name);
-                          }}
+                          onClick={() => removeLogEntry(entry.id)}
                           className="text-red-500 hover:text-red-700 p-1"
-                          title="Delete session"
+                          title="Delete log entry"
                         >
                           <DeleteIcon fontSize="small" />
                         </button>
                       </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 mt-6">
-            <div className="flex gap-2">
-              <TextField
-                fullWidth
-                label="Beer Name"
-                variant="outlined"
-                value={brewData.beerName}
-                onChange={(e) => updateBrewData("beerName", e.target.value)}
-                placeholder="e.g., Thunderhop IPA"
-              />
-              <Button
-                variant="outlined"
-                onClick={handleBeerXMLImport}
-                sx={{
-                  height: "56px",
-                  minWidth: "140px",
-                  backgroundColor: xmlJustImported ? "#4caf50" : "#f5f5f5",
-                  "&:hover": {
-                    backgroundColor: xmlJustImported ? "#45a049" : "#e0e0e0",
-                  },
-                  borderColor: xmlJustImported ? "#4caf50" : "#ccc",
-                  color: xmlJustImported ? "white" : "#666",
-                  textTransform: "none",
-                  whiteSpace: "nowrap",
-                  transition: "all 0.3s ease",
-                }}
-                startIcon={xmlJustImported ? <CheckIcon /> : <UploadFileIcon />}
-              >
-                {xmlJustImported ? "Done" : "Import XML"}
-              </Button>
+                    );
+                  })}
+                </div>
+              )}
             </div>
-            <div className="flex gap-2">
-              <TextField
-                fullWidth
-                label="Batch No."
-                variant="outlined"
-                value={brewData.batchNo}
-                onChange={(e) => updateBrewData("batchNo", e.target.value)}
-                placeholder="e.g., 001"
-              />
-              <Button
-                variant="contained"
-                onClick={saveCurrentSession}
-                sx={{
-                  height: "56px",
-                  minWidth: "140px",
-                  backgroundColor: sessionJustSaved ? "#4caf50" : "#1976d2",
-                  "&:hover": {
-                    backgroundColor: sessionJustSaved ? "#45a049" : "#115293",
-                  },
-                  transition: "all 0.3s ease",
-                  whiteSpace: "nowrap",
-                  textTransform: "none",
-                }}
-                startIcon={sessionJustSaved ? <CheckIcon /> : <SaveIcon />}
-              >
-                {sessionJustSaved ? "Saved" : "Save Session"}
-              </Button>
-            </div>
-          </div>
 
-          {/* Beer Style & Batch Size */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            {/* Notes */}
             <div>
-              <FormControl fullWidth>
-                <InputLabel id="beer-style-label">Beer Style</InputLabel>
-                <Select
-                  labelId="beer-style-label"
-                  value={brewData.beerStyle}
-                  label="Beer Style"
-                  onChange={(e) => updateBrewData("beerStyle", e.target.value)}
-                  className="text-left"
-                  sx={{
-                    "& .MuiOutlinedInput-input": {
-                      padding: "16.5px 14px", // Match TextField padding
-                    },
-                    "& .MuiInputBase-root": {
-                      height: "56px", // Match TextField height
-                    },
-                  }}
+              <TextField
+                fullWidth
+                label="General Notes"
+                variant="outlined"
+                multiline
+                rows={4}
+                value={brewData.notes}
+                onChange={(e) => updateBrewData("notes", e.target.value)}
+                placeholder="Any additional notes about the brew day..."
+              />
+            </div>
+
+            {/* Export Buttons */}
+            <div className="pt-6 pb-6">
+              <div className="flex flex-wrap gap-2 justify-center">
+                <button
+                  onClick={exportToCSV}
+                  className="px-3 py-2 text-gray-700 bg-gray-100 hover:text-gray-800 hover:bg-gray-200 rounded text-sm font-medium transition-colors flex items-center gap-1"
+                  title="Export to CSV"
                 >
-                  <MenuItem value="None">None</MenuItem>
-                  {beerStylesData.beer_style_names.map((style) => (
-                    <MenuItem key={style} value={style}>
-                      {style}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </div>
-            <div>
-              <TextField
-                fullWidth
-                label="Batch Size"
-                variant="outlined"
-                value={brewData.batchSize}
-                onChange={(e) => updateBrewData("batchSize", e.target.value)}
-                placeholder="e.g., 5 gallons"
-              />
-            </div>
-          </div>
+                  <FileDownloadIcon sx={{ fontSize: 16 }} />
+                  CSV
+                </button>
 
-          {/* Brew Supplies & Brew Supplies Cost */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <div>
-              <TextField
-                fullWidth
-                label="Brew Supplies"
-                variant="outlined"
-                value={brewData.brewSupplies}
-                onChange={(e) => updateBrewData("brewSupplies", e.target.value)}
-                placeholder="e.g., Hops, Grain, etc."
-              />
-            </div>
-            <div>
-              <TextField
-                fullWidth
-                label="Brew Supplies Cost"
-                variant="outlined"
-                value={brewData.brewSuppliesCost}
-                onChange={(e) =>
-                  updateBrewData("brewSuppliesCost", e.target.value)
-                }
-                placeholder="e.g., $45.00"
-              />
-            </div>
-          </div>
+                <button
+                  onClick={exportToJSON}
+                  className="px-3 py-2 text-gray-700 bg-gray-100 hover:text-gray-800 hover:bg-gray-200 rounded text-sm font-medium transition-colors flex items-center gap-1"
+                  title="Export to JSON"
+                >
+                  <FileDownloadIcon sx={{ fontSize: 16 }} />
+                  JSON
+                </button>
 
-          {/* Brew System & Yeast Strain */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <div>
-              <TextField
-                fullWidth
-                label="Brew System"
-                variant="outlined"
-                value={brewData.brewSystem}
-                onChange={(e) => updateBrewData("brewSystem", e.target.value)}
-                placeholder="e.g., All Grain, Extract, BIAB"
-              />
-            </div>
-            <div>
-              <TextField
-                fullWidth
-                label="Yeast Strain"
-                variant="outlined"
-                value={brewData.yeastStrain}
-                onChange={(e) => updateBrewData("yeastStrain", e.target.value)}
-                placeholder="e.g., Safale US-05, Wyeast 1056"
-              />
-            </div>
-          </div>
-
-          {/* Target Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div>
-              <TextField
-                fullWidth
-                label="Pre-Boil Gravity"
-                variant="outlined"
-                value={brewData.preBoilGravity}
-                onChange={(e) =>
-                  updateBrewData("preBoilGravity", e.target.value)
-                }
-                placeholder="e.g., 1.050"
-              />
-            </div>
-            <div>
-              <TextField
-                fullWidth
-                label="Target OG"
-                variant="outlined"
-                value={brewData.targetOG}
-                onChange={(e) => updateBrewData("targetOG", e.target.value)}
-                placeholder="e.g., 1.065"
-              />
-            </div>
-            <div>
-              <TextField
-                fullWidth
-                label="Target FG"
-                variant="outlined"
-                value={brewData.targetFG}
-                onChange={(e) => updateBrewData("targetFG", e.target.value)}
-                placeholder="e.g., 1.012"
-              />
-            </div>
-          </div>
-
-          {/* Water Calculations */}
-          <div>
-            <div className="flex items-center gap-2 mb-4">
-              <h3 className="text-lg font-medium text-gray-900">
-                Water Calculations
-              </h3>
-              <button
-                type="button"
-                onClick={() => setShowCalculator(!showCalculator)}
-                className="p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded transition-colors"
-                title="Open Water Calculator"
-              >
-                <CalculateIcon fontSize="small" />
-              </button>
-            </div>
-
-            {showCalculator && (
-              <div className="border-2 border-blue-200 rounded-lg p-4 bg-blue-50 mb-4">
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <TextField
-                        fullWidth
-                        label="Grain Weight (lbs)"
-                        variant="outlined"
-                        type="number"
-                        slotProps={{ htmlInput: { step: 0.1 } }}
-                        value={calculator.grainWeight}
-                        onChange={(e) =>
-                          updateCalculator("grainWeight", e.target.value)
-                        }
-                        placeholder="e.g., 12.5"
-                      />
-                    </div>
-                    <div>
-                      <TextField
-                        fullWidth
-                        label="Target Volume (gal)"
-                        variant="outlined"
-                        type="number"
-                        slotProps={{ htmlInput: { step: 0.1 } }}
-                        value={calculator.targetVolume}
-                        onChange={(e) =>
-                          updateCalculator("targetVolume", e.target.value)
-                        }
-                        placeholder="e.g., 5.0"
-                      />
-                    </div>
-                    <div>
-                      <TextField
-                        fullWidth
-                        label="Boil Time (min)"
-                        variant="outlined"
-                        type="number"
-                        value={calculator.boilTime}
-                        onChange={(e) =>
-                          updateCalculator("boilTime", e.target.value)
-                        }
-                        placeholder="60"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <TextField
-                        fullWidth
-                        label="Mash Thickness (qt/lb)"
-                        variant="outlined"
-                        type="number"
-                        slotProps={{ htmlInput: { step: 0.05 } }}
-                        value={calculator.mashThickness}
-                        onChange={(e) =>
-                          updateCalculator("mashThickness", e.target.value)
-                        }
-                        placeholder="1.25"
-                      />
-                    </div>
-                    <div>
-                      <TextField
-                        fullWidth
-                        label="Boil Off Rate (gal/hr)"
-                        variant="outlined"
-                        type="number"
-                        slotProps={{ htmlInput: { step: 0.1 } }}
-                        value={calculator.boilOffRate}
-                        onChange={(e) =>
-                          updateCalculator("boilOffRate", e.target.value)
-                        }
-                        placeholder="1.0"
-                      />
-                    </div>
-                    <div>
-                      <TextField
-                        fullWidth
-                        label="Trub Loss (gal)"
-                        variant="outlined"
-                        type="number"
-                        slotProps={{ htmlInput: { step: 0.1 } }}
-                        value={calculator.trubLoss}
-                        onChange={(e) =>
-                          updateCalculator("trubLoss", e.target.value)
-                        }
-                        placeholder="0.5"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="flex justify-center">
-                    <button
-                      type="button"
-                      onClick={calculateWaterVolumes}
-                      className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      Calculate Water Volumes
-                    </button>
-                  </div>
-                </div>
+                <button
+                  onClick={exportToPDF}
+                  className="px-3 py-2 text-gray-700 bg-gray-100 hover:text-gray-800 hover:bg-gray-200 rounded text-sm font-medium transition-colors flex items-center gap-1"
+                  title="Export to PDF"
+                >
+                  <FileDownloadIcon sx={{ fontSize: 16 }} />
+                  PDF
+                </button>
               </div>
-            )}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <TextField
-                  fullWidth
-                  label="Strike Water"
-                  variant="outlined"
-                  value={brewData.strikeWater}
-                  onChange={(e) =>
-                    updateBrewData("strikeWater", e.target.value)
-                  }
-                  placeholder="e.g., 5.0 gal"
-                />
-              </div>
-              <div>
-                <TextField
-                  fullWidth
-                  label="Sparge Water"
-                  variant="outlined"
-                  value={brewData.spargeWater}
-                  onChange={(e) =>
-                    updateBrewData("spargeWater", e.target.value)
-                  }
-                  placeholder="e.g., 3.5 gal"
-                />
-              </div>
-              <div>
-                <TextField
-                  fullWidth
-                  label="Total Water"
-                  variant="outlined"
-                  value={brewData.totalWater}
-                  onChange={(e) => updateBrewData("totalWater", e.target.value)}
-                  placeholder="e.g., 8.5 gal"
-                />
-              </div>
-              <div>
-                <TextField
-                  fullWidth
-                  label="Boil Volume"
-                  variant="outlined"
-                  value={brewData.boilVolume}
-                  onChange={(e) => updateBrewData("boilVolume", e.target.value)}
-                  placeholder="e.g., 6.5 gal"
-                />
-              </div>
-              <div>
-                <TextField
-                  fullWidth
-                  label="Fermentor Volume"
-                  variant="outlined"
-                  value={brewData.fermentorVolume}
-                  onChange={(e) =>
-                    updateBrewData("fermentorVolume", e.target.value)
-                  }
-                  placeholder="e.g., 5.0 gal"
-                />
-              </div>
-            </div>
-          </div>
-
-          {/* Brew Day Log */}
-          <div>
-            <div className="flex items-center justify-between mt-4 mb-2">
-              <h2 className="text-xl font-bold text-gray-900">
-                Brew Data Log (time, step, etc)
-              </h2>
-            </div>
-
-            <div className="mb-4">
-              <div className="flex gap-2 mb-2">
-                <TextField
-                  fullWidth
-                  variant="outlined"
-                  multiline
-                  rows={1}
-                  value={newLogText}
-                  onChange={(e) => setNewLogText(e.target.value)}
-                  placeholder="Enter brew day log entry..."
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      addLogEntryWithTimer();
-                    }
-                  }}
-                  sx={{ flexGrow: 1 }}
-                />
-                <div className="flex flex-col gap-2 min-w-[120px]">
-                  <FormControl>
-                    <InputLabel id="timer-select-label">Timer (min)</InputLabel>
-                    <Select
-                      labelId="timer-select-label"
-                      value={selectedTimer}
-                      onChange={(e) => setSelectedTimer(e.target.value)}
-                      label="Timer (min)"
-                      sx={{
-                        height: "56px", // Match TextField height
-                        "& .MuiOutlinedInput-input": {
-                          padding: "16.5px 14px", // Match TextField padding
-                        },
-                        "& .MuiOutlinedInput-notchedOutline": {
-                          borderColor: "#d1d5db",
-                        },
-                        "&:hover .MuiOutlinedInput-notchedOutline": {
-                          borderColor: "#9ca3af",
-                        },
-                        "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                          borderColor: "#3b82f6",
-                          borderWidth: "2px",
-                        },
-                      }}
-                    >
-                      <MenuItem value="">None</MenuItem>
-                      <MenuItem value="1">1</MenuItem>
-                      <MenuItem value="5">5</MenuItem>
-                      <MenuItem value="10">10</MenuItem>
-                      <MenuItem value="15">15</MenuItem>
-                      <MenuItem value="30">30</MenuItem>
-                      <MenuItem value="60">60</MenuItem>
-                      <MenuItem value="75">75</MenuItem>
-                      <MenuItem value="90">90</MenuItem>
-                    </Select>
-                  </FormControl>
-                </div>
-              </div>
-
-              {/* Add Log Entry Button */}
-              <button
-                type="button"
-                onClick={addLogEntryWithTimer}
-                disabled={!newLogText.trim() && !selectedTimer}
-                className="flex items-center gap-1 px-3 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:bg-gray-300 disabled:cursor-not-allowed text-sm"
-              >
-                {selectedTimer ? (
-                  <TimerIcon fontSize="small" />
-                ) : (
-                  <AddIcon fontSize="small" />
-                )}
-                {selectedTimer
-                  ? `Start ${selectedTimer}min Timer`
-                  : "Add Log Entry"}
-              </button>
-            </div>
-
-            {logEntries.length > 0 && (
-              <div className="space-y-2 mb-4">
-                {logEntries.map((entry) => {
-                  const activeTimer = activeTimers.find(
-                    (timer) => timer.id === entry.id
-                  );
-                  const hasTimer = entry.timer && activeTimer;
-
-                  return (
-                    <div
-                      key={entry.id}
-                      className={`flex items-center gap-2 p-3 rounded-md ${
-                        hasTimer && activeTimer.isActive
-                          ? "bg-blue-50 border border-blue-200"
-                          : "bg-gray-50"
-                      }`}
-                    >
-                      <span className="font-mono text-sm text-gray-600 min-w-[50px] flex-shrink-0">
-                        {entry.timestamp}
-                      </span>
-                      <div className="flex-1">
-                        <span className="text-sm font-mono block lowercase">
-                          {entry.text}
-                        </span>
-                        {hasTimer && (
-                          <div className="flex items-center gap-2 mt-1">
-                            <TimerIcon
-                              fontSize="small"
-                              className="text-blue-600"
-                            />
-                            <span
-                              className={`text-xs font-mono ${
-                                activeTimer.isActive
-                                  ? "text-blue-600 font-semibold"
-                                  : "text-gray-500"
-                              }`}
-                            >
-                              {getTimerStatusText(activeTimer)}
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => removeLogEntry(entry.id)}
-                        className="text-red-500 hover:text-red-700 p-1"
-                        title="Delete log entry"
-                      >
-                        <DeleteIcon fontSize="small" />
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* Notes */}
-          <div>
-            <TextField
-              fullWidth
-              label="General Notes"
-              variant="outlined"
-              multiline
-              rows={4}
-              value={brewData.notes}
-              onChange={(e) => updateBrewData("notes", e.target.value)}
-              placeholder="Any additional notes about the brew day..."
-            />
-          </div>
-
-          {/* Export Buttons */}
-          <div className="pt-6 pb-6">
-            <div className="flex flex-wrap gap-2 justify-center">
-              <button
-                onClick={exportToCSV}
-                className="px-3 py-2 text-gray-700 bg-gray-100 hover:text-gray-800 hover:bg-gray-200 rounded text-sm font-medium transition-colors flex items-center gap-1"
-                title="Export to CSV"
-              >
-                <FileDownloadIcon sx={{ fontSize: 16 }} />
-                CSV
-              </button>
-
-              <button
-                onClick={exportToJSON}
-                className="px-3 py-2 text-gray-700 bg-gray-100 hover:text-gray-800 hover:bg-gray-200 rounded text-sm font-medium transition-colors flex items-center gap-1"
-                title="Export to JSON"
-              >
-                <FileDownloadIcon sx={{ fontSize: 16 }} />
-                JSON
-              </button>
-
-              <button
-                onClick={exportToPDF}
-                className="px-3 py-2 text-gray-700 bg-gray-100 hover:text-gray-800 hover:bg-gray-200 rounded text-sm font-medium transition-colors flex items-center gap-1"
-                title="Export to PDF"
-              >
-                <FileDownloadIcon sx={{ fontSize: 16 }} />
-                PDF
-              </button>
             </div>
           </div>
         </div>
