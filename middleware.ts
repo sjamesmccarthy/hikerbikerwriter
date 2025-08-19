@@ -3,15 +3,23 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
+  // Check for auth token
   const token = await getToken({
     req: request,
     secret: process.env.NEXTAUTH_SECRET,
   });
 
-  const isAuthPage = request.nextUrl.pathname.startsWith("/user/profile");
+  // Check if it's a protected route
+  const isProtectedRoute = request.nextUrl.pathname.startsWith("/user/profile");
 
-  if (isAuthPage && !token) {
-    const signInUrl = new URL("/api/auth/signin", request.url);
+  // If accessing protected route and not authenticated
+  if (isProtectedRoute && !token) {
+    // Store the current URL to redirect back after login
+    const callbackUrl = encodeURIComponent(request.nextUrl.pathname);
+    const signInUrl = new URL(
+      `/auth/signin?callbackUrl=${callbackUrl}`,
+      request.url
+    );
     return NextResponse.redirect(signInUrl);
   }
 
