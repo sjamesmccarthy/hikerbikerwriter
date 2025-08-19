@@ -8,6 +8,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import AppsIcon from "@mui/icons-material/Apps";
+
+console.log("Profile page component mounting...");
 import HomeIcon from "@mui/icons-material/Home";
 import EditNoteIcon from "@mui/icons-material/EditNote";
 import AssignmentIcon from "@mui/icons-material/Assignment";
@@ -22,7 +24,8 @@ import TextFieldsIcon from "@mui/icons-material/TextFields";
 import NetworkCheckIcon from "@mui/icons-material/NetworkCheck";
 import CasinoIcon from "@mui/icons-material/Casino";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
-import { Button } from "@mui/material";
+import { Button, TextField, IconButton } from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
 import { renderFooter } from "@/components/shared/footerHelpers";
 
 export default function UserProfilePage() {
@@ -35,6 +38,8 @@ export default function UserProfilePage() {
   const router = useRouter();
   const [isAppsMenuOpen, setIsAppsMenuOpen] = useState(false);
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
+  const [showSearch, setShowSearch] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   React.useEffect(() => {
     let mounted = true;
@@ -380,6 +385,7 @@ function AppSummaries({
   const [familyInfo, setFamilyInfo] = useState<FamilyInfo | null>(null);
   const [familyLoading, setFamilyLoading] = useState(true);
   const [showRawJson, setShowRawJson] = useState(false);
+  const [showAddPerson, setShowAddPerson] = useState(false);
 
   // Define types for entries
   interface RollEntry {
@@ -607,11 +613,56 @@ function AppSummaries({
                 textTransform: "none",
                 boxShadow: "none",
               }}
+              onClick={() => setShowAddPerson(true)}
             >
               Add Person
             </Button>
           </div>
         </div>
+
+        {/* Add Person Container - toggled by button */}
+        {showAddPerson && (
+          <div className="w-full bg-gray-50 border border-gray-200 rounded px-4 py-4 mb-6 flex flex-col items-start relative">
+            <form
+              className="flex flex-row items-center gap-2 w-full"
+              onSubmit={(e) => {
+                e.preventDefault(); /* handle search here */
+              }}
+            >
+              <TextField
+                label="Add a new person to your family/tribe"
+                variant="outlined"
+                size="small"
+                fullWidth
+                sx={{ backgroundColor: "white" }}
+                // Optionally, add value/onChange for controlled input
+              />
+              <Button
+                type="submit"
+                variant="contained"
+                color="primary"
+                size="large"
+                sx={{
+                  textTransform: "none",
+                  boxShadow: "none",
+                  height: 40,
+                  minWidth: 90,
+                  padding: "0 20px",
+                }}
+              >
+                Search
+              </Button>
+              <IconButton
+                aria-label="Close"
+                onClick={() => setShowAddPerson(false)}
+                size="small"
+                sx={{ color: "black" }}
+              >
+                <CloseIcon fontSize="small" />
+              </IconButton>
+            </form>
+          </div>
+        )}
         {/* Family People Card List */}
         {!familyLoading &&
           familyInfo &&

@@ -494,8 +494,9 @@ export default function AboutPage() {
                 but never made any code changes.
               </li>
               <li>
-                Sometimes Claude would favor Page router over App router, thus
-                causing inconsistencies in architecture.
+                Claude sometimes forgot to remove unused code and files leaving
+                the developer with a lot of cleanup after a conversational build
+                of new features or editing existing.
               </li>
             </ul>
 
@@ -506,7 +507,8 @@ export default function AboutPage() {
               <li>Code Review</li>
               <li>
                 Optimizations and code efficiency improvements for performance,
-                security and code reusability.
+                security and code reusability, as well as removing lots of
+                unneccessary code, files and documents that are no longer valid.
               </li>
               <li>
                 I originally planned each component to be a separate app and so
