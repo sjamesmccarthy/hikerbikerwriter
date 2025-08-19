@@ -113,6 +113,7 @@ const RollAndWrite: React.FC = () => {
   const [showBackupWarning, setShowBackupWarning] = useState(false);
   const [loadingEntries, setLoadingEntries] = useState(true);
   const [makePublic, setMakePublic] = useState(false);
+  const [sharedFamily, setSharedFamily] = useState(false);
 
   // Add authentication
   const { data: session, status } = useSession();
@@ -251,6 +252,7 @@ const RollAndWrite: React.FC = () => {
         userEmail: session.user.email,
         userName: session.user.name,
         is_public: makePublic,
+        shared_family: sharedFamily,
       };
 
       const res = await fetch("/api/rollnwrite", {
@@ -276,6 +278,7 @@ const RollAndWrite: React.FC = () => {
         setEntries((prev) => [newEntry, ...prev]);
         setContent("");
         setMakePublic(false);
+        setSharedFamily(false);
         setShowForm(false);
         setJustSaved(true);
       } else {
@@ -291,6 +294,7 @@ const RollAndWrite: React.FC = () => {
   const rollAgain = () => {
     setJustSaved(false);
     setMakePublic(false);
+    setSharedFamily(false);
     rollDice();
   };
 
@@ -1051,7 +1055,7 @@ const RollAndWrite: React.FC = () => {
 
                   <div className="space-y-4">
                     {session && (
-                      <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
                         <FormControlLabel
                           control={
                             <Switch
@@ -1061,6 +1065,24 @@ const RollAndWrite: React.FC = () => {
                             />
                           }
                           label="Make Public"
+                          sx={{
+                            "& .MuiFormControlLabel-label": {
+                              fontSize: "0.875rem",
+                              color: "#374151",
+                            },
+                          }}
+                        />
+                        <FormControlLabel
+                          control={
+                            <Switch
+                              checked={sharedFamily}
+                              onChange={(e) =>
+                                setSharedFamily(e.target.checked)
+                              }
+                              size="small"
+                            />
+                          }
+                          label="Share with Family"
                           sx={{
                             "& .MuiFormControlLabel-label": {
                               fontSize: "0.875rem",

@@ -460,7 +460,7 @@ export default function AboutPage() {
               </li>
               <li>
                 Had to make additional requests to Claude for mobile
-                optimizations
+                optimizations about 90% of the time.
               </li>
               <li>
                 Once I ran out of premium requests to use Claude, I switched to
@@ -480,6 +480,14 @@ export default function AboutPage() {
                 use a one-step-at-a-time prompting because each app had its own
                 context and requirements that Claude sometimes became confused.
               </li>
+              <li>
+                Sometimes either Claude or GPT4.1 would summarize what they did
+                but never made any code changes.
+              </li>
+              <li>
+                Sometimes Claude would favor Page router over App router, thus
+                causing inconsistencies in architecture.
+              </li>
             </ul>
 
             <h2 id="nextsteps" className="text-xl font-semibold mt-6 mb-2">
@@ -492,7 +500,6 @@ export default function AboutPage() {
                 security and code reusability.
               </li>
               <li>
-                {" "}
                 I originally planned each component to be a separate app and so
                 the authentication and logged in/out header are independent.
                 These will need to be combined into a single utility class.

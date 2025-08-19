@@ -33,6 +33,7 @@ export async function GET(request) {
         id: row.id.toString(),
         createdAt: row.created,
         is_public: row.is_public,
+        shared_family: Boolean(row.shared_family),
         favorite: row.favorite || 0,
       };
     });
@@ -83,8 +84,13 @@ export async function POST(request) {
 
     // Insert into database
     await pool.execute(
-      "INSERT INTO rollnwrite (user_email, is_public, json) VALUES (?, ?, ?)",
-      [userEmail, entryData.is_public || false, JSON.stringify(fullEntryData)]
+      "INSERT INTO rollnwrite (user_email, is_public, shared_family, json) VALUES (?, ?, ?, ?)",
+      [
+        userEmail,
+        entryData.is_public || false,
+        entryData.shared_family || false,
+        JSON.stringify(fullEntryData),
+      ]
     );
 
     return NextResponse.json(fullEntryData, { status: 201 });
@@ -147,10 +153,13 @@ export async function PUT(request) {
 
     // Update in database
     await pool.execute(
-      "UPDATE rollnwrite SET json = ?, is_public = ? WHERE id = ?",
+      "UPDATE rollnwrite SET json = ?, is_public = ?, shared_family = ? WHERE id = ?",
       [
         JSON.stringify(updatedEntry),
         updates.is_public !== undefined ? updates.is_public : row.is_public,
+        updates.shared_family !== undefined
+          ? updates.shared_family
+          : row.shared_family,
         row.id,
       ]
     );

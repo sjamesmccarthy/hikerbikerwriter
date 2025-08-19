@@ -36,6 +36,7 @@ type FieldNote = {
   mood?: string;
   images?: string[];
   is_public?: boolean;
+  shared_family?: boolean;
 };
 
 interface FieldNoteDetailProps {
@@ -44,7 +45,7 @@ interface FieldNoteDetailProps {
 
 const FieldNoteDetail: React.FC<FieldNoteDetailProps> = ({ slug }) => {
   const router = useRouter();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
   const [fieldNote, setFieldNote] = useState<FieldNote | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -56,10 +57,24 @@ const FieldNoteDetail: React.FC<FieldNoteDetailProps> = ({ slug }) => {
 
   useEffect(() => {
     async function fetchFieldNote() {
+      if (status === "loading") {
+        setLoading(true);
+        return;
+      }
+
       try {
         setLoading(true);
+        setError(null);
+
+        console.log("Fetching field note with session:", {
+          status,
+          isAuthenticated: !!session,
+          userEmail: session?.user?.email,
+          slug,
+        });
+
         const params = new URLSearchParams();
-        if (session?.user?.email) {
+        if (status === "authenticated" && session?.user?.email) {
           params.set("userEmail", session.user.email);
         }
         const queryString = params.toString();
@@ -67,12 +82,20 @@ const FieldNoteDetail: React.FC<FieldNoteDetailProps> = ({ slug }) => {
         if (queryString) {
           url += `?${queryString}`;
         }
+
         const res = await fetch(url);
         if (!res.ok) {
+          const errorData = await res.json();
+          console.error("API Error:", {
+            status: res.status,
+            error: errorData,
+            url: url,
+            userEmail: session?.user?.email,
+          });
           if (res.status === 404) {
-            setError("Field note not found");
+            setError(`Field note not found - ${errorData.error || ""}`);
           } else {
-            setError("Failed to load field note");
+            setError(`Failed to load field note - ${errorData.error || ""}`);
           }
           return;
         }
@@ -87,7 +110,7 @@ const FieldNoteDetail: React.FC<FieldNoteDetailProps> = ({ slug }) => {
     }
 
     fetchFieldNote();
-  }, [slug, session]);
+  }, [slug, session, status]);
 
   const handleEdit = () => {
     setIsEditing(true);
@@ -99,6 +122,8 @@ const FieldNoteDetail: React.FC<FieldNoteDetailProps> = ({ slug }) => {
     tags?: string;
     mood?: string;
     images?: string[];
+    is_public?: boolean;
+    shared_family?: boolean;
   }) => {
     if (!fieldNote) return;
 
@@ -113,6 +138,7 @@ const FieldNoteDetail: React.FC<FieldNoteDetailProps> = ({ slug }) => {
           userEmail: session?.user?.email,
           userName: session?.user?.name,
           ...formData,
+          shared_family: formData.shared_family, // Ensure consistent field name
         }),
       });
 

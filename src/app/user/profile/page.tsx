@@ -27,9 +27,43 @@ import { renderFooter } from "@/components/shared/footerHelpers";
 
 export default function UserProfilePage() {
   const { data: session, status } = useSession();
+  const [isAdminRemote, setIsAdminRemote] = useState<boolean | null>(null);
+  const [personIdRemote, setPersonIdRemote] = useState<string | null>(null);
+  const [familylineIdRemote, setFamilylineIdRemote] = useState<string | null>(
+    null
+  );
   const router = useRouter();
   const [isAppsMenuOpen, setIsAppsMenuOpen] = useState(false);
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
+
+  React.useEffect(() => {
+    let mounted = true;
+    async function fetchUserInfo() {
+      if (!session || !session.user?.email) return;
+      try {
+        const res = await fetch(
+          `/api/userinfo?email=${encodeURIComponent(session.user.email)}`
+        );
+        if (!mounted) return;
+        if (!res.ok) {
+          setIsAdminRemote(false);
+          return;
+        }
+        const data = await res.json();
+        setIsAdminRemote(Boolean(data.is_admin));
+        setPersonIdRemote(data.person_id ?? null);
+        setFamilylineIdRemote(data.familylineid ?? null);
+      } catch (err) {
+        setIsAdminRemote(false);
+        setPersonIdRemote(null);
+        setFamilylineIdRemote(null);
+      }
+    }
+    fetchUserInfo();
+    return () => {
+      mounted = false;
+    };
+  }, [session]);
 
   // Apps menu configuration
   const apps = [
@@ -264,11 +298,26 @@ export default function UserProfilePage() {
               <h1 className="text-2xl font-bold mb-2">
                 {session?.user?.name ?? ""}
               </h1>
-              <p className="text-gray-600 mb-2">{session?.user?.email ?? ""}</p>
+              <p className="text-gray-600 mb-2">
+                {session?.user?.email ?? ""}
+                {isAdminRemote && (
+                  <>
+                    <span className="mx-2 text-gray-500">|</span>
+                    <Link
+                      href="/admin"
+                      className="font-medium text-blue-600 hover:underline"
+                    >
+                      Admin Panel
+                    </Link>
+                  </>
+                )}
+              </p>
             </div>
             <AppSummaries
               userEmail={session?.user?.email ?? ""}
               session={session}
+              personIdRemote={personIdRemote}
+              familylineIdRemote={familylineIdRemote}
             />
           </main>
         </div>
@@ -283,18 +332,24 @@ export default function UserProfilePage() {
 function AppSummaries({
   userEmail,
   session,
+  personIdRemote,
+  familylineIdRemote,
 }: {
   readonly userEmail: string;
   readonly session: Session | null;
+  readonly personIdRemote?: string | null;
+  readonly familylineIdRemote?: string | null;
 }) {
   const [rollCounts, setRollCounts] = useState<{
     total: number;
     public: number;
-  }>({ total: 0, public: 0 });
+    sharedWithFamily: number;
+  }>({ total: 0, public: 0, sharedWithFamily: 0 });
   const [fieldCounts, setFieldCounts] = useState<{
     total: number;
     public: number;
-  }>({ total: 0, public: 0 });
+    sharedWithFamily: number;
+  }>({ total: 0, public: 0, sharedWithFamily: 0 });
   const [recipeCounts, setRecipeCounts] = useState<{
     total: number;
     public: number;
@@ -364,10 +419,12 @@ function AppSummaries({
       setRollCounts({
         total: rollEntries.length,
         public: rollEntries.filter((e) => e.is_public).length,
+        sharedWithFamily: rollEntries.filter((e) => e.shared_family).length,
       });
       setFieldCounts({
         total: fieldEntries.length,
         public: fieldEntries.filter((e) => e.is_public).length,
+        sharedWithFamily: fieldEntries.filter((e) => e.shared_family).length,
       });
       setRecipeCounts({
         total: recipeEntries.length,
@@ -453,6 +510,9 @@ function AppSummaries({
               Public
             </span>
           </div>
+          <span className="text-xs text-gray-700 mt-1 w-full text-center block">
+            {rollCounts.sharedWithFamily ?? 0} Shared With Family
+          </span>
         </div>
         <div className="flex flex-col items-center justify-center rounded-lg bg-gray-100 shadow-sm p-6 transition-all duration-200 hover:shadow-lg hover:-translate-y-1 cursor-pointer min-h-[140px]">
           <StickyNote2Icon fontSize="large" className="mb-2 text-gray-700" />
@@ -475,6 +535,9 @@ function AppSummaries({
               Public
             </span>
           </div>
+          <span className="text-xs text-gray-700 mt-1 w-full text-center block">
+            {fieldCounts.sharedWithFamily ?? 0} Shared With Family
+          </span>
         </div>
         <div className="flex flex-col items-center justify-center rounded-lg bg-gray-100 shadow-sm p-6 transition-all duration-200 hover:shadow-lg hover:-translate-y-1 cursor-pointer min-h-[140px]">
           <RestaurantIcon fontSize="large" className="mb-2 text-gray-700" />
@@ -525,26 +588,28 @@ function AppSummaries({
       </div>
       <hr className="border-t border-gray-200 my-8 w-full" />
       <div className="flex flex-col items-start w-full mb-8">
-        <h2 className="text-xl font-bold text-gray-800 mb-4 text-center w-full">
-          {(() => {
-            if (familyLoading) return "My Family";
-            if (familyInfo?.name) return `${familyInfo.name}'s People`;
-            return "My Family";
-          })()}
-        </h2>
-        <div className="w-full flex justify-end mb-6">
-          <Button
-            variant="contained"
-            startIcon={<PersonAddIcon />}
-            size="small"
-            style={{
-              backgroundColor: "#1976d2",
-              textTransform: "none",
-              boxShadow: "none",
-            }}
-          >
-            Add Person
-          </Button>
+        <div className="w-full flex items-center justify-between mb-6">
+          {familylineIdRemote ? (
+            <div className="text-sm text-gray-700">
+              FamilyLineId: {familylineIdRemote}
+            </div>
+          ) : (
+            <div />
+          )}
+          <div>
+            <Button
+              variant="contained"
+              startIcon={<PersonAddIcon />}
+              size="small"
+              style={{
+                backgroundColor: "#1976d2",
+                textTransform: "none",
+                boxShadow: "none",
+              }}
+            >
+              Add Person
+            </Button>
+          </div>
         </div>
         {/* Family People Card List */}
         {!familyLoading &&
@@ -592,7 +657,8 @@ function AppSummaries({
                         Me ({session.user.name})
                       </div>
                       <div className="text-xs text-gray-400">
-                        Primary Account
+                        Primary Account{" "}
+                        {personIdRemote && `(${personIdRemote})`}
                       </div>
                     </div>
                   </div>
@@ -605,6 +671,31 @@ function AppSummaries({
                         style={{ color: "#757575" }}
                       />
                       {/* Badge hidden until family share data is available */}
+                      {rollCounts.sharedWithFamily !== undefined && (
+                        <span
+                          className="absolute -top-1.5 -right-1.5"
+                          style={{
+                            background:
+                              rollCounts.sharedWithFamily > 0
+                                ? "#dc2626"
+                                : "#000",
+                            color: "#fff",
+                            borderRadius: "50%",
+                            padding: "0 5px",
+                            fontWeight: "bold",
+                            minWidth: "16px",
+                            fontSize: "0.75rem",
+                            height: "18px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            textAlign: "center",
+                            boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
+                          }}
+                        >
+                          {rollCounts.sharedWithFamily}
+                        </span>
+                      )}
                     </div>
                     <div className="relative flex items-center">
                       <StickyNote2Icon
@@ -612,6 +703,31 @@ function AppSummaries({
                         style={{ color: "#757575" }}
                       />
                       {/* Badge hidden until family share data is available */}
+                      {fieldCounts.sharedWithFamily !== undefined && (
+                        <span
+                          className="absolute -top-1.5 -right-1.5"
+                          style={{
+                            background:
+                              fieldCounts.sharedWithFamily > 0
+                                ? "#dc2626"
+                                : "#000",
+                            color: "#fff",
+                            borderRadius: "50%",
+                            padding: "0 5px",
+                            fontWeight: "bold",
+                            minWidth: "16px",
+                            fontSize: "0.75rem",
+                            height: "18px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            textAlign: "center",
+                            boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
+                          }}
+                        >
+                          {fieldCounts.sharedWithFamily}
+                        </span>
+                      )}
                     </div>
                     <div className="relative flex items-center">
                       <RestaurantIcon

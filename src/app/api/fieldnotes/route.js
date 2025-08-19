@@ -32,6 +32,7 @@ export async function GET(request) {
         ...fieldnote,
         id: fieldnote.id || row.id, // Use JSON id or fallback to database id
         is_public: Boolean(row.is_public), // Add is_public from database column
+        shared_family: Boolean(row.shared_family), // Add shared_family from database column
         author:
           fieldnote.by || fieldnote.author || row.user_email || "Anonymous", // Map 'by' field to 'author'
       };
@@ -86,10 +87,11 @@ export async function POST(request) {
 
     // Insert into database
     await pool.execute(
-      "INSERT INTO fieldnotes (user_email, is_public, json) VALUES (?, ?, ?)",
+      "INSERT INTO fieldnotes (user_email, is_public, shared_family, json) VALUES (?, ?, ?, ?)",
       [
         userEmail,
         fieldNoteData.is_public || false,
+        fieldNoteData.share_with_family ? 1 : 0,
         JSON.stringify(fullFieldNoteData),
       ]
     );
@@ -155,10 +157,13 @@ export async function PUT(request) {
 
     // Update in database
     await pool.execute(
-      "UPDATE fieldnotes SET json = ?, is_public = ? WHERE id = ?",
+      "UPDATE fieldnotes SET json = ?, is_public = ?, shared_family = ? WHERE id = ?",
       [
         JSON.stringify(updatedFieldNote),
         updates.is_public !== undefined ? updates.is_public : row.is_public,
+        updates.shared_family !== undefined
+          ? updates.shared_family
+          : row.shared_family,
         row.id,
       ]
     );

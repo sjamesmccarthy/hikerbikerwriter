@@ -24,6 +24,7 @@ import {
   Menu as MenuIcon,
   ArrowBack as ArrowBackIcon,
 } from "@mui/icons-material";
+import Image from "next/image";
 import { useState, useEffect } from "react";
 import { useSession, signIn, signOut } from "next-auth/react";
 
@@ -175,7 +176,18 @@ export default function AdminLayout({
               }
               return (
                 <div className="flex items-center gap-2">
-                  <span className="font-mono text-blue-600 text-sm">
+                  <span className="flex items-center gap-2 font-mono text-blue-600 text-sm">
+                    {session.user?.image && (
+                      <Link href="/user/profile">
+                        <Image
+                          src={session.user.image}
+                          alt={session.user?.name || "User profile"}
+                          width={28}
+                          height={28}
+                          className="rounded-full border border-gray-300 transition"
+                        />
+                      </Link>
+                    )}
                     Signed in as {session.user?.name}
                   </span>
                   <span className="h-4 w-px bg-gray-300 mx-2" />
@@ -298,7 +310,18 @@ export default function AdminLayout({
                 }}
               >
                 <div className="flex flex-col gap-2">
-                  <span className="font-mono text-blue-600 text-sm text-center">
+                  <span className="flex items-center gap-2 justify-center font-mono text-blue-600 text-sm">
+                    {session.user?.image && (
+                      <Link href="/user/profile">
+                        <Image
+                          src={session.user.image}
+                          alt={session.user?.name || "User profile"}
+                          width={28}
+                          height={28}
+                          className="rounded-full border border-gray-300 transition"
+                        />
+                      </Link>
+                    )}
                     Signed in as {session.user?.name}
                   </span>
                   <button

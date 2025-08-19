@@ -31,6 +31,7 @@ type FieldNote = {
   mood?: string;
   images?: string[];
   is_public?: boolean;
+  shared_family?: boolean;
 };
 
 interface FieldNoteFormProps {
@@ -56,6 +57,9 @@ const FieldNoteForm: React.FC<FieldNoteFormProps> = ({
   const [mood, setMood] = useState(initialData?.mood || "");
   const [images, setImages] = useState<string[]>(initialData?.images || []);
   const [makePublic, setMakePublic] = useState(initialData?.is_public || false);
+  const [shareWithFamily, setShareWithFamily] = useState(
+    initialData?.shared_family || false
+  );
 
   // Update form when initialData changes
   useEffect(() => {
@@ -66,6 +70,7 @@ const FieldNoteForm: React.FC<FieldNoteFormProps> = ({
       setMood(initialData.mood || "");
       setImages(initialData.images || []);
       setMakePublic(initialData.is_public || false);
+      setShareWithFamily(initialData.shared_family || false);
     }
   }, [initialData]);
 
@@ -122,23 +127,27 @@ const FieldNoteForm: React.FC<FieldNoteFormProps> = ({
       mood,
       images,
       is_public: makePublic,
+      shared_family: shareWithFamily,
     });
   };
 
   return (
     <div className="p-4 pt-12 max-w-4xl mx-auto">
       <form onSubmit={handleSubmit} style={{ width: "100%" }}>
-        {/* Title and Make Public Toggle */}
-        <div className="flex gap-4 items-end mb-4">
-          <TextField
-            fullWidth
-            label="Title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            variant="outlined"
-            required
-            placeholder="Enter field note title..."
-          />
+        {/* Title Field */}
+        <TextField
+          fullWidth
+          label="Title"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          variant="outlined"
+          required
+          placeholder="Enter field note title..."
+          sx={{ mb: 2 }}
+        />
+
+        {/* Visibility Controls */}
+        <div className="flex flex-wrap gap-4 mb-4">
           <FormControlLabel
             control={
               <Switch
@@ -148,7 +157,18 @@ const FieldNoteForm: React.FC<FieldNoteFormProps> = ({
               />
             }
             label="Make Public"
-            sx={{ minWidth: "160px", mb: 0.5 }}
+            sx={{ minWidth: "160px" }}
+          />
+          <FormControlLabel
+            control={
+              <Switch
+                checked={shareWithFamily}
+                onChange={(e) => setShareWithFamily(e.target.checked)}
+                color="primary"
+              />
+            }
+            label="Share with Family"
+            sx={{ minWidth: "180px" }}
           />
         </div>
 

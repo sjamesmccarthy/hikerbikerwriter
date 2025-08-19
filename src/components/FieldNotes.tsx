@@ -56,6 +56,8 @@ type Note = {
   mood?: string;
   images?: string[];
   is_public?: boolean;
+  shared_family?: boolean;
+  share_with_family?: boolean;
 };
 
 interface AppMenuItem {
@@ -144,6 +146,7 @@ const FieldNotes: React.FC = () => {
   const [editMood, setEditMood] = useState("");
   const [editImages, setEditImages] = useState<string[]>([]);
   const [editMakePublic, setEditMakePublic] = useState(false);
+  const [editShareWithFamily, setEditShareWithFamily] = useState(false);
   const { data: session, status } = useSession();
   const [notes, setNotes] = useState<Note[]>([]);
   const [loadingNotes, setLoadingNotes] = useState(true);
@@ -679,14 +682,18 @@ const FieldNotes: React.FC = () => {
                     >
                       {editId === note.id ? (
                         <div className="flex flex-col h-full w-full">
-                          {/* Title and Make Public Toggle */}
-                          <div className="flex gap-4 items-center mb-3">
+                          {/* Title */}
+                          <div className="mb-3">
                             <input
                               type="text"
                               value={editTitle}
                               onChange={(e) => setEditTitle(e.target.value)}
-                              className="flex-1 font-bold text-gray-900 font-mono px-2 py-1 border border-gray-300 rounded"
+                              className="w-full font-bold text-gray-900 font-mono px-2 py-1 border border-gray-300 rounded"
                             />
+                          </div>
+
+                          {/* Visibility Controls */}
+                          <div className="flex flex-wrap gap-4 mb-3">
                             <FormControlLabel
                               control={
                                 <Switch
@@ -700,6 +707,20 @@ const FieldNotes: React.FC = () => {
                               }
                               label="Make Public"
                               sx={{ minWidth: "140px", fontSize: "0.875rem" }}
+                            />
+                            <FormControlLabel
+                              control={
+                                <Switch
+                                  checked={editShareWithFamily}
+                                  onChange={(e) =>
+                                    setEditShareWithFamily(e.target.checked)
+                                  }
+                                  color="primary"
+                                  size="small"
+                                />
+                              }
+                              label="Share with Family"
+                              sx={{ minWidth: "160px", fontSize: "0.875rem" }}
                             />
                           </div>
                           <textarea
@@ -854,6 +875,7 @@ const FieldNotes: React.FC = () => {
                                       mood: editMood,
                                       images: editImages,
                                       is_public: editMakePublic,
+                                      shared_family: editShareWithFamily,
                                       userEmail: session?.user?.email,
                                       userName: session?.user?.name,
                                     }),
@@ -1003,6 +1025,11 @@ const FieldNotes: React.FC = () => {
                                       setEditImages(note.images || []);
                                       setEditMakePublic(
                                         note.is_public || false
+                                      );
+                                      setEditShareWithFamily(
+                                        note.share_with_family ||
+                                          note.shared_family ||
+                                          false
                                       );
                                     }}
                                   >

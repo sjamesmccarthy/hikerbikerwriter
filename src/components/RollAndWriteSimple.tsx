@@ -94,6 +94,7 @@ const RollAndWrite: React.FC = () => {
   const [isSwapping, setIsSwapping] = useState(false);
   const [colorsSwapped, setColorsSwapped] = useState(false);
   const [makePublic, setMakePublic] = useState(false);
+  const [sharedFamily, setSharedFamily] = useState(false);
 
   // Add authentication
   const { data: session, status } = useSession();
@@ -144,36 +145,39 @@ const RollAndWrite: React.FC = () => {
       return;
     }
 
-    const entryData = {
-      content: content.trim(),
-      dice1: currentDice1,
-      dice2: currentDice2,
-      is_public: makePublic,
-      userEmail: session.user?.email,
-      userName: session.user?.name,
-    };
-
     try {
-      const response = await fetch("/api/rollnwrite", {
+      const userEmail = session.user?.email ?? "";
+      const userName = session.user?.name ?? "";
+
+      const res = await fetch("/api/rollnwrite", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(entryData),
+        body: JSON.stringify({
+          content: content.trim(),
+          dice1: currentDice1,
+          dice2: currentDice2,
+          userEmail,
+          userName,
+          is_public: makePublic,
+          shared_family: sharedFamily,
+        }),
       });
 
-      if (response.ok) {
+      if (res.ok) {
         setJustSaved(true);
         setContent("");
         setShowForm(false);
         setMakePublic(false);
+        setSharedFamily(false);
 
         setTimeout(() => setJustSaved(false), 2000);
 
         // Navigate to the entries list after saving
         router.push("/rollandwrite");
       } else {
-        const errorData = await response.json();
+        const errorData = await res.json();
         console.error("Save failed:", errorData);
         alert(`Failed to save entry: ${errorData.error || "Unknown error"}`);
       }
@@ -554,8 +558,8 @@ const RollAndWrite: React.FC = () => {
                       className="mb-4"
                     />
 
-                    {/* Make Public Toggle */}
-                    <div className="mb-4">
+                    {/* Visibility Toggles */}
+                    <div className="mb-4 flex flex-wrap items-center gap-4">
                       <FormControlLabel
                         control={
                           <Switch
@@ -565,6 +569,17 @@ const RollAndWrite: React.FC = () => {
                           />
                         }
                         label="Make Public"
+                        className="text-sm"
+                      />
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={sharedFamily}
+                            onChange={(e) => setSharedFamily(e.target.checked)}
+                            color="primary"
+                          />
+                        }
+                        label="Share with Family"
                         className="text-sm"
                       />
                     </div>
