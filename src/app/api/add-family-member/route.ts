@@ -16,7 +16,7 @@ interface FamilyMember {
   relation: string;
   person_id: string;
   familylineid: string;
-  network_degree: number;
+  network_level: number;
   email: string;
 }
 
@@ -139,7 +139,7 @@ export async function POST(request: Request) {
       relation: requestBody.relationship,
       person_id: requestBody.userId,
       familylineid: familyline.id,
-      network_degree:
+      network_level:
         networksData.network.find((n) => n.type === requestBody.network)
           ?.level || 1,
       email: userToAdd.email || "",

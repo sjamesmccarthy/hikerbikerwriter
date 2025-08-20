@@ -399,14 +399,8 @@ interface FamilyInfo {
       email: string;
       gender: string;
       relation: string;
-      network_degree: number;
-      shared_data?: {
-        roll_and_write?: number;
-        field_notes?: number;
-        recipes?: number;
-      };
+      network_level: number;
     }>;
-    [key: string]: unknown;
   };
   [key: string]: unknown;
 }
@@ -1129,7 +1123,7 @@ function AppSummaries({
                 name: string;
                 gender: string;
                 relation: string;
-                network_degree: number;
+                network_level: number;
                 shared_data?: {
                   roll_and_write?: number;
                   field_notes?: number;
@@ -1144,7 +1138,7 @@ function AppSummaries({
                 let familyType = "Immediate Family";
                 if (extendedRelations.includes(person.relation.toLowerCase())) {
                   familyType = "Extended Family";
-                } else if (person.network_degree !== 1) {
+                } else if (person.network_level !== 1) {
                   familyType = "Extended Family";
                 }
                 const shared = person.shared_data || {};
