@@ -325,7 +325,7 @@ export default function UserProfilePage() {
               </h1>
               <p className="text-gray-600 mb-2">
                 {session?.user?.email ?? ""}
-                {isAdminRemote && (
+                {isAdminRemote === true && (
                   <>
                     <span className="mx-2 text-gray-500">|</span>
                     <Link

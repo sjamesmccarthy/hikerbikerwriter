@@ -10,7 +10,7 @@ export async function GET(request) {
     }
 
     const [rows] = await pool.query(
-      "SELECT person_id, familylineid, is_admin, created FROM users WHERE email = ? LIMIT 1",
+      "SELECT person_id, is_admin, created FROM users WHERE email = ? LIMIT 1",
       [email]
     );
 
@@ -21,7 +21,6 @@ export async function GET(request) {
     const user = rows[0];
     return NextResponse.json({
       person_id: user.person_id,
-      familylineid: user.familylineid,
       is_admin: Boolean(user.is_admin),
       created: user.created,
     });

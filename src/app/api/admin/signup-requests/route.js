@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../../../../../pages/api/auth/[...nextauth]";
 import pool from "@/lib/db";
+import crypto from "crypto";
 
 // Check if user is admin
 async function checkAdminAuth() {
@@ -142,11 +143,43 @@ export async function PUT(request) {
     if (action === "approve") {
       try {
         console.log("Creating new user with:", { name, email, person_id });
+        const defaultMetadata = {
+          usermeta: {
+            birthdate: "",
+            current_city: "",
+            current_state: "",
+            current_postal_code: "",
+            hometown_city: "",
+            hometown_state: "",
+            other_names: "",
+            social: {
+              facebook: "",
+              linkedin: "",
+              instagram: "",
+              x_twitter: "",
+            },
+            links: {
+              personal_website: "",
+            },
+            settings: {
+              theme: "system",
+              notifications: false,
+            },
+          },
+        };
+
         await pool.execute(
-          "INSERT INTO users (name, email, oauth, is_admin, person_id) VALUES (?, ?, 'GOOGLE', 0, ?)",
-          [name, email, person_id]
+          "INSERT INTO users (name, email, oauth, is_admin, person_id, metadata) VALUES (?, ?, 'GOOGLE', 0, ?, ?)",
+          [name, email, person_id, defaultMetadata]
         );
-        console.log("User created successfully");
+
+        // Create familyline record with UUID and empty people array
+        const uuid = crypto.randomUUID();
+        await pool.execute(
+          "INSERT INTO familyline (uuid, person_id, json) VALUES (?, ?, ?)",
+          [uuid, person_id, '{"people": []}']
+        );
+        console.log("User and familyline record created successfully");
       } catch (error) {
         if (error.code === "ER_DUP_ENTRY") {
           return NextResponse.json(
