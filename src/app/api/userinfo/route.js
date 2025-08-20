@@ -9,8 +9,9 @@ export async function GET(request) {
       return NextResponse.json({ error: "Missing email" }, { status: 400 });
     }
 
+    console.log("----route.js/api/userinfo");
     const [rows] = await pool.query(
-      "SELECT person_id, is_admin, created FROM users WHERE email = ? LIMIT 1",
+      "SELECT person_id, name, is_admin, created FROM users WHERE email = ? LIMIT 1",
       [email]
     );
 
@@ -23,6 +24,7 @@ export async function GET(request) {
       person_id: user.person_id,
       is_admin: Boolean(user.is_admin),
       created: user.created,
+      name: user.name,
     });
   } catch (err) {
     console.error("Error in GET /api/userinfo:", err);

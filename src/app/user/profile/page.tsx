@@ -65,6 +65,7 @@ export default function UserProfilePage() {
   const { data: session, status } = useSession();
   const [isAdminRemote, setIsAdminRemote] = useState<boolean | null>(null);
   const [personIdRemote, setPersonIdRemote] = useState<string | null>(null);
+  const [nameFromFB, setNameFromFB] = useState<string | null>(null);
   const [familylineIdRemote, setFamilylineIdRemote] = useState<string | null>(
     null
   );
@@ -75,6 +76,7 @@ export default function UserProfilePage() {
     let mounted = true;
     async function fetchUserInfo() {
       if (!session?.user?.email) return;
+      console.log("inUseEffect");
       try {
         const res = await fetch(
           `/api/userinfo?email=${encodeURIComponent(session.user.email)}`
@@ -89,6 +91,7 @@ export default function UserProfilePage() {
         console.log("User info data:", data);
         setIsAdminRemote(Boolean(data.is_admin));
         setPersonIdRemote(data.person_id ?? null);
+        setNameFromFB(data.name ?? session.user?.name ?? null);
         if (data.familyline_id) {
           console.log("Setting familylineId:", data.familyline_id);
           setFamilylineIdRemote(data.familyline_id);
@@ -332,7 +335,7 @@ export default function UserProfilePage() {
                         onClick={() => router.push("/user/profile")}
                       />
                     )}
-                    Signed in as {session.user?.name}
+                    Signed in as {nameFromFB ?? null}
                   </span>
                   <span className="h-4 w-px bg-gray-300 mx-2" />
                   <button
@@ -357,9 +360,7 @@ export default function UserProfilePage() {
                   className="rounded-full border border-gray-300 mb-4"
                 />
               )}
-              <h1 className="text-2xl font-bold mb-2">
-                {session?.user?.name ?? ""}
-              </h1>
+              <h1 className="text-2xl font-bold mb-2">{nameFromFB ?? ""}</h1>
               <p className="text-gray-600 mb-2">
                 {session?.user?.email ?? ""}
                 {isAdminRemote === true && (
@@ -380,6 +381,7 @@ export default function UserProfilePage() {
               session={session}
               personIdRemote={personIdRemote}
               familylineIdRemote={familylineIdRemote}
+              nameFromFB={nameFromFB}
             />
           </main>
         </div>
@@ -411,11 +413,13 @@ function AppSummaries({
   session,
   personIdRemote,
   familylineIdRemote,
+  nameFromFB,
 }: {
   readonly userEmail: string;
   readonly session: Session | null;
   readonly personIdRemote?: string | null;
   readonly familylineIdRemote?: string | null;
+  readonly nameFromFB?: string | null;
 }) {
   const [rollCounts, setRollCounts] = useState<{
     total: number;
@@ -1007,7 +1011,7 @@ function AppSummaries({
                   </div>
                   <div className="flex-1">
                     <div className="font-bold text-lg text-gray-800">
-                      Me ({session.user.name})
+                      Me ({nameFromFB ?? session.user.name ?? null})
                     </div>
                     <div className="text-xs text-gray-400">
                       Primary Account {personIdRemote && `(${personIdRemote})`}
