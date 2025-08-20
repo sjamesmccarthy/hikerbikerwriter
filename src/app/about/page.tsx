@@ -477,7 +477,11 @@ export default function AboutPage() {
                 understanding the context of the app and the codebase. In some
                 cases GPT-4.1 would change things that Claude had already done
                 and break functionality. More often than not I had to revert the
-                changes and ask Claude to fix it.
+                changes and ask Claude to fix it. Claude Sonnet 3.5 was
+                generally as helpful but not quite as aware of the specific
+                nuances of the app and often left duplicate code and files
+                hanging around that needed manual cleanup. 3.5 also tended to
+                hallucinate more often than Claude Sonnet 4.1.
               </li>
               <li>
                 For unknown reasons, Claude used both page and app router for
@@ -534,6 +538,16 @@ export default function AboutPage() {
                 view on GitHub
               </a>
             </h2>
+
+            <h3 className="font-semibold mt-4 mb-1">v1.7.0</h3>
+            <ul className="list-disc ml-6 mb-2">
+              <li>
+                Completed initial family mapping in MySQL database and the
+                ability to find family members by their email addresses or name
+                and then add them to your familyline.
+              </li>
+            </ul>
+
             <h3 className="font-semibold mt-4 mb-1">v1.6.0</h3>
             <ul className="list-disc ml-6 mb-2">
               <li>

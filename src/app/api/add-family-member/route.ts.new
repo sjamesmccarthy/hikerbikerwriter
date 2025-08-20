@@ -94,10 +94,7 @@ function createFamilyMember(
   };
 }
 
-async function updateFamilyLine(
-  familyline: FamilyLine,
-  familyData: FamilyData
-): Promise<void> {
+async function updateFamilyLine(familyline: FamilyLine, familyData: FamilyData): Promise<void> {
   await pool.execute("UPDATE familyline SET json = ? WHERE id = ?", [
     JSON.stringify(familyData),
     familyline.id,
@@ -111,9 +108,7 @@ async function processFamilyUpdate(
 ): Promise<FamilyData> {
   const familyData = parseFamilyData(familyline.json);
 
-  if (
-    familyData.people.some((p: FamilyMember) => p.email === userToAdd.email)
-  ) {
+  if (familyData.people.some((p: FamilyMember) => p.email === userToAdd.email)) {
     throw new Error("User is already in the family");
   }
 
@@ -161,25 +156,16 @@ export async function POST(request: Request) {
     }
 
     try {
-      const familyData = await processFamilyUpdate(
-        userToAdd,
-        requestBody,
-        familyline
-      );
+      const familyData = await processFamilyUpdate(userToAdd, requestBody, familyline);
       const addedPersonFamilyline = await getFamilyLine(userToAdd.email);
 
       if (addedPersonFamilyline) {
-        const addedPersonFamilyData = parseFamilyData(
-          addedPersonFamilyline.json
-        );
+        const addedPersonFamilyData = parseFamilyData(addedPersonFamilyline.json);
         const loggedInUser = await getUser(familyline.person_id);
 
-        if (
-          loggedInUser &&
-          !addedPersonFamilyData.people.some(
-            (p: FamilyMember) => p.email === requestBody.userEmail
-          )
-        ) {
+        if (loggedInUser && !addedPersonFamilyData.people.some(
+          (p: FamilyMember) => p.email === requestBody.userEmail
+        )) {
           const addLoggedInUser = createFamilyMember(
             loggedInUser,
             requestBody.relationship,
@@ -190,7 +176,7 @@ export async function POST(request: Request) {
 
           await Promise.all([
             updateFamilyLine(familyline, familyData),
-            updateFamilyLine(addedPersonFamilyline, addedPersonFamilyData),
+            updateFamilyLine(addedPersonFamilyline, addedPersonFamilyData)
           ]);
         }
       }
@@ -201,11 +187,11 @@ export async function POST(request: Request) {
         familyData,
       });
     } catch (error) {
-      if (
-        error instanceof Error &&
-        error.message === "User is already in the family"
-      ) {
-        return NextResponse.json({ error: error.message }, { status: 400 });
+      if (error instanceof Error && error.message === "User is already in the family") {
+        return NextResponse.json(
+          { error: error.message },
+          { status: 400 }
+        );
       }
       throw error;
     }
