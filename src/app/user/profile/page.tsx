@@ -407,6 +407,67 @@ function AppSummaries({
   const [familyLoading, setFamilyLoading] = useState(true);
   const [showRawJson, setShowRawJson] = useState(false);
   const [showAddPerson, setShowAddPerson] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searching, setSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState<
+    Array<{
+      id: number;
+      name: string;
+      email: string;
+    }>
+  >([]);
+
+  const handleAddPerson = async (user: {
+    id: number;
+    name: string;
+    email: string;
+  }) => {
+    if (!familylineIdRemote || !userEmail) return;
+
+    try {
+      const response = await fetch("/api/add-family-member", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          familylineId: familylineIdRemote,
+          userEmail: userEmail,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || "Failed to add family member");
+      }
+
+      // Clear the search
+      setSearchResults([]);
+      setSearchQuery("");
+      setShowAddPerson(false);
+
+      // Refresh the family data
+      const familyResponse = await fetch(
+        `/api/familyline?email=${encodeURIComponent(userEmail)}`
+      );
+      if (familyResponse.ok) {
+        const data = await familyResponse.json();
+        // Ensure data.json is always an object, not a string
+        if (data && typeof data.json === "string") {
+          try {
+            data.json = JSON.parse(data.json);
+          } catch {
+            data.json = {};
+          }
+        }
+        setFamilyInfo(data);
+      }
+    } catch (error) {
+      console.error("Error adding family member:", error);
+      // You might want to show an error message to the user here
+    }
+  };
 
   // Define types for entries
   interface RollEntry {
@@ -647,31 +708,55 @@ function AppSummaries({
             <div className="w-full">
               <form
                 className="flex flex-row items-center gap-2 w-full"
-                onSubmit={(e) => {
-                  e.preventDefault(); /* handle search here */
+                onSubmit={async (e) => {
+                  e.preventDefault();
+                  if (!searchQuery.trim()) return;
+
+                  setSearching(true);
+                  try {
+                    const response = await fetch(
+                      `/api/user-search?q=${encodeURIComponent(
+                        searchQuery
+                      )}&personId=${personIdRemote || ""}`
+                    );
+                    if (!response.ok) throw new Error("Search failed");
+                    const data = await response.json();
+                    setSearchResults(data);
+                  } catch (error) {
+                    console.error("Search error:", error);
+                    // You might want to show an error message to the user here
+                  } finally {
+                    setSearching(false);
+                  }
                 }}
               >
                 <TextField
-                  label="Add a new person to your family/tribe by searching name, email, family or person id"
+                  label="Add a new person to your family/tribe by searching name or email (eg., John Doe or john@gmail.com)."
                   variant="outlined"
                   size="small"
                   fullWidth
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
                   sx={{ backgroundColor: "white" }}
-                  // Optionally, add value/onChange for controlled input
                 />
                 <Button
                   type="submit"
                   variant="contained"
                   color="primary"
+                  disabled={searching}
                   style={{ textTransform: "none", boxShadow: "none" }}
                 >
-                  Search
+                  {searching ? "Searching..." : "Search"}
                 </Button>
                 <button
                   type="button"
                   className="ml-2 text-black hover:text-blue-900"
                   aria-label="Close"
-                  onClick={() => setShowAddPerson(false)}
+                  onClick={() => {
+                    setShowAddPerson(false);
+                    setSearchResults([]);
+                    setSearchQuery("");
+                  }}
                   style={{
                     background: "none",
                     border: "none",
@@ -684,6 +769,33 @@ function AppSummaries({
                   <CloseIcon />
                 </button>
               </form>
+
+              {/* Search Results */}
+              {searchResults.length > 0 && (
+                <div className="mt-4 space-y-2">
+                  {searchResults.map((user) => (
+                    <div
+                      key={user.id}
+                      className="flex items-center justify-between bg-white p-3 rounded-md shadow-sm"
+                    >
+                      <div>
+                        <div className="font-medium">{user.name}</div>
+                        <div className="text-sm text-gray-500">
+                          {user.email}
+                        </div>
+                      </div>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        onClick={() => handleAddPerson(user)}
+                        style={{ textTransform: "none" }}
+                      >
+                        Add to Family
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
 
               <div id="peopleyoumayknow">
                 {session?.user?.email && familylineIdRemote && (
