@@ -1,7 +1,14 @@
 "use client";
 
 import React, { useState } from "react";
-import { Button, TextField, MenuItem } from "@mui/material";
+import {
+  Button,
+  TextField,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Select,
+} from "@mui/material";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { Session } from "next-auth";
 import Image from "next/image";
@@ -78,9 +85,17 @@ export default function UserProfilePage() {
           return;
         }
         const data = await res.json();
+        console.log("User info response:", data);
+        console.log("User info data:", data);
         setIsAdminRemote(Boolean(data.is_admin));
         setPersonIdRemote(data.person_id ?? null);
-        setFamilylineIdRemote(data.familylineid ?? null);
+        if (data.familyline_id) {
+          console.log("Setting familylineId:", data.familyline_id);
+          setFamilylineIdRemote(data.familyline_id);
+        } else {
+          console.log("No familyline_id in response");
+          setFamilylineIdRemote(null);
+        }
       } catch (err) {
         setIsAdminRemote(false);
         setPersonIdRemote(null);
@@ -431,8 +446,11 @@ function AppSummaries({
   const [showAddPerson, setShowAddPerson] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searching, setSearching] = useState(false);
+  const [relationship, setRelationship] = useState("");
+  const [network, setNetwork] = useState("");
+  const [selectedUser, setSelectedUser] = useState<SearchUser | null>(null);
   interface SearchUser {
-    id: number;
+    person_id: string;
     name: string;
     email: string;
     relationship?: string;
@@ -441,8 +459,47 @@ function AppSummaries({
 
   const [searchResults, setSearchResults] = useState<SearchUser[]>([]);
 
+  const handleSearch = async (query: string) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    setSearching(true);
+    try {
+      const res = await fetch(
+        `/api/search-users?q=${encodeURIComponent(query)}`
+      );
+      if (res.ok) {
+        const data = await res.json();
+        setSearchResults(data);
+      }
+    } catch (error) {
+      console.error("Error searching users:", error);
+    }
+    setSearching(false);
+  };
+
   const handleAddPerson = async (user: SearchUser) => {
-    if (!familylineIdRemote || !userEmail) return;
+    console.log("handleAddPerson called with:", {
+      user,
+      relationship,
+      network,
+    });
+
+    if (!userEmail) {
+      console.error("Missing user email");
+      return;
+    }
+
+    if (!relationship) {
+      console.error("Please select a relationship");
+      return;
+    }
+
+    if (!network) {
+      console.error("Please select a network");
+      return;
+    }
 
     try {
       const response = await fetch("/api/add-family-member", {
@@ -451,43 +508,49 @@ function AppSummaries({
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          userId: user.id,
-          familylineId: familylineIdRemote,
+          userId: user.person_id,
           userEmail: userEmail,
-          relationship: user.relationship,
-          network: user.network,
+          relationship: relationship,
+          network: network,
         }),
       });
 
+      const data = await response.json();
+      console.log("API Response:", data);
+
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || "Failed to add family member");
+        throw new Error(data.error || "Failed to add family member");
       }
 
-      // Clear the search
+      // Clear form and refresh data
       setSearchResults([]);
       setSearchQuery("");
       setShowAddPerson(false);
 
-      // Refresh the family data
-      const familyResponse = await fetch(
-        `/api/familyline?email=${encodeURIComponent(userEmail)}`
-      );
-      if (familyResponse.ok) {
-        const data = await familyResponse.json();
-        // Ensure data.json is always an object, not a string
-        if (data && typeof data.json === "string") {
-          try {
-            data.json = JSON.parse(data.json);
-          } catch {
-            data.json = {};
+      // Refresh family data
+      try {
+        const res = await fetch(
+          `/api/familyline?email=${encodeURIComponent(userEmail)}`
+        );
+        if (res.ok) {
+          const data = await res.json();
+          // Ensure data.json is always an object, not a string
+          if (data && typeof data.json === "string") {
+            try {
+              data.json = JSON.parse(data.json);
+            } catch {
+              data.json = {};
+            }
           }
+          setFamilyInfo(data);
+        } else {
+          setFamilyInfo(null);
         }
-        setFamilyInfo(data);
+      } catch {
+        setFamilyInfo(null);
       }
     } catch (error) {
       console.error("Error adding family member:", error);
-      // You might want to show an error message to the user here
     }
   };
 
@@ -810,7 +873,7 @@ function AppSummaries({
                 <div className="mt-4 space-y-2">
                   {searchResults.map((user) => (
                     <div
-                      key={user.id}
+                      key={user.person_id}
                       className="flex items-center justify-between bg-white p-3 rounded-md shadow-sm"
                     >
                       <div>
@@ -823,10 +886,11 @@ function AppSummaries({
                         <TextField
                           select
                           size="small"
-                          value={user.relationship || ""}
+                          value={relationship}
                           onChange={(e) => {
+                            setRelationship(e.target.value);
                             const newResults = searchResults.map((u) =>
-                              u.id === user.id
+                              u.person_id === user.person_id
                                 ? { ...u, relationship: e.target.value }
                                 : u
                             );
@@ -851,10 +915,11 @@ function AppSummaries({
                         <TextField
                           select
                           size="small"
-                          value={user.network || ""}
+                          value={network}
                           onChange={(e) => {
+                            setNetwork(e.target.value);
                             const newResults = searchResults.map((u) =>
-                              u.id === user.id
+                              u.person_id === user.person_id
                                 ? { ...u, network: e.target.value }
                                 : u
                             );
@@ -882,7 +947,7 @@ function AppSummaries({
                             height: 36, // Explicit height
                             minWidth: 120, // Minimum width for button
                           }}
-                          disabled={!user.relationship || !user.network}
+                          disabled={!relationship || !network}
                         >
                           Add to Family
                         </Button>
