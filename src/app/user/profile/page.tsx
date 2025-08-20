@@ -736,10 +736,23 @@ function AppSummaries({
 
                   setSearching(true);
                   try {
+                    // Get list of existing family member person_ids
+                    const existingIds = [
+                      ...(familyInfo?.json?.people?.map((p) => p.person_id) ||
+                        []),
+                      personIdRemote,
+                    ].filter(Boolean); // Remove any null/undefined values
+
+                    console.log("Client side existingIds:", existingIds);
+
+                    const queryParams = new URLSearchParams({
+                      q: searchQuery,
+                      personId: personIdRemote || "",
+                      excludeIds: existingIds.join(","), // Send as comma-separated string
+                    });
+
                     const response = await fetch(
-                      `/api/user-search?q=${encodeURIComponent(
-                        searchQuery
-                      )}&personId=${personIdRemote || ""}`
+                      `/api/user-search?${queryParams.toString()}`
                     );
                     if (!response.ok) throw new Error("Search failed");
                     const data = await response.json();
