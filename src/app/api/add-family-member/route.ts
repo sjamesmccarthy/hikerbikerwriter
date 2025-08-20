@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server";
 import pool from "@/lib/db";
 import { RowDataPacket } from "mysql2";
+import networksData from "@/data/people-networks.json";
 
 export async function POST(request: Request) {
   try {
-    const { userId, familylineId, userEmail } = await request.json();
+    const { userId, familylineId, userEmail, relationship, network } =
+      await request.json();
 
-    if (!userId || !familylineId || !userEmail) {
+    if (!userId || !familylineId || !userEmail || !relationship || !network) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
@@ -79,8 +81,9 @@ export async function POST(request: Request) {
       person_id: userId,
       name: user.name,
       email: user.email,
-      relation: "friend", // Default relation
-      network_degree: 2, // Default network degree for friends
+      relation: relationship,
+      network_degree:
+        networksData.network.find((n) => n.type === network)?.level || 2,
       shared_data: {
         roll_and_write: 0,
         field_notes: 0,

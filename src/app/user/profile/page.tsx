@@ -1,10 +1,32 @@
 "use client";
 
 import React, { useState } from "react";
-import { Button, TextField } from "@mui/material";
+import { Button, TextField, MenuItem } from "@mui/material";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { Session } from "next-auth";
 import Image from "next/image";
+
+// Import type definitions for our JSON data
+interface Relationship {
+  type: string;
+}
+
+interface Network {
+  type: string;
+  level: number;
+}
+
+interface RelationshipsData {
+  relationships: Relationship[];
+}
+
+interface NetworksData {
+  network: Network[];
+}
+
+// Import the JSON data
+import relationshipsData from "@/data/relationships.json";
+import networksData from "@/data/people-networks.json";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { PeopleSuggestions } from "@/components/PeopleSuggestions";
@@ -409,19 +431,17 @@ function AppSummaries({
   const [showAddPerson, setShowAddPerson] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searching, setSearching] = useState(false);
-  const [searchResults, setSearchResults] = useState<
-    Array<{
-      id: number;
-      name: string;
-      email: string;
-    }>
-  >([]);
-
-  const handleAddPerson = async (user: {
+  interface SearchUser {
     id: number;
     name: string;
     email: string;
-  }) => {
+    relationship?: string;
+    network?: string;
+  }
+
+  const [searchResults, setSearchResults] = useState<SearchUser[]>([]);
+
+  const handleAddPerson = async (user: SearchUser) => {
     if (!familylineIdRemote || !userEmail) return;
 
     try {
@@ -434,6 +454,8 @@ function AppSummaries({
           userId: user.id,
           familylineId: familylineIdRemote,
           userEmail: userEmail,
+          relationship: user.relationship,
+          network: user.network,
         }),
       });
 
@@ -784,14 +806,74 @@ function AppSummaries({
                           {user.email}
                         </div>
                       </div>
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        onClick={() => handleAddPerson(user)}
-                        style={{ textTransform: "none" }}
-                      >
-                        Add to Family
-                      </Button>
+                      <div className="flex items-center gap-2">
+                        <TextField
+                          select
+                          size="small"
+                          value={user.relationship || ""}
+                          onChange={(e) => {
+                            const newResults = searchResults.map((u) =>
+                              u.id === user.id
+                                ? { ...u, relationship: e.target.value }
+                                : u
+                            );
+                            setSearchResults(newResults);
+                          }}
+                          sx={{
+                            width: 160,
+                            "& .MuiInputBase-root": {
+                              height: 36, // Match Button height
+                            },
+                          }}
+                          label="Relationship"
+                        >
+                          {relationshipsData.relationships.map(
+                            (rel: Relationship) => (
+                              <MenuItem key={rel.type} value={rel.type}>
+                                {rel.type}
+                              </MenuItem>
+                            )
+                          )}
+                        </TextField>
+                        <TextField
+                          select
+                          size="small"
+                          value={user.network || ""}
+                          onChange={(e) => {
+                            const newResults = searchResults.map((u) =>
+                              u.id === user.id
+                                ? { ...u, network: e.target.value }
+                                : u
+                            );
+                            setSearchResults(newResults);
+                          }}
+                          sx={{
+                            width: 160,
+                            "& .MuiInputBase-root": {
+                              height: 36, // Match Button height
+                            },
+                          }}
+                          label="Network"
+                        >
+                          {networksData.network.map((net: Network) => (
+                            <MenuItem key={net.type} value={net.type}>
+                              {net.type}
+                            </MenuItem>
+                          ))}
+                        </TextField>
+                        <Button
+                          variant="outlined"
+                          onClick={() => handleAddPerson(user)}
+                          style={{
+                            textTransform: "none",
+                            height: 36, // Explicit height
+                            minWidth: 120, // Minimum width for button
+                          }}
+                          disabled={!user.relationship || !user.network}
+                        >
+                          Add to Family
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
