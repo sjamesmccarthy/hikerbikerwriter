@@ -1023,37 +1023,48 @@ function AppSummaries({
             </span>
           </div>
         )}
+
         {/* End Family People Card List */}
-        {/* {familyLoading ? (
-          <div className="w-full bg-gray-100 rounded px-4 py-3 mt-2">
-            <span className="text-gray-600 text-sm">
-              Loading family info...
-            </span>
-          </div>
-        ) : familyInfo ? (
-          <>
-            <button
-              className="text-blue-600 text-sm underline mb-2"
-              style={{ alignSelf: "flex-start" }}
-              onClick={() => setShowRawJson((prev) => !prev)}
-            >
-              {showRawJson ? "< hide json raw data" : "> json raw data"}
-            </button>
-            {showRawJson && (
+        {(() => {
+          let familyContent;
+          if (familyLoading) {
+            familyContent = (
               <div className="w-full bg-gray-100 rounded px-4 py-3 mt-2">
-                <pre className="text-xs text-gray-600 mt-2 whitespace-pre-wrap">
-                  {JSON.stringify(familyInfo.json, null, 2)}
-                </pre>
+                <span className="text-gray-600 text-sm">
+                  Loading family info...
+                </span>
               </div>
-            )}
-          </>
-        ) : (
-          <div className="w-full bg-gray-100 rounded px-4 py-3 mt-2">
-            <span className="text-gray-600 text-sm">
-              No family information found.
-            </span>
-          </div>
-        )} */}
+            );
+          } else if (familyInfo) {
+            familyContent = (
+              <>
+                <button
+                  className="text-blue-600 text-sm underline mb-2"
+                  style={{ alignSelf: "flex-start" }}
+                  onClick={() => setShowRawJson((prev) => !prev)}
+                >
+                  {showRawJson ? "< hide json raw data" : "> json raw data"}
+                </button>
+                {showRawJson && (
+                  <div className="w-full bg-gray-100 rounded px-4 py-3 mt-2">
+                    <pre className="text-xs text-gray-600 mt-2 whitespace-pre-wrap">
+                      {JSON.stringify(familyInfo.json, null, 2)}
+                    </pre>
+                  </div>
+                )}
+              </>
+            );
+          } else {
+            familyContent = (
+              <div className="w-full bg-gray-100 rounded px-4 py-3 mt-2">
+                <span className="text-gray-600 text-sm">
+                  No family information found.
+                </span>
+              </div>
+            );
+          }
+          return familyContent;
+        })()}
       </div>
     </>
   );

@@ -23,11 +23,12 @@ export async function GET(request: Request) {
       );
     }
 
-    // Simple query to get users with the same familylineid
+    // Query to get users who belong to the same family line
     const query = `
-      SELECT name, email, person_id 
-      FROM users 
-      WHERE familylineid = ?`;
+      SELECT u.name, u.email, u.person_id 
+      FROM familyline f
+      JOIN users u ON f.person_id = u.person_id
+      WHERE f.uuid = ?`;
 
     console.log("Executing query:", { query, params: [familylineId] });
 

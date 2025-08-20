@@ -8,22 +8,13 @@ export async function GET(req) {
     return NextResponse.json({ error: "Missing email" }, { status: 400 });
   }
   try {
-    // Get user and their familylineid
-    const [userRows] = await pool.query(
-      "SELECT familylineid FROM users WHERE email = ?",
-      [email]
-    );
-    if (!userRows.length || !userRows[0].familylineid) {
-      return NextResponse.json(
-        { error: "No familylineid found" },
-        { status: 404 }
-      );
-    }
-    const familylineid = userRows[0].familylineid;
-    // Get family info
+    // Get family info with user details
     const [familyRows] = await pool.query(
-      "SELECT * FROM familyline WHERE uuid = ?",
-      [familylineid]
+      `SELECT u.name, u.email, u.person_id, f.json
+      FROM familyline f
+      JOIN users u ON f.person_id = u.person_id
+      WHERE u.email = ?`,
+      [email]
     );
     if (!familyRows.length) {
       return NextResponse.json({ error: "No family found" }, { status: 404 });
