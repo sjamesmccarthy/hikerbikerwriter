@@ -1024,7 +1024,7 @@ function AppSummaries({
           </div>
         )}
         {/* End Family People Card List */}
-        {familyLoading ? (
+        {/* {familyLoading ? (
           <div className="w-full bg-gray-100 rounded px-4 py-3 mt-2">
             <span className="text-gray-600 text-sm">
               Loading family info...
@@ -1053,7 +1053,7 @@ function AppSummaries({
               No family information found.
             </span>
           </div>
-        )}
+        )} */}
       </div>
     </>
   );
