@@ -1088,7 +1088,7 @@ function AppSummaries({
                     {/* Badge hidden until family share data is available */}
                     {rollCounts.sharedWithFamily !== undefined && (
                       <span
-                        className="absolute -top-1.5 -right-1.5"
+                        className="absolute -top-2 -right-2"
                         style={{
                           background:
                             rollCounts.sharedWithFamily > 0
@@ -1096,16 +1096,17 @@ function AppSummaries({
                               : "#000",
                           color: "#fff",
                           borderRadius: "50%",
-                          padding: "0 5px",
+                          padding: "0",
                           fontWeight: "bold",
-                          minWidth: "16px",
-                          fontSize: "0.75rem",
-                          height: "18px",
+                          minWidth: "20px",
+                          fontSize: "0.7rem",
+                          height: "20px",
+                          width: "20px",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
                           textAlign: "center",
-                          boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
+                          boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
                         }}
                       >
                         {rollCounts.sharedWithFamily}
@@ -1120,7 +1121,7 @@ function AppSummaries({
                     {/* Badge hidden until family share data is available */}
                     {fieldCounts.sharedWithFamily !== undefined && (
                       <span
-                        className="absolute -top-1.5 -right-1.5"
+                        className="absolute -top-2 -right-2"
                         style={{
                           background:
                             fieldCounts.sharedWithFamily > 0
@@ -1128,16 +1129,17 @@ function AppSummaries({
                               : "#000",
                           color: "#fff",
                           borderRadius: "50%",
-                          padding: "0 5px",
+                          padding: "0",
                           fontWeight: "bold",
-                          minWidth: "16px",
-                          fontSize: "0.75rem",
-                          height: "18px",
+                          minWidth: "20px",
+                          fontSize: "0.7rem",
+                          height: "20px",
+                          width: "20px",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
                           textAlign: "center",
-                          boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
+                          boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
                         }}
                       >
                         {fieldCounts.sharedWithFamily}
@@ -1145,13 +1147,22 @@ function AppSummaries({
                     )}
                   </div>
                   <div className="relative flex items-center">
-                    <RestaurantIcon
-                      fontSize="medium"
-                      style={{ color: "#757575" }}
-                    />
+                    {recipeCounts.sharedWithFamily > 0 ? (
+                      <Link href="/recipes?family=true">
+                        <RestaurantIcon
+                          fontSize="medium"
+                          style={{ color: "#757575", cursor: "pointer" }}
+                        />
+                      </Link>
+                    ) : (
+                      <RestaurantIcon
+                        fontSize="medium"
+                        style={{ color: "#757575" }}
+                      />
+                    )}
                     {recipeCounts.sharedWithFamily !== undefined && (
                       <span
-                        className="absolute -top-1.5 -right-1.5"
+                        className="absolute -top-2 -right-2"
                         style={{
                           background:
                             recipeCounts.sharedWithFamily > 0
@@ -1159,16 +1170,17 @@ function AppSummaries({
                               : "#000",
                           color: "#fff",
                           borderRadius: "50%",
-                          padding: "0 5px",
+                          padding: "0",
                           fontWeight: "bold",
-                          minWidth: "16px",
-                          fontSize: "0.75rem",
-                          height: "18px",
+                          minWidth: "20px",
+                          fontSize: "0.7rem",
+                          height: "20px",
+                          width: "20px",
                           display: "flex",
                           alignItems: "center",
                           justifyContent: "center",
                           textAlign: "center",
-                          boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
+                          boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
                         }}
                       >
                         {recipeCounts.sharedWithFamily}
@@ -1289,28 +1301,29 @@ function AppSummaries({
                       </div>
 
                       {/* Icons section - responsive layout like Me card */}
-                      <div className="flex flex-row items-center gap-4 mt-4 sm:mt-0 justify-center sm:justify-end sm:ml-auto">
+                      <div className="flex flex-row items-center gap-4 mt-4 sm:mt-0 justify-end sm:ml-auto">
                         <div className="relative flex items-center">
                           <CasinoIcon
                             fontSize="medium"
                             style={{ color: "#757575" }}
                           />
                           <span
-                            className="absolute -top-1.5 -right-1.5"
+                            className="absolute -top-2 -right-2"
                             style={{
                               background: "#000",
                               color: "#fff",
                               borderRadius: "50%",
-                              padding: "0 5px",
+                              padding: "0",
                               fontWeight: "bold",
-                              minWidth: "16px",
-                              fontSize: "0.75rem",
-                              height: "18px",
+                              minWidth: "20px",
+                              fontSize: "0.7rem",
+                              height: "20px",
+                              width: "20px",
                               display: "flex",
                               alignItems: "center",
                               justifyContent: "center",
                               textAlign: "center",
-                              boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
+                              boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
                             }}
                           >
                             {shared.roll_and_write ?? 0}
@@ -1322,21 +1335,22 @@ function AppSummaries({
                             style={{ color: "#757575" }}
                           />
                           <span
-                            className="absolute -top-1.5 -right-1.5"
+                            className="absolute -top-2 -right-2"
                             style={{
                               background: "#000",
                               color: "#fff",
                               borderRadius: "50%",
-                              padding: "0 5px",
+                              padding: "0",
                               fontWeight: "bold",
-                              minWidth: "16px",
-                              fontSize: "0.75rem",
-                              height: "18px",
+                              minWidth: "20px",
+                              fontSize: "0.7rem",
+                              height: "20px",
+                              width: "20px",
                               display: "flex",
                               alignItems: "center",
                               justifyContent: "center",
                               textAlign: "center",
-                              boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
+                              boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
                             }}
                           >
                             {shared.field_notes ?? 0}
@@ -1348,21 +1362,22 @@ function AppSummaries({
                             style={{ color: "#757575" }}
                           />
                           <span
-                            className="absolute -top-1.5 -right-1.5"
+                            className="absolute -top-2 -right-2"
                             style={{
                               background: "#000",
                               color: "#fff",
                               borderRadius: "50%",
-                              padding: "0 5px",
+                              padding: "0",
                               fontWeight: "bold",
-                              minWidth: "16px",
-                              fontSize: "0.75rem",
-                              height: "18px",
+                              minWidth: "20px",
+                              fontSize: "0.7rem",
+                              height: "20px",
+                              width: "20px",
                               display: "flex",
                               alignItems: "center",
                               justifyContent: "center",
                               textAlign: "center",
-                              boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
+                              boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
                             }}
                           >
                             {shared.recipes ?? 0}

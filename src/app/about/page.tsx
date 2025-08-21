@@ -549,6 +549,10 @@ export default function AboutPage() {
                 Fixed up profile page inconsistencies and improved layout on
                 mobile.
               </li>
+              <li>
+                Added a filter for family on recipes only accessible if there
+                area people in the json object in the familyline.
+              </li>
             </ul>
 
             <h3 className="font-semibold mt-4 mb-1">v1.7.1</h3>
