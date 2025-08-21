@@ -812,16 +812,17 @@ function AppSummaries({
           ) : (
             <div />
           )}
-          <div>
+          <div className="w-full sm:w-auto">
             <Button
               variant="contained"
               startIcon={<PersonAddIcon />}
-              size="small"
+              size="large"
               style={{
                 backgroundColor: "#1976d2",
                 textTransform: "none",
                 boxShadow: "none",
               }}
+              className="w-full sm:w-auto"
               onClick={() => setShowAddPerson(true)}
             >
               Add Person
@@ -1058,7 +1059,7 @@ function AppSummaries({
                       Me ({nameFromFB ?? session.user.name ?? null})
                     </div>
                     <div className="text-xs text-gray-400 flex items-center gap-1">
-                      Primary Account {personIdRemote && `(${personIdRemote})`}
+                      Primary Account
                       <EditNoteIcon
                         sx={{
                           fontSize: 12,
@@ -1078,7 +1079,7 @@ function AppSummaries({
                 </div>
 
                 {/* Icons section */}
-                <div className="flex flex-row items-center gap-4 mt-4 sm:mt-0 justify-center sm:justify-end sm:ml-auto">
+                <div className="flex flex-row items-center gap-4 mt-4 sm:mt-0 justify-end sm:ml-auto">
                   <div className="relative flex items-center">
                     <CasinoIcon
                       fontSize="medium"
@@ -1207,83 +1208,88 @@ function AppSummaries({
                 return (
                   <div
                     key={person.person_id}
-                    className="flex flex-col bg-white rounded-lg shadow p-4 w-full"
+                    className="bg-white rounded-lg shadow p-4 w-full"
                   >
-                    {/* Top row: Profile, name, and relation */}
-                    <div className="flex items-center">
-                      <div
-                        className={`flex items-center justify-center w-12 h-12 rounded-full mr-4`}
-                        style={{
-                          boxShadow: "0 0 0 0 transparent",
-                          border: "none",
-                          background: "none",
-                        }}
-                      >
-                        <svg
-                          width="32"
-                          height="32"
-                          viewBox="0 0 32 32"
-                          fill="none"
+                    {/* Profile info and icons row */}
+                    <div className="flex flex-col sm:flex-row sm:items-center">
+                      <div className="flex items-center">
+                        <div
+                          className={`flex items-center justify-center w-12 h-12 rounded-full mr-4`}
+                          style={{
+                            boxShadow: "0 0 0 0 transparent",
+                            border: "none",
+                            background: "none",
+                          }}
                         >
-                          <circle
-                            cx="16"
-                            cy="16"
-                            r="16"
-                            fill={(() => {
-                              if (iconColor === "bg-blue-500") return "#3F51B5";
-                              if (iconColor === "bg-pink-400") return "#f472b6";
-                              return "#9ca3af";
-                            })()}
-                          />
-                          <text
-                            x="16"
-                            y="21"
-                            textAnchor="middle"
-                            fontSize="16"
-                            fill="#fff"
-                            fontFamily="Arial"
+                          <svg
+                            width="32"
+                            height="32"
+                            viewBox="0 0 32 32"
+                            fill="none"
                           >
-                            {person.name ? person.name[0] : "?"}
-                          </text>
-                        </svg>
-                      </div>
-                      <div className="flex-1">
-                        <div className="font-bold text-lg text-gray-800">
-                          {person.name}
+                            <circle
+                              cx="16"
+                              cy="16"
+                              r="16"
+                              fill={(() => {
+                                if (iconColor === "bg-blue-500")
+                                  return "#3F51B5";
+                                if (iconColor === "bg-pink-400")
+                                  return "#f472b6";
+                                return "#9ca3af";
+                              })()}
+                            />
+                            <text
+                              x="16"
+                              y="21"
+                              textAnchor="middle"
+                              fontSize="16"
+                              fill="#fff"
+                              fontFamily="Arial"
+                            >
+                              {person.name ? person.name[0] : "?"}
+                            </text>
+                          </svg>
                         </div>
-                        <div className="text-xs text-gray-400 flex items-center gap-1">
-                          {familyType} ({person.relation})
-                          <EditNoteIcon
-                            sx={{
-                              fontSize: 12,
-                              color: "#9ca3af",
-                              cursor: "pointer",
-                            }}
-                            className="hover:text-gray-600"
-                            onClick={() => {
-                              if (editingPersonId === person.person_id) {
-                                // Cancel editing
-                                setEditingPersonId(null);
-                                setEditRelationship("");
-                                setEditNetwork("");
-                              } else {
-                                // Start editing
-                                setEditingPersonId(person.person_id);
-                                setEditRelationship(person.relation);
-                                // Convert network_level to network type
-                                const networkType =
-                                  networksData.network.find(
-                                    (n: Network) =>
-                                      n.level === person.network_level
-                                  )?.type || "";
-                                setEditNetwork(networkType);
-                              }
-                            }}
-                          />
+                        <div className="flex-1">
+                          <div className="font-bold text-lg text-gray-800">
+                            {person.name}
+                          </div>
+                          <div className="text-xs text-gray-400 flex items-center gap-1">
+                            {familyType} ({person.relation})
+                            <EditNoteIcon
+                              sx={{
+                                fontSize: 12,
+                                color: "#9ca3af",
+                                cursor: "pointer",
+                              }}
+                              className="hover:text-gray-600"
+                              onClick={() => {
+                                if (editingPersonId === person.person_id) {
+                                  // Cancel editing
+                                  setEditingPersonId(null);
+                                  setEditRelationship("");
+                                  setEditNetwork("");
+                                } else {
+                                  // Start editing
+                                  setEditingPersonId(person.person_id);
+                                  setEditRelationship(person.relation);
+                                  // Convert network_level to network type
+                                  const networkType =
+                                    networksData.network.find(
+                                      (n: Network) =>
+                                        n.level === person.network_level
+                                    )?.type || "";
+                                  setEditNetwork(networkType);
+                                }
+                              }}
+                            />
+                          </div>
                         </div>
                       </div>
-                      {/* Icons section - moved to always be on the right */}
-                      <div className="flex flex-row items-center gap-4 ml-auto">
+
+                      {/* Icons section - responsive layout like Me card */}
+                      <div className="flex flex-row items-center gap-4 mt-4 sm:mt-0 justify-center sm:justify-end sm:ml-auto">
                         <div className="relative flex items-center">
                           <CasinoIcon
                             fontSize="medium"
@@ -1367,78 +1373,84 @@ function AppSummaries({
 
                     {/* Edit form - shows when this person is being edited */}
                     {editingPersonId === person.person_id && (
-                      <div className="mt-4" style={{ marginLeft: "4rem" }}>
-                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                          <TextField
-                            select
-                            size="small"
-                            value={editRelationship}
-                            onChange={(e) =>
-                              setEditRelationship(e.target.value)
-                            }
-                            sx={{
-                              width: 160,
-                              "& .MuiInputBase-root": {
-                                height: 36,
-                              },
-                            }}
-                            label="Relationship"
-                          >
-                            {relationshipsData.relationships.map(
-                              (rel: Relationship) => (
-                                <MenuItem key={rel.type} value={rel.type}>
-                                  {rel.type}
+                      <div className="mt-4">
+                        <div className="flex flex-col gap-2">
+                          <div className="flex flex-col sm:flex-row gap-2">
+                            <TextField
+                              select
+                              size="small"
+                              value={editRelationship}
+                              onChange={(e) =>
+                                setEditRelationship(e.target.value)
+                              }
+                              sx={{
+                                width: { xs: "100%", sm: 160 },
+                                "& .MuiInputBase-root": {
+                                  height: 36,
+                                },
+                              }}
+                              label="Relationship"
+                            >
+                              {relationshipsData.relationships.map(
+                                (rel: Relationship) => (
+                                  <MenuItem key={rel.type} value={rel.type}>
+                                    {rel.type}
+                                  </MenuItem>
+                                )
+                              )}
+                            </TextField>
+                            <TextField
+                              select
+                              size="small"
+                              value={editNetwork}
+                              onChange={(e) => setEditNetwork(e.target.value)}
+                              sx={{
+                                width: { xs: "100%", sm: 160 },
+                                "& .MuiInputBase-root": {
+                                  height: 36,
+                                },
+                              }}
+                              label="Network"
+                            >
+                              {networksData.network.map((net: Network) => (
+                                <MenuItem key={net.type} value={net.type}>
+                                  {net.type}
                                 </MenuItem>
-                              )
-                            )}
-                          </TextField>
-                          <TextField
-                            select
-                            size="small"
-                            value={editNetwork}
-                            onChange={(e) => setEditNetwork(e.target.value)}
-                            sx={{
-                              width: 160,
-                              "& .MuiInputBase-root": {
-                                height: 36,
-                              },
-                            }}
-                            label="Network"
-                          >
-                            {networksData.network.map((net: Network) => (
-                              <MenuItem key={net.type} value={net.type}>
-                                {net.type}
-                              </MenuItem>
-                            ))}
-                          </TextField>
-                          <div className="flex gap-2">
-                            <Button
-                              variant="contained"
-                              onClick={() => handleEditPerson(person.person_id)}
-                              style={{
-                                textTransform: "none",
-                                height: 36,
-                                minWidth: 80,
-                              }}
-                              disabled={!editRelationship || !editNetwork}
-                            >
-                              Update
-                            </Button>
-                            <Button
-                              variant="outlined"
-                              onClick={() => {
-                                setEditingPersonId(null);
-                                setEditRelationship("");
-                                setEditNetwork("");
-                              }}
-                              style={{
-                                textTransform: "none",
-                                height: 36,
-                                minWidth: 80,
-                              }}
-                            >
-                              Cancel
-                            </Button>
+                              ))}
+                            </TextField>
+                            <div className="flex gap-2 w-full sm:w-auto">
+                              <Button
+                                variant="contained"
+                                onClick={() =>
+                                  handleEditPerson(person.person_id)
+                                }
+                                style={{
+                                  textTransform: "none",
+                                  height: 36,
+                                  minWidth: 80,
+                                }}
+                                className="flex-1 sm:flex-none"
+                                disabled={!editRelationship || !editNetwork}
+                              >
+                                Update
+                              </Button>
+                              <Button
+                                variant="outlined"
+                                onClick={() => {
+                                  setEditingPersonId(null);
+                                  setEditRelationship("");
+                                  setEditNetwork("");
+                                }}
+                                style={{
+                                  textTransform: "none",
+                                  height: 36,
+                                  minWidth: 80,
+                                }}
+                                className="flex-1 sm:flex-none"
+                              >
+                                Cancel
+                              </Button>
+                            </div>
                           </div>
                         </div>
                       </div>

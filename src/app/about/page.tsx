@@ -545,6 +545,10 @@ export default function AboutPage() {
                 Added a new Job Search feature for tracking opportunities,
                 recruiters, resources and statuses.
               </li>
+              <li>
+                Fixed up profile page inconsistencies and improved layout on
+                mobile.
+              </li>
             </ul>
 
             <h3 className="font-semibold mt-4 mb-1">v1.7.1</h3>
