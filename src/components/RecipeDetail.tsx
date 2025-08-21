@@ -1145,7 +1145,7 @@ const RecipeDetail = React.memo(function RecipeDetail({
             </div>
             <div className="text-sm text-gray-500 mt-1">
               {recipe?.steps && currentStep < (recipe?.steps?.length || 0)
-                ? "Swipe or tap to navigate"
+                ? "Tap to navigate"
                 : "Recipe complete!"}
             </div>
           </div>
