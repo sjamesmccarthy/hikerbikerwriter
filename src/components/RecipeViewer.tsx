@@ -296,6 +296,8 @@ const RecipeViewer: React.FC<RecipeViewerProps> = ({}) => {
 
   // Handle URL parameters for filters
   useEffect(() => {
+    if (!searchParams) return;
+
     const familyParam = searchParams.get("family");
     const favoritesParam = searchParams.get("favorites");
 
