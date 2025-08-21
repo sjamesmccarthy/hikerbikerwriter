@@ -48,6 +48,7 @@ import AssignmentIcon from "@mui/icons-material/Assignment";
 import StickyNote2Icon from "@mui/icons-material/StickyNote2";
 import RestaurantIcon from "@mui/icons-material/Restaurant";
 import PhotoCameraIcon from "@mui/icons-material/PhotoCamera";
+import WorkIcon from "@mui/icons-material/Work";
 import IntegrationInstructionsIcon from "@mui/icons-material/IntegrationInstructions";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import CodeIcon from "@mui/icons-material/Code";
@@ -167,6 +168,7 @@ export default function UserProfilePage() {
     { name: "Field Notes", path: "/fieldnotes", icon: StickyNote2Icon },
     { name: "Recipes", path: "/recipes", icon: RestaurantIcon },
     { name: "jM Galleries", path: "/jmgalleries", icon: PhotoCameraIcon },
+    { name: "Jobs", path: "/jobs", icon: WorkIcon },
   ];
 
   // Handle app selection from menu

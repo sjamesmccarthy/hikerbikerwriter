@@ -4,10 +4,10 @@ CREATE TABLE `familyline` (
   `uuid` varchar(36) NOT NULL,
   `person_id` varchar(36) DEFAULT NULL,
   `json` json NOT NULL,
-  `created` datetime DEFAULT NULL,
-  `modified` datetime DEFAULT NULL,
+  `created` datetime DEFAULT CURRENT_TIMESTAMP,
+  `modified` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4;
 
 DROP TABLE IF EXISTS `fieldnotes`;
 CREATE TABLE `fieldnotes` (
@@ -20,6 +20,18 @@ CREATE TABLE `fieldnotes` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4;
 
+DROP TABLE IF EXISTS `jobs`;
+CREATE TABLE `jobs` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` int(11) DEFAULT NULL,
+  `search_id` varchar(36) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `json` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin,
+  `created` datetime DEFAULT CURRENT_TIMESTAMP,
+  `last_modified` datetime DEFAULT NULL ON UPDATE CURRENT_TIMESTAMP,
+  `closed` tinyint(1) DEFAULT '0',
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 DROP TABLE IF EXISTS `recipes`;
 CREATE TABLE `recipes` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
@@ -29,7 +41,7 @@ CREATE TABLE `recipes` (
   `is_public` tinyint(1) DEFAULT '0',
   `shared_family` tinyint(1) DEFAULT '0',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4;
 
 DROP TABLE IF EXISTS `rollnwrite`;
 CREATE TABLE `rollnwrite` (
@@ -67,11 +79,11 @@ CREATE TABLE `users` (
   `person_id` varchar(36) DEFAULT NULL,
   `email` varchar(255) NOT NULL,
   `name` varchar(255) NOT NULL,
+  `metadata` json DEFAULT NULL,
   `oauth` varchar(50) DEFAULT 'GOOGLE',
   `created` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `is_admin` tinyint(1) NOT NULL DEFAULT '0',
-  `familylineid` varchar(36) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `email` (`email`),
   KEY `idx_email` (`email`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4;
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4;

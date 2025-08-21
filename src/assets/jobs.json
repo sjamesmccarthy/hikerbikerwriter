@@ -1,0 +1,44 @@
+{
+  "searchExample": {
+    "id": "search-1",
+    "name": "Software Engineer - 2025",
+    "isActive": true,
+    "created": "2025-01-01T00:00:00.000Z",
+    "opportunities": [
+      {
+        "id": "opp-1",
+        "company": "Tech Corp",
+        "position": "Senior Software Engineer",
+        "dateApplied": "2025-01-15",
+        "status": "applied",
+        "description": "Full-stack development role with React and Node.js",
+        "jobUrl": "https://example.com/job/123",
+        "salary": "$120k - $150k",
+        "location": "San Francisco, CA",
+        "interviews": [],
+        "contacts": [],
+        "notes": "Referred by John Doe"
+      }
+    ],
+    "recruiters": [
+      {
+        "id": "rec-1",
+        "name": "Jane Smith",
+        "company": "Recruiting Inc",
+        "email": "jane@recruiting.com",
+        "phone": "+1-555-0123",
+        "specialty": "Software Engineering",
+        "notes": "Met at tech conference"
+      }
+    ],
+    "resources": [
+      {
+        "id": "res-1",
+        "name": "LinkedIn Jobs",
+        "url": "https://linkedin.com/jobs",
+        "description": "Professional networking and job search platform",
+        "category": "Job Board"
+      }
+    ]
+  }
+}
