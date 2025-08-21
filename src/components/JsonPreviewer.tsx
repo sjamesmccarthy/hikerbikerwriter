@@ -123,6 +123,7 @@ const JsonPreviewer: React.FC = () => {
       if (!jsonInput.trim()) {
         setError("Please enter some JSON to minify");
         setParsedJson(null);
+        setFormattedJson("");
         return;
       }
 
@@ -131,6 +132,7 @@ const JsonPreviewer: React.FC = () => {
       setFormattedJson(minified);
       setParsedJson(parsed);
       setError("");
+      setViewMode("text"); // Switch to text view to show minified output
     } catch (err) {
       setError("Invalid JSON: " + (err as Error).message);
       setFormattedJson("");
