@@ -103,58 +103,45 @@ const RecipeBuilder: React.FC = () => {
 
   const handleImportRecipe = async () => {
     if (!importUrl) return;
-
+    
     setIsImporting(true);
     try {
-      const response = await fetch("/api/import-recipe", {
-        method: "POST",
+      const response = await fetch('/api/import-recipe', {
+        method: 'POST',
         headers: {
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({ url: importUrl }),
       });
 
       if (!response.ok) {
-        throw new Error("Failed to import recipe");
+        throw new Error('Failed to import recipe');
       }
 
       const recipe = await response.json();
-
+      
       // Populate form fields with imported data
-      setTitle(recipe.title || "");
-      setDescription(recipe.description || "");
+      setTitle(recipe.title || '');
+      setDescription(recipe.description || '');
       setSource(importUrl); // Use the URL as the source
-      setIngredients(
-        recipe.ingredients?.map(
-          (ing: { name?: string; amount?: string; unit?: string }) => ({
-            id: crypto.randomUUID(),
-            name: ing.name || "",
-            amount: ing.amount || "",
-            unit: ing.unit || "",
-          })
-        ) || [{ id: crypto.randomUUID(), name: "", amount: "", unit: "" }]
-      );
-      setSteps(
-        recipe.steps?.map(
-          (step: {
-            step?: string;
-            temperature?: number;
-            time?: number;
-            superSmoke?: boolean;
-          }) => ({
-            id: crypto.randomUUID(),
-            step: step.step || "",
-            temperature: step.temperature,
-            time: step.time,
-            superSmoke: step.superSmoke,
-          })
-        ) || [{ id: crypto.randomUUID(), step: "" }]
-      );
+      setIngredients(recipe.ingredients?.map((ing: any) => ({
+        id: crypto.randomUUID(),
+        name: ing.name || '',
+        amount: ing.amount || '',
+        unit: ing.unit || '',
+      })) || [{ id: crypto.randomUUID(), name: '', amount: '', unit: '' }]);
+      setSteps(recipe.steps?.map((step: any) => ({
+        id: crypto.randomUUID(),
+        step: step.step || '',
+        temperature: step.temperature,
+        time: step.time,
+        superSmoke: step.superSmoke,
+      })) || [{ id: crypto.randomUUID(), step: '' }]);
       setPrepTime(recipe.prepTime || 0);
       setCookTime(recipe.cookTime || 0);
       setServings(recipe.servings || 1);
     } catch (error) {
-      console.error("Error importing recipe:", error);
+      console.error('Error importing recipe:', error);
       // You might want to show an error message to the user here
     } finally {
       setIsImporting(false);
@@ -554,18 +541,6 @@ const RecipeBuilder: React.FC = () => {
       <div className="max-xl bg-white flex-1">
         {/* Header */}
         <div className="flex items-center justify-between h-[61px] border-b border-gray-200 px-3">
-          <div className="flex items-center space-x-2">
-            <Link href="/recipes">
-              <button className="px-3 py-1 rounded text-sm font-medium transition-colors flex items-center gap-1 text-gray-600 hover:text-gray-800 hover:bg-gray-100">
-                <ArrowBackIcon sx={{ fontSize: 16 }} />
-                Back to Recipes
-              </button>
-            </Link>
-            <div className="h-4 w-px bg-gray-300" />
-            <h3 className="text-lg font-semibold text-gray-800">
-              {editId ? "Edit Recipe" : "Create Recipe"}
-            </h3>
-          </div>
           <div className="flex items-center space-x-2">
             <Link href="/recipes">
               <button className="px-3 py-1 rounded text-sm font-medium transition-colors flex items-center gap-1 text-gray-600 hover:text-gray-800 hover:bg-gray-100">
@@ -1188,36 +1163,52 @@ const RecipeBuilder: React.FC = () => {
           </div>
 
           {/* Action Buttons */}
-          <div className="mt-8 pt-6 border-t border-gray-200">
-            <div className="flex justify-between items-center">
-              <div className="flex items-center gap-2">
+          <div className="flex justify-between items-center mt-8 pt-6 border-t border-gray-200">
+            <div>
+              {editId && (
+                <>
+                  {/* Desktop Delete Button - Full button with text */}
+                  <Button
+                    variant="outlined"
+                    color="error"
+                    startIcon={<DeleteIcon />}
+                    onClick={handleDelete}
+                    sx={{ display: { xs: "none", sm: "inline-flex" } }}
+                  >
+                    Delete Recipe
+                  </Button>
+                  {/* Mobile Delete Button - Icon only */}
+                  <IconButton
+                    onClick={handleDelete}
+                    color="error"
+                    sx={{ display: { xs: "inline-flex", sm: "none" } }}
+                    title="Delete Recipe"
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                </>
+              )}
+            </div>
+            <div className="space-y-4">
+              <div className="flex items-start gap-2">
                 <TextField
                   label="Import Recipe URL"
                   value={importUrl}
                   onChange={(e) => setImportUrl(e.target.value)}
+                  fullWidth
                   placeholder="https://example.com/recipe"
-                  size="small"
-                  sx={{ width: "400px" }}
+                  sx={{ minWidth: '500px' }}
                 />
                 <Button
                   variant="outlined"
                   onClick={handleImportRecipe}
                   disabled={!importUrl || isImporting}
+                  sx={{ height: '56px' }}
                 >
-                  {isImporting ? "Importing..." : "Import"}
+                  {isImporting ? 'Importing...' : 'Import'}
                 </Button>
               </div>
-              <div className="flex items-center gap-4">
-                {editId && (
-                  <IconButton
-                    onClick={handleDelete}
-                    color="error"
-                    title="Delete Recipe"
-                  >
-                    <DeleteIcon />
-                  </IconButton>
-                )}
-                <div className="border-l border-gray-200 h-8" />
+              <div className="flex justify-end gap-4">
                 <Link href="/recipes">
                   <Button variant="outlined">Cancel</Button>
                 </Link>
@@ -1227,20 +1218,15 @@ const RecipeBuilder: React.FC = () => {
                   onClick={handleSave}
                   disabled={saving}
                 >
-                  {saving
-                    ? "Saving..."
-                    : editId
-                    ? "Update Recipe"
-                    : "Save Recipe"}
+                  {saving ? "Saving..." : editId ? "Update Recipe" : "Save Recipe"}
                 </Button>
               </div>
             </div>
-          </div>
         </div>
-
-        {/* Footer */}
-        {renderFooter("integrated")}
       </div>
+
+      {/* Footer */}
+      {renderFooter("integrated")}
     </div>
   );
 };
