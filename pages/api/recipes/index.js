@@ -87,6 +87,7 @@ export default async function handler(req, res) {
         title,
         description,
         source,
+        sourceTitle,
         type,
         recommendedPellets,
         categories,
@@ -156,6 +157,7 @@ export default async function handler(req, res) {
         dateAdded: new Date().toISOString(),
         personalNotes: "",
         isFavorite: false,
+        sourceTitle: sourceTitle || undefined,
       };
 
       // Insert into database
@@ -188,6 +190,7 @@ export default async function handler(req, res) {
         title,
         description,
         source,
+        sourceTitle,
         type,
         recommendedPellets,
         category, // Changed from categories to category
@@ -259,6 +262,8 @@ export default async function handler(req, res) {
         date: req.body.date || existingRecipe.date,
         personalNotes: personalNotes || "",
         isFavorite: isFavorite || false,
+        sourceTitle:
+          req.body.sourceTitle || existingRecipe.sourceTitle || undefined,
       };
 
       // Update in database

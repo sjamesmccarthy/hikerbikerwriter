@@ -570,18 +570,6 @@ const RecipeBuilder: React.FC = () => {
               {editId ? "Edit Recipe" : "Create Recipe"}
             </h3>
           </div>
-          <div className="flex items-center space-x-2">
-            <Link href="/recipes">
-              <button className="px-3 py-1 rounded text-sm font-medium transition-colors flex items-center gap-1 text-gray-600 hover:text-gray-800 hover:bg-gray-100">
-                <ArrowBackIcon sx={{ fontSize: 16 }} />
-                Back to Recipes
-              </button>
-            </Link>
-            <div className="h-4 w-px bg-gray-300" />
-            <h3 className="text-lg font-semibold text-gray-800">
-              {editId ? "Edit Recipe" : "Create Recipe"}
-            </h3>
-          </div>
 
           {/* Auth Info - Desktop only */}
           <div className="hidden sm:flex items-center gap-2">

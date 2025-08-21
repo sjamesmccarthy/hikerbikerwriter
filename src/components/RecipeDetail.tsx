@@ -817,15 +817,9 @@ const RecipeDetail = React.memo(function RecipeDetail({
                 <div className="mt-1">
                   Inspired by{" "}
                   {recipe.sourceTitle ? (
-                    <span
-                      className={
-                        recipe.source ? "text-blue-600" : "text-gray-500"
-                      }
-                    >
-                      {recipe.sourceTitle}
-                    </span>
+                    <span className="text-gray-500">{recipe.sourceTitle}</span>
                   ) : (
-                    recipe.source
+                    <span className="text-gray-500">{recipe.source}</span>
                   )}
                   {recipe.source && recipe.source.trim() !== "" && (
                     <>
