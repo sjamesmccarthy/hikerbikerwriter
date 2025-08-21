@@ -58,6 +58,7 @@ type Recipe = {
   title: string;
   description: string;
   source?: string;
+  sourceTitle?: string;
   type: "smoker" | "flat-top" | "grill";
   recommendedPellets?: string;
   categories: string[];
@@ -380,7 +381,11 @@ const RecipeDetail = React.memo(function RecipeDetail({
 
       // Source (if available)
       if (recipe?.source) {
-        pdf.text(`Inspired by ${recipe.source}`, 20, yPosition);
+        pdf.text(
+          `Inspired by ${recipe.sourceTitle || recipe.source}`,
+          20,
+          yPosition
+        );
         yPosition += 10;
       } else {
         yPosition += 5;
@@ -808,40 +813,48 @@ const RecipeDetail = React.memo(function RecipeDetail({
             {/* Author */}
             <div className="text-center text-gray-500 text-sm mb-4">
               <div>Cooked Up by {recipe.author}</div>
-              {recipe.source && (
+              {(recipe.source || recipe.sourceTitle) && (
                 <div className="mt-1">
                   Inspired by{" "}
-                  {recipe.source.startsWith("http") ? (
-                    <>
-                      <a
-                        href={recipe.source}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-blue-600 hover:text-blue-800 underline"
-                      >
-                        {recipe.source}
-                      </a>
-                      {recipe?.shared_family && (
-                        <button
-                          onClick={() => setShowFamilyDetails((prev) => !prev)}
-                          className="text-blue-600 hover:text-blue-800 hover:underline ml-1 font-medium"
-                        >
-                          and shared with family
-                        </button>
-                      )}
-                    </>
+                  {recipe.sourceTitle ? (
+                    <span
+                      className={
+                        recipe.source ? "text-blue-600" : "text-gray-500"
+                      }
+                    >
+                      {recipe.sourceTitle}
+                    </span>
                   ) : (
+                    recipe.source
+                  )}
+                  {recipe.source && recipe.source.trim() !== "" && (
                     <>
-                      {recipe?.source}
-                      {recipe?.shared_family && (
-                        <button
-                          onClick={() => setShowFamilyDetails((prev) => !prev)}
-                          className="text-blue-600 hover:text-blue-800 hover:underline ml-1 font-medium"
-                        >
-                          and shared with family
-                        </button>
-                      )}
+                      {(() => {
+                        try {
+                          const url = new URL(recipe.source);
+                          return (
+                            <a
+                              href={recipe.source}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:text-blue-800 underline ml-1"
+                            >
+                              ({url.hostname.replace(/^www\./, "")})
+                            </a>
+                          );
+                        } catch {
+                          return null;
+                        }
+                      })()}
                     </>
+                  )}
+                  {recipe?.shared_family && (
+                    <button
+                      onClick={() => setShowFamilyDetails((prev) => !prev)}
+                      className="text-blue-600 hover:text-blue-800 hover:underline ml-1 font-medium"
+                    >
+                      and shared with family
+                    </button>
                   )}
                 </div>
               )}
