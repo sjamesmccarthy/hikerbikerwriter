@@ -73,6 +73,7 @@ const RecipeBuilder: React.FC = () => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [source, setSource] = useState("");
+  const [sourceTitle, setSourceTitle] = useState("");
   const [type, setType] = useState<"Smoker" | "Flat-top" | "Grill">("Grill");
   const [recommendedPellets, setRecommendedPellets] = useState("");
   const [category, setCategory] = useState<string>("Dinner");
@@ -124,6 +125,7 @@ const RecipeBuilder: React.FC = () => {
       setTitle(recipe.title || "");
       setDescription(recipe.description || "");
       setSource(importUrl); // Use the URL as the source
+      setSourceTitle(recipe.title || "");
       setIngredients(
         recipe.ingredients?.map(
           (ing: { name?: string; amount?: string; unit?: string }) => ({
@@ -280,6 +282,7 @@ const RecipeBuilder: React.FC = () => {
           setTitle(recipe.title || "");
           setDescription(recipe.description || "");
           setSource(recipe.source || "");
+          setSourceTitle(recipe.sourceTitle || "");
           // Handle legacy type names ("smoker" -> "Smoker")
           const loadedType = recipe.type || "Grill";
           const normalizedType =
@@ -435,6 +438,7 @@ const RecipeBuilder: React.FC = () => {
         title: title.trim(),
         description: description.trim(),
         source: source.trim() || undefined,
+        sourceTitle: sourceTitle.trim() || undefined,
         type,
         recommendedPellets: recommendedPellets || "",
         category,
@@ -775,11 +779,19 @@ const RecipeBuilder: React.FC = () => {
 
                   <TextField
                     fullWidth
-                    label="Recipe Source"
+                    label="Recipe Source URL"
                     value={source}
                     onChange={(e) => setSource(e.target.value)}
                     margin="normal"
-                    placeholder="e.g., Food Network, family recipe, cookbook name"
+                    placeholder="e.g., www.foodnetwork.com"
+                  />
+                  <TextField
+                    fullWidth
+                    label="Recipe Source Title"
+                    value={sourceTitle}
+                    onChange={(e) => setSourceTitle(e.target.value)}
+                    margin="normal"
+                    placeholder="e.g., The Best Chocolate Chip Cookies"
                   />
 
                   <TextField
