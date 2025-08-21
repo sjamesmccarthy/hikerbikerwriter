@@ -1192,13 +1192,23 @@ const RecipeBuilder: React.FC = () => {
             <div className="flex justify-between items-center">
               <div className="flex items-center gap-2">
                 <TextField
-                  label="Import Recipe URL"
+                  label={
+                    <span style={{ fontFamily: "monospace" }}>
+                      Import Recipe URL
+                    </span>
+                  }
                   value={importUrl}
                   onChange={(e) => setImportUrl(e.target.value)}
                   placeholder="https://example.com/recipe"
                   size="small"
-                  sx={{ width: "400px" }}
+                  sx={{
+                    width: "400px",
+                    "& .MuiInputBase-input": {
+                      fontFamily: "monospace",
+                    },
+                  }}
                 />
+
                 <Button
                   variant="outlined"
                   onClick={handleImportRecipe}
@@ -1207,7 +1217,7 @@ const RecipeBuilder: React.FC = () => {
                   {isImporting ? "Importing..." : "Import"}
                 </Button>
               </div>
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
                 {editId && (
                   <IconButton
                     onClick={handleDelete}
@@ -1217,7 +1227,7 @@ const RecipeBuilder: React.FC = () => {
                     <DeleteIcon />
                   </IconButton>
                 )}
-                <div className="border-l border-gray-200 h-8" />
+                <div className="h-8" />
                 <Link href="/recipes">
                   <Button variant="outlined">Cancel</Button>
                 </Link>
@@ -1227,11 +1237,7 @@ const RecipeBuilder: React.FC = () => {
                   onClick={handleSave}
                   disabled={saving}
                 >
-                  {saving
-                    ? "Saving..."
-                    : editId
-                    ? "Update Recipe"
-                    : "Save Recipe"}
+                  {saving ? "Saving..." : editId ? "Update" : "Save"}
                 </Button>
               </div>
             </div>

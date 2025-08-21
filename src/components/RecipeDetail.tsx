@@ -816,33 +816,32 @@ const RecipeDetail = React.memo(function RecipeDetail({
               {(recipe.source || recipe.sourceTitle) && (
                 <div className="mt-1">
                   Inspired by{" "}
-                  {recipe.sourceTitle ? (
-                    <span className="text-gray-500">{recipe.sourceTitle}</span>
-                  ) : (
+                  {!recipe.sourceTitle && recipe.source && (
                     <span className="text-gray-500">{recipe.source}</span>
                   )}
-                  {recipe.source && recipe.source.trim() !== "" && (
-                    <>
-                      {(() => {
-                        try {
-                          const url = new URL(recipe.source);
-                          return (
-                            <a
-                              href={recipe.source}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-blue-600 hover:text-blue-800 underline ml-1"
-                            >
-                              ({url.hostname.replace(/^www\./, "")})
-                            </a>
-                          );
-                        } catch {
-                          return null;
-                        }
-                      })()}
-                    </>
+                  {recipe.source &&
+                    recipe.source.trim() !== "" &&
+                    (function () {
+                      try {
+                        const url = new URL(recipe.source);
+                        return (
+                          <a
+                            href={recipe.source}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-blue-600 hover:text-blue-800 underline ml-1"
+                          >
+                            {recipe.sourceTitle}
+                          </a>
+                        );
+                      } catch {
+                        return null;
+                      }
+                    })()}
+                  {recipe.sourceTitle && !recipe.source && (
+                    <span className="text-gray-500">{recipe.sourceTitle}</span>
                   )}
-                  {recipe?.shared_family && (
+                  {recipe?.shared_family == true && (
                     <button
                       onClick={() => setShowFamilyDetails((prev) => !prev)}
                       className="text-blue-600 hover:text-blue-800 hover:underline ml-1 font-medium"
@@ -861,7 +860,7 @@ const RecipeDetail = React.memo(function RecipeDetail({
           </div>
 
           {/* Family Details */}
-          {recipe.shared_family && (
+          {recipe.shared_family === true && (
             <div className="mt-4 relative">
               {showFamilyDetails && (
                 <div className="space-y-4 p-4 mb-8 bg-gray-50 rounded-lg relative">
@@ -921,7 +920,6 @@ const RecipeDetail = React.memo(function RecipeDetail({
 
           {/* Recipe Content */}
           <div className="space-y-4">
-            {/* Ingredients */}
             <Accordion defaultExpanded>
               <AccordionSummary
                 expandIcon={<ExpandMoreIcon />}
