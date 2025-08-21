@@ -1189,34 +1189,7 @@ const RecipeBuilder: React.FC = () => {
 
           {/* Action Buttons */}
           <div className="mt-8 pt-6 border-t border-gray-200">
-            <div className="flex justify-between items-center">
-              <div className="flex items-center gap-2">
-                <TextField
-                  label={
-                    <span style={{ fontFamily: "monospace" }}>
-                      Import Recipe URL
-                    </span>
-                  }
-                  value={importUrl}
-                  onChange={(e) => setImportUrl(e.target.value)}
-                  placeholder="https://example.com/recipe"
-                  size="small"
-                  sx={{
-                    width: "400px",
-                    "& .MuiInputBase-input": {
-                      fontFamily: "monospace",
-                    },
-                  }}
-                />
-
-                <Button
-                  variant="outlined"
-                  onClick={handleImportRecipe}
-                  disabled={!importUrl || isImporting}
-                >
-                  {isImporting ? "Importing..." : "Import"}
-                </Button>
-              </div>
+            <div className="flex flex-row-reverse justify-between items-center">
               <div className="flex items-center gap-2">
                 {editId && (
                   <IconButton
@@ -1227,7 +1200,6 @@ const RecipeBuilder: React.FC = () => {
                     <DeleteIcon />
                   </IconButton>
                 )}
-                <div className="h-8" />
                 <Link href="/recipes">
                   <Button variant="outlined">Cancel</Button>
                 </Link>
@@ -1240,6 +1212,35 @@ const RecipeBuilder: React.FC = () => {
                   {saving ? "Saving..." : editId ? "Update" : "Save"}
                 </Button>
               </div>
+
+              {!editId && (
+                <div className="flex items-center gap-2">
+                  <TextField
+                    label={
+                      <span style={{ fontFamily: "monospace" }}>
+                        Import Recipe URL
+                      </span>
+                    }
+                    value={importUrl}
+                    onChange={(e) => setImportUrl(e.target.value)}
+                    placeholder="https://example.com/recipe"
+                    size="small"
+                    sx={{
+                      width: "400px",
+                      "& .MuiInputBase-input": {
+                        fontFamily: "monospace",
+                      },
+                    }}
+                  />
+                  <Button
+                    variant="outlined"
+                    onClick={handleImportRecipe}
+                    disabled={!importUrl || isImporting}
+                  >
+                    {isImporting ? "Importing..." : "Import"}
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </div>
