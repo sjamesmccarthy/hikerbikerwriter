@@ -190,10 +190,14 @@ export async function POST(request: Request) {
         addedPersonFamilyline
       );
 
-      // Add logged-in user to person's family - using logged-in user's familyline uuid
+      // Add logged-in user to person's family - using logged-in user's familyline uuid and "unknown" relationship
+      const modifiedRequestBody = {
+        ...requestBody,
+        relationship: "unknown", // Override the relationship to "unknown" for the reverse connection
+      };
       const addedPersonFamilyData = await processFamilyUpdate(
         loggedInUser,
-        requestBody,
+        modifiedRequestBody,
         addedPersonFamilyline,
         familyline
       );
