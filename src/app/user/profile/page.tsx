@@ -322,7 +322,7 @@ export default function UserProfilePage() {
                         onClick={() => router.push("/user/profile")}
                       />
                     )}
-                    Signed in as {nameFromFB ?? null}
+                    Signed in as {session.user?.name ?? null}
                   </span>
                   <span className="h-4 w-px bg-gray-300 mx-2" />
                   <button
