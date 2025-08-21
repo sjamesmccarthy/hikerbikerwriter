@@ -1,14 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import {
-  Button,
-  TextField,
-  MenuItem,
-  FormControl,
-  InputLabel,
-  Select,
-} from "@mui/material";
+import { Button, TextField, MenuItem } from "@mui/material";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { Session } from "next-auth";
 import Image from "next/image";
@@ -21,14 +14,6 @@ interface Relationship {
 interface Network {
   type: string;
   level: number;
-}
-
-interface RelationshipsData {
-  relationships: Relationship[];
-}
-
-interface NetworksData {
-  network: Network[];
 }
 
 // Import the JSON data
@@ -448,7 +433,6 @@ function AppSummaries({
   const [searching, setSearching] = useState(false);
   const [relationship, setRelationship] = useState("");
   const [network, setNetwork] = useState("");
-  const [selectedUser, setSelectedUser] = useState<SearchUser | null>(null);
   interface SearchUser {
     person_id: string;
     name: string;
@@ -458,26 +442,6 @@ function AppSummaries({
   }
 
   const [searchResults, setSearchResults] = useState<SearchUser[]>([]);
-
-  const handleSearch = async (query: string) => {
-    if (!query.trim()) {
-      setSearchResults([]);
-      return;
-    }
-    setSearching(true);
-    try {
-      const res = await fetch(
-        `/api/search-users?q=${encodeURIComponent(query)}`
-      );
-      if (res.ok) {
-        const data = await res.json();
-        setSearchResults(data);
-      }
-    } catch (error) {
-      console.error("Error searching users:", error);
-    }
-    setSearching(false);
-  };
 
   const handleAddPerson = async (user: SearchUser) => {
     console.log("handleAddPerson called with:", {

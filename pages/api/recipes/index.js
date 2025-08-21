@@ -90,7 +90,6 @@ export default async function handler(req, res) {
         sourceTitle,
         type,
         recommendedPellets,
-        categories,
         photo,
         prepTime,
         cookTime,
@@ -136,7 +135,7 @@ export default async function handler(req, res) {
         source,
         type: type || "grill",
         recommendedPellets,
-        category: req.body.category || "Dinner",
+        category: category || "Dinner",
         photo,
         prepTime: prepTime || 0,
         cookTime: cookTime || 0,
@@ -151,8 +150,8 @@ export default async function handler(req, res) {
           req.body.shared_family === 1 || req.body.shared_family === true
             ? 1
             : 0,
-        familyPhoto: req.body.familyPhoto || "",
-        familyNotes: req.body.familyNotes || "",
+        familyPhoto: familyPhoto || "",
+        familyNotes: familyNotes || "",
         date: new Date().toISOString(),
         dateAdded: new Date().toISOString(),
         personalNotes: "",
@@ -242,7 +241,7 @@ export default async function handler(req, res) {
         source,
         type: type || "grill",
         recommendedPellets,
-        category: req.body.category || existingRecipe.category || "Dinner",
+        category: category || existingRecipe.category || "Dinner",
         photo,
         prepTime: prepTime || 0,
         cookTime: cookTime || 0,
@@ -257,13 +256,12 @@ export default async function handler(req, res) {
           req.body.shared_family === 1 || req.body.shared_family === true
             ? 1
             : 0,
-        familyPhoto: req.body.familyPhoto || existingRecipe.familyPhoto || "",
-        familyNotes: req.body.familyNotes || existingRecipe.familyNotes || "",
+        familyPhoto: familyPhoto || existingRecipe.familyPhoto || "",
+        familyNotes: familyNotes || existingRecipe.familyNotes || "",
         date: req.body.date || existingRecipe.date,
         personalNotes: personalNotes || "",
         isFavorite: isFavorite || false,
-        sourceTitle:
-          req.body.sourceTitle || existingRecipe.sourceTitle || undefined,
+        sourceTitle: sourceTitle || existingRecipe.sourceTitle || undefined,
       };
 
       // Update in database

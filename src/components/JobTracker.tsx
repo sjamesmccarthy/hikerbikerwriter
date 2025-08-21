@@ -339,19 +339,6 @@ export default function JobTracker() {
     setNewSearchName("");
   };
 
-  const handleArchiveSearch = () => {
-    if (!currentSearch) return;
-
-    const updatedSearch = { ...currentSearch, isActive: false };
-    const updatedSearches = searches.map((s) =>
-      s.id === currentSearch.id ? updatedSearch : s
-    );
-
-    setSearches(updatedSearches);
-    setCurrentSearch(null);
-    saveJobData(updatedSearch);
-  };
-
   const handleAddOpportunity = () => {
     if (!currentSearch || !opportunityForm.company || !opportunityForm.position)
       return;

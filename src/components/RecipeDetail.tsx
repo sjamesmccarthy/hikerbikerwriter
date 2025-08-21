@@ -823,7 +823,7 @@ const RecipeDetail = React.memo(function RecipeDetail({
                     recipe.source.trim() !== "" &&
                     (function () {
                       try {
-                        const url = new URL(recipe.source);
+                        new URL(recipe.source);
                         return (
                           <a
                             href={recipe.source}
