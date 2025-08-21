@@ -37,6 +37,7 @@
     { "type": "great-granddaughter" },
     { "type": "great-grandson" },
     { "type": "great-aunt" },
-    { "type": "great-uncle" }
+    { "type": "great-uncle" },
+    { "type": "other" }
   ]
 }

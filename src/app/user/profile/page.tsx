@@ -433,6 +433,9 @@ function AppSummaries({
   const [searching, setSearching] = useState(false);
   const [relationship, setRelationship] = useState("");
   const [network, setNetwork] = useState("");
+  const [editingPersonId, setEditingPersonId] = useState<string | null>(null);
+  const [editRelationship, setEditRelationship] = useState("");
+  const [editNetwork, setEditNetwork] = useState("");
   interface SearchUser {
     person_id: string;
     name: string;
@@ -515,6 +518,81 @@ function AppSummaries({
       }
     } catch (error) {
       console.error("Error adding family member:", error);
+    }
+  };
+
+  const handleEditPerson = async (personId: string) => {
+    console.log("handleEditPerson called with:", {
+      personId,
+      editRelationship,
+      editNetwork,
+    });
+
+    if (!userEmail) {
+      console.error("Missing user email");
+      return;
+    }
+
+    if (!editRelationship) {
+      console.error("Please select a relationship");
+      return;
+    }
+
+    if (!editNetwork) {
+      console.error("Please select a network");
+      return;
+    }
+
+    try {
+      const response = await fetch("/api/update-family-member", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          personId: personId,
+          userEmail: userEmail,
+          relationship: editRelationship,
+          network: editNetwork,
+        }),
+      });
+
+      const data = await response.json();
+      console.log("API Response:", data);
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to update family member");
+      }
+
+      // Clear edit state and refresh data
+      setEditingPersonId(null);
+      setEditRelationship("");
+      setEditNetwork("");
+
+      // Refresh family data
+      try {
+        const res = await fetch(
+          `/api/familyline?email=${encodeURIComponent(userEmail)}`
+        );
+        if (res.ok) {
+          const data = await res.json();
+          // Ensure data.json is always an object, not a string
+          if (data && typeof data.json === "string") {
+            try {
+              data.json = JSON.parse(data.json);
+            } catch {
+              data.json = {};
+            }
+          }
+          setFamilyInfo(data);
+        } else {
+          setFamilyInfo(null);
+        }
+      } catch {
+        setFamilyInfo(null);
+      }
+    } catch (error) {
+      console.error("Error updating family member:", error);
     }
   };
 
@@ -979,8 +1057,22 @@ function AppSummaries({
                     <div className="font-bold text-lg text-gray-800">
                       Me ({nameFromFB ?? session.user.name ?? null})
                     </div>
-                    <div className="text-xs text-gray-400">
+                    <div className="text-xs text-gray-400 flex items-center gap-1">
                       Primary Account {personIdRemote && `(${personIdRemote})`}
+                      <EditNoteIcon
+                        sx={{
+                          fontSize: 12,
+                          color: "#9ca3af",
+                          cursor: "pointer",
+                        }}
+                        className="hover:text-gray-600"
+                        onClick={() => {
+                          // For now, we'll just show an alert since "Me" card editing might be different
+                          alert(
+                            "Edit functionality for your own profile coming soon!"
+                          );
+                        }}
+                      />
                     </div>
                   </div>
                 </div>
@@ -1115,9 +1207,9 @@ function AppSummaries({
                 return (
                   <div
                     key={person.person_id}
-                    className="flex flex-col sm:flex-row sm:items-center bg-white rounded-lg shadow p-4 w-full"
+                    className="flex flex-col bg-white rounded-lg shadow p-4 w-full"
                   >
-                    {/* Top row for mobile: Profile, name, and relation */}
+                    {/* Top row: Profile, name, and relation */}
                     <div className="flex items-center">
                       <div
                         className={`flex items-center justify-center w-12 h-12 rounded-full mr-4`}
@@ -1159,93 +1251,198 @@ function AppSummaries({
                         <div className="font-bold text-lg text-gray-800">
                           {person.name}
                         </div>
-                        <div className="text-xs text-gray-400">
+                        <div className="text-xs text-gray-400 flex items-center gap-1">
                           {familyType} ({person.relation})
+                          <EditNoteIcon
+                            sx={{
+                              fontSize: 12,
+                              color: "#9ca3af",
+                              cursor: "pointer",
+                            }}
+                            className="hover:text-gray-600"
+                            onClick={() => {
+                              if (editingPersonId === person.person_id) {
+                                // Cancel editing
+                                setEditingPersonId(null);
+                                setEditRelationship("");
+                                setEditNetwork("");
+                              } else {
+                                // Start editing
+                                setEditingPersonId(person.person_id);
+                                setEditRelationship(person.relation);
+                                // Convert network_level to network type
+                                const networkType =
+                                  networksData.network.find(
+                                    (n: Network) =>
+                                      n.level === person.network_level
+                                  )?.type || "";
+                                setEditNetwork(networkType);
+                              }
+                            }}
+                          />
+                        </div>
+                      </div>
+                      {/* Icons section - moved to always be on the right */}
+                      <div className="flex flex-row items-center gap-4 ml-auto">
+                        <div className="relative flex items-center">
+                          <CasinoIcon
+                            fontSize="medium"
+                            style={{ color: "#757575" }}
+                          />
+                          <span
+                            className="absolute -top-1.5 -right-1.5"
+                            style={{
+                              background: "#000",
+                              color: "#fff",
+                              borderRadius: "50%",
+                              padding: "0 5px",
+                              fontWeight: "bold",
+                              minWidth: "16px",
+                              fontSize: "0.75rem",
+                              height: "18px",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              textAlign: "center",
+                              boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
+                            }}
+                          >
+                            {shared.roll_and_write ?? 0}
+                          </span>
+                        </div>
+                        <div className="relative flex items-center">
+                          <StickyNote2Icon
+                            fontSize="medium"
+                            style={{ color: "#757575" }}
+                          />
+                          <span
+                            className="absolute -top-1.5 -right-1.5"
+                            style={{
+                              background: "#000",
+                              color: "#fff",
+                              borderRadius: "50%",
+                              padding: "0 5px",
+                              fontWeight: "bold",
+                              minWidth: "16px",
+                              fontSize: "0.75rem",
+                              height: "18px",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              textAlign: "center",
+                              boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
+                            }}
+                          >
+                            {shared.field_notes ?? 0}
+                          </span>
+                        </div>
+                        <div className="relative flex items-center">
+                          <RestaurantIcon
+                            fontSize="medium"
+                            style={{ color: "#757575" }}
+                          />
+                          <span
+                            className="absolute -top-1.5 -right-1.5"
+                            style={{
+                              background: "#000",
+                              color: "#fff",
+                              borderRadius: "50%",
+                              padding: "0 5px",
+                              fontWeight: "bold",
+                              minWidth: "16px",
+                              fontSize: "0.75rem",
+                              height: "18px",
+                              display: "flex",
+                              alignItems: "center",
+                              justifyContent: "center",
+                              textAlign: "center",
+                              boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
+                            }}
+                          >
+                            {shared.recipes ?? 0}
+                          </span>
                         </div>
                       </div>
                     </div>
 
-                    {/* Bottom row for mobile / Right side for desktop: Icons */}
-                    <div className="flex flex-row items-center gap-4 mt-4 sm:mt-0 justify-center sm:justify-end sm:ml-auto">
-                      <div className="relative flex items-center">
-                        <CasinoIcon
-                          fontSize="medium"
-                          style={{ color: "#757575" }}
-                        />
-                        <span
-                          className="absolute -top-1.5 -right-1.5"
-                          style={{
-                            background: "#000",
-                            color: "#fff",
-                            borderRadius: "50%",
-                            padding: "0 5px",
-                            fontWeight: "bold",
-                            minWidth: "16px",
-                            fontSize: "0.75rem",
-                            height: "18px",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            textAlign: "center",
-                            boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
-                          }}
-                        >
-                          {shared.roll_and_write ?? 0}
-                        </span>
+                    {/* Edit form - shows when this person is being edited */}
+                    {editingPersonId === person.person_id && (
+                      <div className="mt-4" style={{ marginLeft: "4rem" }}>
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                          <TextField
+                            select
+                            size="small"
+                            value={editRelationship}
+                            onChange={(e) =>
+                              setEditRelationship(e.target.value)
+                            }
+                            sx={{
+                              width: 160,
+                              "& .MuiInputBase-root": {
+                                height: 36,
+                              },
+                            }}
+                            label="Relationship"
+                          >
+                            {relationshipsData.relationships.map(
+                              (rel: Relationship) => (
+                                <MenuItem key={rel.type} value={rel.type}>
+                                  {rel.type}
+                                </MenuItem>
+                              )
+                            )}
+                          </TextField>
+                          <TextField
+                            select
+                            size="small"
+                            value={editNetwork}
+                            onChange={(e) => setEditNetwork(e.target.value)}
+                            sx={{
+                              width: 160,
+                              "& .MuiInputBase-root": {
+                                height: 36,
+                              },
+                            }}
+                            label="Network"
+                          >
+                            {networksData.network.map((net: Network) => (
+                              <MenuItem key={net.type} value={net.type}>
+                                {net.type}
+                              </MenuItem>
+                            ))}
+                          </TextField>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="contained"
+                              onClick={() => handleEditPerson(person.person_id)}
+                              style={{
+                                textTransform: "none",
+                                height: 36,
+                                minWidth: 80,
+                              }}
+                              disabled={!editRelationship || !editNetwork}
+                            >
+                              Update
+                            </Button>
+                            <Button
+                              variant="outlined"
+                              onClick={() => {
+                                setEditingPersonId(null);
+                                setEditRelationship("");
+                                setEditNetwork("");
+                              }}
+                              style={{
+                                textTransform: "none",
+                                height: 36,
+                                minWidth: 80,
+                              }}
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
                       </div>
-                      <div className="relative flex items-center">
-                        <StickyNote2Icon
-                          fontSize="medium"
-                          style={{ color: "#757575" }}
-                        />
-                        <span
-                          className="absolute -top-1.5 -right-1.5"
-                          style={{
-                            background: "#000",
-                            color: "#fff",
-                            borderRadius: "50%",
-                            padding: "0 5px",
-                            fontWeight: "bold",
-                            minWidth: "16px",
-                            fontSize: "0.75rem",
-                            height: "18px",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            textAlign: "center",
-                            boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
-                          }}
-                        >
-                          {shared.field_notes ?? 0}
-                        </span>
-                      </div>
-                      <div className="relative flex items-center">
-                        <RestaurantIcon
-                          fontSize="medium"
-                          style={{ color: "#757575" }}
-                        />
-                        <span
-                          className="absolute -top-1.5 -right-1.5"
-                          style={{
-                            background: "#000",
-                            color: "#fff",
-                            borderRadius: "50%",
-                            padding: "0 5px",
-                            fontWeight: "bold",
-                            minWidth: "16px",
-                            fontSize: "0.75rem",
-                            height: "18px",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            textAlign: "center",
-                            boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
-                          }}
-                        >
-                          {shared.recipes ?? 0}
-                        </span>
-                      </div>
-                    </div>
+                    )}
                   </div>
                 );
               }

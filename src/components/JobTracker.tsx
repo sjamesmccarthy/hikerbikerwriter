@@ -23,6 +23,7 @@ import {
   PhotoCamera as PhotoCameraIcon,
   IntegrationInstructions as DevToolsIcon,
   EditNote as EditNoteIcon,
+  StickyNote2 as NotesIcon,
   Code as CodeIcon,
   ColorLens as ColorIcon,
   TextFields as TextIcon,
@@ -1477,28 +1478,28 @@ export default function JobTracker() {
                           className="border border-gray-200"
                         >
                           <CardContent className="p-4">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center space-x-3">
-                                <Avatar className="bg-purple-100 text-purple-600">
+                            <div className="flex items-start justify-between">
+                              <div className="flex items-start space-x-3 flex-1">
+                                <Avatar className="bg-purple-100 text-purple-600 mt-1">
                                   <PersonIcon />
                                 </Avatar>
-                                <div>
+                                <div className="flex-1 min-h-[80px]">
                                   <Typography
                                     variant="subtitle1"
-                                    className="font-semibold"
+                                    className="font-semibold leading-5"
                                   >
                                     {recruiter.name}
                                   </Typography>
                                   <Typography
                                     variant="body2"
-                                    className="text-gray-600"
+                                    className="text-gray-600 leading-5 mt-1"
                                   >
                                     {recruiter.company}
                                   </Typography>
                                   {recruiter.specialty && (
                                     <Typography
                                       variant="caption"
-                                      className="text-gray-500"
+                                      className="text-gray-500 leading-4 block mt-1"
                                     >
                                       {recruiter.specialty}
                                     </Typography>
@@ -1523,20 +1524,34 @@ export default function JobTracker() {
                                   </div>
                                 </div>
                               </div>
-                              <div className="flex space-x-1">
+                              <div className="flex space-x-1 self-start">
+                                {recruiter.notes?.trim() && (
+                                  <IconButton
+                                    size="small"
+                                    className="text-orange-500 hover:text-orange-600"
+                                    onClick={() =>
+                                      handleEditRecruiter(recruiter)
+                                    }
+                                    title="View/Edit Notes"
+                                  >
+                                    <NotesIcon fontSize="small" />
+                                  </IconButton>
+                                )}
                                 <IconButton
                                   size="small"
-                                  className="text-gray-400"
+                                  className="text-gray-400 hover:text-gray-600"
                                   onClick={() => handleEditRecruiter(recruiter)}
+                                  title="Edit Recruiter"
                                 >
                                   <EditIcon fontSize="small" />
                                 </IconButton>
                                 <IconButton
                                   size="small"
-                                  style={{ color: "#6b7280" }}
+                                  className="text-gray-400 hover:text-red-500"
                                   onClick={() =>
                                     handleDeleteRecruiter(recruiter.id)
                                   }
+                                  title="Delete Recruiter"
                                 >
                                   <DeleteIcon fontSize="small" />
                                 </IconButton>
