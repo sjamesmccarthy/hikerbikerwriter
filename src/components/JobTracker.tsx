@@ -703,7 +703,7 @@ export default function JobTracker() {
   };
 
   const renderHeader = () => (
-    <div className="flex items-center space-x-2 h-[61px] border-b border-gray-200 px-3">
+    <div className="flex items-center space-x-2 h-[61px] border-b border-gray-200 px-3 bg-white">
       <Link href="/">
         <button className="px-3 py-1 rounded text-sm font-medium transition-colors flex items-center gap-1 text-gray-600 hover:text-gray-800 hover:bg-gray-100 cursor-pointer">
           <ArrowBackIcon sx={{ fontSize: 16 }} />
@@ -866,7 +866,7 @@ export default function JobTracker() {
       {renderHeader()}
 
       {/* Auth UI - same pattern as FieldNotes */}
-      <div className="flex justify-center sm:justify-end px-3 py-2 bg-white border-b border-gray-200">
+      <div className="flex justify-center sm:justify-end px-3 py-2 bg-white ">
         {(() => {
           if (status !== "authenticated") {
             return (
@@ -922,7 +922,7 @@ export default function JobTracker() {
         })()}
       </div>
 
-      <div className="max-w-7xl mx-auto p-6">
+      <div className="max-w-7xl mx-auto p-6 min-h-screen bg-white">
         {currentSearch && (
           <div>
             {/* Search Title */}
@@ -2056,7 +2056,7 @@ export default function JobTracker() {
             </div>
 
             {/* Close Job Search Button */}
-            <div className="flex justify-center mt-8">
+            <div className="flex justify-center sm:justify-end mt-8">
               <Button
                 variant="outlined"
                 color="error"

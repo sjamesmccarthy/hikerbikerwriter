@@ -405,7 +405,7 @@ const RollAndWriteEntries: React.FC = () => {
           </div>
 
           {/* Horizontal gray line */}
-          <div className="border-b border-gray-200 mb-6"></div>
+          {/* <div className="border-b border-gray-200 mb-6"></div> */}
 
           {/* Main Content */}
           <div className="flex-1 flex flex-col px-0 py-6">
