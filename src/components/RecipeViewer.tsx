@@ -160,6 +160,11 @@ const RecipeViewer: React.FC<RecipeViewerProps> = ({}) => {
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [showFamilyOnly, setShowFamilyOnly] = useState(false);
   const [hasFamilyMembers, setHasFamilyMembers] = useState(false);
+  const [familyMembers, setFamilyMembers] = useState<
+    Array<{ name: string; email: string; relationship: string }>
+  >([]);
+  const [selectedFamilyMember, setSelectedFamilyMember] =
+    useState<string>("All");
   const [minimized, setMinimized] = useState(false);
   const [imageErrors, setImageErrors] = useState<Set<number>>(new Set());
   const [openSelect, setOpenSelect] = useState<string | null>(null);
@@ -265,6 +270,7 @@ const RecipeViewer: React.FC<RecipeViewerProps> = ({}) => {
     async function checkFamilyMembers() {
       if (session?.user?.email) {
         try {
+          // Fetch family data to check if user has family members
           const res = await fetch(
             `/api/familyline?email=${encodeURIComponent(session.user.email)}`
           );
@@ -281,13 +287,28 @@ const RecipeViewer: React.FC<RecipeViewerProps> = ({}) => {
               Array.isArray(parsedJson.people) &&
               parsedJson.people.length > 0;
             setHasFamilyMembers(hasPeople);
+
+            // If user has family members, fetch the family members list
+            if (hasPeople) {
+              const membersRes = await fetch(
+                `/api/family-members?email=${encodeURIComponent(
+                  session.user.email
+                )}`
+              );
+              if (membersRes.ok) {
+                const members = await membersRes.json();
+                setFamilyMembers(members);
+              }
+            }
           }
         } catch (error) {
           console.error("Error checking family members:", error);
           setHasFamilyMembers(false);
+          setFamilyMembers([]);
         }
       } else {
         setHasFamilyMembers(false);
+        setFamilyMembers([]);
       }
     }
 
@@ -300,25 +321,42 @@ const RecipeViewer: React.FC<RecipeViewerProps> = ({}) => {
 
     const familyParam = searchParams.get("family");
     const favoritesParam = searchParams.get("favorites");
+    const familyMemberParam = searchParams.get("familyMember");
 
     if (familyParam === "true" && hasFamilyMembers) {
       setShowFamilyOnly(true);
       setShowFilters(true); // Open filters when family filter is triggered
+
+      // Set the family member if specified in URL
+      if (familyMemberParam && familyMembers.length > 0) {
+        const memberExists = familyMembers.some(
+          (member) => member.name === familyMemberParam
+        );
+        if (memberExists) {
+          setSelectedFamilyMember(familyMemberParam);
+        }
+      }
     }
 
     if (favoritesParam === "true" && session?.user?.email) {
       setShowFavoritesOnly(true);
       setShowFilters(true); // Open filters when favorites filter is triggered
     }
-  }, [searchParams, hasFamilyMembers, session?.user?.email]);
+  }, [searchParams, hasFamilyMembers, session?.user?.email, familyMembers]);
 
   // Helper function to update URL with filter parameters
   const updateURLWithFilters = (
     familyFilter: boolean,
-    favoritesFilter: boolean
+    favoritesFilter: boolean,
+    familyMember?: string
   ) => {
     const params = new URLSearchParams();
-    if (familyFilter) params.set("family", "true");
+    if (familyFilter) {
+      params.set("family", "true");
+      if (familyMember && familyMember !== "All") {
+        params.set("familyMember", familyMember);
+      }
+    }
     if (favoritesFilter) params.set("favorites", "true");
 
     const newURL = params.toString()
@@ -376,10 +414,27 @@ const RecipeViewer: React.FC<RecipeViewerProps> = ({}) => {
         recipe.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         recipe.description.toLowerCase().includes(searchTerm.toLowerCase());
       const favoriteMatch = !showFavoritesOnly || recipe.favorite;
-      const familyMatch =
-        !showFamilyOnly ||
-        recipe.shared_family === 1 ||
-        recipe.shared_family === true;
+
+      let familyMatch = !showFamilyOnly;
+      if (showFamilyOnly) {
+        if (selectedFamilyMember === "All") {
+          // Show all family recipes (recipes with shared_family enabled)
+          familyMatch =
+            recipe.shared_family === 1 || recipe.shared_family === true;
+        } else {
+          // Show recipes from the selected family member
+          const selectedMemberData = familyMembers.find(
+            (member) => member.name === selectedFamilyMember
+          );
+          if (selectedMemberData) {
+            familyMatch =
+              (recipe.shared_family === 1 || recipe.shared_family === true) &&
+              recipe.userEmail === selectedMemberData.email;
+          } else {
+            familyMatch = false;
+          }
+        }
+      }
 
       return (
         categoryMatch &&
@@ -802,7 +857,11 @@ const RecipeViewer: React.FC<RecipeViewerProps> = ({}) => {
                           onClick={() => {
                             const newFavorites = !showFavoritesOnly;
                             setShowFavoritesOnly(newFavorites);
-                            updateURLWithFilters(showFamilyOnly, newFavorites);
+                            updateURLWithFilters(
+                              showFamilyOnly,
+                              newFavorites,
+                              selectedFamilyMember
+                            );
                           }}
                           className={`px-3 py-2 rounded text-sm font-medium transition-colors flex items-center gap-1 ${
                             showFavoritesOnly
@@ -819,23 +878,85 @@ const RecipeViewer: React.FC<RecipeViewerProps> = ({}) => {
                         </button>
                       )}
 
-                      {/* Only show Family Only button for logged in users with family members */}
+                      {/* Family filters for logged in users with family members */}
                       {session?.user?.email && hasFamilyMembers && (
-                        <button
-                          onClick={() => {
-                            const newFamily = !showFamilyOnly;
-                            setShowFamilyOnly(newFamily);
-                            updateURLWithFilters(newFamily, showFavoritesOnly);
-                          }}
-                          className={`px-3 py-2 rounded text-sm font-medium transition-colors flex items-center gap-1 ${
-                            showFamilyOnly
-                              ? "bg-blue-100 text-blue-700 border border-blue-300"
-                              : "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200"
-                          }`}
-                        >
-                          <PeopleIcon sx={{ fontSize: 16 }} />
-                          Family Only
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => {
+                              const newFamily = !showFamilyOnly;
+                              setShowFamilyOnly(newFamily);
+                              if (!newFamily) {
+                                // Reset family member selection when turning off family filter
+                                setSelectedFamilyMember("All");
+                              }
+                              updateURLWithFilters(
+                                newFamily,
+                                showFavoritesOnly,
+                                newFamily ? selectedFamilyMember : undefined
+                              );
+                            }}
+                            className={`px-3 py-2 rounded text-sm font-medium transition-colors flex items-center gap-1 ${
+                              showFamilyOnly
+                                ? "bg-blue-100 text-blue-700 border border-blue-300"
+                                : "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200"
+                            }`}
+                          >
+                            <PeopleIcon sx={{ fontSize: 16 }} />
+                            Family Only
+                          </button>
+
+                          {/* Family member select dropdown */}
+                          {showFamilyOnly && familyMembers.length > 0 && (
+                            <FormControl size="small" sx={{ minWidth: 160 }}>
+                              <InputLabel>Family Member</InputLabel>
+                              <Select
+                                value={selectedFamilyMember}
+                                label="Family Member"
+                                open={openSelect === "familyMember"}
+                                onOpen={() => setOpenSelect("familyMember")}
+                                onClose={() => setOpenSelect(null)}
+                                onChange={(e) => {
+                                  const newFamilyMember = e.target.value;
+                                  setSelectedFamilyMember(newFamilyMember);
+                                  updateURLWithFilters(
+                                    showFamilyOnly,
+                                    showFavoritesOnly,
+                                    newFamilyMember
+                                  );
+                                }}
+                                MenuProps={{
+                                  PaperProps: {
+                                    style: {
+                                      zIndex: 10000,
+                                    },
+                                  },
+                                }}
+                              >
+                                <MenuItem value="All">
+                                  <div className="flex items-center">
+                                    <PeopleIcon sx={{ fontSize: 16, mr: 1 }} />
+                                    All Family
+                                  </div>
+                                </MenuItem>
+                                {familyMembers.map((member) => (
+                                  <MenuItem
+                                    key={member.email}
+                                    value={member.name}
+                                  >
+                                    <div className="flex items-center">
+                                      <span>{member.name}</span>
+                                      {member.relationship && (
+                                        <span className="ml-2 text-xs text-gray-500">
+                                          ({member.relationship})
+                                        </span>
+                                      )}
+                                    </div>
+                                  </MenuItem>
+                                ))}
+                              </Select>
+                            </FormControl>
+                          )}
+                        </div>
                       )}
                     </div>
                   </div>
@@ -1026,14 +1147,21 @@ const RecipeViewer: React.FC<RecipeViewerProps> = ({}) => {
 // generateRecipeFilterURL({ family: true }) => "/recipes?family=true"
 // generateRecipeFilterURL({ favorites: true }) => "/recipes?favorites=true"
 // generateRecipeFilterURL({ family: true, favorites: true }) => "/recipes?family=true&favorites=true"
+// generateRecipeFilterURL({ family: true, familyMember: "John Doe" }) => "/recipes?family=true&familyMember=John%20Doe"
 // generateRecipeFilterURL({ family: true, basePath: "/custom-recipes" }) => "/custom-recipes?family=true"
 export const generateRecipeFilterURL = (options: {
   family?: boolean;
   favorites?: boolean;
+  familyMember?: string;
   basePath?: string;
 }) => {
   const params = new URLSearchParams();
-  if (options.family) params.set("family", "true");
+  if (options.family) {
+    params.set("family", "true");
+    if (options.familyMember && options.familyMember !== "All") {
+      params.set("familyMember", options.familyMember);
+    }
+  }
   if (options.favorites) params.set("favorites", "true");
 
   const basePath = options.basePath || "/recipes";
