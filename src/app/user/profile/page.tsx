@@ -1265,7 +1265,12 @@ function AppSummaries({
                         </div>
                         <div className="flex-1">
                           <div className="font-bold text-lg text-gray-800">
-                            {person.name}
+                            <Link
+                              href={`/person/${person.person_id}`}
+                              className="hover:text-blue-600 transition-colors cursor-pointer"
+                            >
+                              {person.name}
+                            </Link>
                           </div>
                           <div className="text-xs text-gray-400 flex items-center gap-1">
                             {familyType} ({person.relation})
