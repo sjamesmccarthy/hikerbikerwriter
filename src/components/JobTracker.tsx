@@ -282,17 +282,15 @@ export default function JobTracker() {
   };
 
   const getStatusCounts = () => {
-    if (!currentSearch) return { applied: 0, closed: 0, active: 0 };
+    if (!currentSearch) return { applied: 0, closed: 0, saved: 0 };
 
     const opportunities = currentSearch.opportunities;
     return {
-      applied: opportunities.length, // Total number of jobs applied to
+      applied: opportunities.filter((o) => o.status === "applied").length,
       closed: opportunities.filter(
         (o) => o.status === "closed" || o.status === "rejected"
       ).length,
-      active: opportunities.filter(
-        (o) => o.status === "interview" || o.status === "offer"
-      ).length,
+      saved: opportunities.filter((o) => o.status === "saved").length,
     };
   };
 
@@ -666,7 +664,7 @@ export default function JobTracker() {
       summary: {
         totalOpportunities: currentSearch.opportunities.length,
         applied: statusCounts.applied,
-        active: statusCounts.active,
+        saved: statusCounts.saved,
         closed: statusCounts.closed,
       },
       opportunities: currentSearch.opportunities.map((opp) => ({
@@ -771,7 +769,7 @@ export default function JobTracker() {
     )}\n`;
     csvContent += `Total Opportunities,${currentSearch.opportunities.length}\n`;
     csvContent += `Applied,${statusCounts.applied}\n`;
-    csvContent += `Active,${statusCounts.active}\n`;
+    csvContent += `Saved,${statusCounts.saved}\n`;
     csvContent += `Closed,${statusCounts.closed}\n`;
     csvContent += `Total Recruiters,${currentSearch.recruiters.length}\n`;
     csvContent += `Total Resources,${currentSearch.resources.length}\n`;
@@ -1254,18 +1252,18 @@ export default function JobTracker() {
                   </Paper>
                 </div>
                 <div className="w-full">
-                  <Paper className="p-2 md:p-4 text-center bg-orange-50">
+                  <Paper className="p-2 md:p-4 text-center bg-purple-50">
                     <Typography
                       variant="h5"
-                      className="text-orange-600 font-bold text-lg md:text-3xl"
+                      className="text-purple-600 font-bold text-lg md:text-3xl"
                     >
-                      {statusCounts.active}
+                      {statusCounts.saved}
                     </Typography>
                     <Typography
                       variant="body2"
                       className="text-slate-600 text-xs md:text-base"
                     >
-                      Active
+                      Saved
                     </Typography>
                   </Paper>
                 </div>
