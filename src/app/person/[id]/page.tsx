@@ -403,7 +403,7 @@ export default function PersonPage() {
                 aria-label="person tabs"
                 centered
               >
-                <Tab label="People" {...a11yProps(0)} />
+                <Tab label="Profile" {...a11yProps(0)} />
                 <Tab label="Discovery" {...a11yProps(1)} />
                 <Tab label="Artifacts" {...a11yProps(2)} />
               </Tabs>
@@ -411,21 +411,18 @@ export default function PersonPage() {
 
             <TabPanel value={activeTab} index={0}>
               <div className="text-center text-gray-600">
-                <h3 className="text-lg font-semibold mb-4">People</h3>
-                <p>Shared connections and relationships coming soon...</p>
+                <p>Things being shared coming soon...</p>
               </div>
             </TabPanel>
 
             <TabPanel value={activeTab} index={1}>
               <div className="text-center text-gray-600">
-                <h3 className="text-lg font-semibold mb-4">Discovery</h3>
                 <p>Shared discoveries and interests coming soon...</p>
               </div>
             </TabPanel>
 
             <TabPanel value={activeTab} index={2}>
               <div className="text-center text-gray-600">
-                <h3 className="text-lg font-semibold mb-4">Artifacts</h3>
                 <p>Shared photos, notes, and memories coming soon...</p>
               </div>
             </TabPanel>
