@@ -66,9 +66,10 @@ interface JobOpportunity {
   company: string;
   position: string;
   dateApplied: string;
-  status: "applied" | "interview" | "offer" | "rejected" | "closed";
+  status: "saved" | "applied" | "interview" | "offer" | "rejected" | "closed";
   description?: string;
   jobUrl?: string;
+  jobSource?: string;
   salary?: string;
   location?: string;
   interviews: Interview[];
@@ -126,6 +127,7 @@ interface JobSearch {
 }
 
 const statusColors = {
+  saved: "#9C27B0",
   applied: "#2196F3",
   interview: "#FF9800",
   offer: "#4CAF50",
@@ -134,6 +136,7 @@ const statusColors = {
 };
 
 const statusLabels = {
+  saved: "Saved",
   applied: "Applied",
   interview: "Interview",
   offer: "Offer",
@@ -196,6 +199,7 @@ export default function JobTracker() {
   const [resourceForm, setResourceForm] = useState<Partial<OnlineResource>>({});
   const [interviewForm, setInterviewForm] = useState<Partial<Interview>>({});
   const [contactForm, setContactForm] = useState<Partial<Contact>>({});
+  const [isJobSourceOther, setIsJobSourceOther] = useState(false);
 
   // Apps menu state
   const [isAppsMenuOpen, setIsAppsMenuOpen] = useState(false);
@@ -361,6 +365,7 @@ export default function JobTracker() {
         status: opportunityForm.status || editingOpportunity.status,
         description: opportunityForm.description,
         jobUrl: opportunityForm.jobUrl,
+        jobSource: opportunityForm.jobSource,
         salary: opportunityForm.salary,
         location: opportunityForm.location,
         notes: opportunityForm.notes,
@@ -386,6 +391,7 @@ export default function JobTracker() {
         status: opportunityForm.status || "applied",
         description: opportunityForm.description,
         jobUrl: opportunityForm.jobUrl,
+        jobSource: opportunityForm.jobSource,
         salary: opportunityForm.salary,
         location: opportunityForm.location,
         interviews: [],
@@ -405,6 +411,7 @@ export default function JobTracker() {
     setShowOpportunityDialog(false);
     setOpportunityForm({});
     setEditingOpportunity(null);
+    setIsJobSourceOther(false);
   };
 
   const handleDeleteOpportunity = (opportunityId: string) => {
@@ -424,6 +431,30 @@ export default function JobTracker() {
   const handleEditOpportunity = (opportunity: JobOpportunity) => {
     setEditingOpportunity(opportunity);
     setOpportunityForm(opportunity);
+
+    // If no resources or recruiters available, always use text field
+    const hasResources = (currentSearch?.resources?.length ?? 0) > 0;
+    const hasRecruiters = (currentSearch?.recruiters?.length ?? 0) > 0;
+
+    if (!hasResources && !hasRecruiters) {
+      setIsJobSourceOther(true);
+    } else {
+      // Check if jobSource matches any resource name or recruiter format
+      const resourceNames = currentSearch?.resources?.map((r) => r.name) || [];
+      const recruiterNames =
+        currentSearch?.recruiters?.map((r) => `Recruiter - ${r.name}`) || [];
+      const allValidSources = [...resourceNames, ...recruiterNames];
+
+      if (
+        opportunity.jobSource &&
+        !allValidSources.includes(opportunity.jobSource)
+      ) {
+        setIsJobSourceOther(true);
+      } else {
+        setIsJobSourceOther(false);
+      }
+    }
+
     setShowOpportunityDialog(true);
   };
 
@@ -647,6 +678,7 @@ export default function JobTracker() {
         salary: opp.salary,
         description: opp.description,
         jobUrl: opp.jobUrl,
+        jobSource: opp.jobSource,
         notes: opp.notes,
         interviews: opp.interviews.map((interview) => ({
           type: interview.type,
@@ -760,6 +792,7 @@ export default function JobTracker() {
       "Salary",
       "Description",
       "Job URL",
+      "Job Source",
       "Notes",
       "Interviews",
       "Contacts",
@@ -796,6 +829,7 @@ export default function JobTracker() {
         opp.salary || "",
         (opp.description || "").replace(/,/g, ";").replace(/\n/g, " "),
         opp.jobUrl || "",
+        opp.jobSource || "",
         (opp.notes || "").replace(/,/g, ";").replace(/\n/g, " "),
         interviews,
         contacts,
@@ -1298,6 +1332,7 @@ export default function JobTracker() {
                         onChange={(e) => setFilterStatus(e.target.value)}
                       >
                         <MenuItem value="all">All</MenuItem>
+                        <MenuItem value="saved">Saved</MenuItem>
                         <MenuItem value="applied">Applied</MenuItem>
                         <MenuItem value="interview">Interview</MenuItem>
                         <MenuItem value="offer">Offer</MenuItem>
@@ -1458,7 +1493,7 @@ export default function JobTracker() {
                                               <div>
                                                 <Typography variant="body2">
                                                   <span className="font-semibold">
-                                                    Job Posting:
+                                                    Job Posting URL:
                                                   </span>{" "}
                                                   <a
                                                     href={opportunity.jobUrl}
@@ -1468,6 +1503,16 @@ export default function JobTracker() {
                                                   >
                                                     View Job Posting
                                                   </a>
+                                                </Typography>
+                                              </div>
+                                            )}
+                                            {opportunity.jobSource && (
+                                              <div>
+                                                <Typography variant="body2">
+                                                  <span className="font-semibold">
+                                                    Job Posting Source:
+                                                  </span>{" "}
+                                                  {opportunity.jobSource}
                                                 </Typography>
                                               </div>
                                             )}
@@ -1891,7 +1936,7 @@ export default function JobTracker() {
                                   {opportunity.jobUrl && (
                                     <Typography variant="body2">
                                       <span className="font-medium">
-                                        Job Posting:
+                                        Job Posting URL:
                                       </span>{" "}
                                       <a
                                         href={opportunity.jobUrl}
@@ -1901,6 +1946,14 @@ export default function JobTracker() {
                                       >
                                         View Job Posting
                                       </a>
+                                    </Typography>
+                                  )}
+                                  {opportunity.jobSource && (
+                                    <Typography variant="body2">
+                                      <span className="font-medium">
+                                        Job Posting Source:
+                                      </span>{" "}
+                                      {opportunity.jobSource}
                                     </Typography>
                                   )}
                                 </div>
@@ -2574,6 +2627,7 @@ export default function JobTracker() {
           setShowOpportunityDialog(false);
           setEditingOpportunity(null);
           setOpportunityForm({});
+          setIsJobSourceOther(false);
         }}
         maxWidth="md"
         fullWidth
@@ -2640,6 +2694,7 @@ export default function JobTracker() {
                     })
                   }
                 >
+                  <MenuItem value="saved">Saved</MenuItem>
                   <MenuItem value="applied">Applied</MenuItem>
                   <MenuItem value="interview">Interview</MenuItem>
                   <MenuItem value="offer">Offer</MenuItem>
@@ -2676,7 +2731,7 @@ export default function JobTracker() {
                 }
               />
             </div>
-            <div className="w-full md:col-span-2">
+            <div className="w-full md:col-span-1">
               <TextField
                 label="Job URL"
                 fullWidth
@@ -2689,6 +2744,87 @@ export default function JobTracker() {
                   })
                 }
               />
+            </div>
+            <div className="w-full md:col-span-1">
+              {isJobSourceOther ||
+              (!currentSearch?.resources?.length &&
+                !currentSearch?.recruiters?.length) ? (
+                <div className="flex items-center gap-2">
+                  {((currentSearch?.resources?.length ?? 0) > 0 ||
+                    (currentSearch?.recruiters?.length ?? 0) > 0) && (
+                    <IconButton
+                      size="small"
+                      onClick={() => {
+                        setIsJobSourceOther(false);
+                        setOpportunityForm({
+                          ...opportunityForm,
+                          jobSource: "",
+                        });
+                      }}
+                      className="text-gray-600 hover:text-gray-800"
+                      title="Back to dropdown"
+                    >
+                      <ArrowBackIcon />
+                    </IconButton>
+                  )}
+                  <TextField
+                    label="Job Source"
+                    fullWidth
+                    variant="outlined"
+                    placeholder="Enter job source (e.g., LinkedIn, Indeed, Recruiter)"
+                    value={opportunityForm.jobSource || ""}
+                    onChange={(e) =>
+                      setOpportunityForm({
+                        ...opportunityForm,
+                        jobSource: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+              ) : (
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel>Job Source</InputLabel>
+                  <Select
+                    value={opportunityForm.jobSource || ""}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      if (value === "Other") {
+                        setIsJobSourceOther(true);
+                        setOpportunityForm({
+                          ...opportunityForm,
+                          jobSource: "",
+                        });
+                      } else {
+                        setOpportunityForm({
+                          ...opportunityForm,
+                          jobSource: value,
+                        });
+                      }
+                    }}
+                    label="Job Source"
+                  >
+                    {/* Resources from current search */}
+                    {currentSearch?.resources?.map((resource) => (
+                      <MenuItem key={resource.id} value={resource.name}>
+                        {resource.name}
+                      </MenuItem>
+                    ))}
+
+                    {/* Recruiters from current search */}
+                    {currentSearch?.recruiters?.map((recruiter) => (
+                      <MenuItem
+                        key={`recruiter-${recruiter.id}`}
+                        value={`Recruiter - ${recruiter.name}`}
+                      >
+                        Recruiter - {recruiter.name}
+                      </MenuItem>
+                    ))}
+
+                    {/* Other option */}
+                    <MenuItem value="Other">Other</MenuItem>
+                  </Select>
+                </FormControl>
+              )}
             </div>
             <div className="w-full md:col-span-2">
               <TextField
@@ -2736,6 +2872,7 @@ export default function JobTracker() {
               setShowOpportunityDialog(false);
               setEditingOpportunity(null);
               setOpportunityForm({});
+              setIsJobSourceOther(false);
             }}
             variant="outlined"
             size="large"
