@@ -180,6 +180,9 @@ export default function JobTracker() {
   const [editingRecruiter, setEditingRecruiter] = useState<Recruiter | null>(
     null
   );
+  const [editingResource, setEditingResource] = useState<OnlineResource | null>(
+    null
+  );
   const [currentOpportunityForInterview, setCurrentOpportunityForInterview] =
     useState<JobOpportunity | null>(null);
   const [currentOpportunityForContact, setCurrentOpportunityForContact] =
@@ -614,6 +617,12 @@ export default function JobTracker() {
 
     setCurrentSearch(updatedSearch);
     saveJobData(updatedSearch);
+  };
+
+  const handleEditResource = (resource: OnlineResource) => {
+    setEditingResource(resource);
+    setResourceForm(resource);
+    setShowResourceDialog(true);
   };
 
   const handleExportSearch = () => {
@@ -2304,15 +2313,24 @@ export default function JobTracker() {
                                   {resource.description}
                                 </Typography>
                               </div>
-                              <IconButton
-                                size="small"
-                                style={{ color: "#6b7280" }}
-                                onClick={() =>
-                                  handleDeleteResource(resource.id)
-                                }
-                              >
-                                <DeleteIcon fontSize="small" />
-                              </IconButton>
+                              <div className="flex gap-1">
+                                <IconButton
+                                  size="small"
+                                  style={{ color: "#6b7280" }}
+                                  onClick={() => handleEditResource(resource)}
+                                >
+                                  <EditIcon fontSize="small" />
+                                </IconButton>
+                                <IconButton
+                                  size="small"
+                                  style={{ color: "#6b7280" }}
+                                  onClick={() =>
+                                    handleDeleteResource(resource.id)
+                                  }
+                                >
+                                  <DeleteIcon fontSize="small" />
+                                </IconButton>
+                              </div>
                             </div>
                           </CardContent>
                         </Card>
@@ -2922,14 +2940,20 @@ export default function JobTracker() {
         </DialogActions>
       </Dialog>
 
-      {/* Add Resource Dialog */}
+      {/* Add/Edit Resource Dialog */}
       <Dialog
         open={showResourceDialog}
-        onClose={() => setShowResourceDialog(false)}
+        onClose={() => {
+          setShowResourceDialog(false);
+          setEditingResource(null);
+          setResourceForm({});
+        }}
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle>Add Online Resource</DialogTitle>
+        <DialogTitle>
+          {editingResource ? "Edit Resource" : "Add Online Resource"}
+        </DialogTitle>
         <DialogContent>
           <div className="space-y-4 mt-4">
             <div className="w-full">
@@ -2999,7 +3023,11 @@ export default function JobTracker() {
           style={{ paddingBottom: "24px", justifyContent: "center" }}
         >
           <Button
-            onClick={() => setShowResourceDialog(false)}
+            onClick={() => {
+              setShowResourceDialog(false);
+              setEditingResource(null);
+              setResourceForm({});
+            }}
             variant="outlined"
             size="large"
             style={{ minWidth: "120px" }}
@@ -3013,24 +3041,50 @@ export default function JobTracker() {
                 resourceForm.url &&
                 resourceForm.category
               ) {
-                const newResource: OnlineResource = {
-                  id: Date.now().toString(),
-                  name: resourceForm.name,
-                  url: resourceForm.url,
-                  category: resourceForm.category,
-                  description: resourceForm.description,
-                };
-
-                if (currentSearch) {
-                  const updatedSearch = {
-                    ...currentSearch,
-                    resources: [...currentSearch.resources, newResource],
+                if (editingResource) {
+                  // Update existing resource
+                  const updatedResource: OnlineResource = {
+                    ...editingResource,
+                    name: resourceForm.name,
+                    url: resourceForm.url,
+                    category: resourceForm.category,
+                    description: resourceForm.description,
                   };
-                  setCurrentSearch(updatedSearch);
-                  saveJobData(updatedSearch);
+
+                  if (currentSearch) {
+                    const updatedSearch = {
+                      ...currentSearch,
+                      resources: currentSearch.resources.map((resource) =>
+                        resource.id === editingResource.id
+                          ? updatedResource
+                          : resource
+                      ),
+                    };
+                    setCurrentSearch(updatedSearch);
+                    saveJobData(updatedSearch);
+                  }
+                } else {
+                  // Add new resource
+                  const newResource: OnlineResource = {
+                    id: Date.now().toString(),
+                    name: resourceForm.name,
+                    url: resourceForm.url,
+                    category: resourceForm.category,
+                    description: resourceForm.description,
+                  };
+
+                  if (currentSearch) {
+                    const updatedSearch = {
+                      ...currentSearch,
+                      resources: [...currentSearch.resources, newResource],
+                    };
+                    setCurrentSearch(updatedSearch);
+                    saveJobData(updatedSearch);
+                  }
                 }
 
                 setShowResourceDialog(false);
+                setEditingResource(null);
                 setResourceForm({});
               }
             }}
@@ -3038,7 +3092,7 @@ export default function JobTracker() {
             size="large"
             style={{ minWidth: "120px" }}
           >
-            Add Resource
+            {editingResource ? "Update Resource" : "Add Resource"}
           </Button>
         </DialogActions>
       </Dialog>
