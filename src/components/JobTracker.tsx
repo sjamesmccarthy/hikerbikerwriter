@@ -167,6 +167,7 @@ export default function JobTracker() {
   const [expandedRow, setExpandedRow] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("newest");
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
   // Dialog states
   const [showNewSearchDialog, setShowNewSearchDialog] = useState(false);
@@ -282,10 +283,13 @@ export default function JobTracker() {
   };
 
   const getStatusCounts = () => {
-    if (!currentSearch) return { applied: 0, closed: 0, saved: 0 };
+    if (!currentSearch) return { total: 0, applied: 0, closed: 0, saved: 0 };
 
     const opportunities = currentSearch.opportunities;
     return {
+      total: opportunities.filter(
+        (o) => o.status !== "closed" && o.status !== "rejected"
+      ).length,
       applied: opportunities.filter((o) => o.status === "applied").length,
       closed: opportunities.filter(
         (o) => o.status === "closed" || o.status === "rejected"
@@ -306,10 +310,37 @@ export default function JobTracker() {
 
     let filtered = currentSearch.opportunities;
 
+    // Apply status filter
     if (filterStatus !== "all") {
       filtered = filtered.filter((o) => o.status === filterStatus);
     }
 
+    // Apply fuzzy search
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase().trim();
+      filtered = filtered.filter((o) => {
+        // Search only in company and position
+        const searchableText = [o.company, o.position]
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+
+        // Simple fuzzy search: check if all characters of query appear in order
+        let queryIndex = 0;
+        for (
+          let i = 0;
+          i < searchableText.length && queryIndex < query.length;
+          i++
+        ) {
+          if (searchableText[i] === query[queryIndex]) {
+            queryIndex++;
+          }
+        }
+        return queryIndex === query.length;
+      });
+    }
+
+    // Apply sorting
     return filtered.sort((a, b) => {
       if (sortBy === "newest") {
         return (
@@ -663,6 +694,7 @@ export default function JobTracker() {
       exportDate: new Date().toISOString(),
       summary: {
         totalOpportunities: currentSearch.opportunities.length,
+        total: statusCounts.total,
         applied: statusCounts.applied,
         saved: statusCounts.saved,
         closed: statusCounts.closed,
@@ -768,6 +800,7 @@ export default function JobTracker() {
       })
     )}\n`;
     csvContent += `Total Opportunities,${currentSearch.opportunities.length}\n`;
+    csvContent += `Total Active,${statusCounts.total}\n`;
     csvContent += `Applied,${statusCounts.applied}\n`;
     csvContent += `Saved,${statusCounts.saved}\n`;
     csvContent += `Closed,${statusCounts.closed}\n`;
@@ -1234,7 +1267,23 @@ export default function JobTracker() {
 
             {/* Progress Table */}
             <div className="mb-8">
-              <div className="grid grid-cols-3 gap-2 md:gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
+                <div className="w-full">
+                  <Paper className="p-2 md:p-4 text-center bg-green-50">
+                    <Typography
+                      variant="h5"
+                      className="text-green-600 font-bold text-lg md:text-3xl"
+                    >
+                      {statusCounts.total}
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      className="text-slate-600 text-xs md:text-base"
+                    >
+                      Total
+                    </Typography>
+                  </Paper>
+                </div>
                 <div className="w-full">
                   <Paper className="p-2 md:p-4 text-center bg-blue-50">
                     <Typography
@@ -1302,6 +1351,17 @@ export default function JobTracker() {
                   </Button>
 
                   <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+                    <TextField
+                      size="small"
+                      label="Search"
+                      placeholder="Search company, position..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full sm:w-auto"
+                      style={{ minWidth: 300, maxWidth: 400 }}
+                      variant="outlined"
+                    />
+
                     <FormControl
                       size="small"
                       className="w-full sm:w-auto"
