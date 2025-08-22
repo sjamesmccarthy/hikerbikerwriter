@@ -25,6 +25,7 @@ import {
   Star as StarIcon,
   Public as PublicIcon,
 } from "@mui/icons-material";
+import { renderFooter } from "@/components/shared/footerHelpers";
 
 interface Entry {
   id: number;
@@ -525,6 +526,9 @@ export default function AdminEntries() {
           })()}
         </Paper>
       </Box>
+
+      {/* Footer */}
+      {renderFooter("component")}
     </Box>
   );
 }

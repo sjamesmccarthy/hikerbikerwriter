@@ -38,6 +38,7 @@ import {
   Check as CheckIcon,
   Close as CloseIcon,
 } from "@mui/icons-material";
+import { renderFooter } from "@/components/shared/footerHelpers";
 
 interface User {
   id: number;
@@ -695,6 +696,9 @@ export default function AdminUserManagement() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Footer */}
+      {renderFooter("component")}
     </Box>
   );
 }
