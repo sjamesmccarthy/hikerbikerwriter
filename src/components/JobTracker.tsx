@@ -160,6 +160,19 @@ const formatPhoneNumber = (phone: string): string => {
   return phone;
 };
 
+// Get local date in YYYY-MM-DD format
+const getLocalDateString = (): string => {
+  const now = new Date();
+  const localDate = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
+  return localDate.toISOString().split("T")[0];
+};
+
+// Parse date string as local date to avoid timezone issues
+const parseLocalDate = (dateString: string): Date => {
+  const [year, month, day] = dateString.split("-").map(Number);
+  return new Date(year, month - 1, day); // month is 0-indexed
+};
+
 export default function JobTracker() {
   const { data: session, status } = useSession();
   const [searches, setSearches] = useState<JobSearch[]>([]);
@@ -299,7 +312,7 @@ export default function JobTracker() {
   };
 
   const getDaysSinceApplied = (dateApplied: string) => {
-    const applied = new Date(dateApplied);
+    const applied = parseLocalDate(dateApplied);
     const today = new Date();
     const diffTime = Math.abs(today.getTime() - applied.getTime());
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
@@ -385,12 +398,17 @@ export default function JobTracker() {
 
     if (editingOpportunity) {
       // Update existing opportunity
+      const statusChanged =
+        (opportunityForm.status || editingOpportunity.status) !==
+        editingOpportunity.status;
+
       const updatedOpportunity: JobOpportunity = {
         ...editingOpportunity,
         company: opportunityForm.company,
         position: opportunityForm.position,
-        dateApplied:
-          opportunityForm.dateApplied || editingOpportunity.dateApplied,
+        dateApplied: statusChanged
+          ? getLocalDateString()
+          : opportunityForm.dateApplied || editingOpportunity.dateApplied,
         status: opportunityForm.status || editingOpportunity.status,
         description: opportunityForm.description,
         jobUrl: opportunityForm.jobUrl,
@@ -415,8 +433,7 @@ export default function JobTracker() {
         id: Date.now().toString(),
         company: opportunityForm.company,
         position: opportunityForm.position,
-        dateApplied:
-          opportunityForm.dateApplied || new Date().toISOString().split("T")[0],
+        dateApplied: opportunityForm.dateApplied || getLocalDateString(),
         status: opportunityForm.status || "applied",
         description: opportunityForm.description,
         jobUrl: opportunityForm.jobUrl,
@@ -488,7 +505,7 @@ export default function JobTracker() {
   };
 
   const handleAddInterview = (opportunity: JobOpportunity) => {
-    const today = new Date().toISOString().split("T")[0]; // Get today's date in YYYY-MM-DD format
+    const today = getLocalDateString(); // Get today's date in YYYY-MM-DD format
     setCurrentOpportunityForInterview(opportunity);
     setInterviewForm({ date: today }); // Set default date to today
     setShowInterviewDialog(true);
@@ -853,7 +870,7 @@ export default function JobTracker() {
       opportunityRows.push([
         opp.company || "",
         opp.position || "",
-        new Date(opp.dateApplied).toLocaleDateString(),
+        parseLocalDate(opp.dateApplied).toLocaleDateString(),
         `${daysSince} days`,
         statusLabels[opp.status] || "",
         opp.location || "",
@@ -1422,7 +1439,7 @@ export default function JobTracker() {
                               Position
                             </TableCell>
                             <TableCell style={{ width: "12%" }}>
-                              Date Applied
+                              Last Changed
                             </TableCell>
                             <TableCell style={{ width: "10%" }}>
                               Days Since
@@ -1449,7 +1466,7 @@ export default function JobTracker() {
                                 <TableCell>{opportunity.company}</TableCell>
                                 <TableCell>{opportunity.position}</TableCell>
                                 <TableCell>
-                                  {new Date(
+                                  {parseLocalDate(
                                     opportunity.dateApplied
                                   ).toLocaleDateString()}
                                 </TableCell>
@@ -1931,7 +1948,7 @@ export default function JobTracker() {
                           <div>
                             <span className="text-gray-500">Applied:</span>
                             <div className="font-medium">
-                              {new Date(
+                              {parseLocalDate(
                                 opportunity.dateApplied
                               ).toLocaleDateString()}
                             </div>
