@@ -926,48 +926,57 @@ export default function JobTracker() {
         {currentSearch && (
           <div>
             {/* Search Title */}
-            <h1 className="text-3xl font-bold text-left mb-6">
+            <h1 className="text-3xl font-bold text-center md:text-left mb-6">
               {currentSearch.name} Job Search
             </h1>
 
             {/* Progress Table */}
             <div className="mb-8">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-3 gap-2 md:gap-4">
                 <div className="w-full">
-                  <Paper className="p-4 text-center bg-blue-50">
+                  <Paper className="p-2 md:p-4 text-center bg-blue-50">
                     <Typography
-                      variant="h4"
-                      className="text-blue-600 font-bold"
+                      variant="h5"
+                      className="text-blue-600 font-bold text-lg md:text-3xl"
                     >
                       {statusCounts.applied}
                     </Typography>
-                    <Typography variant="h6" className="text-slate-600">
+                    <Typography
+                      variant="body2"
+                      className="text-slate-600 text-xs md:text-base"
+                    >
                       Applied
                     </Typography>
                   </Paper>
                 </div>
                 <div className="w-full">
-                  <Paper className="p-4 text-center bg-orange-50">
+                  <Paper className="p-2 md:p-4 text-center bg-orange-50">
                     <Typography
-                      variant="h4"
-                      className="text-orange-600 font-bold"
+                      variant="h5"
+                      className="text-orange-600 font-bold text-lg md:text-3xl"
                     >
                       {statusCounts.active}
                     </Typography>
-                    <Typography variant="h6" className="text-slate-600">
+                    <Typography
+                      variant="body2"
+                      className="text-slate-600 text-xs md:text-base"
+                    >
                       Active
                     </Typography>
                   </Paper>
                 </div>
                 <div className="w-full">
-                  <Paper className="p-4 text-center bg-gray-50">
+                  <Paper className="p-2 md:p-4 text-center bg-gray-50">
                     <Typography
-                      variant="h4"
-                      className="text-gray-600 font-bold"
+                      variant="h5"
+                      className="text-gray-600 font-bold text-lg md:text-3xl"
                     >
                       {statusCounts.closed}
                     </Typography>
-                    <Typography variant="h6" className="text-slate-600">
+                    <Typography
+                      variant="body2"
+                      className="text-slate-600 text-xs md:text-base"
+                    >
                       Closed
                     </Typography>
                   </Paper>
@@ -978,20 +987,24 @@ export default function JobTracker() {
             {/* Opportunities Section */}
             <Card className="mb-8">
               <CardContent>
-                {/* Add Opportunity Button with Filters */}
-                <div className="flex justify-between items-center mb-4">
+                {/* Add Opportunity Button and Filters - Mobile: stacked, Desktop: side by side */}
+                <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-4">
                   <Button
                     variant="contained"
                     startIcon={<AddIcon />}
                     onClick={() => setShowOpportunityDialog(true)}
-                    className="bg-green-600 hover:bg-green-700"
+                    className="bg-green-600 hover:bg-green-700 w-full md:w-auto"
                     size="large"
                   >
                     Add Opportunity
                   </Button>
 
-                  <div className="flex space-x-4 gap-2">
-                    <FormControl size="small" style={{ minWidth: 120 }}>
+                  <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+                    <FormControl
+                      size="small"
+                      className="w-full sm:w-auto"
+                      style={{ minWidth: 120 }}
+                    >
                       <InputLabel>Sort By</InputLabel>
                       <Select
                         value={sortBy}
@@ -1003,7 +1016,11 @@ export default function JobTracker() {
                       </Select>
                     </FormControl>
 
-                    <FormControl size="small" style={{ minWidth: 120 }}>
+                    <FormControl
+                      size="small"
+                      className="w-full sm:w-auto"
+                      style={{ minWidth: 120 }}
+                    >
                       <InputLabel>Status</InputLabel>
                       <Select
                         value={filterStatus}
@@ -1464,7 +1481,7 @@ export default function JobTracker() {
                         variant="contained"
                         startIcon={<AddIcon />}
                         onClick={() => setShowRecruiterDialog(true)}
-                        className="bg-purple-600 hover:bg-purple-700"
+                        className="bg-purple-600 hover:bg-purple-700 w-full md:w-auto"
                         size="large"
                       >
                         Add Recruiter
@@ -1478,53 +1495,10 @@ export default function JobTracker() {
                           className="border border-gray-200"
                         >
                           <CardContent className="p-4">
-                            <div className="flex items-start justify-between">
-                              <div className="flex items-start space-x-3 flex-1">
-                                <Avatar className="bg-purple-100 text-purple-600 mt-1">
-                                  <PersonIcon />
-                                </Avatar>
-                                <div className="flex-1 min-h-[80px]">
-                                  <Typography
-                                    variant="subtitle1"
-                                    className="font-semibold leading-5"
-                                  >
-                                    {recruiter.name}
-                                  </Typography>
-                                  <Typography
-                                    variant="body2"
-                                    className="text-gray-600 leading-5 mt-1"
-                                  >
-                                    {recruiter.company}
-                                  </Typography>
-                                  {recruiter.specialty && (
-                                    <Typography
-                                      variant="caption"
-                                      className="text-gray-500 leading-4 block mt-1"
-                                    >
-                                      {recruiter.specialty}
-                                    </Typography>
-                                  )}
-                                  <div className="flex space-x-2 mt-2">
-                                    {recruiter.email && (
-                                      <a
-                                        href={`mailto:${recruiter.email}`}
-                                        className="text-blue-600 hover:underline text-sm"
-                                      >
-                                        {recruiter.email}
-                                      </a>
-                                    )}
-                                    {recruiter.phone && (
-                                      <a
-                                        href={`tel:${recruiter.phone}`}
-                                        className="text-blue-600 hover:underline text-sm"
-                                      >
-                                        {formatPhoneNumber(recruiter.phone)}
-                                      </a>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="flex space-x-1 self-start">
+                            {/* Mobile: Icons above content, Desktop: Icons on the right */}
+                            <div className="flex flex-col md:flex-row md:items-start md:justify-between">
+                              {/* Icons - Mobile: top, Desktop: right */}
+                              <div className="flex space-x-1 justify-end md:order-2 md:self-start mb-2 md:mb-0">
                                 {recruiter.notes?.trim() && (
                                   <IconButton
                                     size="small"
@@ -1556,6 +1530,55 @@ export default function JobTracker() {
                                   <DeleteIcon fontSize="small" />
                                 </IconButton>
                               </div>
+
+                              {/* Content - Mobile: below icons, Desktop: left side */}
+                              <div className="flex items-start space-x-3 flex-1 md:order-1">
+                                <div className="hidden md:block">
+                                  <Avatar className="bg-purple-100 text-purple-600 mt-1">
+                                    <PersonIcon />
+                                  </Avatar>
+                                </div>
+                                <div className="flex-1 min-h-[80px]">
+                                  <Typography
+                                    variant="subtitle1"
+                                    className="font-semibold leading-5"
+                                  >
+                                    {recruiter.name}
+                                  </Typography>
+                                  <Typography
+                                    variant="body2"
+                                    className="text-gray-600 leading-5 mt-1"
+                                  >
+                                    {recruiter.company}
+                                  </Typography>
+                                  {recruiter.specialty && (
+                                    <Typography
+                                      variant="caption"
+                                      className="text-gray-500 leading-4 block mt-1"
+                                    >
+                                      {recruiter.specialty}
+                                    </Typography>
+                                  )}
+                                  <div className="flex flex-col space-y-1 mt-2">
+                                    {recruiter.email && (
+                                      <a
+                                        href={`mailto:${recruiter.email}`}
+                                        className="text-blue-600 hover:underline text-sm"
+                                      >
+                                        {recruiter.email}
+                                      </a>
+                                    )}
+                                    {recruiter.phone && (
+                                      <a
+                                        href={`tel:${recruiter.phone}`}
+                                        className="text-blue-600 hover:underline text-sm"
+                                      >
+                                        {formatPhoneNumber(recruiter.phone)}
+                                      </a>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
                             </div>
                           </CardContent>
                         </Card>
@@ -1584,7 +1607,7 @@ export default function JobTracker() {
                         variant="contained"
                         startIcon={<AddIcon />}
                         onClick={() => setShowResourceDialog(true)}
-                        className="bg-teal-600 hover:bg-teal-700"
+                        className="bg-teal-600 hover:bg-teal-700 w-full md:w-auto"
                         size="large"
                       >
                         Add Resource
@@ -1648,12 +1671,13 @@ export default function JobTracker() {
             </div>
 
             {/* Close Job Search Button */}
-            <div className="flex justify-end mt-8">
+            <div className="flex justify-center mt-8">
               <Button
                 variant="outlined"
                 color="error"
                 onClick={() => handleCloseJobSearch()}
                 size="large"
+                className="w-full md:w-auto"
               >
                 Close This Job Search
               </Button>

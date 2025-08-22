@@ -153,7 +153,7 @@ export default function UserProfilePage() {
     { name: "Field Notes", path: "/fieldnotes", icon: StickyNote2Icon },
     { name: "Recipes", path: "/recipes", icon: RestaurantIcon },
     { name: "jM Galleries", path: "/jmgalleries", icon: PhotoCameraIcon },
-    { name: "Jobs", path: "/jobs", icon: WorkIcon },
+    { name: "Job Tracker", path: "/jobs", icon: WorkIcon },
   ];
 
   // Handle app selection from menu
