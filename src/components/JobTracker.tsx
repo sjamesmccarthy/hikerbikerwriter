@@ -2727,6 +2727,15 @@ export default function JobTracker() {
                     salary: e.target.value,
                   })
                 }
+                onBlur={(e) => {
+                  // If user clicked into the field but left it empty, set to "Not Specified"
+                  if (e.target.value.trim() === "") {
+                    setOpportunityForm({
+                      ...opportunityForm,
+                      salary: "Not Specified",
+                    });
+                  }
+                }}
               />
             </div>
             <div className="w-full md:col-span-1">
