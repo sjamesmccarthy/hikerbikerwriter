@@ -1038,260 +1038,378 @@ export default function JobTracker() {
                   </div>
                 </div>
 
-                {/* Opportunities Table */}
-                <TableContainer component={Paper}>
-                  <Table>
-                    <TableHead>
-                      <TableRow>
-                        <TableCell style={{ width: "30%" }}>Company</TableCell>
-                        <TableCell style={{ width: "25%" }}>Position</TableCell>
-                        <TableCell style={{ width: "12%" }}>
-                          Date Applied
-                        </TableCell>
-                        <TableCell style={{ width: "10%" }}>
-                          Days Since
-                        </TableCell>
-                        <TableCell style={{ width: "10%" }}>Status</TableCell>
-                        <TableCell
-                          style={{ width: "8%", textAlign: "right" }}
-                        ></TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {filteredOpportunities.map((opportunity) => (
-                        <React.Fragment key={opportunity.id}>
-                          <TableRow
-                            style={{
-                              backgroundColor: `${
-                                statusColors[opportunity.status]
-                              }10`,
-                            }}
-                            className="cursor-pointer hover:bg-gray-50"
-                          >
-                            <TableCell>{opportunity.company}</TableCell>
-                            <TableCell>{opportunity.position}</TableCell>
-                            <TableCell>
-                              {new Date(
-                                opportunity.dateApplied
-                              ).toLocaleDateString()}
-                            </TableCell>
-                            <TableCell>
-                              {getDaysSinceApplied(opportunity.dateApplied)}{" "}
-                              days
-                            </TableCell>
-                            <TableCell>
-                              <Chip
-                                label={statusLabels[opportunity.status]}
-                                style={{
-                                  backgroundColor:
-                                    statusColors[opportunity.status],
-                                  color: "white",
-                                }}
-                                size="small"
-                              />
-                            </TableCell>
-                            <TableCell style={{ textAlign: "right" }}>
-                              <IconButton
-                                onClick={() =>
-                                  setExpandedRow(
-                                    expandedRow === opportunity.id
-                                      ? null
-                                      : opportunity.id
-                                  )
-                                }
-                              >
-                                {expandedRow === opportunity.id ? (
-                                  <ExpandLessIcon />
-                                ) : (
-                                  <ExpandMoreIcon />
-                                )}
-                              </IconButton>
-                            </TableCell>
-                          </TableRow>
-                          <TableRow>
-                            <TableCell
-                              style={{ paddingBottom: 0, paddingTop: 0 }}
-                              colSpan={7}
+                {/* Opportunities Table - Desktop / Cards - Mobile */}
+
+                {/* Desktop Table View */}
+                <div className="hidden md:block">
+                  <TableContainer component={Paper}>
+                    <Table>
+                      <TableHead>
+                        <TableRow>
+                          <TableCell style={{ width: "30%" }}>
+                            Company
+                          </TableCell>
+                          <TableCell style={{ width: "25%" }}>
+                            Position
+                          </TableCell>
+                          <TableCell style={{ width: "12%" }}>
+                            Date Applied
+                          </TableCell>
+                          <TableCell style={{ width: "10%" }}>
+                            Days Since
+                          </TableCell>
+                          <TableCell style={{ width: "10%" }}>Status</TableCell>
+                          <TableCell
+                            style={{ width: "8%", textAlign: "right" }}
+                          ></TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {filteredOpportunities.map((opportunity) => (
+                          <React.Fragment key={opportunity.id}>
+                            <TableRow
+                              style={{
+                                backgroundColor: `${
+                                  statusColors[opportunity.status]
+                                }10`,
+                              }}
+                              className="cursor-pointer hover:bg-gray-50"
                             >
-                              <Collapse
-                                in={expandedRow === opportunity.id}
-                                timeout="auto"
-                                unmountOnExit
+                              <TableCell>{opportunity.company}</TableCell>
+                              <TableCell>{opportunity.position}</TableCell>
+                              <TableCell>
+                                {new Date(
+                                  opportunity.dateApplied
+                                ).toLocaleDateString()}
+                              </TableCell>
+                              <TableCell>
+                                {getDaysSinceApplied(opportunity.dateApplied)}{" "}
+                                days
+                              </TableCell>
+                              <TableCell>
+                                <Chip
+                                  label={statusLabels[opportunity.status]}
+                                  style={{
+                                    backgroundColor:
+                                      statusColors[opportunity.status],
+                                    color: "white",
+                                  }}
+                                  size="small"
+                                />
+                              </TableCell>
+                              <TableCell style={{ textAlign: "right" }}>
+                                <IconButton
+                                  onClick={() =>
+                                    setExpandedRow(
+                                      expandedRow === opportunity.id
+                                        ? null
+                                        : opportunity.id
+                                    )
+                                  }
+                                >
+                                  {expandedRow === opportunity.id ? (
+                                    <ExpandLessIcon />
+                                  ) : (
+                                    <ExpandMoreIcon />
+                                  )}
+                                </IconButton>
+                              </TableCell>
+                            </TableRow>
+                            <TableRow>
+                              <TableCell
+                                style={{ paddingBottom: 0, paddingTop: 0 }}
+                                colSpan={7}
                               >
-                                <Box className="p-4">
-                                  {/* Two column layout */}
-                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    {/* Left Column - Opportunity Details */}
-                                    <div>
-                                      <Typography
-                                        variant="h6"
-                                        style={{ marginBottom: "1.5rem" }}
-                                      >
-                                        Opportunity Details
-                                      </Typography>
-
-                                      {/* Description */}
-                                      <div className="mb-4">
+                                <Collapse
+                                  in={expandedRow === opportunity.id}
+                                  timeout="auto"
+                                  unmountOnExit
+                                >
+                                  <Box className="p-4">
+                                    {/* Two column layout */}
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                      {/* Left Column - Opportunity Details */}
+                                      <div>
                                         <Typography
-                                          variant="subtitle2"
-                                          className="mb-2"
+                                          variant="h6"
+                                          style={{ marginBottom: "1.5rem" }}
                                         >
-                                          <span className="font-semibold">
-                                            Description
-                                          </span>
+                                          Opportunity Details
                                         </Typography>
-                                        <Typography
-                                          variant="body2"
-                                          className="mb-2"
-                                        >
-                                          {opportunity.description ||
-                                            "No description"}
-                                        </Typography>
-                                      </div>
 
-                                      {/* Key-value pairs */}
-                                      <div className="space-y-2 mb-4">
-                                        <div>
-                                          <Typography variant="body2">
+                                        {/* Description */}
+                                        <div className="mb-4">
+                                          <Typography
+                                            variant="subtitle2"
+                                            className="mb-2"
+                                          >
                                             <span className="font-semibold">
-                                              Location:
-                                            </span>{" "}
-                                            {opportunity.location ||
-                                              "Not specified"}
+                                              Description
+                                            </span>
+                                          </Typography>
+                                          <Typography
+                                            variant="body2"
+                                            className="mb-2"
+                                          >
+                                            {opportunity.description ||
+                                              "No description"}
                                           </Typography>
                                         </div>
-                                        <div>
-                                          <Typography variant="body2">
-                                            <span className="font-semibold">
-                                              Salary:
-                                            </span>{" "}
-                                            {opportunity.salary ||
-                                              "Not specified"}
-                                          </Typography>
-                                        </div>
-                                        {opportunity.jobUrl && (
+
+                                        {/* Key-value pairs */}
+                                        <div className="space-y-2 mb-4">
                                           <div>
                                             <Typography variant="body2">
                                               <span className="font-semibold">
-                                                Job Posting:
+                                                Location:
                                               </span>{" "}
-                                              <a
-                                                href={opportunity.jobUrl}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="text-blue-600 hover:underline"
-                                              >
-                                                View Job Posting
-                                              </a>
+                                              {opportunity.location ||
+                                                "Not specified"}
+                                            </Typography>
+                                          </div>
+                                          <div>
+                                            <Typography variant="body2">
+                                              <span className="font-semibold">
+                                                Salary:
+                                              </span>{" "}
+                                              {opportunity.salary ||
+                                                "Not specified"}
+                                            </Typography>
+                                          </div>
+                                          {opportunity.jobUrl && (
+                                            <div>
+                                              <Typography variant="body2">
+                                                <span className="font-semibold">
+                                                  Job Posting:
+                                                </span>{" "}
+                                                <a
+                                                  href={opportunity.jobUrl}
+                                                  target="_blank"
+                                                  rel="noopener noreferrer"
+                                                  className="text-blue-600 hover:underline"
+                                                >
+                                                  View Job Posting
+                                                </a>
+                                              </Typography>
+                                            </div>
+                                          )}
+                                        </div>
+
+                                        {/* Notes - only show if notes exist */}
+                                        {opportunity.notes && (
+                                          <div className="mb-4">
+                                            <Typography
+                                              variant="subtitle2"
+                                              className="font-bold mb-2"
+                                            >
+                                              <span className="font-semibold">
+                                                Notes
+                                              </span>
+                                            </Typography>
+                                            <Typography variant="body2">
+                                              {opportunity.notes}
                                             </Typography>
                                           </div>
                                         )}
                                       </div>
 
-                                      {/* Notes - only show if notes exist */}
-                                      {opportunity.notes && (
-                                        <div className="mb-4">
-                                          <Typography
-                                            variant="subtitle2"
-                                            className="font-bold mb-2"
-                                          >
-                                            <span className="font-semibold">
-                                              Notes
-                                            </span>
-                                          </Typography>
-                                          <Typography variant="body2">
-                                            {opportunity.notes}
-                                          </Typography>
-                                        </div>
-                                      )}
-                                    </div>
+                                      {/* Right Column - Interviews */}
+                                      <div>
+                                        <Typography
+                                          variant="h6"
+                                          className="mb-3"
+                                        >
+                                          Interviews (
+                                          {opportunity.interviews.length})
+                                        </Typography>
 
-                                    {/* Right Column - Interviews */}
-                                    <div>
-                                      <Typography variant="h6" className="mb-3">
-                                        Interviews (
-                                        {opportunity.interviews.length})
-                                      </Typography>
-
-                                      {/* Interview list */}
-                                      {opportunity.interviews.length > 0 ? (
-                                        <div className="space-y-3 mb-6">
-                                          {opportunity.interviews.map(
-                                            (interview) => (
-                                              <div
-                                                key={interview.id}
-                                                className="border border-gray-200 rounded p-3 bg-gray-50"
-                                              >
-                                                <div className="flex justify-between">
-                                                  <div className="flex-1">
-                                                    {/* Date and Time */}
-                                                    <Typography
-                                                      variant="subtitle2"
-                                                      className="text-gray-600 block leading-tight"
-                                                    >
-                                                      {new Date(
-                                                        interview.date
-                                                      ).toLocaleDateString()}
-                                                      {interview.time &&
-                                                        interview.time.trim() !==
-                                                          "" &&
-                                                        ` at ${interview.time}`}
-                                                    </Typography>
-
-                                                    {/* Interview Type */}
-                                                    <Typography
-                                                      variant="subtitle2"
-                                                      className="font-semibold leading-tight"
-                                                    >
-                                                      {interview.type}
-                                                    </Typography>
-
-                                                    {/* Interviewer */}
-                                                    {interview.interviewer && (
+                                        {/* Interview list */}
+                                        {opportunity.interviews.length > 0 ? (
+                                          <div className="space-y-3 mb-6">
+                                            {opportunity.interviews.map(
+                                              (interview) => (
+                                                <div
+                                                  key={interview.id}
+                                                  className="border border-gray-200 rounded p-3 bg-gray-50"
+                                                >
+                                                  <div className="flex justify-between">
+                                                    <div className="flex-1">
+                                                      {/* Date and Time */}
                                                       <Typography
-                                                        variant="body2"
-                                                        className="text-gray-600 leading-tight"
+                                                        variant="subtitle2"
+                                                        className="text-gray-600 block leading-tight"
                                                       >
-                                                        <span className="font-medium">
-                                                          Interviewer:
-                                                        </span>{" "}
-                                                        {interview.interviewer}
+                                                        {new Date(
+                                                          interview.date
+                                                        ).toLocaleDateString()}
+                                                        {interview.time &&
+                                                          interview.time.trim() !==
+                                                            "" &&
+                                                          ` at ${interview.time}`}
                                                       </Typography>
-                                                    )}
 
-                                                    {/* Notes */}
-                                                    {interview.notes && (
+                                                      {/* Interview Type */}
                                                       <Typography
-                                                        variant="body2"
-                                                        className="text-gray-600 mt-2"
+                                                        variant="subtitle2"
+                                                        className="font-semibold leading-tight"
                                                       >
-                                                        <span className="font-medium">
-                                                          Notes:
-                                                        </span>{" "}
-                                                        {interview.notes}
+                                                        {interview.type}
                                                       </Typography>
-                                                    )}
+
+                                                      {/* Interviewer */}
+                                                      {interview.interviewer && (
+                                                        <Typography
+                                                          variant="body2"
+                                                          className="text-gray-600 leading-tight"
+                                                        >
+                                                          <span className="font-medium">
+                                                            Interviewer:
+                                                          </span>{" "}
+                                                          {
+                                                            interview.interviewer
+                                                          }
+                                                        </Typography>
+                                                      )}
+
+                                                      {/* Notes */}
+                                                      {interview.notes && (
+                                                        <Typography
+                                                          variant="body2"
+                                                          className="text-gray-600 mt-2"
+                                                        >
+                                                          <span className="font-medium">
+                                                            Notes:
+                                                          </span>{" "}
+                                                          {interview.notes}
+                                                        </Typography>
+                                                      )}
+                                                    </div>
+
+                                                    {/* Delete button */}
+                                                    <div
+                                                      className="flex items-start justify-center"
+                                                      style={{
+                                                        height: "100%",
+                                                        alignSelf: "center",
+                                                      }}
+                                                    >
+                                                      <IconButton
+                                                        size="small"
+                                                        onClick={() =>
+                                                          handleDeleteInterview(
+                                                            opportunity.id,
+                                                            interview.id
+                                                          )
+                                                        }
+                                                        style={{
+                                                          color: "#6b7280",
+                                                          marginTop: "8px",
+                                                        }}
+                                                        className="ml-2"
+                                                      >
+                                                        <DeleteIcon fontSize="small" />
+                                                      </IconButton>
+                                                    </div>
                                                   </div>
+                                                </div>
+                                              )
+                                            )}
+                                          </div>
+                                        ) : (
+                                          <Typography
+                                            variant="body2"
+                                            className="text-gray-500 mb-6"
+                                          >
+                                            No interviews scheduled
+                                          </Typography>
+                                        )}
 
-                                                  {/* Delete button */}
-                                                  <div
-                                                    className="flex items-start justify-center"
-                                                    style={{
-                                                      height: "100%",
-                                                      alignSelf: "center",
-                                                    }}
-                                                  >
+                                        <Typography
+                                          variant="h6"
+                                          className="mb-3 mt-6"
+                                          style={{ marginTop: "1.5rem" }}
+                                        >
+                                          Contacts (
+                                          {opportunity.contacts.length})
+                                        </Typography>
+
+                                        {/* Contact list */}
+                                        {opportunity.contacts.length > 0 ? (
+                                          <div className="space-y-3 mb-4">
+                                            {opportunity.contacts.map(
+                                              (contact) => (
+                                                <div
+                                                  key={contact.id}
+                                                  className="border border-gray-200 rounded p-3 bg-gray-50"
+                                                >
+                                                  <div className="flex justify-between items-center">
+                                                    <div className="flex-1">
+                                                      {/* Name, Role, and Company on first line */}
+                                                      <Typography
+                                                        variant="body2"
+                                                        className="font-semibold mb-1"
+                                                      >
+                                                        {contact.name}
+                                                        {contact.role &&
+                                                          `, ${contact.role}`}
+                                                        {contact.company &&
+                                                          `, ${contact.company}`}
+                                                      </Typography>
+
+                                                      {/* Email and Phone on same line */}
+                                                      {(contact.email ||
+                                                        contact.phone) && (
+                                                        <div className="mb-1">
+                                                          {contact.email && (
+                                                            <a
+                                                              href={`mailto:${contact.email}`}
+                                                              className="text-blue-600 hover:underline"
+                                                            >
+                                                              {contact.email}
+                                                            </a>
+                                                          )}
+                                                          {contact.phone && (
+                                                            <span>
+                                                              {contact.email &&
+                                                                " "}
+                                                              <a
+                                                                href={`tel:${contact.phone}`}
+                                                                className="text-blue-600 hover:underline"
+                                                              >
+                                                                {formatPhoneNumber(
+                                                                  contact.phone
+                                                                )}
+                                                              </a>
+                                                            </span>
+                                                          )}
+                                                        </div>
+                                                      )}
+
+                                                      {/* Notes if available */}
+                                                      {contact.notes && (
+                                                        <Typography
+                                                          variant="body2"
+                                                          className="text-gray-600 mt-2"
+                                                        >
+                                                          <span className="font-medium">
+                                                            Notes:
+                                                          </span>{" "}
+                                                          {contact.notes}
+                                                        </Typography>
+                                                      )}
+                                                    </div>
+
+                                                    {/* Delete button */}
                                                     <IconButton
                                                       size="small"
                                                       onClick={() =>
-                                                        handleDeleteInterview(
+                                                        handleDeleteContact(
                                                           opportunity.id,
-                                                          interview.id
+                                                          contact.id
                                                         )
                                                       }
                                                       style={{
                                                         color: "#6b7280",
-                                                        marginTop: "8px",
                                                       }}
                                                       className="ml-2"
                                                     >
@@ -1299,174 +1417,441 @@ export default function JobTracker() {
                                                     </IconButton>
                                                   </div>
                                                 </div>
-                                              </div>
-                                            )
-                                          )}
-                                        </div>
-                                      ) : (
-                                        <Typography
-                                          variant="body2"
-                                          className="text-gray-500 mb-6"
-                                        >
-                                          No interviews scheduled
-                                        </Typography>
-                                      )}
-
-                                      <Typography
-                                        variant="h6"
-                                        className="mb-3 mt-6"
-                                        style={{ marginTop: "1.5rem" }}
-                                      >
-                                        Contacts ({opportunity.contacts.length})
-                                      </Typography>
-
-                                      {/* Contact list */}
-                                      {opportunity.contacts.length > 0 ? (
-                                        <div className="space-y-3 mb-4">
-                                          {opportunity.contacts.map(
-                                            (contact) => (
-                                              <div
-                                                key={contact.id}
-                                                className="border border-gray-200 rounded p-3 bg-gray-50"
-                                              >
-                                                <div className="flex justify-between items-center">
-                                                  <div className="flex-1">
-                                                    {/* Name, Role, and Company on first line */}
-                                                    <Typography
-                                                      variant="body2"
-                                                      className="font-semibold mb-1"
-                                                    >
-                                                      {contact.name}
-                                                      {contact.role &&
-                                                        `, ${contact.role}`}
-                                                      {contact.company &&
-                                                        `, ${contact.company}`}
-                                                    </Typography>
-
-                                                    {/* Email and Phone on same line */}
-                                                    {(contact.email ||
-                                                      contact.phone) && (
-                                                      <div className="mb-1">
-                                                        {contact.email && (
-                                                          <a
-                                                            href={`mailto:${contact.email}`}
-                                                            className="text-blue-600 hover:underline"
-                                                          >
-                                                            {contact.email}
-                                                          </a>
-                                                        )}
-                                                        {contact.phone && (
-                                                          <span>
-                                                            {contact.email &&
-                                                              " "}
-                                                            <a
-                                                              href={`tel:${contact.phone}`}
-                                                              className="text-blue-600 hover:underline"
-                                                            >
-                                                              {formatPhoneNumber(
-                                                                contact.phone
-                                                              )}
-                                                            </a>
-                                                          </span>
-                                                        )}
-                                                      </div>
-                                                    )}
-
-                                                    {/* Notes if available */}
-                                                    {contact.notes && (
-                                                      <Typography
-                                                        variant="body2"
-                                                        className="text-gray-600 mt-2"
-                                                      >
-                                                        <span className="font-medium">
-                                                          Notes:
-                                                        </span>{" "}
-                                                        {contact.notes}
-                                                      </Typography>
-                                                    )}
-                                                  </div>
-
-                                                  {/* Delete button */}
-                                                  <IconButton
-                                                    size="small"
-                                                    onClick={() =>
-                                                      handleDeleteContact(
-                                                        opportunity.id,
-                                                        contact.id
-                                                      )
-                                                    }
-                                                    style={{ color: "#6b7280" }}
-                                                    className="ml-2"
-                                                  >
-                                                    <DeleteIcon fontSize="small" />
-                                                  </IconButton>
-                                                </div>
-                                              </div>
-                                            )
-                                          )}
-                                        </div>
-                                      ) : (
-                                        <Typography
-                                          variant="body2"
-                                          className="text-gray-500 mb-4"
-                                        >
-                                          No contacts added
-                                        </Typography>
-                                      )}
+                                              )
+                                            )}
+                                          </div>
+                                        ) : (
+                                          <Typography
+                                            variant="body2"
+                                            className="text-gray-500 mb-4"
+                                          >
+                                            No contacts added
+                                          </Typography>
+                                        )}
+                                      </div>
                                     </div>
-                                  </div>
 
-                                  <div className="flex justify-end space-x-3 pt-6 px-0 pb-2 gap-2">
-                                    <Button
-                                      variant="outlined"
-                                      size="small"
-                                      className="px-4 py-2"
-                                      onClick={() =>
-                                        handleEditOpportunity(opportunity)
-                                      }
+                                    <div className="flex justify-end space-x-3 pt-6 px-0 pb-2 gap-2">
+                                      <Button
+                                        variant="outlined"
+                                        size="small"
+                                        className="px-4 py-2"
+                                        onClick={() =>
+                                          handleEditOpportunity(opportunity)
+                                        }
+                                      >
+                                        Edit
+                                      </Button>
+                                      <Button
+                                        variant="outlined"
+                                        size="small"
+                                        className="px-4 py-2"
+                                        onClick={() =>
+                                          handleAddInterview(opportunity)
+                                        }
+                                      >
+                                        Add Interview
+                                      </Button>
+                                      <Button
+                                        variant="outlined"
+                                        size="small"
+                                        className="px-4 py-2"
+                                        onClick={() =>
+                                          handleAddContact(opportunity)
+                                        }
+                                      >
+                                        Add Contact
+                                      </Button>
+                                      <IconButton
+                                        size="small"
+                                        onClick={() =>
+                                          handleDeleteOpportunity(
+                                            opportunity.id
+                                          )
+                                        }
+                                        className="ml-2 p-2"
+                                        style={{ color: "#dc2626" }}
+                                      >
+                                        <DeleteIcon />
+                                      </IconButton>
+                                    </div>
+                                  </Box>
+                                </Collapse>
+                              </TableCell>
+                            </TableRow>
+                          </React.Fragment>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </div>
+
+                {/* Mobile Card View */}
+                <div className="md:hidden space-y-4">
+                  {filteredOpportunities.map((opportunity) => (
+                    <Card
+                      key={opportunity.id}
+                      className="border border-gray-200"
+                      style={{
+                        backgroundColor: `${
+                          statusColors[opportunity.status]
+                        }08`,
+                      }}
+                    >
+                      <CardContent className="p-4">
+                        {/* Card Header */}
+                        <div className="flex justify-between items-start mb-3">
+                          <div className="flex-1">
+                            <Typography
+                              variant="h6"
+                              className="font-semibold text-lg"
+                            >
+                              {opportunity.company}
+                            </Typography>
+                            <Typography
+                              variant="subtitle1"
+                              className="text-gray-700"
+                            >
+                              {opportunity.position}
+                            </Typography>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Chip
+                              label={statusLabels[opportunity.status]}
+                              style={{
+                                backgroundColor:
+                                  statusColors[opportunity.status],
+                                color: "white",
+                              }}
+                              size="small"
+                            />
+                            <IconButton
+                              onClick={() =>
+                                setExpandedRow(
+                                  expandedRow === opportunity.id
+                                    ? null
+                                    : opportunity.id
+                                )
+                              }
+                              size="small"
+                            >
+                              {expandedRow === opportunity.id ? (
+                                <ExpandLessIcon />
+                              ) : (
+                                <ExpandMoreIcon />
+                              )}
+                            </IconButton>
+                          </div>
+                        </div>
+
+                        {/* Card Info */}
+                        <div className="grid grid-cols-2 gap-3 text-sm mb-3">
+                          <div>
+                            <span className="text-gray-500">Applied:</span>
+                            <div className="font-medium">
+                              {new Date(
+                                opportunity.dateApplied
+                              ).toLocaleDateString()}
+                            </div>
+                          </div>
+                          <div>
+                            <span className="text-gray-500">Days Since:</span>
+                            <div className="font-medium">
+                              {getDaysSinceApplied(opportunity.dateApplied)}{" "}
+                              days
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Expanded Content */}
+                        <Collapse
+                          in={expandedRow === opportunity.id}
+                          timeout="auto"
+                          unmountOnExit
+                        >
+                          <div className="border-t border-gray-200 pt-4 mt-4">
+                            {/* Two column layout */}
+                            <div className="space-y-4">
+                              {/* Opportunity Details */}
+                              <div>
+                                <Typography
+                                  variant="subtitle1"
+                                  className="font-semibold mb-2"
+                                >
+                                  Opportunity Details
+                                </Typography>
+
+                                {/* Description */}
+                                <div className="mb-3">
+                                  <Typography
+                                    variant="body2"
+                                    className="text-gray-600 mb-1"
+                                  >
+                                    <span className="font-medium">
+                                      Description:
+                                    </span>
+                                  </Typography>
+                                  <Typography variant="body2">
+                                    {opportunity.description ||
+                                      "No description"}
+                                  </Typography>
+                                </div>
+
+                                {/* Key-value pairs */}
+                                <div className="space-y-2 mb-3">
+                                  <Typography variant="body2">
+                                    <span className="font-medium">
+                                      Location:
+                                    </span>{" "}
+                                    {opportunity.location || "Not specified"}
+                                  </Typography>
+                                  <Typography variant="body2">
+                                    <span className="font-medium">Salary:</span>{" "}
+                                    {opportunity.salary || "Not specified"}
+                                  </Typography>
+                                  {opportunity.jobUrl && (
+                                    <Typography variant="body2">
+                                      <span className="font-medium">
+                                        Job Posting:
+                                      </span>{" "}
+                                      <a
+                                        href={opportunity.jobUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-blue-600 hover:underline"
+                                      >
+                                        View Job Posting
+                                      </a>
+                                    </Typography>
+                                  )}
+                                </div>
+
+                                {/* Notes */}
+                                {opportunity.notes && (
+                                  <div className="mb-4">
+                                    <Typography
+                                      variant="body2"
+                                      className="text-gray-600 mb-1"
                                     >
-                                      Edit
-                                    </Button>
-                                    <Button
-                                      variant="outlined"
-                                      size="small"
-                                      className="px-4 py-2"
-                                      onClick={() =>
-                                        handleAddInterview(opportunity)
-                                      }
-                                    >
-                                      Add Interview
-                                    </Button>
-                                    <Button
-                                      variant="outlined"
-                                      size="small"
-                                      className="px-4 py-2"
-                                      onClick={() =>
-                                        handleAddContact(opportunity)
-                                      }
-                                    >
-                                      Add Contact
-                                    </Button>
-                                    <IconButton
-                                      size="small"
-                                      onClick={() =>
-                                        handleDeleteOpportunity(opportunity.id)
-                                      }
-                                      className="ml-2 p-2"
-                                      style={{ color: "#dc2626" }}
-                                    >
-                                      <DeleteIcon />
-                                    </IconButton>
+                                      <span className="font-medium">
+                                        Notes:
+                                      </span>
+                                    </Typography>
+                                    <Typography variant="body2">
+                                      {opportunity.notes}
+                                    </Typography>
                                   </div>
-                                </Box>
-                              </Collapse>
-                            </TableCell>
-                          </TableRow>
-                        </React.Fragment>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
+                                )}
+                              </div>
+
+                              {/* Interviews Section */}
+                              <div>
+                                <div className="flex justify-between items-center mb-2">
+                                  <Typography
+                                    variant="subtitle1"
+                                    className="font-semibold"
+                                  >
+                                    Interviews ({opportunity.interviews.length})
+                                  </Typography>
+                                  <Button
+                                    size="small"
+                                    startIcon={<AddIcon />}
+                                    onClick={() =>
+                                      handleAddInterview(opportunity)
+                                    }
+                                    className="text-blue-600"
+                                  >
+                                    Add
+                                  </Button>
+                                </div>
+
+                                {opportunity.interviews.length > 0 ? (
+                                  <div className="space-y-2">
+                                    {opportunity.interviews.map((interview) => (
+                                      <div
+                                        key={interview.id}
+                                        className="border border-gray-200 rounded p-2 bg-gray-50"
+                                      >
+                                        <div className="flex justify-between items-start">
+                                          <div className="flex-1">
+                                            <Typography
+                                              variant="body2"
+                                              className="font-medium"
+                                            >
+                                              {interview.type}
+                                            </Typography>
+                                            <Typography
+                                              variant="caption"
+                                              className="text-gray-600"
+                                            >
+                                              {new Date(
+                                                interview.date
+                                              ).toLocaleDateString()}
+                                              {interview.time &&
+                                                ` at ${interview.time}`}
+                                            </Typography>
+                                            {interview.interviewer && (
+                                              <Typography
+                                                variant="caption"
+                                                className="block text-gray-600"
+                                              >
+                                                {interview.interviewer}
+                                              </Typography>
+                                            )}
+                                          </div>
+                                          <IconButton
+                                            size="small"
+                                            onClick={() =>
+                                              handleDeleteInterview(
+                                                opportunity.id,
+                                                interview.id
+                                              )
+                                            }
+                                            className="text-gray-400"
+                                          >
+                                            <DeleteIcon fontSize="small" />
+                                          </IconButton>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <Typography
+                                    variant="body2"
+                                    className="text-gray-500 italic"
+                                  >
+                                    No interviews scheduled
+                                  </Typography>
+                                )}
+                              </div>
+
+                              {/* Contacts Section */}
+                              <div>
+                                <div className="flex justify-between items-center mb-2">
+                                  <Typography
+                                    variant="subtitle1"
+                                    className="font-semibold"
+                                  >
+                                    Contacts ({opportunity.contacts.length})
+                                  </Typography>
+                                  <Button
+                                    size="small"
+                                    startIcon={<AddIcon />}
+                                    onClick={() =>
+                                      handleAddContact(opportunity)
+                                    }
+                                    className="text-blue-600"
+                                  >
+                                    Add
+                                  </Button>
+                                </div>
+
+                                {opportunity.contacts.length > 0 ? (
+                                  <div className="space-y-2">
+                                    {opportunity.contacts.map((contact) => (
+                                      <div
+                                        key={contact.id}
+                                        className="border border-gray-200 rounded p-2 bg-gray-50"
+                                      >
+                                        <div className="flex justify-between items-start">
+                                          <div className="flex-1">
+                                            <Typography
+                                              variant="body2"
+                                              className="font-medium"
+                                            >
+                                              {contact.name}
+                                            </Typography>
+                                            <Typography
+                                              variant="caption"
+                                              className="text-gray-600 block"
+                                            >
+                                              {contact.role}{" "}
+                                              {contact.company &&
+                                                `at ${contact.company}`}
+                                            </Typography>
+                                            {contact.email && (
+                                              <a
+                                                href={`mailto:${contact.email}`}
+                                                className="text-blue-600 hover:underline text-xs block"
+                                              >
+                                                {contact.email}
+                                              </a>
+                                            )}
+                                            {contact.phone && (
+                                              <a
+                                                href={`tel:${contact.phone}`}
+                                                className="text-blue-600 hover:underline text-xs block"
+                                              >
+                                                {formatPhoneNumber(
+                                                  contact.phone
+                                                )}
+                                              </a>
+                                            )}
+                                          </div>
+                                          <IconButton
+                                            size="small"
+                                            onClick={() =>
+                                              handleDeleteContact(
+                                                opportunity.id,
+                                                contact.id
+                                              )
+                                            }
+                                            className="text-gray-400"
+                                          >
+                                            <DeleteIcon fontSize="small" />
+                                          </IconButton>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <Typography
+                                    variant="body2"
+                                    className="text-gray-500 italic"
+                                  >
+                                    No contacts added
+                                  </Typography>
+                                )}
+                              </div>
+
+                              {/* Actions */}
+                              <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-100">
+                                <Button
+                                  size="small"
+                                  startIcon={<EditIcon />}
+                                  onClick={() =>
+                                    handleEditOpportunity(opportunity)
+                                  }
+                                  variant="outlined"
+                                >
+                                  Edit
+                                </Button>
+                                <Button
+                                  size="small"
+                                  startIcon={<DeleteIcon />}
+                                  onClick={() =>
+                                    handleDeleteOpportunity(opportunity.id)
+                                  }
+                                  variant="outlined"
+                                  color="error"
+                                >
+                                  Delete
+                                </Button>
+                              </div>
+                            </div>
+                          </div>
+                        </Collapse>
+                      </CardContent>
+                    </Card>
+                  ))}
+
+                  {filteredOpportunities.length === 0 && (
+                    <div className="text-center py-8 text-gray-500">
+                      <WorkIcon className="mx-auto mb-2" fontSize="large" />
+                      <Typography>No opportunities found</Typography>
+                    </div>
+                  )}
+                </div>
               </CardContent>
             </Card>
 
