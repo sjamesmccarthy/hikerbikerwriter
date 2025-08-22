@@ -20,14 +20,15 @@ import {
   TextFields as TextIcon,
   NetworkCheck as NetworkIcon,
   Folder as FolderIcon,
-  Add as AddIcon,
   Casino as CasinoIcon,
   StickyNote2 as StickyNote2Icon,
   CreateNewFolder as CreateNewFolderIcon,
+  GroupWorkOutlined as GroupWorkOutlinedIcon,
 } from "@mui/icons-material";
-import { Tabs, Tab, Box } from "@mui/material";
+import { Tabs, Tab, Box, Select, MenuItem, FormControl } from "@mui/material";
 import { renderFooter } from "@/components/shared/footerHelpers";
 import { useSession, signIn, signOut } from "next-auth/react";
+import peopleNetworksData from "@/data/people-networks.json";
 
 interface PersonData {
   person_id: string;
@@ -86,6 +87,8 @@ export default function PersonPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState(0);
+  const [relationshipFilter, setRelationshipFilter] = useState<string>("all");
+  const [showFamilyTree, setShowFamilyTree] = useState(false);
 
   // Apps menu configuration (same as FieldNotes)
   const apps: AppMenuItem[] = [
@@ -539,7 +542,9 @@ export default function PersonPage() {
             <TabPanel value={activeTab} index={1}>
               <div className="text-center text-gray-800 pt-8 pb-4">
                 <p>
-                  We discovered some people that you may have a connection with.
+                  We discovered some people that{" "}
+                  <span className="font-semibold">you and Stacey McCarthy</span>{" "}
+                  may have a connection with.
                 </p>
               </div>
 
@@ -585,15 +590,21 @@ export default function PersonPage() {
                     </div>
                   </div>
 
-                  {/* Add Connection Button */}
-                  <div className="mt-4 sm:mt-0">
+                  {/* Action Buttons */}
+                  <div className="mt-4 sm:mt-0 flex gap-2">
+                    <button
+                      onClick={() => alert("Ignore functionality coming soon!")}
+                      className="px-4 py-2 bg-gray-200 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-300 transition-colors cursor-pointer"
+                    >
+                      Ignore
+                    </button>
                     <button
                       onClick={() =>
-                        alert("Add connection functionality coming soon!")
+                        alert("Connect functionality coming soon!")
                       }
-                      className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors"
+                      className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors cursor-pointer"
                     >
-                      Add Connection
+                      Connect
                     </button>
                   </div>
                 </div>
@@ -671,11 +682,173 @@ export default function PersonPage() {
 
             <TabPanel value={activeTab} index={3}>
               <div className="w-full mx-auto py-8">
-                {/* <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                    Mutual Connections
-                  </h3>
-                </div> */}
+                {/* Filter Section */}
+                <div className="mb-6 flex justify-between items-center">
+                  <FormControl size="small" sx={{ minWidth: 200 }}>
+                    <Select
+                      value={relationshipFilter}
+                      onChange={(e) => setRelationshipFilter(e.target.value)}
+                      displayEmpty
+                      sx={{
+                        backgroundColor: "white",
+                        "& .MuiOutlinedInput-root": {
+                          "& fieldset": {
+                            borderColor: "#d1d5db",
+                          },
+                          "&:hover fieldset": {
+                            borderColor: "#9ca3af",
+                          },
+                          "&.Mui-focused fieldset": {
+                            borderColor: "#3b82f6",
+                          },
+                        },
+                      }}
+                    >
+                      <MenuItem value="all">All Relationships</MenuItem>
+                      {peopleNetworksData.network.map((network) => (
+                        <MenuItem key={network.type} value={network.type}>
+                          {network.type.charAt(0).toUpperCase() +
+                            network.type.slice(1)}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+
+                  {/* Family Tree Icon */}
+                  <button
+                    onClick={() => setShowFamilyTree(!showFamilyTree)}
+                    className="p-2 rounded-md hover:bg-gray-100 transition-colors cursor-pointer"
+                    title="Toggle Family Tree"
+                  >
+                    <GroupWorkOutlinedIcon
+                      sx={{
+                        fontSize: 24,
+                        color: showFamilyTree ? "#3b82f6" : "#6b7280",
+                      }}
+                    />
+                  </button>
+                </div>
+
+                {/* Family Tree Visualization */}
+                {showFamilyTree && (
+                  <div className="mb-6 bg-white rounded-lg shadow p-6">
+                    <div className="text-center">
+                      <div className="text-gray-600">
+                        {/* Concentric Network Layout - 3 Rings */}
+                        <div className="relative w-[48rem] h-[48rem] mx-auto mb-8">
+                          {/* Ring Borders */}
+                          {/* Outermost Ring - Colleagues/Acquaintances */}
+                          <div className="absolute inset-0 border-2 border-gray-300 rounded-full z-10"></div>
+                          {/* Middle Ring - Extended Family/Friends */}
+                          <div className="absolute inset-16 border-2 border-orange-300 rounded-full z-10"></div>
+                          {/* Inner Ring - Immediate Family */}
+                          <div className="absolute inset-40 border-4 border-blue-400 rounded-full bg-blue-50 z-10"></div>
+
+                          {/* People Positioned Relative to Main Container - All Same Size */}
+
+                          {/* Outermost Ring - Colleagues/Acquaintances */}
+                          <div className="absolute top-12 left-1/2 transform -translate-x-1/2 group z-30">
+                            <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center text-white text-xl font-bold cursor-pointer hover:scale-110 transition-transform">
+                              C
+                            </div>
+                            {/* Tooltip */}
+                            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                              Carol Davis - Colleague
+                            </div>
+                          </div>
+                          <div className="absolute bottom-12 right-12 group z-30">
+                            <div className="w-16 h-16 bg-yellow-500 rounded-full flex items-center justify-center text-white text-xl font-bold cursor-pointer hover:scale-110 transition-transform">
+                              A
+                            </div>
+                            {/* Tooltip */}
+                            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                              Alice Johnson - Acquaintance
+                            </div>
+                          </div>
+                          <div className="absolute left-12 top-1/2 transform -translate-y-1/2 group z-30">
+                            <div className="w-16 h-16 bg-purple-500 rounded-full flex items-center justify-center text-white text-xl font-bold cursor-pointer hover:scale-110 transition-transform">
+                              N
+                            </div>
+                            {/* Tooltip */}
+                            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                              Nancy Brown - Neighbor
+                            </div>
+                          </div>
+
+                          {/* Middle Ring - Extended Family/Friends */}
+                          <div className="absolute top-28 left-1/2 transform -translate-x-1/2 group z-30">
+                            <div className="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center text-white text-xl font-bold cursor-pointer hover:scale-110 transition-transform">
+                              F
+                            </div>
+                            {/* Tooltip */}
+                            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                              Frank Miller - Friend
+                            </div>
+                          </div>
+                          <div className="absolute bottom-28 right-28 group z-30">
+                            <div className="w-16 h-16 bg-pink-500 rounded-full flex items-center justify-center text-white text-xl font-bold cursor-pointer hover:scale-110 transition-transform">
+                              E
+                            </div>
+                            {/* Tooltip */}
+                            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                              Emma McCarthy - Extended Family
+                            </div>
+                          </div>
+
+                          {/* Inner Ring - Immediate Family */}
+                          {/* Center - You */}
+                          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 group z-30">
+                            <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center text-white text-xl font-bold ring-4 ring-blue-200 cursor-pointer hover:scale-105 transition-transform">
+                              S
+                            </div>
+                            {/* Tooltip */}
+                            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                              Stacey McCarthy - You
+                            </div>
+                          </div>
+
+                          {/* Immediate Family Members around center */}
+                          <div className="absolute top-48 left-1/2 transform -translate-x-1/2 group z-30">
+                            <div className="w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center text-white text-xl font-bold cursor-pointer hover:scale-110 transition-transform">
+                              J
+                            </div>
+                            {/* Tooltip */}
+                            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                              John McCarthy - Brother
+                            </div>
+                          </div>
+                          <div className="absolute bottom-48 left-1/2 transform -translate-x-1/2 group z-30">
+                            <div className="w-16 h-16 bg-indigo-600 rounded-full flex items-center justify-center text-white text-xl font-bold cursor-pointer hover:scale-110 transition-transform">
+                              M
+                            </div>
+                            {/* Tooltip */}
+                            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                              Mary McCarthy - Mother
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Network Level Labels - Three Rings */}
+                        <div className="flex justify-center px-4">
+                          <div className="grid grid-cols-3 gap-x-6 gap-y-2 text-xs max-w-lg">
+                            <div className="flex items-center space-x-2">
+                              <div className="w-3 h-3 bg-blue-600 rounded-full"></div>
+                              <span>Immediate Family</span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
+                              <span>Extended/Friends</span>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                              <div className="w-3 h-3 bg-gray-400 rounded-full"></div>
+                              <span>Colleagues/Acquaintances</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Sample People Card */}
                 <div className="bg-white rounded-lg shadow p-4 w-full">
