@@ -19,6 +19,11 @@ import {
   ColorLens as ColorIcon,
   TextFields as TextIcon,
   NetworkCheck as NetworkIcon,
+  Folder as FolderIcon,
+  Add as AddIcon,
+  Casino as CasinoIcon,
+  StickyNote2 as StickyNote2Icon,
+  CreateNewFolder as CreateNewFolderIcon,
 } from "@mui/icons-material";
 import { Tabs, Tab, Box } from "@mui/material";
 import { renderFooter } from "@/components/shared/footerHelpers";
@@ -59,7 +64,7 @@ function TabPanel({ children, value, index, ...other }: TabPanelProps) {
       aria-labelledby={`person-tab-${index}`}
       {...other}
     >
-      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
+      {value === index && <Box sx={{ p: 0 }}>{children}</Box>}
     </div>
   );
 }
@@ -406,24 +411,404 @@ export default function PersonPage() {
                 <Tab label="Profile" {...a11yProps(0)} />
                 <Tab label="Discovery" {...a11yProps(1)} />
                 <Tab label="Artifacts" {...a11yProps(2)} />
+                <Tab label="People" {...a11yProps(3)} />
               </Tabs>
             </Box>
 
             <TabPanel value={activeTab} index={0}>
-              <div className="text-center text-gray-600">
-                <p>Things being shared coming soon...</p>
+              {/* <div className="text-center text-gray-600 mb-6">
+                <h3 className="text-lg font-semibold mb-6">
+                  Profile
+                </h3>
+              </div> */}
+
+              {/* Activities Grid */}
+              <div className="flex justify-center py-8">
+                <div className="grid grid-cols-3 gap-8 md:gap-12">
+                  {/* Roll And Write */}
+                  <div className="flex flex-col items-center cursor-pointer hover:opacity-75 transition-opacity">
+                    <div className="mb-3 relative">
+                      <CasinoIcon
+                        sx={{
+                          fontSize: 60,
+                          color: "#9C27B0",
+                        }}
+                      />
+                      <span
+                        className="absolute -top-2 -right-2"
+                        style={{
+                          background: "#000",
+                          color: "#fff",
+                          borderRadius: "50%",
+                          padding: "0",
+                          fontWeight: "bold",
+                          minWidth: "24px",
+                          fontSize: "0.75rem",
+                          height: "24px",
+                          width: "24px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          textAlign: "center",
+                          boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
+                        }}
+                      >
+                        7
+                      </span>
+                    </div>
+                    <span className="text-sm font-medium text-gray-700">
+                      Roll & Write
+                    </span>
+                  </div>
+
+                  {/* Field Notes */}
+                  <div className="flex flex-col items-center cursor-pointer hover:opacity-75 transition-opacity">
+                    <div className="mb-3 relative">
+                      <StickyNote2Icon
+                        sx={{
+                          fontSize: 60,
+                          color: "#FF9800",
+                        }}
+                      />
+                      <span
+                        className="absolute -top-2 -right-2"
+                        style={{
+                          background: "#000",
+                          color: "#fff",
+                          borderRadius: "50%",
+                          padding: "0",
+                          fontWeight: "bold",
+                          minWidth: "24px",
+                          fontSize: "0.75rem",
+                          height: "24px",
+                          width: "24px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          textAlign: "center",
+                          boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
+                        }}
+                      >
+                        12
+                      </span>
+                    </div>
+                    <span className="text-sm font-medium text-gray-700">
+                      Field Notes
+                    </span>
+                  </div>
+
+                  {/* Recipes */}
+                  <div className="flex flex-col items-center cursor-pointer hover:opacity-75 transition-opacity">
+                    <div className="mb-3 relative">
+                      <RestaurantIcon
+                        sx={{
+                          fontSize: 60,
+                          color: "#4CAF50",
+                        }}
+                      />
+                      <span
+                        className="absolute -top-2 -right-2"
+                        style={{
+                          background: "#000",
+                          color: "#fff",
+                          borderRadius: "50%",
+                          padding: "0",
+                          fontWeight: "bold",
+                          minWidth: "24px",
+                          fontSize: "0.75rem",
+                          height: "24px",
+                          width: "24px",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          textAlign: "center",
+                          boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
+                        }}
+                      >
+                        5
+                      </span>
+                    </div>
+                    <span className="text-sm font-medium text-gray-700">
+                      Recipes
+                    </span>
+                  </div>
+                </div>
               </div>
             </TabPanel>
 
             <TabPanel value={activeTab} index={1}>
-              <div className="text-center text-gray-600">
-                <p>Shared discoveries and interests coming soon...</p>
+              <div className="text-center text-gray-800 pt-8 pb-4">
+                <p>
+                  We discovered some people that you may have a connection with.
+                </p>
+              </div>
+
+              {/* Sample People Card */}
+              <div className="bg-white rounded-lg shadow p-4 w-full">
+                {/* Profile info and icons row */}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between">
+                  <div className="flex items-center">
+                    <div
+                      className="flex items-center justify-center w-12 h-12 rounded-full mr-4"
+                      style={{
+                        boxShadow: "0 0 0 0 transparent",
+                        border: "none",
+                        background: "none",
+                      }}
+                    >
+                      <svg
+                        width="32"
+                        height="32"
+                        viewBox="0 0 32 32"
+                        fill="none"
+                      >
+                        <circle cx="16" cy="16" r="16" fill="#3F51B5" />
+                        <text
+                          x="16"
+                          y="21"
+                          textAnchor="middle"
+                          fontSize="16"
+                          fill="#fff"
+                          fontFamily="Arial"
+                        >
+                          J
+                        </text>
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-bold text-lg text-gray-800">
+                        John Smith
+                      </div>
+                      <div className="text-xs text-gray-400 flex items-center gap-1">
+                        Immediate Family (Brother)
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Add Connection Button */}
+                  <div className="mt-4 sm:mt-0">
+                    <button
+                      onClick={() =>
+                        alert("Add connection functionality coming soon!")
+                      }
+                      className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 transition-colors"
+                    >
+                      Add Connection
+                    </button>
+                  </div>
+                </div>
               </div>
             </TabPanel>
 
             <TabPanel value={activeTab} index={2}>
-              <div className="text-center text-gray-600">
-                <p>Shared photos, notes, and memories coming soon...</p>
+              {/* Header with Add Button */}
+
+              {/* Folder Grid */}
+              <div className="flex justify-center py-8">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-8 md:gap-12">
+                  {/* Photos Folder */}
+                  <div className="flex flex-col items-center cursor-pointer hover:opacity-75 transition-opacity">
+                    <div className="mb-3">
+                      <FolderIcon
+                        sx={{
+                          fontSize: 60,
+                          color: "#FFA726",
+                        }}
+                      />
+                    </div>
+                    <span className="text-sm font-medium text-gray-700">
+                      Photos
+                    </span>
+                  </div>
+
+                  {/* Web Clippings Folder */}
+                  <div className="flex flex-col items-center cursor-pointer hover:opacity-75 transition-opacity">
+                    <div className="mb-3">
+                      <FolderIcon
+                        sx={{
+                          fontSize: 60,
+                          color: "#42A5F5",
+                        }}
+                      />
+                    </div>
+                    <span className="text-sm font-medium text-gray-700">
+                      Web Clippings
+                    </span>
+                  </div>
+
+                  {/* Notes Folder */}
+                  <div className="flex flex-col items-center cursor-pointer hover:opacity-75 transition-opacity">
+                    <div className="mb-3">
+                      <FolderIcon
+                        sx={{
+                          fontSize: 60,
+                          color: "#66BB6A",
+                        }}
+                      />
+                    </div>
+                    <span className="text-sm font-medium text-gray-700">
+                      Notes
+                    </span>
+                  </div>
+
+                  {/* Add New Folder */}
+                  <div className="flex flex-col items-center cursor-pointer hover:opacity-75 transition-opacity">
+                    <div className="mb-3">
+                      <CreateNewFolderIcon
+                        sx={{
+                          fontSize: 60,
+                          color: "#9E9E9E",
+                        }}
+                      />
+                    </div>
+                    <span className="text-sm font-medium text-gray-700">
+                      Add New Folder
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </TabPanel>
+
+            <TabPanel value={activeTab} index={3}>
+              <div className="w-full mx-auto py-8">
+                {/* <div className="mb-6">
+                  <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                    Mutual Connections
+                  </h3>
+                </div> */}
+
+                {/* Sample People Card */}
+                <div className="bg-white rounded-lg shadow p-4 w-full">
+                  {/* Profile info and icons row */}
+                  <div className="flex flex-col sm:flex-row sm:items-center">
+                    <div className="flex items-center">
+                      <div
+                        className="flex items-center justify-center w-12 h-12 rounded-full mr-4"
+                        style={{
+                          boxShadow: "0 0 0 0 transparent",
+                          border: "none",
+                          background: "none",
+                        }}
+                      >
+                        <svg
+                          width="32"
+                          height="32"
+                          viewBox="0 0 32 32"
+                          fill="none"
+                        >
+                          <circle cx="16" cy="16" r="16" fill="#3F51B5" />
+                          <text
+                            x="16"
+                            y="21"
+                            textAnchor="middle"
+                            fontSize="16"
+                            fill="#fff"
+                            fontFamily="Arial"
+                          >
+                            J
+                          </text>
+                        </svg>
+                      </div>
+                      <div className="flex-1">
+                        <div className="font-bold text-lg text-gray-800">
+                          John Smith
+                        </div>
+                        <div className="text-xs text-gray-400 flex items-center gap-1">
+                          Immediate Family (Brother)
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Icons section */}
+                    <div className="flex flex-row items-center gap-4 mt-4 sm:mt-0 justify-end sm:ml-auto">
+                      <div className="relative flex items-center">
+                        <CasinoIcon
+                          fontSize="medium"
+                          style={{ color: "#757575" }}
+                        />
+                        <span
+                          className="absolute -top-2 -right-2"
+                          style={{
+                            background: "#000",
+                            color: "#fff",
+                            borderRadius: "50%",
+                            padding: "0",
+                            fontWeight: "bold",
+                            minWidth: "20px",
+                            fontSize: "0.7rem",
+                            height: "20px",
+                            width: "20px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            textAlign: "center",
+                            boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
+                          }}
+                        >
+                          3
+                        </span>
+                      </div>
+                      <div className="relative flex items-center">
+                        <StickyNote2Icon
+                          fontSize="medium"
+                          style={{ color: "#757575" }}
+                        />
+                        <span
+                          className="absolute -top-2 -right-2"
+                          style={{
+                            background: "#000",
+                            color: "#fff",
+                            borderRadius: "50%",
+                            padding: "0",
+                            fontWeight: "bold",
+                            minWidth: "20px",
+                            fontSize: "0.7rem",
+                            height: "20px",
+                            width: "20px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            textAlign: "center",
+                            boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
+                          }}
+                        >
+                          5
+                        </span>
+                      </div>
+                      <div className="relative flex items-center">
+                        <RestaurantIcon
+                          fontSize="medium"
+                          style={{ color: "#757575" }}
+                        />
+                        <span
+                          className="absolute -top-2 -right-2"
+                          style={{
+                            background: "#000",
+                            color: "#fff",
+                            borderRadius: "50%",
+                            padding: "0",
+                            fontWeight: "bold",
+                            minWidth: "20px",
+                            fontSize: "0.7rem",
+                            height: "20px",
+                            width: "20px",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            textAlign: "center",
+                            boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
+                          }}
+                        >
+                          2
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="text-center text-gray-500 text-sm mt-6">
+                  <p>Showing mutual connections and shared relationships</p>
+                </div>
               </div>
             </TabPanel>
           </div>

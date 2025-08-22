@@ -552,6 +552,7 @@ export default function AboutPage() {
               <li>
                 Improved responsiveness for mobile devices in Job Tracker.
               </li>
+              <li>Added Person page</li>
             </ul>
 
             <h3 className="font-semibold mt-4 mb-1">v1.8.0</h3>
