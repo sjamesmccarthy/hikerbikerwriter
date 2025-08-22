@@ -28,7 +28,6 @@ import {
   ColorLens as ColorIcon,
   TextFields as TextIcon,
   NetworkCheck as NetworkIcon,
-  Download as DownloadIcon,
   FileDownload as FileDownloadIcon,
   TableChart as TableChartIcon,
   Close as CloseIcon,

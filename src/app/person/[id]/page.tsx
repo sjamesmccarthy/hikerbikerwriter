@@ -88,7 +88,10 @@ export default function PersonPage() {
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState(0);
   const [relationshipFilter, setRelationshipFilter] = useState<string>("all");
-  const [showFamilyTree, setShowFamilyTree] = useState(false);
+  const [showNetworkView, setShowNetworkView] = useState(false);
+  const [showFriendsSection, setShowFriendsSection] = useState(false);
+  const [showAcquaintancesSection, setShowAcquaintancesSection] =
+    useState(false);
 
   // Apps menu configuration (same as FieldNotes)
   const apps: AppMenuItem[] = [
@@ -682,169 +685,383 @@ export default function PersonPage() {
 
             <TabPanel value={activeTab} index={3}>
               <div className="w-full mx-auto py-8">
-                {/* Filter Section */}
+                {/* Filter Section with Network View Toggle */}
                 <div className="mb-6 flex justify-between items-center">
-                  <FormControl size="small" sx={{ minWidth: 200 }}>
-                    <Select
-                      value={relationshipFilter}
-                      onChange={(e) => setRelationshipFilter(e.target.value)}
-                      displayEmpty
-                      sx={{
-                        backgroundColor: "white",
-                        "& .MuiOutlinedInput-root": {
-                          "& fieldset": {
-                            borderColor: "#d1d5db",
+                  {!showNetworkView && (
+                    <FormControl size="small" sx={{ minWidth: 200 }}>
+                      <Select
+                        value={relationshipFilter}
+                        onChange={(e) => setRelationshipFilter(e.target.value)}
+                        displayEmpty
+                        sx={{
+                          backgroundColor: "white",
+                          "& .MuiOutlinedInput-root": {
+                            "& fieldset": {
+                              borderColor: "#d1d5db",
+                            },
+                            "&:hover fieldset": {
+                              borderColor: "#9ca3af",
+                            },
+                            "&.Mui-focused fieldset": {
+                              borderColor: "#3b82f6",
+                            },
                           },
-                          "&:hover fieldset": {
-                            borderColor: "#9ca3af",
-                          },
-                          "&.Mui-focused fieldset": {
-                            borderColor: "#3b82f6",
-                          },
-                        },
-                      }}
-                    >
-                      <MenuItem value="all">All Relationships</MenuItem>
-                      {peopleNetworksData.network.map((network) => (
-                        <MenuItem key={network.type} value={network.type}>
-                          {network.type.charAt(0).toUpperCase() +
-                            network.type.slice(1)}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
+                        }}
+                      >
+                        <MenuItem value="all">All Relationships</MenuItem>
+                        {peopleNetworksData.network.map((network) => (
+                          <MenuItem key={network.type} value={network.type}>
+                            {network.type.charAt(0).toUpperCase() +
+                              network.type.slice(1)}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  )}
 
-                  {/* Family Tree Icon */}
+                  {showNetworkView && <div></div>}
+
+                  {/* Network View Toggle Button */}
                   <button
-                    onClick={() => setShowFamilyTree(!showFamilyTree)}
+                    onClick={() => setShowNetworkView(!showNetworkView)}
                     className="p-2 rounded-md hover:bg-gray-100 transition-colors cursor-pointer"
-                    title="Toggle Family Tree"
+                    title="Toggle Network View"
                   >
                     <GroupWorkOutlinedIcon
                       sx={{
                         fontSize: 24,
-                        color: showFamilyTree ? "#3b82f6" : "#6b7280",
+                        color: showNetworkView ? "#3b82f6" : "#6b7280",
                       }}
                     />
                   </button>
                 </div>
 
-                {/* Family Tree Visualization */}
-                {showFamilyTree && (
+                {/* Network View Box (empty for now) */}
+                {showNetworkView && (
                   <div className="mb-6 bg-white rounded-lg shadow p-6">
                     <div className="text-center">
-                      <div className="text-gray-600">
-                        {/* Concentric Network Layout - 3 Rings */}
-                        <div className="relative w-[48rem] h-[48rem] mx-auto mb-8">
-                          {/* Ring Borders */}
-                          {/* Outermost Ring - Colleagues/Acquaintances */}
-                          <div className="absolute inset-0 border-2 border-gray-300 rounded-full z-10"></div>
-                          {/* Middle Ring - Extended Family/Friends */}
-                          <div className="absolute inset-16 border-2 border-orange-300 rounded-full z-10"></div>
-                          {/* Inner Ring - Immediate Family */}
-                          <div className="absolute inset-40 border-4 border-blue-400 rounded-full bg-blue-50 z-10"></div>
+                      {/* Circle Profile Avatar */}
+                      <div className="flex flex-col items-center">
+                        <div className="w-24 h-24 bg-blue-200 rounded-full flex items-center justify-center text-blue-800 text-3xl font-bold mb-2 shadow-lg">
+                          {personData.name.charAt(0).toUpperCase()}
+                        </div>
+                        <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                          {personData.name}
+                        </h3>
 
-                          {/* People Positioned Relative to Main Container - All Same Size */}
+                        {/* Extended Family Label */}
+                        <div className="flex flex-col items-center mb-4">
+                          <span className="text-sm font-medium text-gray-600 mb-1">
+                            Immediate and Extended Family
+                          </span>
+                          <div className="w-full h-px bg-gray-300"></div>
+                        </div>
 
-                          {/* Outermost Ring - Colleagues/Acquaintances */}
-                          <div className="absolute top-12 left-1/2 transform -translate-x-1/2 group z-30">
-                            <div className="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center text-white text-xl font-bold cursor-pointer hover:scale-110 transition-transform">
-                              C
-                            </div>
-                            {/* Tooltip */}
-                            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
-                              Carol Davis - Colleague
-                            </div>
-                          </div>
-                          <div className="absolute bottom-12 right-12 group z-30">
-                            <div className="w-16 h-16 bg-yellow-500 rounded-full flex items-center justify-center text-white text-xl font-bold cursor-pointer hover:scale-110 transition-transform">
-                              A
-                            </div>
-                            {/* Tooltip */}
-                            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
-                              Alice Johnson - Acquaintance
-                            </div>
-                          </div>
-                          <div className="absolute left-12 top-1/2 transform -translate-y-1/2 group z-30">
-                            <div className="w-16 h-16 bg-purple-500 rounded-full flex items-center justify-center text-white text-xl font-bold cursor-pointer hover:scale-110 transition-transform">
-                              N
-                            </div>
-                            {/* Tooltip */}
-                            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
-                              Nancy Brown - Neighbor
-                            </div>
-                          </div>
-
-                          {/* Middle Ring - Extended Family/Friends */}
-                          <div className="absolute top-28 left-1/2 transform -translate-x-1/2 group z-30">
-                            <div className="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center text-white text-xl font-bold cursor-pointer hover:scale-110 transition-transform">
-                              F
-                            </div>
-                            {/* Tooltip */}
-                            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
-                              Frank Miller - Friend
-                            </div>
-                          </div>
-                          <div className="absolute bottom-28 right-28 group z-30">
-                            <div className="w-16 h-16 bg-pink-500 rounded-full flex items-center justify-center text-white text-xl font-bold cursor-pointer hover:scale-110 transition-transform">
-                              E
-                            </div>
-                            {/* Tooltip */}
-                            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
-                              Emma McCarthy - Extended Family
-                            </div>
-                          </div>
-
-                          {/* Inner Ring - Immediate Family */}
-                          {/* Center - You */}
-                          <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 group z-30">
-                            <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center text-white text-xl font-bold ring-4 ring-blue-200 cursor-pointer hover:scale-105 transition-transform">
-                              S
-                            </div>
-                            {/* Tooltip */}
-                            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
-                              Stacey McCarthy - You
-                            </div>
-                          </div>
-
-                          {/* Immediate Family Members around center */}
-                          <div className="absolute top-48 left-1/2 transform -translate-x-1/2 group z-30">
-                            <div className="w-16 h-16 bg-purple-600 rounded-full flex items-center justify-center text-white text-xl font-bold cursor-pointer hover:scale-110 transition-transform">
+                        {/* Row of 4 smaller avatars */}
+                        <div className="flex justify-center gap-4 mb-4">
+                          <div className="relative group">
+                            <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center text-blue-100 text-base font-bold shadow-md cursor-pointer hover:scale-105 transition-transform">
                               J
                             </div>
                             {/* Tooltip */}
-                            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
-                              John McCarthy - Brother
+                            <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                              Immediate Family (Brother)
+                              {/* Arrow pointing up */}
+                              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-l-transparent border-r-transparent border-b-gray-800"></div>
                             </div>
                           </div>
-                          <div className="absolute bottom-48 left-1/2 transform -translate-x-1/2 group z-30">
-                            <div className="w-16 h-16 bg-indigo-600 rounded-full flex items-center justify-center text-white text-xl font-bold cursor-pointer hover:scale-110 transition-transform">
+
+                          <div className="relative group">
+                            <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center text-blue-100 text-base font-bold shadow-md cursor-pointer hover:scale-105 transition-transform">
                               M
                             </div>
                             {/* Tooltip */}
-                            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
-                              Mary McCarthy - Mother
+                            <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                              Immediate Family (Mother)
+                              {/* Arrow pointing up */}
+                              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-l-transparent border-r-transparent border-b-gray-800"></div>
+                            </div>
+                          </div>
+
+                          <div className="relative group">
+                            <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center text-blue-100 text-base font-bold shadow-md cursor-pointer hover:scale-105 transition-transform">
+                              A
+                            </div>
+                            {/* Tooltip */}
+                            <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                              Immediate Family (Aunt)
+                              {/* Arrow pointing up */}
+                              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-l-transparent border-r-transparent border-b-gray-800"></div>
+                            </div>
+                          </div>
+
+                          <div className="relative group">
+                            <div className="w-16 h-16 bg-blue-600 rounded-full flex items-center justify-center text-blue-100 text-base font-bold shadow-md cursor-pointer hover:scale-105 transition-transform">
+                              K
+                            </div>
+                            {/* Tooltip */}
+                            <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                              Immediate Family (Father)
+                              {/* Arrow pointing up */}
+                              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-l-transparent border-r-transparent border-b-gray-800"></div>
                             </div>
                           </div>
                         </div>
 
-                        {/* Network Level Labels - Three Rings */}
-                        <div className="flex justify-center px-4">
-                          <div className="grid grid-cols-3 gap-x-6 gap-y-2 text-xs max-w-lg">
-                            <div className="flex items-center space-x-2">
-                              <div className="w-3 h-3 bg-blue-600 rounded-full"></div>
-                              <span>Immediate Family</span>
+                        {/* Row of 4 even smaller avatars with inverted colors */}
+                        <div className="flex justify-center gap-3">
+                          <div className="relative group">
+                            <div className="w-12 h-12 bg-blue-200 rounded-full flex items-center justify-center text-blue-800 text-sm font-bold shadow-md cursor-pointer hover:scale-105 transition-transform">
+                              C
                             </div>
-                            <div className="flex items-center space-x-2">
-                              <div className="w-3 h-3 bg-orange-500 rounded-full"></div>
-                              <span>Extended/Friends</span>
+                            {/* Tooltip */}
+                            <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                              Extended Family (Cousin)
+                              {/* Arrow pointing up */}
+                              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-l-transparent border-r-transparent border-b-gray-800"></div>
                             </div>
-                            <div className="flex items-center space-x-2">
-                              <div className="w-3 h-3 bg-gray-400 rounded-full"></div>
-                              <span>Colleagues/Acquaintances</span>
+                          </div>
+
+                          <div className="relative group">
+                            <div className="w-12 h-12 bg-blue-200 rounded-full flex items-center justify-center text-blue-800 text-sm font-bold shadow-md cursor-pointer hover:scale-105 transition-transform">
+                              U
+                            </div>
+                            {/* Tooltip */}
+                            <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                              Extended Family (Uncle)
+                              {/* Arrow pointing up */}
+                              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-l-transparent border-r-transparent border-b-gray-800"></div>
+                            </div>
+                          </div>
+
+                          <div className="relative group">
+                            <div className="w-12 h-12 bg-blue-200 rounded-full flex items-center justify-center text-blue-800 text-sm font-bold shadow-md cursor-pointer hover:scale-105 transition-transform">
+                              G
+                            </div>
+                            {/* Tooltip */}
+                            <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                              Extended Family (Grandmother)
+                              {/* Arrow pointing up */}
+                              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-l-transparent border-r-transparent border-b-gray-800"></div>
+                            </div>
+                          </div>
+
+                          <div className="relative group">
+                            <div className="w-12 h-12 bg-blue-200 rounded-full flex items-center justify-center text-blue-800 text-sm font-bold shadow-md cursor-pointer hover:scale-105 transition-transform">
+                              N
+                            </div>
+                            {/* Tooltip */}
+                            <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                              Extended Family (Nephew)
+                              {/* Arrow pointing up */}
+                              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-l-transparent border-r-transparent border-b-gray-800"></div>
                             </div>
                           </div>
                         </div>
+
+                        {/* Friends, Neighbors and Colleagues label */}
+                        <div className="flex justify-center mt-6 mb-2">
+                          <div className="text-center">
+                            <button
+                              className="text-sm text-gray-600 font-medium cursor-pointer hover:text-gray-800 transition-colors bg-transparent border-none"
+                              onClick={() =>
+                                setShowFriendsSection(!showFriendsSection)
+                              }
+                            >
+                              Friends, Neighbors and Colleagues
+                            </button>
+                            <div
+                              className="h-px bg-gray-300 mt-1"
+                              style={{ width: "75%", margin: "0 auto" }}
+                            ></div>
+                          </div>
+                        </div>
+
+                        {/* Row of 4 square avatars with green colors - conditionally shown */}
+                        {showFriendsSection && (
+                          <div className="flex justify-center gap-3 mt-4 mb-2">
+                            <div className="relative group">
+                              <div className="w-10 h-10 bg-green-200 rounded-md flex items-center justify-center text-green-800 text-sm font-bold shadow-md cursor-pointer hover:scale-105 transition-transform">
+                                F
+                              </div>
+                              {/* Tooltip */}
+                              <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                                Friend
+                                {/* Arrow pointing up */}
+                                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-l-transparent border-r-transparent border-b-gray-800"></div>
+                              </div>
+                            </div>
+
+                            <div className="relative group">
+                              <div className="w-10 h-10 bg-green-200 rounded-md flex items-center justify-center text-green-800 text-sm font-bold shadow-md cursor-pointer hover:scale-105 transition-transform">
+                                C
+                              </div>
+                              {/* Tooltip */}
+                              <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                                Coworker
+                                {/* Arrow pointing up */}
+                                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-l-transparent border-r-transparent border-b-gray-800"></div>
+                              </div>
+                            </div>
+
+                            <div className="relative group">
+                              <div className="w-10 h-10 bg-green-200 rounded-md flex items-center justify-center text-green-800 text-sm font-bold shadow-md cursor-pointer hover:scale-105 transition-transform">
+                                N
+                              </div>
+                              {/* Tooltip */}
+                              <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                                Neighbor
+                                {/* Arrow pointing up */}
+                                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-l-transparent border-r-transparent border-b-gray-800"></div>
+                              </div>
+                            </div>
+
+                            <div className="relative group">
+                              <div className="w-10 h-10 bg-green-200 rounded-md flex items-center justify-center text-green-800 text-sm font-bold shadow-md cursor-pointer hover:scale-105 transition-transform">
+                                F
+                              </div>
+                              {/* Tooltip */}
+                              <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                                Friend
+                                {/* Arrow pointing up */}
+                                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-l-transparent border-r-transparent border-b-gray-800"></div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Acquaintances label */}
+                        <div className="flex justify-center mt-2 mb-2">
+                          <div className="text-center">
+                            <button
+                              className="text-sm text-gray-600 font-medium cursor-pointer hover:text-gray-800 transition-colors bg-transparent border-none"
+                              onClick={() =>
+                                setShowAcquaintancesSection(
+                                  !showAcquaintancesSection
+                                )
+                              }
+                            >
+                              Acquaintances
+                            </button>
+                            <div
+                              className="h-px bg-gray-300 mt-1"
+                              style={{ width: "100%", margin: "0 auto" }}
+                            ></div>
+                          </div>
+                        </div>
+
+                        {/* Row of 6 triangle avatars with gray colors - conditionally shown */}
+                        {showAcquaintancesSection && (
+                          <div className="flex justify-center gap-2 mt-4">
+                            <div className="relative group">
+                              <div
+                                className="w-8 h-8 bg-gray-200 flex items-center justify-center text-gray-700 text-xs font-bold shadow-md cursor-pointer hover:scale-105 transition-transform"
+                                style={{
+                                  clipPath:
+                                    "polygon(50% 0%, 0% 100%, 100% 100%)",
+                                }}
+                              >
+                                A
+                              </div>
+                              {/* Tooltip */}
+                              <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                                Acquaintance
+                                {/* Arrow pointing up */}
+                                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-l-transparent border-r-transparent border-b-gray-800"></div>
+                              </div>
+                            </div>
+
+                            <div className="relative group">
+                              <div
+                                className="w-8 h-8 bg-gray-200 flex items-center justify-center text-gray-700 text-xs font-bold shadow-md cursor-pointer hover:scale-105 transition-transform"
+                                style={{
+                                  clipPath:
+                                    "polygon(50% 0%, 0% 100%, 100% 100%)",
+                                }}
+                              >
+                                A
+                              </div>
+                              {/* Tooltip */}
+                              <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                                Acquaintance
+                                {/* Arrow pointing up */}
+                                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-l-transparent border-r-transparent border-b-gray-800"></div>
+                              </div>
+                            </div>
+
+                            <div className="relative group">
+                              <div
+                                className="w-8 h-8 bg-gray-200 flex items-center justify-center text-gray-700 text-xs font-bold shadow-md cursor-pointer hover:scale-105 transition-transform"
+                                style={{
+                                  clipPath:
+                                    "polygon(50% 0%, 0% 100%, 100% 100%)",
+                                }}
+                              >
+                                A
+                              </div>
+                              {/* Tooltip */}
+                              <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                                Acquaintance
+                                {/* Arrow pointing up */}
+                                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-l-transparent border-r-transparent border-b-gray-800"></div>
+                              </div>
+                            </div>
+
+                            <div className="relative group">
+                              <div
+                                className="w-8 h-8 bg-gray-200 flex items-center justify-center text-gray-700 text-xs font-bold shadow-md cursor-pointer hover:scale-105 transition-transform"
+                                style={{
+                                  clipPath:
+                                    "polygon(50% 0%, 0% 100%, 100% 100%)",
+                                }}
+                              >
+                                A
+                              </div>
+                              {/* Tooltip */}
+                              <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                                Acquaintance
+                                {/* Arrow pointing up */}
+                                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-l-transparent border-r-transparent border-b-gray-800"></div>
+                              </div>
+                            </div>
+
+                            <div className="relative group">
+                              <div
+                                className="w-8 h-8 bg-gray-200 flex items-center justify-center text-gray-700 text-xs font-bold shadow-md cursor-pointer hover:scale-105 transition-transform"
+                                style={{
+                                  clipPath:
+                                    "polygon(50% 0%, 0% 100%, 100% 100%)",
+                                }}
+                              >
+                                A
+                              </div>
+                              {/* Tooltip */}
+                              <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                                Acquaintance
+                                {/* Arrow pointing up */}
+                                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-l-transparent border-r-transparent border-b-gray-800"></div>
+                              </div>
+                            </div>
+
+                            <div className="relative group">
+                              <div
+                                className="w-8 h-8 bg-gray-200 flex items-center justify-center text-gray-700 text-xs font-bold shadow-md cursor-pointer hover:scale-105 transition-transform"
+                                style={{
+                                  clipPath:
+                                    "polygon(50% 0%, 0% 100%, 100% 100%)",
+                                }}
+                              >
+                                A
+                              </div>
+                              {/* Tooltip */}
+                              <div className="absolute top-full left-1/2 transform -translate-x-1/2 mt-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-50">
+                                Acquaintance
+                                {/* Arrow pointing up */}
+                                <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-4 border-r-4 border-b-4 border-l-transparent border-r-transparent border-b-gray-800"></div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
