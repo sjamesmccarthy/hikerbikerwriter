@@ -954,6 +954,195 @@ export default function JobTracker() {
     URL.revokeObjectURL(url);
   };
 
+  const handleExportAsPDF = async () => {
+    if (!currentSearch) return;
+
+    const filteredOpportunities = getFilteredOpportunities();
+
+    try {
+      // Import jsPDF
+      const jsPDFModule = await import("jspdf");
+      const jsPDF = jsPDFModule.jsPDF;
+
+      // Import autoTable plugin
+      await import("jspdf-autotable");
+
+      const doc = new jsPDF("landscape", "mm", "a4");
+
+      // Add title
+      doc.setFontSize(20);
+      doc.setTextColor(25, 118, 210);
+      doc.text(`Job Search Summary: ${currentSearch.name}`, 20, 25);
+
+      // Add summary info
+      doc.setFontSize(12);
+      doc.setTextColor(0, 0, 0);
+      doc.text(`Generated: ${new Date().toLocaleDateString()}`, 20, 40);
+      doc.text(`Total Opportunities: ${filteredOpportunities.length}`, 20, 50);
+      doc.text(
+        `Showing: ${
+          filterStatus === "all"
+            ? "All Statuses"
+            : statusLabels[filterStatus as keyof typeof statusLabels]
+        }`,
+        20,
+        60
+      );
+
+      // Helper function to convert to title case
+      const toTitleCase = (str: string) => {
+        return str.replace(
+          /\w\S*/g,
+          (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
+        );
+      };
+
+      // Prepare table data
+      const tableData = filteredOpportunities.map((opportunity) => [
+        opportunity.company.length > 32
+          ? opportunity.company.substring(0, 32) + "..."
+          : opportunity.company,
+        opportunity.position.length > 32
+          ? toTitleCase(opportunity.position.substring(0, 32)) + "..."
+          : toTitleCase(opportunity.position),
+        parseLocalDate(opportunity.dateApplied).toLocaleDateString(),
+        statusLabels[opportunity.status as keyof typeof statusLabels],
+        opportunity.jobSource || "N/A",
+        opportunity.location || "N/A",
+        opportunity.salary || "N/A",
+      ]);
+
+      // Check if autoTable is available and use it
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      if (typeof (doc as any).autoTable === "function") {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        (doc as any).autoTable({
+          head: [
+            [
+              "Company",
+              "Position",
+              "Last Changed",
+              "Status",
+              "Job Source",
+              "Location",
+              "Salary",
+            ],
+          ],
+          body: tableData,
+          startY: 75,
+          theme: "striped",
+          styles: {
+            fontSize: 9,
+            cellPadding: 4,
+          },
+          headStyles: {
+            fillColor: [25, 118, 210],
+            textColor: 255,
+            fontStyle: "bold",
+            fontSize: 9,
+          },
+          alternateRowStyles: {
+            fillColor: [248, 249, 250],
+          },
+          columnStyles: {
+            0: { cellWidth: 40 }, // Company
+            1: { cellWidth: 45 }, // Position
+            2: { cellWidth: 25 }, // Last Changed
+            3: { cellWidth: 22 }, // Status
+            4: { cellWidth: 35 }, // Job Source
+            5: { cellWidth: 35 }, // Location
+            6: { cellWidth: 30 }, // Salary
+          },
+          margin: { left: 15, right: 15 },
+        });
+      } else {
+        // Helper function for fallback table
+        const toTitleCase = (str: string) => {
+          return str.replace(
+            /\w\S*/g,
+            (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase()
+          );
+        };
+
+        // Fallback: create a basic table manually
+        let yPosition = 80;
+
+        // Add table headers
+        doc.setFontSize(9);
+        doc.setTextColor(255, 255, 255);
+        doc.setFillColor(25, 118, 210);
+        doc.rect(20, yPosition - 5, 252, 10, "F");
+
+        doc.text("Company", 25, yPosition);
+        doc.text("Position", 70, yPosition);
+        doc.text("Last Changed", 120, yPosition);
+        doc.text("Status", 150, yPosition);
+        doc.text("Job Source", 175, yPosition);
+        doc.text("Location", 215, yPosition);
+        doc.text("Salary", 250, yPosition);
+
+        yPosition += 15;
+
+        // Add table rows
+        doc.setFontSize(9);
+        doc.setTextColor(0, 0, 0);
+
+        filteredOpportunities.forEach((opportunity, index) => {
+          if (yPosition > 180) {
+            doc.addPage();
+            yPosition = 20;
+          }
+
+          // Alternate row colors
+          if (index % 2 === 0) {
+            doc.setFillColor(248, 249, 250);
+            doc.rect(20, yPosition - 5, 252, 10, "F");
+          }
+
+          const truncatedCompany =
+            opportunity.company.length > 32
+              ? opportunity.company.substring(0, 32) + "..."
+              : opportunity.company;
+          const truncatedPosition =
+            opportunity.position.length > 32
+              ? toTitleCase(opportunity.position.substring(0, 32)) + "..."
+              : toTitleCase(opportunity.position);
+
+          doc.text(truncatedCompany || "", 25, yPosition);
+          doc.text(truncatedPosition, 70, yPosition);
+          doc.text(
+            parseLocalDate(opportunity.dateApplied).toLocaleDateString(),
+            120,
+            yPosition
+          );
+          doc.text(
+            statusLabels[opportunity.status as keyof typeof statusLabels],
+            150,
+            yPosition
+          );
+          doc.text(opportunity.jobSource || "N/A", 175, yPosition);
+          doc.text(opportunity.location || "N/A", 215, yPosition);
+          doc.text(opportunity.salary || "N/A", 250, yPosition);
+
+          yPosition += 12;
+        });
+      }
+
+      // Save the PDF
+      const fileName = `${currentSearch.name
+        .replace(/[^a-z0-9]/gi, "_")
+        .toLowerCase()}_opportunities_summary.pdf`;
+      doc.save(fileName);
+
+      console.log("PDF generated successfully");
+    } catch (error) {
+      console.error("PDF generation failed:", error);
+      alert(
+        "PDF generation failed. Please try again or use CSV export instead."
+      );
+    }
+  };
+
   const handleCloseJobSearch = async () => {
     if (!currentSearch) return;
 
@@ -1415,6 +1604,23 @@ export default function JobTracker() {
                         <MenuItem value="closed">Closed</MenuItem>
                       </Select>
                     </FormControl>
+
+                    <IconButton
+                      onClick={handleExportAsPDF}
+                      size="small"
+                      title="Download PDF Summary"
+                      sx={{
+                        border: "1px solid #e0e0e0",
+                        borderRadius: "4px",
+                        padding: "8px",
+                        color: "#1976d2",
+                        "&:hover": {
+                          backgroundColor: "#f5f5f5",
+                        },
+                      }}
+                    >
+                      <FileDownloadIcon />
+                    </IconButton>
                   </div>
                 </div>
 
