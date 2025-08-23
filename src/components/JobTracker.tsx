@@ -1499,7 +1499,7 @@ export default function JobTracker() {
             <div className="mb-8">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
                 <div className="w-full">
-                  <Paper className="p-2 md:p-4 text-center bg-green-50">
+                  <div className="p-2 md:p-4 text-center bg-green-50 rounded">
                     <Typography
                       variant="h5"
                       className="text-green-600 font-bold text-lg md:text-3xl"
@@ -1508,14 +1508,14 @@ export default function JobTracker() {
                     </Typography>
                     <Typography
                       variant="body2"
-                      className="text-slate-600 text-xs md:text-base"
+                      className="text-green-700 text-xs md:text-base"
                     >
                       Total
                     </Typography>
-                  </Paper>
+                  </div>
                 </div>
                 <div className="w-full">
-                  <Paper className="p-2 md:p-4 text-center bg-blue-50">
+                  <div className="p-2 md:p-4 text-center bg-blue-50 rounded">
                     <Typography
                       variant="h5"
                       className="text-blue-600 font-bold text-lg md:text-3xl"
@@ -1524,14 +1524,14 @@ export default function JobTracker() {
                     </Typography>
                     <Typography
                       variant="body2"
-                      className="text-slate-600 text-xs md:text-base"
+                      className="text-blue-700 text-xs md:text-base"
                     >
                       Applied
                     </Typography>
-                  </Paper>
+                  </div>
                 </div>
                 <div className="w-full">
-                  <Paper className="p-2 md:p-4 text-center bg-purple-50">
+                  <div className="p-2 md:p-4 text-center bg-purple-50 rounded">
                     <Typography
                       variant="h5"
                       className="text-purple-600 font-bold text-lg md:text-3xl"
@@ -1540,14 +1540,14 @@ export default function JobTracker() {
                     </Typography>
                     <Typography
                       variant="body2"
-                      className="text-slate-600 text-xs md:text-base"
+                      className="text-purple-700 text-xs md:text-base"
                     >
                       Saved
                     </Typography>
-                  </Paper>
+                  </div>
                 </div>
                 <div className="w-full">
-                  <Paper className="p-2 md:p-4 text-center bg-gray-50">
+                  <div className="p-2 md:p-4 text-center bg-gray-50 rounded">
                     <Typography
                       variant="h5"
                       className="text-gray-600 font-bold text-lg md:text-3xl"
@@ -1556,18 +1556,18 @@ export default function JobTracker() {
                     </Typography>
                     <Typography
                       variant="body2"
-                      className="text-slate-600 text-xs md:text-base"
+                      className="text-gray-700 text-xs md:text-base"
                     >
                       Closed
                     </Typography>
-                  </Paper>
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Opportunities Section */}
-            <Card className="mb-8">
-              <CardContent>
+            <div className="mb-8 bg-gradient-to-b from-white to-gray-50 rounded-lg p-4">
+              <div>
                 {/* Add Opportunity Button and Filters - Mobile: stacked, Desktop: side by side */}
                 <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-4">
                   <Button
@@ -2489,219 +2489,203 @@ export default function JobTracker() {
                     </div>
                   )}
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
             {/* Recruiters and Resources Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Recruiters Section */}
               <div className="w-full">
-                <Card>
-                  <CardContent>
-                    <div className="flex justify-between items-center mb-4">
-                      <Button
-                        variant="contained"
-                        startIcon={<AddIcon />}
-                        onClick={() => setShowRecruiterDialog(true)}
-                        className="bg-purple-600 hover:bg-purple-700 w-full md:w-auto"
-                        size="large"
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="flex justify-between items-center mb-4">
+                    <Button
+                      variant="contained"
+                      startIcon={<AddIcon />}
+                      onClick={() => setShowRecruiterDialog(true)}
+                      className="bg-purple-600 hover:bg-purple-700 w-full md:w-auto"
+                      size="large"
+                    >
+                      Add Recruiter
+                    </Button>
+                  </div>
+
+                  <div className="space-y-3">
+                    {currentSearch.recruiters.map((recruiter) => (
+                      <div
+                        key={recruiter.id}
+                        className="bg-gray-100 rounded-lg p-3"
                       >
-                        Add Recruiter
-                      </Button>
-                    </div>
-
-                    <div className="space-y-3">
-                      {currentSearch.recruiters.map((recruiter) => (
-                        <Card
-                          key={recruiter.id}
-                          className="border border-gray-200"
-                        >
-                          <CardContent
-                            sx={{ px: 2, py: 1, "&:last-child": { pb: 1 } }}
-                          >
-                            {/* Mobile: Icons above content, Desktop: Icons on the right */}
-                            <div className="flex flex-col md:flex-row md:items-start md:justify-between">
-                              {/* Icons - Mobile: top, Desktop: right */}
-                              <div className="flex space-x-1 justify-end md:order-2 md:self-start mb-2 md:mb-0">
-                                {recruiter.notes?.trim() && (
-                                  <IconButton
-                                    size="small"
-                                    className="text-orange-500 hover:text-orange-600"
-                                    onClick={() =>
-                                      handleEditRecruiter(recruiter)
-                                    }
-                                    title="View/Edit Notes"
-                                  >
-                                    <NotesIcon fontSize="small" />
-                                  </IconButton>
-                                )}
+                        <div>
+                          {/* Mobile: Icons above content, Desktop: Icons on the right */}
+                          <div className="flex flex-col md:flex-row md:items-start md:justify-between">
+                            {/* Icons - Mobile: top, Desktop: right */}
+                            <div className="flex space-x-1 justify-end md:order-2 md:self-start mb-2 md:mb-0">
+                              {recruiter.notes?.trim() && (
                                 <IconButton
                                   size="small"
-                                  className="text-gray-400 hover:text-gray-600"
+                                  className="text-orange-500 hover:text-orange-600"
                                   onClick={() => handleEditRecruiter(recruiter)}
-                                  title="Edit Recruiter"
+                                  title="View/Edit Notes"
                                 >
-                                  <EditIcon fontSize="small" />
+                                  <NotesIcon fontSize="small" />
                                 </IconButton>
-                                <IconButton
-                                  size="small"
-                                  className="text-gray-400 hover:text-red-500"
-                                  onClick={() =>
-                                    handleDeleteRecruiter(recruiter.id)
-                                  }
-                                  title="Delete Recruiter"
-                                >
-                                  <DeleteIcon fontSize="small" />
-                                </IconButton>
-                              </div>
+                              )}
+                              <IconButton
+                                size="small"
+                                className="text-gray-400 hover:text-gray-600"
+                                onClick={() => handleEditRecruiter(recruiter)}
+                                title="Edit Recruiter"
+                              >
+                                <EditIcon fontSize="small" />
+                              </IconButton>
+                              <IconButton
+                                size="small"
+                                className="text-gray-400 hover:text-red-500"
+                                onClick={() =>
+                                  handleDeleteRecruiter(recruiter.id)
+                                }
+                                title="Delete Recruiter"
+                              >
+                                <DeleteIcon fontSize="small" />
+                              </IconButton>
+                            </div>
 
-                              {/* Content - Mobile: below icons, Desktop: left side */}
-                              <div className="flex items-start space-x-3 flex-1 md:order-1">
-                                <div className="hidden md:block">
-                                  <Avatar className="bg-purple-100 text-purple-600 mt-1">
-                                    <PersonIcon />
-                                  </Avatar>
-                                </div>
-                                <div className="flex-1 min-h-[80px]">
+                            {/* Content - Mobile: below icons, Desktop: left side */}
+                            <div className="flex items-start space-x-3 flex-1 md:order-1">
+                              <div className="hidden md:block">
+                                <Avatar className="bg-purple-100 text-purple-600 mt-1">
+                                  <PersonIcon />
+                                </Avatar>
+                              </div>
+                              <div className="flex-1 min-h-[80px]">
+                                <Typography
+                                  variant="subtitle1"
+                                  className="font-semibold leading-5"
+                                >
+                                  {recruiter.name}
+                                </Typography>
+                                <Typography
+                                  variant="body2"
+                                  className="text-gray-600 leading-5 mt-1"
+                                >
+                                  {recruiter.company}
+                                </Typography>
+                                {recruiter.specialty && (
                                   <Typography
-                                    variant="subtitle1"
-                                    className="font-semibold leading-5"
+                                    variant="caption"
+                                    className="text-gray-500 leading-4 block mt-1"
                                   >
-                                    {recruiter.name}
+                                    {recruiter.specialty}
                                   </Typography>
-                                  <Typography
-                                    variant="body2"
-                                    className="text-gray-600 leading-5 mt-1"
-                                  >
-                                    {recruiter.company}
-                                  </Typography>
-                                  {recruiter.specialty && (
-                                    <Typography
-                                      variant="caption"
-                                      className="text-gray-500 leading-4 block mt-1"
+                                )}
+                                <div className="flex flex-col space-y-1 mt-2">
+                                  {recruiter.email && (
+                                    <a
+                                      href={`mailto:${recruiter.email}`}
+                                      className="text-blue-600 hover:underline text-sm"
                                     >
-                                      {recruiter.specialty}
-                                    </Typography>
+                                      {recruiter.email}
+                                    </a>
                                   )}
-                                  <div className="flex flex-col space-y-1 mt-2">
-                                    {recruiter.email && (
-                                      <a
-                                        href={`mailto:${recruiter.email}`}
-                                        className="text-blue-600 hover:underline text-sm"
-                                      >
-                                        {recruiter.email}
-                                      </a>
-                                    )}
-                                    {recruiter.phone && (
-                                      <a
-                                        href={`tel:${recruiter.phone}`}
-                                        className="text-blue-600 hover:underline text-sm"
-                                      >
-                                        {formatPhoneNumber(recruiter.phone)}
-                                      </a>
-                                    )}
-                                  </div>
+                                  {recruiter.phone && (
+                                    <a
+                                      href={`tel:${recruiter.phone}`}
+                                      className="text-blue-600 hover:underline text-sm"
+                                    >
+                                      {formatPhoneNumber(recruiter.phone)}
+                                    </a>
+                                  )}
                                 </div>
                               </div>
                             </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-
-                      {currentSearch.recruiters.length === 0 && (
-                        <div className="text-center py-8 text-gray-500">
-                          <PersonIcon
-                            className="mx-auto mb-2"
-                            fontSize="large"
-                          />
-                          <Typography>No recruiters added yet</Typography>
+                          </div>
                         </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
+                      </div>
+                    ))}
+
+                    {currentSearch.recruiters.length === 0 && (
+                      <div className="text-center py-8 text-gray-500">
+                        <PersonIcon className="mx-auto mb-2" fontSize="large" />
+                        <Typography>No recruiters added yet</Typography>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
 
               {/* Online Resources Section */}
               <div className="w-full">
-                <Card>
-                  <CardContent>
-                    <div className="flex justify-between items-center mb-4">
-                      <Button
-                        variant="contained"
-                        startIcon={<AddIcon />}
-                        onClick={() => setShowResourceDialog(true)}
-                        className="bg-teal-600 hover:bg-teal-700 w-full md:w-auto"
-                        size="large"
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <div className="flex justify-between items-center mb-4">
+                    <Button
+                      variant="contained"
+                      startIcon={<AddIcon />}
+                      onClick={() => setShowResourceDialog(true)}
+                      className="bg-teal-600 hover:bg-teal-700 w-full md:w-auto"
+                      size="large"
+                    >
+                      Add Resource
+                    </Button>
+                  </div>
+
+                  <div className="space-y-3">
+                    {currentSearch.resources.map((resource) => (
+                      <div
+                        key={resource.id}
+                        className="bg-gray-100 rounded-lg p-3"
                       >
-                        Add Resource
-                      </Button>
-                    </div>
-
-                    <div className="space-y-3">
-                      {currentSearch.resources.map((resource) => (
-                        <Card
-                          key={resource.id}
-                          className="border border-gray-200"
-                        >
-                          <CardContent
-                            sx={{ px: 2, py: 1, "&:last-child": { pb: 1 } }}
-                          >
-                            <div className="flex items-start justify-between">
-                              <div>
-                                <div className="flex items-center gap-2 mb-2">
-                                  <a
-                                    href={resource.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-blue-600 hover:underline"
-                                  >
-                                    {resource.name}
-                                  </a>
-                                  <Chip
-                                    label={resource.category}
-                                    size="small"
-                                  />
-                                </div>
-                                <Typography
-                                  variant="body2"
-                                  className="text-gray-600"
+                        <div>
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <div className="flex items-center gap-2 mb-2">
+                                <a
+                                  href={resource.url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-blue-600 hover:underline"
                                 >
-                                  {resource.description}
-                                </Typography>
+                                  {resource.name}
+                                </a>
+                                <Chip label={resource.category} size="small" />
                               </div>
-                              <div className="flex gap-1">
-                                <IconButton
-                                  size="small"
-                                  style={{ color: "#6b7280" }}
-                                  onClick={() => handleEditResource(resource)}
-                                >
-                                  <EditIcon fontSize="small" />
-                                </IconButton>
-                                <IconButton
-                                  size="small"
-                                  style={{ color: "#6b7280" }}
-                                  onClick={() =>
-                                    handleDeleteResource(resource.id)
-                                  }
-                                >
-                                  <DeleteIcon fontSize="small" />
-                                </IconButton>
-                              </div>
+                              <Typography
+                                variant="body2"
+                                className="text-gray-600"
+                              >
+                                {resource.description}
+                              </Typography>
                             </div>
-                          </CardContent>
-                        </Card>
-                      ))}
-
-                      {currentSearch.resources.length === 0 && (
-                        <div className="text-center py-8 text-gray-500">
-                          <LinkIcon className="mx-auto mb-2" fontSize="large" />
-                          <Typography>No resources added yet</Typography>
+                            <div className="flex gap-1">
+                              <IconButton
+                                size="small"
+                                style={{ color: "#6b7280" }}
+                                onClick={() => handleEditResource(resource)}
+                              >
+                                <EditIcon fontSize="small" />
+                              </IconButton>
+                              <IconButton
+                                size="small"
+                                style={{ color: "#6b7280" }}
+                                onClick={() =>
+                                  handleDeleteResource(resource.id)
+                                }
+                              >
+                                <DeleteIcon fontSize="small" />
+                              </IconButton>
+                            </div>
+                          </div>
                         </div>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
+                      </div>
+                    ))}
+
+                    {currentSearch.resources.length === 0 && (
+                      <div className="text-center py-8 text-gray-500">
+                        <LinkIcon className="mx-auto mb-2" fontSize="large" />
+                        <Typography>No resources added yet</Typography>
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
 
