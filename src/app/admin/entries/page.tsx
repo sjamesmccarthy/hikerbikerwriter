@@ -217,7 +217,15 @@ export default function AdminEntries() {
   return (
     <Box sx={{ py: 6, px: { xs: 2, sm: 3, lg: 4 } }}>
       <Box sx={{ maxWidth: "1400px", mx: "auto" }}>
-        <Paper sx={{ p: 4, borderRadius: 2, boxShadow: 3 }}>
+        <Paper
+          sx={{
+            p: 4,
+            background: "linear-gradient(to bottom, #ffffff 0%, #f5f5f5 100%)",
+            boxShadow: "none",
+            border: "none",
+            outline: "none",
+          }}
+        >
           {/* Header */}
           <Box sx={{ mb: 4 }}>
             <Typography

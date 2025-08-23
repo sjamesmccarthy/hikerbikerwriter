@@ -219,7 +219,7 @@ const FieldNoteDetail: React.FC<FieldNoteDetailProps> = ({ slug }) => {
       reflective: "🤔",
       inspired: "💡",
       calm: "😌",
-      adventurous: "�️",
+      adventurous: "🏔️",
     };
     return moodEmojis[mood] || "";
   };

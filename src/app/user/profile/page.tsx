@@ -345,7 +345,7 @@ export default function UserProfilePage() {
             })()}
           </div>
           {/* Main profile content */}
-          <main className="w-full mx-auto p-8">
+          <main className="w-full sm:w-3/4 mx-auto p-8">
             <div className="flex flex-col items-center">
               {session?.user?.image && (
                 <Image
@@ -714,7 +714,7 @@ function AppSummaries({
     <>
       <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {/* ...existing code for app summaries... */}
-        <div className="flex flex-col items-center justify-center rounded-lg bg-gray-100 shadow-sm p-6 transition-all duration-200 hover:shadow-lg hover:-translate-y-1 cursor-pointer min-h-[140px]">
+        <div className="flex flex-col items-center justify-center bg-blue-50 p-6 transition-all duration-200 hover:shadow-lg hover:-translate-y-1 cursor-pointer min-h-[140px]">
           <CasinoIcon fontSize="large" className="mb-2 text-gray-700" />
           <Link
             href="/rollandwrite"
@@ -739,7 +739,7 @@ function AppSummaries({
             {rollCounts.sharedWithFamily ?? 0} Shared With Family
           </span>
         </div>
-        <div className="flex flex-col items-center justify-center rounded-lg bg-gray-100 shadow-sm p-6 transition-all duration-200 hover:shadow-lg hover:-translate-y-1 cursor-pointer min-h-[140px]">
+        <div className="flex flex-col items-center justify-center bg-blue-50 p-6 transition-all duration-200 hover:shadow-lg hover:-translate-y-1 cursor-pointer min-h-[140px]">
           <StickyNote2Icon fontSize="large" className="mb-2 text-gray-700" />
           <Link
             href="/fieldnotes"
@@ -764,7 +764,7 @@ function AppSummaries({
             {fieldCounts.sharedWithFamily ?? 0} Shared With Family
           </span>
         </div>
-        <div className="flex flex-col items-center justify-center rounded-lg bg-gray-100 shadow-sm p-6 transition-all duration-200 hover:shadow-lg hover:-translate-y-1 cursor-pointer min-h-[140px]">
+        <div className="flex flex-col items-center justify-center bg-blue-50 p-6 transition-all duration-200 hover:shadow-lg hover:-translate-y-1 cursor-pointer min-h-[140px]">
           <RestaurantIcon fontSize="large" className="mb-2 text-gray-700" />
           <Link
             href="/recipes"
@@ -791,7 +791,7 @@ function AppSummaries({
             </span>
           </div>
         </div>
-        <div className="flex flex-col items-center justify-center rounded-lg bg-gray-100 shadow-sm p-6 transition-all duration-200 hover:shadow-lg hover:-translate-y-1 cursor-pointer min-h-[140px]">
+        <div className="flex flex-col items-center justify-center bg-blue-50  p-6 transition-all duration-200 hover:shadow-lg hover:-translate-y-1 cursor-pointer min-h-[140px]">
           <AssignmentIcon fontSize="large" className="mb-2 text-gray-700" />
           <Link
             href="/brewday"
