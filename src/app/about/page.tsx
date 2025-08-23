@@ -539,6 +539,12 @@ export default function AboutPage() {
               </a>
             </h2>
 
+            <h3 className="font-semibold mt-4 mb-1">v1.8.7</h3>
+            <ul className="list-disc ml-6 mb-2">
+              <li>Added job tracker card to profile.</li>
+              <li>Add quick export/download to app cards on profile.</li>
+            </ul>
+
             <h3 className="font-semibold mt-4 mb-1">v1.8.6</h3>
             <ul className="list-disc ml-6 mb-2">
               <li>

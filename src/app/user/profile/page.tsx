@@ -38,6 +38,11 @@ interface BrewSession {
   savedAt: string;
 }
 
+interface Job {
+  closed: number;
+  status: string;
+}
+
 // Import the JSON data
 import relationshipsData from "@/data/relationships.json";
 import networksData from "@/data/people-networks.json";
@@ -456,6 +461,15 @@ function AppSummaries({
     sharedWithFamily: number;
   }>({ total: 0, public: 0, sharedWithFamily: 0 });
   const [brewLogTotal, setBrewLogTotal] = useState<number>(0);
+  const [jobCounts, setJobCounts] = useState<{
+    total: number;
+    applied: number;
+    hasActiveSearch: boolean;
+  }>({
+    total: 0,
+    applied: 0,
+    hasActiveSearch: false,
+  });
   const [loading, setLoading] = useState(true);
   const [familyInfo, setFamilyInfo] = useState<FamilyInfo | null>(null);
   const [familyLoading, setFamilyLoading] = useState(true);
@@ -709,15 +723,17 @@ function AppSummaries({
     async function fetchCounts() {
       setLoading(true);
       // Fetch all API data in parallel
-      const [rollRes, fieldRes, recipeRes] = await Promise.all([
+      const [rollRes, fieldRes, recipeRes, jobsRes] = await Promise.all([
         fetch(`/api/rollnwrite?userEmail=${encodeURIComponent(userEmail)}`),
         fetch(`/api/fieldnotes?userEmail=${encodeURIComponent(userEmail)}`),
         fetch(`/api/recipes?userEmail=${encodeURIComponent(userEmail)}`),
+        fetch(`/api/jobs?userEmail=${encodeURIComponent(userEmail)}`),
       ]);
-      const [rollRaw, fieldRaw, recipeRaw] = await Promise.all([
+      const [rollRaw, fieldRaw, recipeRaw, jobsRaw] = await Promise.all([
         rollRes.json(),
         fieldRes.json(),
         recipeRes.json(),
+        jobsRes.json(),
       ]);
       const rollEntries: RollEntry[] = Array.isArray(rollRaw) ? rollRaw : [];
       const fieldEntries: FieldEntry[] = Array.isArray(fieldRaw)
@@ -755,6 +771,27 @@ function AppSummaries({
         brewLogCount = 0;
       }
       setBrewLogTotal(brewLogCount);
+
+      // Process jobs data - now expects {jobs: [], stats: {}} format
+      const jobsData = jobsRaw || {};
+      const jobsStats = jobsData.stats || {
+        total: 0,
+        applied: 0,
+        hasActiveSearch: false,
+      };
+
+      console.log("Jobs response:", {
+        jobsRaw,
+        jobsData,
+        jobsStats,
+      });
+
+      setJobCounts({
+        total: jobsStats.total,
+        applied: jobsStats.applied,
+        hasActiveSearch: jobsStats.hasActiveSearch,
+      });
+
       setLoading(false);
     }
     async function fetchFamily() {
@@ -971,12 +1008,39 @@ function AppSummaries({
               <span className="font-bold text-lg">{brewLogTotal}</span> Entries
             </span>
           </div>
-          <p>
+          <p className="leading-[1.0]">
             <span className="text-[10px]">
-              *Stored in local storage and may not appear on all devices
+              *Stored in local storage and may not appear on all devices. Click
+              the export icon above to download.
             </span>
           </p>
         </div>
+
+        {/* Job Search Card - Only show if there is an active job search */}
+        {jobCounts.hasActiveSearch && (
+          <div className="relative flex flex-col items-center justify-center bg-blue-50 p-6 transition-all duration-200 hover:shadow-lg hover:-translate-y-1 cursor-pointer min-h-[140px]">
+            <div className="absolute top-2 right-2">
+              <SimCardDownloadIcon fontSize="small" className="text-gray-400" />
+            </div>
+            <WorkIcon fontSize="large" className="mb-2 text-gray-700" />
+            <Link
+              href="/jobs"
+              className="font-semibold text-black hover:underline text-lg mb-2"
+            >
+              Job Search
+            </Link>
+            <div className="flex items-center gap-3 mt-1">
+              <span className="flex items-center gap-1 text-xs text-black">
+                <span className="font-bold text-lg">{jobCounts.total}</span>{" "}
+                Opportunities
+              </span>
+              <span className="flex items-center gap-1 text-xs text-black">
+                <span className="font-bold text-lg">{jobCounts.applied}</span>{" "}
+                Applied
+              </span>
+            </div>
+          </div>
+        )}
       </div>
       <hr className="border-t border-gray-200 my-8 w-full" />
       <div className="flex flex-col items-start w-full mb-8">

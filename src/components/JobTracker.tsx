@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSession, signIn, signOut } from "next-auth/react";
@@ -110,8 +110,18 @@ interface OnlineResource {
   id: string;
   name: string;
   url: string;
-  description?: string;
   category: string;
+  description?: string;
+}
+
+interface JobData {
+  id: number;
+  closed: number;
+  status: string;
+  searchName?: string;
+  opportunities?: JobOpportunity[];
+  recruiters?: Recruiter[];
+  resources?: OnlineResource[];
 }
 
 interface JobSearch {
@@ -261,6 +271,53 @@ export default function JobTracker() {
     window.location.href = path;
   };
 
+  const loadJobData = useCallback(async () => {
+    if (!session?.user?.email) {
+      console.log("No user email available");
+      setHasLoadedData(true);
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `/api/jobs?userEmail=${encodeURIComponent(session.user.email)}`
+      );
+      if (response.ok) {
+        const data = await response.json();
+        console.log("JobTracker received data:", data);
+
+        // Handle the new API response format with jobs array and stats
+        const jobs = data.jobs || data || [];
+        console.log("JobTracker jobs array:", jobs);
+
+        // Convert jobs data to the expected search format
+        const searches = jobs.map((job: JobData) => {
+          console.log("Processing job:", job);
+          return {
+            id: job.id.toString(),
+            name: job.searchName || job.status || "Job Search",
+            isActive: job.closed === 0,
+            opportunities: job.opportunities || [],
+            recruiters: job.recruiters || [],
+            resources: job.resources || [],
+            created: new Date().toISOString(),
+            closed: job.closed,
+          };
+        });
+
+        console.log("JobTracker converted searches:", searches);
+        setSearches(searches);
+        const activeSearch = searches.find((s: JobSearch) => s.isActive);
+        console.log("JobTracker active search:", activeSearch);
+        setCurrentSearch(activeSearch || null);
+      }
+    } catch (error) {
+      console.error("Error loading job data:", error);
+    } finally {
+      setHasLoadedData(true);
+    }
+  }, [session?.user?.email]);
+
   useEffect(() => {
     if (status === "loading") {
       return; // Don't do anything while session is loading
@@ -272,33 +329,47 @@ export default function JobTracker() {
       // User is not authenticated, mark as loaded
       setHasLoadedData(true);
     }
-  }, [session, status]);
-
-  const loadJobData = async () => {
-    try {
-      const response = await fetch("/api/jobs");
-      if (response.ok) {
-        const data = await response.json();
-        setSearches(data.searches || []);
-        const activeSearch = data.searches?.find((s: JobSearch) => s.isActive);
-        setCurrentSearch(activeSearch || null);
-      }
-    } catch (error) {
-      console.error("Error loading job data:", error);
-    } finally {
-      setHasLoadedData(true);
-    }
-  };
+  }, [session, status, loadJobData]);
 
   const saveJobData = async (searchData: JobSearch) => {
+    if (!session?.user?.email) {
+      console.log("No user email available for saving");
+      return;
+    }
+
     try {
+      console.log("Saving job data:", searchData);
+
+      // Convert the JobSearch back to the format expected by the database
+      const jobDataForDB = {
+        id: searchData.id === "new" ? undefined : parseInt(searchData.id),
+        searchName: searchData.name,
+        status: searchData.isActive ? "active" : "closed",
+        closed: searchData.isActive ? 0 : 1,
+        opportunities: searchData.opportunities,
+        recruiters: searchData.recruiters,
+        resources: searchData.resources,
+        created: searchData.created,
+        closedDate: searchData.closedDate,
+      };
+
       const response = await fetch("/api/jobs", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(searchData),
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userEmail: session.user.email,
+          jobData: jobDataForDB,
+        }),
       });
+
       if (response.ok) {
+        console.log("Job data saved successfully");
+        // Reload the data to get the updated state from the database
         loadJobData();
+      } else {
+        console.error("Failed to save job data:", await response.text());
       }
     } catch (error) {
       console.error("Error saving job data:", error);
