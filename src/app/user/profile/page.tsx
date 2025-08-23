@@ -16,6 +16,28 @@ interface Network {
   level: number;
 }
 
+interface LogEntry {
+  id: string;
+  timestamp: string;
+  text: string;
+  timer?: {
+    duration: number;
+    startTime: number;
+    isActive: boolean;
+  };
+}
+
+interface BrewSession {
+  id: string;
+  name: string;
+  date: string;
+  brewData: {
+    [key: string]: string;
+  };
+  logEntries: LogEntry[];
+  savedAt: string;
+}
+
 // Import the JSON data
 import relationshipsData from "@/data/relationships.json";
 import networksData from "@/data/people-networks.json";
@@ -25,6 +47,7 @@ import { PeopleSuggestions } from "@/components/PeopleSuggestions";
 import { renderFooter } from "@/components/shared/footerHelpers";
 
 // MUI Icons
+import SimCardDownloadIcon from "@mui/icons-material/SimCardDownload";
 import PublicIcon from "@mui/icons-material/Public";
 import AppsIcon from "@mui/icons-material/Apps";
 import HomeIcon from "@mui/icons-material/Home";
@@ -453,7 +476,69 @@ function AppSummaries({
     network?: string;
   }
 
+  interface RollAndWriteEntry {
+    created_at: string;
+    title: string;
+    is_public: boolean;
+    shared_family: boolean;
+    content: string;
+  }
+
   const [searchResults, setSearchResults] = useState<SearchUser[]>([]);
+
+  // Function to handle Roll and Write entries download
+  const handleRollAndWriteDownload = async () => {
+    try {
+      const res = await fetch(
+        `/api/rollnwrite?userEmail=${encodeURIComponent(userEmail)}`
+      );
+      if (!res.ok) throw new Error("Failed to fetch entries");
+
+      const entries = (await res.json()) as RollAndWriteEntry[];
+      const formattedData = entries.map((entry: RollAndWriteEntry) => ({
+        date: entry.created_at,
+        title: entry.title,
+        is_public: entry.is_public ? "Yes" : "No",
+        shared_family: entry.shared_family ? "Yes" : "No",
+        content: entry.content,
+      }));
+
+      type FormattedEntry = {
+        date: string;
+        title: string;
+        is_public: string;
+        shared_family: string;
+        content: string;
+      };
+
+      const csvContent = [
+        ["Date", "Title", "Public", "Shared with Family", "Content"],
+        ...formattedData.map((entry: FormattedEntry) => [
+          entry.date,
+          entry.title,
+          entry.is_public,
+          entry.shared_family,
+          entry.content,
+        ]),
+      ]
+        .map((row) => row.map((cell: string) => `"${cell}"`).join(","))
+        .join("\n");
+
+      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.setAttribute(
+        "download",
+        `roll-and-write-entries-${new Date().toISOString().split("T")[0]}.csv`
+      );
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error("Error downloading entries:", error);
+      alert("Failed to download entries. Please try again.");
+    }
+  };
 
   const handleAddPerson = async (user: SearchUser) => {
     console.log("handleAddPerson called with:", {
@@ -713,8 +798,18 @@ function AppSummaries({
   return (
     <>
       <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* ...existing code for app summaries... */}
-        <div className="flex flex-col items-center justify-center bg-blue-50 p-6 transition-all duration-200 hover:shadow-lg hover:-translate-y-1 cursor-pointer min-h-[140px]">
+        {/* Roll And Write Card */}
+        <div className="relative flex flex-col items-center justify-center bg-blue-50 p-6 transition-all duration-200 hover:shadow-lg hover:-translate-y-1 cursor-pointer min-h-[140px]">
+          <div className="absolute top-2 right-2">
+            <SimCardDownloadIcon
+              fontSize="small"
+              className="text-gray-400 hover:text-gray-600 cursor-pointer"
+              onClick={(e) => {
+                e.preventDefault();
+                handleRollAndWriteDownload();
+              }}
+            />
+          </div>
           <CasinoIcon fontSize="large" className="mb-2 text-gray-700" />
           <Link
             href="/rollandwrite"
@@ -739,7 +834,11 @@ function AppSummaries({
             {rollCounts.sharedWithFamily ?? 0} Shared With Family
           </span>
         </div>
-        <div className="flex flex-col items-center justify-center bg-blue-50 p-6 transition-all duration-200 hover:shadow-lg hover:-translate-y-1 cursor-pointer min-h-[140px]">
+        {/* Field Notes Card */}
+        <div className="relative flex flex-col items-center justify-center bg-blue-50 p-6 transition-all duration-200 hover:shadow-lg hover:-translate-y-1 cursor-pointer min-h-[140px]">
+          <div className="absolute top-2 right-2">
+            <SimCardDownloadIcon fontSize="small" className="text-gray-400" />
+          </div>
           <StickyNote2Icon fontSize="large" className="mb-2 text-gray-700" />
           <Link
             href="/fieldnotes"
@@ -764,7 +863,11 @@ function AppSummaries({
             {fieldCounts.sharedWithFamily ?? 0} Shared With Family
           </span>
         </div>
-        <div className="flex flex-col items-center justify-center bg-blue-50 p-6 transition-all duration-200 hover:shadow-lg hover:-translate-y-1 cursor-pointer min-h-[140px]">
+        {/* Recipes Card */}
+        <div className="relative flex flex-col items-center justify-center bg-blue-50 p-6 transition-all duration-200 hover:shadow-lg hover:-translate-y-1 cursor-pointer min-h-[140px]">
+          <div className="absolute top-2 right-2">
+            <SimCardDownloadIcon fontSize="small" className="text-gray-400" />
+          </div>
           <RestaurantIcon fontSize="large" className="mb-2 text-gray-700" />
           <Link
             href="/recipes"
@@ -791,7 +894,71 @@ function AppSummaries({
             </span>
           </div>
         </div>
-        <div className="flex flex-col items-center justify-center bg-blue-50  p-6 transition-all duration-200 hover:shadow-lg hover:-translate-y-1 cursor-pointer min-h-[140px]">
+        {/* Brew Day Log Card */}
+        <div className="relative flex flex-col items-center justify-center bg-blue-50  p-6 transition-all duration-200 hover:shadow-lg hover:-translate-y-1 cursor-pointer min-h-[140px]">
+          <div className="absolute top-2 right-2">
+            <SimCardDownloadIcon
+              fontSize="small"
+              className="text-gray-400 hover:text-gray-600 cursor-pointer"
+              onClick={(e) => {
+                e.preventDefault();
+                // Get brew sessions from local storage
+                const storedSessions = localStorage.getItem("brewSessions");
+                if (!storedSessions) {
+                  alert("No brew logs found to download.");
+                  return;
+                }
+
+                try {
+                  const brewSessions = JSON.parse(storedSessions);
+                  if (
+                    !Array.isArray(brewSessions) ||
+                    brewSessions.length === 0
+                  ) {
+                    alert("No brew logs found to download.");
+                    return;
+                  }
+
+                  // Create text content
+                  let textContent = "BREW DAY LOGS\n\n";
+
+                  brewSessions.forEach((session: BrewSession) => {
+                    textContent += `=== ${session.name} - ${session.date} ===\n\n`;
+
+                    // Add brew data
+                    textContent += "Brew Details:\n";
+                    Object.entries(session.brewData).forEach(([key, value]) => {
+                      textContent += `${key}: ${value}\n`;
+                    });
+
+                    // Add log entries
+                    textContent += "\nLog Entries:\n";
+                    session.logEntries.forEach((entry: LogEntry) => {
+                      textContent += `[${entry.timestamp}] ${entry.text}\n`;
+                    });
+
+                    textContent += "\n-------------------\n\n";
+                  });
+
+                  // Create and download the file
+                  const blob = new Blob([textContent], { type: "text/plain" });
+                  const url = window.URL.createObjectURL(blob);
+                  const a = document.createElement("a");
+                  a.href = url;
+                  a.download = "brew-day-logs.txt";
+                  document.body.appendChild(a);
+                  a.click();
+                  document.body.removeChild(a);
+                  window.URL.revokeObjectURL(url);
+                } catch (error) {
+                  console.error("Error downloading brew logs:", error);
+                  alert(
+                    "There was an error downloading the brew logs. Please try again."
+                  );
+                }
+              }}
+            />
+          </div>
           <AssignmentIcon fontSize="large" className="mb-2 text-gray-700" />
           <Link
             href="/brewday"

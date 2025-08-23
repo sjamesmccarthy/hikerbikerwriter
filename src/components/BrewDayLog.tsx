@@ -11,6 +11,7 @@ import {
   Delete as DeleteIcon,
   Timer as TimerIcon,
   FileDownload as FileDownloadIcon,
+  SimCardDownload as SimCardDownloadIcon,
   Save as SaveIcon,
   Check as CheckIcon,
   Folder as FolderIcon,
@@ -118,6 +119,44 @@ const BrewDayLog: React.FC = () => {
   const [isAppsMenuOpen, setIsAppsMenuOpen] = useState(false);
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
   const router = useRouter();
+
+  const downloadSession = (session: BrewSession) => {
+    try {
+      // Create text content for single session
+      let textContent = "BREW DAY LOG\n\n";
+      textContent += `=== ${session.name} - ${session.date} ===\n\n`;
+
+      // Add brew data
+      textContent += "Brew Details:\n";
+      Object.entries(session.brewData).forEach(([key, value]) => {
+        textContent += `${key}: ${value}\n`;
+      });
+
+      // Add log entries
+      textContent += "\nLog Entries:\n";
+      session.logEntries.forEach((entry: LogEntry) => {
+        textContent += `[${entry.timestamp}] ${entry.text}\n`;
+      });
+
+      // Create and download the file
+      const blob = new Blob([textContent], { type: "text/plain" });
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `brew-session-${session.name
+        .toLowerCase()
+        .replace(/\s+/g, "-")}-${session.date}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Error downloading brew session:", error);
+      alert(
+        "There was an error downloading the brew session. Please try again."
+      );
+    }
+  };
 
   // Apps menu configuration
   const apps: AppMenuItem[] = [
@@ -1340,6 +1379,17 @@ const BrewDayLog: React.FC = () => {
                               )}
                             </div>
                           </div>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              downloadSession(session);
+                            }}
+                            className="text-gray-500 hover:text-gray-700 p-1 mr-1"
+                            title="Download session"
+                          >
+                            <SimCardDownloadIcon fontSize="small" />
+                          </button>
                           <button
                             type="button"
                             onClick={(e) => {
