@@ -105,6 +105,15 @@ export default function UserProfilePage() {
   if (!session) {
     return (
       <div className="p-8 text-center">
+        <div className="flex justify-center mb-6">
+          <Image
+            src="/images/hikerbikerwriter.png"
+            alt="HikerBikerWriter Logo"
+            width={200}
+            height={100}
+            className="w-1/4 h-auto"
+          />
+        </div>
         <p className="mb-4">Please sign in to view your profile</p>
         <button
           onClick={() => signIn("google")}

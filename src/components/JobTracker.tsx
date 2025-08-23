@@ -181,6 +181,7 @@ export default function JobTracker() {
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [sortBy, setSortBy] = useState<string>("newest");
   const [searchQuery, setSearchQuery] = useState<string>("");
+  const [hasLoadedData, setHasLoadedData] = useState<boolean>(false);
 
   // Dialog states
   const [showNewSearchDialog, setShowNewSearchDialog] = useState(false);
@@ -261,8 +262,15 @@ export default function JobTracker() {
   };
 
   useEffect(() => {
+    if (status === "loading") {
+      return; // Don't do anything while session is loading
+    }
+
     if (session?.user?.email) {
       loadJobData();
+    } else {
+      // User is not authenticated, mark as loaded
+      setHasLoadedData(true);
     }
   }, [session, status]);
 
@@ -277,6 +285,8 @@ export default function JobTracker() {
       }
     } catch (error) {
       console.error("Error loading job data:", error);
+    } finally {
+      setHasLoadedData(true);
     }
   };
 
@@ -1341,9 +1351,9 @@ export default function JobTracker() {
     return (
       <div>
         {renderHeader()}
-        <div className="flex justify-center items-center h-96">
+        {/* <div className="flex justify-center items-center h-96">
           <div className="text-xl">Loading...</div>
-        </div>
+        </div> */}
         {renderFooter()}
       </div>
     );
@@ -1367,7 +1377,14 @@ export default function JobTracker() {
             </Typography>
             <Typography
               variant="h6"
-              className="text-slate-600 mb-8 max-w-2xl mx-auto"
+              sx={{
+                color: "#64748b", // slate-600 equivalent
+                marginBottom: 4, // equivalent to mb-8
+                maxWidth: "42rem", // equivalent to max-w-2xl
+                marginLeft: "auto",
+                marginRight: "auto",
+                textAlign: "center",
+              }}
             >
               Track your job applications, interviews, and networking contacts
               all in one place. Organize your job search with detailed progress
@@ -1454,7 +1471,14 @@ export default function JobTracker() {
       </div>
 
       <div className="max-w-7xl mx-auto p-6 min-h-screen bg-white">
-        {currentSearch && (
+        {/* Show loading state while data is being fetched */}
+        {!hasLoadedData && session && (
+          <div className="flex justify-center items-center h-96">
+            <div className="text-xl text-gray-600">Loading job data...</div>
+          </div>
+        )}
+
+        {hasLoadedData && currentSearch && (
           <div>
             {/* Search Title */}
             <div className="text-center mt-8 mb-8">
@@ -2715,7 +2739,7 @@ export default function JobTracker() {
           </div>
         )}
 
-        {!currentSearch && searches.length > 0 && (
+        {hasLoadedData && !currentSearch && searches.length > 0 && (
           <div className="text-center py-20">
             <Typography variant="h5" className="text-slate-600 mb-4">
               NO ACTIVE JOB SEARCH
@@ -2828,7 +2852,7 @@ export default function JobTracker() {
           </div>
         )}
 
-        {!currentSearch && searches.length === 0 && (
+        {hasLoadedData && !currentSearch && searches.length === 0 && (
           <div className="text-center py-20">
             <WorkIcon sx={{ fontSize: 80, color: "#64748b", mb: 4 }} />
             <Typography variant="h5" className="text-slate-600 mb-4">

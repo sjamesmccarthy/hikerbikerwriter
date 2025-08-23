@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { v4 as uuidv4 } from "uuid";
 
 export default function SignUp() {
@@ -104,6 +105,15 @@ export default function SignUp() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
+          <div className="flex justify-center mb-6">
+            <Image
+              src="/images/hikerbikerwriter.png"
+              alt="HikerBikerWriter Logo"
+              width={200}
+              height={100}
+              className="w-1/2 h-auto"
+            />
+          </div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Request Access
           </h2>
