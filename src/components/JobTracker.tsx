@@ -36,6 +36,7 @@ import {
   FormControl,
   InputLabel,
   Select,
+  SelectChangeEvent,
   MenuItem,
   TextField,
   Button,
@@ -58,6 +59,7 @@ import {
   DialogActions,
   Box,
   Avatar,
+  Pagination,
 } from "@mui/material";
 import { renderFooter } from "./shared/footerHelpers";
 
@@ -66,6 +68,7 @@ interface JobOpportunity {
   company: string;
   position: string;
   dateApplied: string;
+  createdAt?: string; // Timestamp when opportunity was added to the system
   status: "saved" | "applied" | "interview" | "offer" | "rejected" | "closed";
   description?: string;
   jobUrl?: string;
@@ -192,6 +195,10 @@ export default function JobTracker() {
   const [sortBy, setSortBy] = useState<string>("newest");
   const [searchQuery, setSearchQuery] = useState<string>("");
   const [hasLoadedData, setHasLoadedData] = useState<boolean>(false);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const [itemsPerPage, setItemsPerPage] = useState<number>(20);
 
   // Dialog states
   const [showNewSearchDialog, setShowNewSearchDialog] = useState(false);
@@ -437,6 +444,19 @@ export default function JobTracker() {
     // Apply sorting
     return filtered.sort((a, b) => {
       if (sortBy === "newest") {
+        // Prioritize recently created opportunities (within last hour)
+        const aCreated = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+        const bCreated = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+        const oneHourAgo = Date.now() - (60 * 60 * 1000);
+        
+        const aIsRecent = aCreated > oneHourAgo;
+        const bIsRecent = bCreated > oneHourAgo;
+        
+        if (aIsRecent && !bIsRecent) return -1;
+        if (!aIsRecent && bIsRecent) return 1;
+        if (aIsRecent && bIsRecent) return bCreated - aCreated;
+        
+        // Default to sorting by dateApplied
         return (
           new Date(b.dateApplied).getTime() - new Date(a.dateApplied).getTime()
         );
@@ -447,6 +467,48 @@ export default function JobTracker() {
       }
       return 0;
     });
+  };
+
+  const getPaginatedOpportunities = () => {
+    const filtered = getFilteredOpportunities();
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filtered.slice(startIndex, endIndex);
+  };
+
+  const getTotalPages = () => {
+    const filtered = getFilteredOpportunities();
+    return Math.ceil(filtered.length / itemsPerPage);
+  };
+
+  const getPaginationInfo = () => {
+    const filtered = getFilteredOpportunities();
+    const totalItems = filtered.length;
+    const startItem =
+      totalItems === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1;
+    const endItem = Math.min(currentPage * itemsPerPage, totalItems);
+    return `Showing ${startItem}-${endItem} of ${totalItems} opportunities`;
+  };
+
+  // Reset pagination when filters change
+  const handleFilterChange = (event: SelectChangeEvent) => {
+    setFilterStatus(event.target.value);
+    setCurrentPage(1);
+  };
+
+  const handleSearchChange = (newSearch: string) => {
+    setSearchQuery(newSearch);
+    setCurrentPage(1);
+  };
+
+  const handleSortChange = (event: SelectChangeEvent) => {
+    setSortBy(event.target.value);
+    setCurrentPage(1);
+  };
+
+  const handleItemsPerPageChange = (event: SelectChangeEvent) => {
+    setItemsPerPage(Number(event.target.value));
+    setCurrentPage(1); // Reset to first page when changing page size
   };
 
   const handleCreateNewSearch = () => {
@@ -515,6 +577,7 @@ export default function JobTracker() {
         company: opportunityForm.company,
         position: opportunityForm.position,
         dateApplied: opportunityForm.dateApplied || getLocalDateString(),
+        createdAt: new Date().toISOString(), // Track when opportunity was added
         status: opportunityForm.status || "applied",
         description: opportunityForm.description,
         jobUrl: opportunityForm.jobUrl,
@@ -1059,7 +1122,11 @@ export default function JobTracker() {
       doc.setFontSize(12);
       doc.setTextColor(0, 0, 0);
       doc.text(`Generated: ${new Date().toLocaleDateString()}`, 20, 40);
-      doc.text(`Total Opportunities: ${filteredOpportunities.length}`, 20, 50);
+      doc.text(
+        `Total Opportunities: ${getFilteredOpportunities().length}`,
+        20,
+        50
+      );
       doc.text(
         `Showing: ${
           filterStatus === "all"
@@ -1079,7 +1146,7 @@ export default function JobTracker() {
       };
 
       // Prepare table data
-      const tableData = filteredOpportunities.map((opportunity) => [
+      const tableData = getFilteredOpportunities().map((opportunity) => [
         opportunity.company.length > 32
           ? opportunity.company.substring(0, 32) + "..."
           : opportunity.company,
@@ -1478,7 +1545,9 @@ export default function JobTracker() {
 
   // Authenticated user content
   const statusCounts = getStatusCounts();
-  const filteredOpportunities = getFilteredOpportunities();
+  const paginatedOpportunities = getPaginatedOpportunities();
+  const totalPages = getTotalPages();
+  const paginationInfo = getPaginationInfo();
 
   return (
     <div>
@@ -1657,7 +1726,7 @@ export default function JobTracker() {
                       label="Search"
                       placeholder="Search company, position..."
                       value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
+                      onChange={(e) => handleSearchChange(e.target.value)}
                       className="w-full sm:w-auto"
                       style={{ minWidth: 300, maxWidth: 400 }}
                       variant="outlined"
@@ -1672,7 +1741,7 @@ export default function JobTracker() {
                       <Select
                         value={sortBy}
                         label="Sort By"
-                        onChange={(e) => setSortBy(e.target.value)}
+                        onChange={handleSortChange}
                       >
                         <MenuItem value="newest">Newest</MenuItem>
                         <MenuItem value="oldest">Oldest</MenuItem>
@@ -1688,7 +1757,7 @@ export default function JobTracker() {
                       <Select
                         value={filterStatus}
                         label="Status"
-                        onChange={(e) => setFilterStatus(e.target.value)}
+                        onChange={handleFilterChange}
                       >
                         <MenuItem value="all">All</MenuItem>
                         <MenuItem value="saved">Saved</MenuItem>
@@ -1723,7 +1792,7 @@ export default function JobTracker() {
 
                 {/* Desktop Table View */}
                 <div className="hidden md:block">
-                  {filteredOpportunities.length === 0 ? (
+                  {getFilteredOpportunities().length === 0 ? (
                     <div className="text-center py-12 text-gray-500">
                       <WorkIcon className="mx-auto mb-2" fontSize="large" />
                       <Typography>No opportunities found</Typography>
@@ -1754,7 +1823,7 @@ export default function JobTracker() {
                           </TableRow>
                         </TableHead>
                         <TableBody>
-                          {filteredOpportunities.map((opportunity) => (
+                          {paginatedOpportunities.map((opportunity) => (
                             <React.Fragment key={opportunity.id}>
                               <TableRow
                                 style={{
@@ -2188,7 +2257,7 @@ export default function JobTracker() {
 
                 {/* Mobile Card View */}
                 <div className="md:hidden space-y-4">
-                  {filteredOpportunities.map((opportunity) => (
+                  {paginatedOpportunities.map((opportunity) => (
                     <Card
                       key={opportunity.id}
                       className="border border-gray-200"
@@ -2553,13 +2622,53 @@ export default function JobTracker() {
                     </Card>
                   ))}
 
-                  {filteredOpportunities.length === 0 && (
+                  {paginatedOpportunities.length === 0 && (
                     <div className="text-center py-8 text-gray-500">
                       <WorkIcon className="mx-auto mb-2" fontSize="large" />
                       <Typography>No opportunities found</Typography>
                     </div>
                   )}
                 </div>
+
+                {/* Pagination */}
+                {getFilteredOpportunities().length > 0 && (
+                  <div className="mt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+                    <Typography variant="body2" className="text-gray-600">
+                      {paginationInfo}
+                    </Typography>
+
+                    <div className="flex flex-col sm:flex-row items-center gap-4">
+                      {totalPages > 1 && (
+                        <Pagination
+                          count={totalPages}
+                          page={currentPage}
+                          onChange={(event, value) => setCurrentPage(value)}
+                          color="primary"
+                          showFirstButton
+                          showLastButton
+                        />
+                      )}
+
+                      <div className="flex items-center gap-2">
+                        <Typography variant="body2" className="text-gray-600">
+                          Items per page:
+                        </Typography>
+                        <FormControl size="small" style={{ minWidth: 80 }}>
+                          <Select
+                            value={itemsPerPage.toString()}
+                            onChange={handleItemsPerPageChange}
+                            variant="outlined"
+                          >
+                            <MenuItem value="20">20</MenuItem>
+                            <MenuItem value="50">50</MenuItem>
+                            <MenuItem value="100">100</MenuItem>
+                            <MenuItem value="250">250</MenuItem>
+                          </Select>
+                        </FormControl>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
