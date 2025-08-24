@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import { useSession, signIn, signOut } from "next-auth/react";
 import {
@@ -70,6 +70,7 @@ const RollAndWriteEntries: React.FC = () => {
     useState<string>("All");
   const { data: session, status } = useSession();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   // Apps menu configuration
   const apps: AppMenuItem[] = [
@@ -207,6 +208,28 @@ const RollAndWriteEntries: React.FC = () => {
 
     checkFamilyMembers();
   }, [session]);
+
+  // Handle URL parameters for filters
+  useEffect(() => {
+    if (!searchParams) return;
+
+    const familyParam = searchParams.get("family");
+    const familyMemberParam = searchParams.get("familyMember");
+
+    if (familyParam === "true" && hasFamilyMembers) {
+      setShowFamilyOnly(true);
+
+      // Set the family member if specified in URL
+      if (familyMemberParam && familyMembers.length > 0) {
+        const memberExists = familyMembers.some(
+          (member) => member.name === familyMemberParam
+        );
+        if (memberExists) {
+          setSelectedFamilyMember(familyMemberParam);
+        }
+      }
+    }
+  }, [searchParams, hasFamilyMembers, familyMembers]);
 
   // Delete entry
   const deleteEntry = async (id: string) => {
@@ -817,6 +840,27 @@ const RollAndWriteEntries: React.FC = () => {
       {renderFooter("integrated")}
     </div>
   );
+};
+
+// Helper function to generate URLs with family filter parameters
+// Examples:
+// generateRollAndWriteFilterURL({ family: true }) => "/rollandwrite?family=true"
+// generateRollAndWriteFilterURL({ family: true, familyMember: "John Doe" }) => "/rollandwrite?family=true&familyMember=John%20Doe"
+export const generateRollAndWriteFilterURL = (options: {
+  family?: boolean;
+  familyMember?: string;
+  basePath?: string;
+}) => {
+  const params = new URLSearchParams();
+  if (options.family) {
+    params.set("family", "true");
+    if (options.familyMember && options.familyMember !== "All") {
+      params.set("familyMember", options.familyMember);
+    }
+  }
+
+  const basePath = options.basePath || "/rollandwrite";
+  return params.toString() ? `${basePath}?${params.toString()}` : basePath;
 };
 
 export default RollAndWriteEntries;

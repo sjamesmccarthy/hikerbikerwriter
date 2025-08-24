@@ -1868,7 +1868,7 @@ function AppSummaries({
           <div className="flex flex-col gap-4 mb-6 w-full">
             {/* Me Card */}
             {session?.user && (
-              <div className="flex flex-col sm:flex-row sm:items-center bg-white rounded-lg shadow p-4 w-full">
+              <div className="flex flex-col sm:flex-row sm:items-center bg-gray-50 rounded-lg p-4 w-full cursor-pointer transition-transform duration-200 hover:scale-105">
                 <div className="flex items-center">
                   <div className="flex items-center justify-center w-12 h-12 rounded-full mr-4">
                     {session.user.image ? (
@@ -1927,10 +1927,19 @@ function AppSummaries({
                 {/* Icons section */}
                 <div className="flex flex-row items-center gap-4 mt-4 sm:mt-0 justify-end sm:ml-auto">
                   <div className="relative flex items-center">
-                    <CasinoIcon
-                      fontSize="medium"
-                      style={{ color: "#757575" }}
-                    />
+                    {rollCounts.sharedWithFamily > 0 ? (
+                      <Link href="/rollandwrite?family=true">
+                        <CasinoIcon
+                          fontSize="medium"
+                          style={{ color: "#757575", cursor: "pointer" }}
+                        />
+                      </Link>
+                    ) : (
+                      <CasinoIcon
+                        fontSize="medium"
+                        style={{ color: "#757575" }}
+                      />
+                    )}
                     {/* Badge hidden until family share data is available */}
                     {rollCounts.sharedWithFamily !== undefined && (
                       <span
@@ -1960,10 +1969,19 @@ function AppSummaries({
                     )}
                   </div>
                   <div className="relative flex items-center">
-                    <StickyNote2Icon
-                      fontSize="medium"
-                      style={{ color: "#757575" }}
-                    />
+                    {fieldCounts.sharedWithFamily > 0 ? (
+                      <Link href="/fieldnotes?family=true">
+                        <StickyNote2Icon
+                          fontSize="medium"
+                          style={{ color: "#757575", cursor: "pointer" }}
+                        />
+                      </Link>
+                    ) : (
+                      <StickyNote2Icon
+                        fontSize="medium"
+                        style={{ color: "#757575" }}
+                      />
+                    )}
                     {/* Badge hidden until family share data is available */}
                     {fieldCounts.sharedWithFamily !== undefined && (
                       <span
@@ -2066,7 +2084,7 @@ function AppSummaries({
                 return (
                   <div
                     key={person.person_id}
-                    className="bg-white rounded-lg shadow p-4 w-full"
+                    className="bg-gray-50 rounded-lg p-4 w-full cursor-pointer transition-transform duration-200 hover:scale-105"
                   >
                     {/* Profile info and icons row */}
                     <div className="flex flex-col sm:flex-row sm:items-center">

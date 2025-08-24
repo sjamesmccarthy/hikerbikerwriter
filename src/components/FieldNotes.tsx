@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowBack as ArrowBackIcon,
   Apps as AppsIcon,
@@ -78,6 +78,7 @@ const FieldNotes: React.FC = () => {
   const [isAppsMenuOpen, setIsAppsMenuOpen] = useState(false);
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   // Helper function to get mood emoji
   const getMoodEmoji = (mood: string | undefined): string => {
@@ -287,6 +288,28 @@ const FieldNotes: React.FC = () => {
 
     checkFamilyMembers();
   }, [session]);
+
+  // Handle URL parameters for filters
+  useEffect(() => {
+    if (!searchParams) return;
+
+    const familyParam = searchParams.get("family");
+    const familyMemberParam = searchParams.get("familyMember");
+
+    if (familyParam === "true" && hasFamilyMembers) {
+      setShowFamilyOnly(true);
+
+      // Set the family member if specified in URL
+      if (familyMemberParam && familyMembers.length > 0) {
+        const memberExists = familyMembers.some(
+          (member) => member.name === familyMemberParam
+        );
+        if (memberExists) {
+          setSelectedFamilyMember(familyMemberParam);
+        }
+      }
+    }
+  }, [searchParams, hasFamilyMembers, familyMembers]);
 
   // Filter and sort notes by activeTag before rendering - ensure notes is an array
   const filteredNotes = Array.isArray(notes)
@@ -1456,6 +1479,27 @@ const FieldNotes: React.FC = () => {
       {renderFooter("integrated")}
     </div>
   );
+};
+
+// Helper function to generate URLs with family filter parameters
+// Examples:
+// generateFieldNotesFilterURL({ family: true }) => "/fieldnotes?family=true"
+// generateFieldNotesFilterURL({ family: true, familyMember: "John Doe" }) => "/fieldnotes?family=true&familyMember=John%20Doe"
+export const generateFieldNotesFilterURL = (options: {
+  family?: boolean;
+  familyMember?: string;
+  basePath?: string;
+}) => {
+  const params = new URLSearchParams();
+  if (options.family) {
+    params.set("family", "true");
+    if (options.familyMember && options.familyMember !== "All") {
+      params.set("familyMember", options.familyMember);
+    }
+  }
+
+  const basePath = options.basePath || "/fieldnotes";
+  return params.toString() ? `${basePath}?${params.toString()}` : basePath;
 };
 
 export default FieldNotes;
