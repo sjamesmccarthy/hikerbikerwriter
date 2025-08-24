@@ -1154,6 +1154,11 @@ const FieldNotes: React.FC = () => {
                                   sx={{ fontSize: 16, color: "gray" }}
                                 />
                               )}
+                              {note.shared_family && (
+                                <PeopleIcon
+                                  sx={{ fontSize: 16, color: "#3b82f6" }}
+                                />
+                              )}
                               {note.title}
                             </h3>
                           </Link>
@@ -1320,6 +1325,11 @@ const FieldNotes: React.FC = () => {
                         <span className="font-bold text-gray-900 font-mono text-base hover:text-blue-600 transition-colors flex items-center gap-2">
                           {note.is_public && (
                             <PublicIcon sx={{ fontSize: 16, color: "gray" }} />
+                          )}
+                          {note.shared_family && (
+                            <PeopleIcon
+                              sx={{ fontSize: 16, color: "#3b82f6" }}
+                            />
                           )}
                           {note.title}
                         </span>

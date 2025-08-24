@@ -717,28 +717,49 @@ const RollAndWriteEntries: React.FC = () => {
                       key={entry.id}
                       className="bg-white border border-gray-200 rounded-xl p-3 text-left mb-4 relative"
                     >
-                      {/* Favorite heart icon in upper-right corner */}
-                      <button
-                        onClick={() => toggleFavorite(entry.id, entry.favorite)}
-                        className="absolute top-2 right-2 p-1 text-gray-400 hover:text-red-500 transition-colors touch-manipulation flex items-center gap-1 cursor-pointer"
-                        title="Add to favorites"
-                        style={{ minWidth: "40px", minHeight: "32px" }}
-                      >
-                        <FavoriteIcon
-                          sx={{
-                            fontSize: 16,
-                            color: entry.favorite > 0 ? "red" : "gray",
-                          }}
-                        />
-                        {entry.favorite > 0 && (
-                          <span className="text-xs font-mono text-gray-500">
-                            {entry.favorite}
-                          </span>
+                      {/* Icons in upper-right corner - Family and Favorite */}
+                      <div className="absolute top-2 right-2 flex items-center gap-1">
+                        {/* Family icon if shared with family */}
+                        {entry.shared_family && (
+                          <div
+                            className="p-1 text-blue-500"
+                            title="Shared with family"
+                            style={{ minWidth: "24px", minHeight: "32px" }}
+                          >
+                            <PeopleIcon
+                              sx={{
+                                fontSize: 16,
+                                color: "#3b82f6",
+                              }}
+                            />
+                          </div>
                         )}
-                      </button>
+
+                        {/* Favorite heart icon */}
+                        <button
+                          onClick={() =>
+                            toggleFavorite(entry.id, entry.favorite)
+                          }
+                          className="p-1 text-gray-400 hover:text-red-500 transition-colors touch-manipulation flex items-center gap-1 cursor-pointer"
+                          title="Add to favorites"
+                          style={{ minWidth: "40px", minHeight: "32px" }}
+                        >
+                          <FavoriteIcon
+                            sx={{
+                              fontSize: 16,
+                              color: entry.favorite > 0 ? "red" : "gray",
+                            }}
+                          />
+                          {entry.favorite > 0 && (
+                            <span className="text-xs font-mono text-gray-500">
+                              {entry.favorite}
+                            </span>
+                          )}
+                        </button>
+                      </div>
 
                       {/* Header with dice only */}
-                      <div className="flex items-center gap-1 mb-3 pr-12">
+                      <div className="flex items-center gap-1 mb-3 pr-20">
                         <CasinoIcon sx={{ fontSize: 16, color: "#6b7280" }} />
                         <span className="text-sm text-gray-500 font-mono">
                           {entry.dice1} & {entry.dice2} / {entry.dice1}

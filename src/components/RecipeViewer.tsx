@@ -1054,8 +1054,18 @@ const RecipeViewer: React.FC<RecipeViewerProps> = ({}) => {
                                   />
                                 )}
 
-                                {/* Icons overlay - public and favorite */}
+                                {/* Icons overlay - public, family and favorite */}
                                 <div className="absolute top-2 right-2 flex items-center gap-1">
+                                  {/* Family icon - show for family shared recipes */}
+                                  {(recipe.shared_family === 1 ||
+                                    recipe.shared_family === true) && (
+                                    <div className="w-8 h-8 rounded-full bg-white/80 flex items-center justify-center">
+                                      <PeopleIcon
+                                        sx={{ fontSize: 20, color: "#3b82f6" }}
+                                      />
+                                    </div>
+                                  )}
+
                                   {/* Public icon - show for public recipes */}
                                   {recipe.public && (
                                     <div className="w-8 h-8 rounded-full bg-white/80 flex items-center justify-center">
@@ -1119,6 +1129,10 @@ const RecipeViewer: React.FC<RecipeViewerProps> = ({}) => {
                   >
                     <Link href={`/recipes/${recipe.slug}`} className="flex-1">
                       <span className="font-bold text-gray-900 font-mono text-base uppercase flex items-center gap-2">
+                        {(recipe.shared_family === 1 ||
+                          recipe.shared_family === true) && (
+                          <PeopleIcon sx={{ fontSize: 16, color: "#3b82f6" }} />
+                        )}
                         {recipe.public && (
                           <PublicIcon sx={{ fontSize: 16, color: "gray" }} />
                         )}

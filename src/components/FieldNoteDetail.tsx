@@ -311,20 +311,7 @@ const FieldNoteDetail: React.FC<FieldNoteDetailProps> = ({ slug }) => {
           </div>
 
           <div className="flex items-center space-x-2">
-            {session && !isEditing && (
-              <>
-                <IconButton onClick={handleEdit} size="small">
-                  <EditIcon className="w-5 h-5" />
-                </IconButton>
-                <IconButton
-                  onClick={() => setIsDeleteDialogOpen(true)}
-                  size="small"
-                  color="error"
-                >
-                  <DeleteIcon className="w-5 h-5" />
-                </IconButton>
-              </>
-            )}
+            {/* Icons moved to tags section */}
           </div>
         </div>
 
@@ -385,20 +372,37 @@ const FieldNoteDetail: React.FC<FieldNoteDetailProps> = ({ slug }) => {
                 </div>
               )}
 
-              {/* Tags */}
-              {formatTags(fieldNote.tags || "").length > 0 && (
+              {/* Tags and Action Icons */}
+              {(formatTags(fieldNote.tags || "").length > 0 ||
+                (session && !isEditing)) && (
                 <>
                   <hr className="border-gray-200" />
-                  <div className="flex flex-wrap gap-2">
-                    {formatTags(fieldNote.tags || "").map((tag) => (
-                      <Chip
-                        key={tag}
-                        label={tag}
-                        size="small"
-                        variant="outlined"
-                        className="bg-gray-50"
-                      />
-                    ))}
+                  <div className="flex items-center justify-between">
+                    <div className="flex flex-wrap gap-2">
+                      {formatTags(fieldNote.tags || "").map((tag) => (
+                        <Chip
+                          key={tag}
+                          label={tag}
+                          size="small"
+                          variant="outlined"
+                          className="bg-gray-50"
+                        />
+                      ))}
+                    </div>
+                    {session && !isEditing && (
+                      <div className="flex items-center space-x-2 ml-4">
+                        <IconButton onClick={handleEdit} size="small">
+                          <EditIcon className="w-5 h-5" />
+                        </IconButton>
+                        <IconButton
+                          onClick={() => setIsDeleteDialogOpen(true)}
+                          size="small"
+                          color="error"
+                        >
+                          <DeleteIcon className="w-5 h-5" />
+                        </IconButton>
+                      </div>
+                    )}
                   </div>
                 </>
               )}
