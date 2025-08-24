@@ -438,6 +438,15 @@ function AppSummaries({
     applied: 0,
     hasActiveSearch: false,
   });
+
+  // State for storing real counts for each family member
+  const [personCounts, setPersonCounts] = useState<{
+    [personId: string]: {
+      rollAndWrite: number;
+      fieldNotes: number;
+      recipes: number;
+    };
+  }>({});
   const [loading, setLoading] = useState(true);
   const [familyInfo, setFamilyInfo] = useState<FamilyInfo | null>(null);
   const [familyLoading, setFamilyLoading] = useState(true);
@@ -1311,6 +1320,54 @@ function AppSummaries({
     [key: string]: unknown;
   }
 
+  // Function to fetch counts for a specific family member
+  async function fetchPersonCounts(personEmail: string) {
+    try {
+      const [rollRes, fieldRes, recipeRes] = await Promise.all([
+        fetch(
+          `/api/rollnwrite?userEmail=${encodeURIComponent(
+            personEmail
+          )}&family=true`
+        ),
+        fetch(
+          `/api/fieldnotes?userEmail=${encodeURIComponent(
+            personEmail
+          )}&family=true`
+        ),
+        fetch(
+          `/api/recipes?userEmail=${encodeURIComponent(
+            personEmail
+          )}&family=true`
+        ),
+      ]);
+
+      const [rollData, fieldData, recipeData] = await Promise.all([
+        rollRes.json(),
+        fieldRes.json(),
+        recipeRes.json(),
+      ]);
+
+      const rollEntries = Array.isArray(rollData) ? rollData : [];
+      const fieldEntries = Array.isArray(fieldData) ? fieldData : [];
+      const recipeEntries = Array.isArray(recipeData) ? recipeData : [];
+
+      return {
+        rollAndWrite: rollEntries.filter(
+          (entry) => entry.shared_family && entry.userEmail === personEmail
+        ).length,
+        fieldNotes: fieldEntries.filter(
+          (entry) => entry.shared_family && entry.userEmail === personEmail
+        ).length,
+        recipes: recipeEntries.filter(
+          (entry) => entry.shared_family && entry.userEmail === personEmail
+        ).length,
+      };
+    } catch (error) {
+      console.error(`Error fetching counts for ${personEmail}:`, error);
+      return { rollAndWrite: 0, fieldNotes: 0, recipes: 0 };
+    }
+  }
+
   React.useEffect(() => {
     async function fetchCounts() {
       setLoading(true);
@@ -1414,6 +1471,32 @@ function AppSummaries({
     fetchCounts();
     fetchFamily();
   }, [userEmail]);
+
+  // Separate useEffect to fetch family member counts when familyInfo changes
+  React.useEffect(() => {
+    async function fetchFamilyMemberCounts() {
+      if (familyInfo?.json?.people) {
+        const personCountsData: {
+          [personId: string]: {
+            rollAndWrite: number;
+            fieldNotes: number;
+            recipes: number;
+          };
+        } = {};
+
+        for (const person of familyInfo.json.people) {
+          if (person.email && person.email !== userEmail) {
+            const counts = await fetchPersonCounts(person.email);
+            personCountsData[person.person_id] = counts;
+          }
+        }
+
+        setPersonCounts(personCountsData);
+      }
+    }
+
+    fetchFamilyMemberCounts();
+  }, [familyInfo, userEmail]);
 
   if (loading) {
     return (
@@ -1940,15 +2023,12 @@ function AppSummaries({
                         style={{ color: "#757575" }}
                       />
                     )}
-                    {/* Badge hidden until family share data is available */}
-                    {rollCounts.sharedWithFamily !== undefined && (
+                    {/* Badge shown only when there are shared items */}
+                    {rollCounts.sharedWithFamily > 0 && (
                       <span
                         className="absolute -top-2 -right-2"
                         style={{
-                          background:
-                            rollCounts.sharedWithFamily > 0
-                              ? "#dc2626"
-                              : "#000",
+                          background: "#1B5E20",
                           color: "#fff",
                           borderRadius: "50%",
                           padding: "0",
@@ -1982,15 +2062,12 @@ function AppSummaries({
                         style={{ color: "#757575" }}
                       />
                     )}
-                    {/* Badge hidden until family share data is available */}
-                    {fieldCounts.sharedWithFamily !== undefined && (
+                    {/* Badge shown only when there are shared items */}
+                    {fieldCounts.sharedWithFamily > 0 && (
                       <span
                         className="absolute -top-2 -right-2"
                         style={{
-                          background:
-                            fieldCounts.sharedWithFamily > 0
-                              ? "#dc2626"
-                              : "#000",
+                          background: "#1B5E20",
                           color: "#fff",
                           borderRadius: "50%",
                           padding: "0",
@@ -2024,14 +2101,12 @@ function AppSummaries({
                         style={{ color: "#757575" }}
                       />
                     )}
-                    {recipeCounts.sharedWithFamily !== undefined && (
+                    {/* Badge shown only when there are shared items */}
+                    {recipeCounts.sharedWithFamily > 0 && (
                       <span
                         className="absolute -top-2 -right-2"
                         style={{
-                          background:
-                            recipeCounts.sharedWithFamily > 0
-                              ? "#dc2626"
-                              : "#000",
+                          background: "#1B5E20",
                           color: "#fff",
                           borderRadius: "50%",
                           padding: "0",
@@ -2080,7 +2155,12 @@ function AppSummaries({
                 } else if (person.network_level !== 1) {
                   familyType = "Extended Family";
                 }
-                const shared = person.shared_data || {};
+                // Get real counts from API data instead of hardcoded shared_data
+                const realCounts = personCounts[person.person_id] || {
+                  rollAndWrite: 0,
+                  fieldNotes: 0,
+                  recipes: 0,
+                };
                 return (
                   <div
                     key={person.person_id}
@@ -2172,7 +2252,7 @@ function AppSummaries({
                       {/* Icons section - responsive layout like Me card */}
                       <div className="flex flex-row items-center gap-4 mt-4 sm:mt-0 justify-end sm:ml-auto">
                         <div className="relative flex items-center">
-                          {(shared.roll_and_write ?? 0) > 0 ? (
+                          {realCounts.rollAndWrite > 0 ? (
                             <Link
                               href={`/rollandwrite?family=true&familyMember=${encodeURIComponent(
                                 person.name
@@ -2189,30 +2269,32 @@ function AppSummaries({
                               style={{ color: "#757575" }}
                             />
                           )}
-                          <span
-                            className="absolute -top-2 -right-2"
-                            style={{
-                              background: "#000",
-                              color: "#fff",
-                              borderRadius: "50%",
-                              padding: "0",
-                              fontWeight: "bold",
-                              minWidth: "20px",
-                              fontSize: "0.7rem",
-                              height: "20px",
-                              width: "20px",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              textAlign: "center",
-                              boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
-                            }}
-                          >
-                            {shared.roll_and_write ?? 0}
-                          </span>
+                          {realCounts.rollAndWrite > 0 && (
+                            <span
+                              className="absolute -top-2 -right-2"
+                              style={{
+                                background: "#1B5E20",
+                                color: "#fff",
+                                borderRadius: "50%",
+                                padding: "0",
+                                fontWeight: "bold",
+                                minWidth: "20px",
+                                fontSize: "0.7rem",
+                                height: "20px",
+                                width: "20px",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                textAlign: "center",
+                                boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
+                              }}
+                            >
+                              {realCounts.rollAndWrite}
+                            </span>
+                          )}
                         </div>
                         <div className="relative flex items-center">
-                          {(shared.field_notes ?? 0) > 0 ? (
+                          {realCounts.fieldNotes > 0 ? (
                             <Link
                               href={`/fieldnotes?family=true&familyMember=${encodeURIComponent(
                                 person.name
@@ -2229,30 +2311,32 @@ function AppSummaries({
                               style={{ color: "#757575" }}
                             />
                           )}
-                          <span
-                            className="absolute -top-2 -right-2"
-                            style={{
-                              background: "#000",
-                              color: "#fff",
-                              borderRadius: "50%",
-                              padding: "0",
-                              fontWeight: "bold",
-                              minWidth: "20px",
-                              fontSize: "0.7rem",
-                              height: "20px",
-                              width: "20px",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              textAlign: "center",
-                              boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
-                            }}
-                          >
-                            {shared.field_notes ?? 0}
-                          </span>
+                          {realCounts.fieldNotes > 0 && (
+                            <span
+                              className="absolute -top-2 -right-2"
+                              style={{
+                                background: "#1B5E20",
+                                color: "#fff",
+                                borderRadius: "50%",
+                                padding: "0",
+                                fontWeight: "bold",
+                                minWidth: "20px",
+                                fontSize: "0.7rem",
+                                height: "20px",
+                                width: "20px",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                textAlign: "center",
+                                boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
+                              }}
+                            >
+                              {realCounts.fieldNotes}
+                            </span>
+                          )}
                         </div>
                         <div className="relative flex items-center">
-                          {(shared.recipes ?? 0) > 0 ? (
+                          {realCounts.recipes > 0 ? (
                             <Link
                               href={`/recipes?family=true&familyMember=${encodeURIComponent(
                                 person.name
@@ -2269,27 +2353,29 @@ function AppSummaries({
                               style={{ color: "#757575" }}
                             />
                           )}
-                          <span
-                            className="absolute -top-2 -right-2"
-                            style={{
-                              background: "#000",
-                              color: "#fff",
-                              borderRadius: "50%",
-                              padding: "0",
-                              fontWeight: "bold",
-                              minWidth: "20px",
-                              fontSize: "0.7rem",
-                              height: "20px",
-                              width: "20px",
-                              display: "flex",
-                              alignItems: "center",
-                              justifyContent: "center",
-                              textAlign: "center",
-                              boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
-                            }}
-                          >
-                            {shared.recipes ?? 0}
-                          </span>
+                          {realCounts.recipes > 0 && (
+                            <span
+                              className="absolute -top-2 -right-2"
+                              style={{
+                                background: "#1B5E20",
+                                color: "#fff",
+                                borderRadius: "50%",
+                                padding: "0",
+                                fontWeight: "bold",
+                                minWidth: "20px",
+                                fontSize: "0.7rem",
+                                height: "20px",
+                                width: "20px",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                textAlign: "center",
+                                boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
+                              }}
+                            >
+                              {realCounts.recipes}
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
