@@ -147,7 +147,7 @@ function extractSteps(html: string): Array<{ step: string }> {
   if (schemaMatch) {
     try {
       const instructions = JSON.parse(`[${schemaMatch[1]}]`);
-      instructions.forEach((instruction: any) => {
+      instructions.forEach((instruction: string | { text?: string }) => {
         let stepText = "";
         if (typeof instruction === "string") {
           stepText = instruction;
@@ -170,7 +170,7 @@ function extractSteps(html: string): Array<{ step: string }> {
   }
 
   // Try to find steps in ordered lists or divs with step/instruction classes
-  let regex =
+  const regex =
     /<li[^>]*class="[^"]*instruction[^"]*"[^>]*>(.*?)<\/li>|<div[^>]*class="[^"]*step[^"]*"[^>]*>(.*?)<\/div>/gi;
   let match;
 

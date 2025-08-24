@@ -737,7 +737,7 @@ const RollAndWriteEntries: React.FC = () => {
                   // Filter entries based on family settings
                   const filteredEntries = entries.filter((entry) => {
                     // Ownership filtering for logged-in users
-                    let ownershipMatch = true;
+                    let ownershipMatch;
                     if (session?.user?.email) {
                       if (showPublicNotes) {
                         // Show all public entries (including user's own public entries)

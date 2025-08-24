@@ -102,7 +102,7 @@ interface RecipeViewerProps {
   headerOnly?: boolean;
 }
 
-const RecipeViewer: React.FC<RecipeViewerProps> = ({}) => {
+const RecipeViewer: React.FC<RecipeViewerProps> = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [isAppsMenuOpen, setIsAppsMenuOpen] = useState(false);
@@ -440,21 +440,18 @@ const RecipeViewer: React.FC<RecipeViewerProps> = ({}) => {
       if (!session?.user?.email) {
         // When not logged in, show only public recipes
         ownershipMatch = Boolean(recipe.public);
+      } else if (showPublicRecipes) {
+        // Show public recipes (excluding user's own unless they're also public)
+        ownershipMatch = Boolean(recipe.public);
+      } else if (showFamilyOnly) {
+        // When showing family recipes, allow family shared recipes OR user's own recipes
+        const isFamilyShared =
+          recipe.shared_family === 1 || recipe.shared_family === true;
+        const isUserOwned = recipe.userEmail === session.user.email;
+        ownershipMatch = isFamilyShared || isUserOwned;
       } else {
-        // When logged in
-        if (showPublicRecipes) {
-          // Show public recipes (excluding user's own unless they're also public)
-          ownershipMatch = Boolean(recipe.public);
-        } else if (showFamilyOnly) {
-          // When showing family recipes, allow family shared recipes OR user's own recipes
-          const isFamilyShared =
-            recipe.shared_family === 1 || recipe.shared_family === true;
-          const isUserOwned = recipe.userEmail === session.user.email;
-          ownershipMatch = isFamilyShared || isUserOwned;
-        } else {
-          // Default: show only user's own recipes
-          ownershipMatch = recipe.userEmail === session.user.email;
-        }
+        // Default: show only user's own recipes
+        ownershipMatch = recipe.userEmail === session.user.email;
       }
 
       let familyMatch = !showFamilyOnly;
@@ -571,7 +568,10 @@ const RecipeViewer: React.FC<RecipeViewerProps> = ({}) => {
                   aria-label="Close menu"
                   tabIndex={-1}
                 />
-                <div className="absolute top-full left-0 mt-2 bg-white/95 backdrop-blur-sm rounded-md shadow-xl border border-white/30 min-w-[200px] overflow-hidden z-50">
+                <div
+                  className="absolute top-full left-0 mt-2 bg-white/95 backdrop-blur-sm rounded-md shadow-xl border border-white/30 min-w-[200px] overflow-hidden"
+                  style={{ zIndex: 1100 }}
+                >
                   {apps.map((app) => {
                     const IconComponent = app.icon;
                     const hasSubmenu = app.hasSubmenu && app.submenu;
@@ -1099,137 +1099,133 @@ const RecipeViewer: React.FC<RecipeViewerProps> = ({}) => {
                     </div>
                   </div>
                 ) : (
-                  <>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                      {filteredRecipes.map((recipe) => (
-                        <div
-                          key={recipe.id}
-                          className="bg-white border border-gray-200 rounded-xl overflow-hidden transition-all duration-300 relative hover:scale-105"
-                        >
-                          {/* Edit button for logged in users - only show for their own recipes */}
-                          {session &&
-                            session.user?.email === recipe.userEmail && (
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.preventDefault();
-                                  e.stopPropagation();
-                                  router.push(
-                                    `/recipes/builder?edit=${recipe.id}`
-                                  );
-                                }}
-                                className="absolute top-2 left-2 w-8 h-8 rounded-full bg-white/80 hover:bg-white transition-colors cursor-pointer flex items-center justify-center"
-                                style={{ zIndex: 100 }}
-                              >
-                                <EditIcon
-                                  sx={{ fontSize: 20, color: "gray" }}
-                                />
-                              </button>
-                            )}
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {filteredRecipes.map((recipe) => (
+                      <div
+                        key={recipe.id}
+                        className="bg-white border border-gray-200 rounded-xl overflow-hidden transition-all duration-300 relative hover:scale-105"
+                      >
+                        {/* Edit button for logged in users - only show for their own recipes */}
+                        {session &&
+                          session.user?.email === recipe.userEmail && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                router.push(
+                                  `/recipes/builder?edit=${recipe.id}`
+                                );
+                              }}
+                              className="absolute top-2 left-2 w-8 h-8 rounded-full bg-white/80 hover:bg-white transition-colors cursor-pointer flex items-center justify-center"
+                              style={{ zIndex: 100 }}
+                            >
+                              <EditIcon sx={{ fontSize: 20, color: "gray" }} />
+                            </button>
+                          )}
 
-                          <Link href={`/recipes/${recipe.slug}`}>
-                            <div className="cursor-pointer">
-                              {/* Recipe Image */}
-                              <div className="relative w-full h-48 bg-gray-100 flex items-center justify-center">
-                                {recipe.photo && !imageErrors.has(recipe.id) ? (
-                                  <Image
-                                    src={recipe.photo}
-                                    alt={recipe.title}
-                                    fill
-                                    className="object-cover"
-                                    onError={() => handleImageError(recipe.id)}
-                                  />
-                                ) : (
-                                  <LocalDiningIcon
-                                    sx={{ fontSize: 48, color: "#9CA3AF" }}
-                                  />
+                        <Link href={`/recipes/${recipe.slug}`}>
+                          <div className="cursor-pointer">
+                            {/* Recipe Image */}
+                            <div className="relative w-full h-48 bg-gray-100 flex items-center justify-center">
+                              {recipe.photo && !imageErrors.has(recipe.id) ? (
+                                <Image
+                                  src={recipe.photo}
+                                  alt={recipe.title}
+                                  fill
+                                  className="object-cover"
+                                  onError={() => handleImageError(recipe.id)}
+                                />
+                              ) : (
+                                <LocalDiningIcon
+                                  sx={{ fontSize: 48, color: "#9CA3AF" }}
+                                />
+                              )}
+
+                              {/* Icons overlay - public, family and favorite */}
+                              <div className="absolute top-2 right-2 flex items-center gap-1">
+                                {/* Family icon - show for family shared recipes */}
+                                {(recipe.shared_family === 1 ||
+                                  recipe.shared_family === true) && (
+                                  <div className="w-8 h-8 rounded-full bg-white/80 flex items-center justify-center">
+                                    <PeopleIcon
+                                      sx={{ fontSize: 20, color: "#3b82f6" }}
+                                    />
+                                  </div>
                                 )}
 
-                                {/* Icons overlay - public, family and favorite */}
-                                <div className="absolute top-2 right-2 flex items-center gap-1">
-                                  {/* Family icon - show for family shared recipes */}
-                                  {(recipe.shared_family === 1 ||
-                                    recipe.shared_family === true) && (
-                                    <div className="w-8 h-8 rounded-full bg-white/80 flex items-center justify-center">
-                                      <PeopleIcon
-                                        sx={{ fontSize: 20, color: "#3b82f6" }}
-                                      />
-                                    </div>
-                                  )}
+                                {/* Public icon - show for public recipes */}
+                                {recipe.public && (
+                                  <div className="w-8 h-8 rounded-full bg-white/80 flex items-center justify-center">
+                                    <PublicIcon
+                                      sx={{ fontSize: 20, color: "gray" }}
+                                    />
+                                  </div>
+                                )}
 
-                                  {/* Public icon - show for public recipes */}
-                                  {recipe.public && (
-                                    <div className="w-8 h-8 rounded-full bg-white/80 flex items-center justify-center">
-                                      <PublicIcon
+                                {/* Favorite button - only show for logged in users */}
+                                {session?.user?.email && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      toggleFavorite(recipe.id);
+                                    }}
+                                    className="w-8 h-8 rounded-full bg-white/80 hover:bg-white transition-colors cursor-pointer flex items-center justify-center"
+                                  >
+                                    {recipe.favorite ? (
+                                      <FavoriteIcon
+                                        sx={{ fontSize: 20, color: "red" }}
+                                      />
+                                    ) : (
+                                      <FavoriteBorderIcon
                                         sx={{ fontSize: 20, color: "gray" }}
                                       />
-                                    </div>
-                                  )}
-
-                                  {/* Favorite button - only show for logged in users */}
-                                  {session?.user?.email && (
-                                    <button
-                                      onClick={(e) => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        toggleFavorite(recipe.id);
-                                      }}
-                                      className="w-8 h-8 rounded-full bg-white/80 hover:bg-white transition-colors cursor-pointer flex items-center justify-center"
-                                    >
-                                      {recipe.favorite ? (
-                                        <FavoriteIcon
-                                          sx={{ fontSize: 20, color: "red" }}
-                                        />
-                                      ) : (
-                                        <FavoriteBorderIcon
-                                          sx={{ fontSize: 20, color: "gray" }}
-                                        />
-                                      )}
-                                    </button>
-                                  )}
-                                </div>
-                              </div>
-
-                              {/* Recipe Info */}
-                              <div className="p-4 flex flex-col">
-                                <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 min-h-[3rem] flex items-start uppercase">
-                                  {recipe.title}
-                                </h3>
-
-                                {/* Show family member name for shared family recipes */}
-                                {(recipe.shared_family === 1 ||
-                                  recipe.shared_family === true) &&
-                                  recipe.userEmail !== session?.user?.email && (
-                                    <div className="text-sm text-blue-600 font-medium mb-2 flex items-center">
-                                      <PeopleIcon
-                                        sx={{ fontSize: 16, mr: 0.5 }}
-                                      />
-                                      {(() => {
-                                        const familyMember = familyMembers.find(
-                                          (member) =>
-                                            member.email === recipe.userEmail
-                                        );
-                                        return familyMember
-                                          ? familyMember.name
-                                          : recipe.userEmail;
-                                      })()}
-                                    </div>
-                                  )}
-
-                                <div className="w-full h-px bg-gray-200 mb-2"></div>
-                                <div className="flex items-center text-sm text-gray-500 mt-auto">
-                                  <AccessTimeIcon
-                                    sx={{ fontSize: 16, mr: 0.5 }}
-                                  />
-                                  {formatTime(getTotalTime(recipe))} total
-                                </div>
+                                    )}
+                                  </button>
+                                )}
                               </div>
                             </div>
-                          </Link>
-                        </div>
-                      ))}
-                    </div>
-                  </>
+
+                            {/* Recipe Info */}
+                            <div className="p-4 flex flex-col">
+                              <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 min-h-[3rem] flex items-start uppercase">
+                                {recipe.title}
+                              </h3>
+
+                              {/* Show family member name for shared family recipes */}
+                              {(recipe.shared_family === 1 ||
+                                recipe.shared_family === true) &&
+                                recipe.userEmail !== session?.user?.email && (
+                                  <div className="text-sm text-blue-600 font-medium mb-2 flex items-center">
+                                    <PeopleIcon
+                                      sx={{ fontSize: 16, mr: 0.5 }}
+                                    />
+                                    {(() => {
+                                      const familyMember = familyMembers.find(
+                                        (member) =>
+                                          member.email === recipe.userEmail
+                                      );
+                                      return familyMember
+                                        ? familyMember.name
+                                        : recipe.userEmail;
+                                    })()}
+                                  </div>
+                                )}
+
+                              <div className="w-full h-px bg-gray-200 mb-2"></div>
+                              <div className="flex items-center text-sm text-gray-500 mt-auto">
+                                <AccessTimeIcon
+                                  sx={{ fontSize: 16, mr: 0.5 }}
+                                />
+                                {formatTime(getTotalTime(recipe))} total
+                              </div>
+                            </div>
+                          </div>
+                        </Link>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
             ) : (

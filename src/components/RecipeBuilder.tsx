@@ -9,7 +9,6 @@ import {
   Add as AddIcon,
   PhotoCamera as PhotoCameraIcon,
   LocalDining as LocalDiningIcon,
-  Save as SaveIcon,
   Delete as DeleteIcon,
 } from "@mui/icons-material";
 import {
