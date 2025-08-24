@@ -445,6 +445,12 @@ const RecipeViewer: React.FC<RecipeViewerProps> = ({}) => {
         if (showPublicRecipes) {
           // Show public recipes (excluding user's own unless they're also public)
           ownershipMatch = Boolean(recipe.public);
+        } else if (showFamilyOnly) {
+          // When showing family recipes, allow family shared recipes OR user's own recipes
+          const isFamilyShared =
+            recipe.shared_family === 1 || recipe.shared_family === true;
+          const isUserOwned = recipe.userEmail === session.user.email;
+          ownershipMatch = isFamilyShared || isUserOwned;
         } else {
           // Default: show only user's own recipes
           ownershipMatch = recipe.userEmail === session.user.email;
@@ -453,34 +459,60 @@ const RecipeViewer: React.FC<RecipeViewerProps> = ({}) => {
 
       let familyMatch = !showFamilyOnly;
       if (showFamilyOnly) {
+        console.log("Family filtering for recipe:", recipe.title);
+        console.log("Recipe shared_family:", recipe.shared_family);
+        console.log("Recipe userEmail:", recipe.userEmail);
+        console.log("selectedFamilyMember:", selectedFamilyMember);
+
         if (selectedFamilyMember === "All") {
           // Show all family recipes (recipes with shared_family enabled)
           familyMatch =
             recipe.shared_family === 1 || recipe.shared_family === true;
+          console.log("Family match result (All):", familyMatch);
         } else {
           // Show recipes from the selected family member
           const selectedMemberData = familyMembers.find(
             (member) => member.name === selectedFamilyMember
           );
+          console.log("selectedMemberData:", selectedMemberData);
           if (selectedMemberData) {
             familyMatch =
               (recipe.shared_family === 1 || recipe.shared_family === true) &&
               recipe.userEmail === selectedMemberData.email;
+            console.log("Family match result (specific member):", familyMatch);
           } else {
             familyMatch = false;
+            console.log("No member data found, familyMatch = false");
           }
         }
       }
 
-      return (
+      const finalResult =
         categoryMatch &&
         cookingTypeMatch &&
         cookTimeMatch &&
         searchMatch &&
         favoriteMatch &&
         ownershipMatch &&
-        familyMatch
-      );
+        familyMatch;
+
+      if (
+        showFamilyOnly &&
+        recipe.title === "Braised Chicken Tacos with Cracklins"
+      ) {
+        console.log("=== FINAL FILTER RESULTS FOR FAMILY RECIPE ===");
+        console.log("categoryMatch:", categoryMatch);
+        console.log("cookingTypeMatch:", cookingTypeMatch);
+        console.log("cookTimeMatch:", cookTimeMatch);
+        console.log("searchMatch:", searchMatch);
+        console.log("favoriteMatch:", favoriteMatch);
+        console.log("ownershipMatch:", ownershipMatch);
+        console.log("familyMatch:", familyMatch);
+        console.log("FINAL RESULT:", finalResult);
+        console.log("===============================================");
+      }
+
+      return finalResult;
     }
   );
 

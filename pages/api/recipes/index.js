@@ -30,8 +30,7 @@ export default async function handler(req, res) {
         typeof userEmail
       );
 
-      let query;
-      let params;
+      let allRecipes = [];
 
       if (
         userEmail &&
@@ -39,25 +38,152 @@ export default async function handler(req, res) {
         userEmail !== "" &&
         userEmail !== "null"
       ) {
-        // Logged in user: get their recipes + public recipes
-        query =
-          "SELECT * FROM recipes WHERE user_email = ? OR is_public = TRUE ORDER BY created DESC";
-        params = [userEmail];
-        console.log("Using authenticated query for user:", userEmail);
-        console.log("Query:", query);
+        // Step 1: Get the user's person_id
+        console.log("Looking up person_id for user:", userEmail);
+        const [userRows] = await pool.query(
+          "SELECT person_id FROM users WHERE email = ?",
+          [userEmail]
+        );
+
+        if (userRows.length > 0) {
+          const personId = userRows[0].person_id;
+          console.log("Found person_id:", personId);
+
+          // Step 2: Get the familyline data for this person_id
+          const [familyRows] = await pool.query(
+            "SELECT json FROM familyline WHERE person_id = ?",
+            [personId]
+          );
+
+          let familyEmails = [];
+          if (familyRows.length > 0) {
+            console.log("Found familyline data");
+            let familyData = familyRows[0].json;
+            if (typeof familyData === "string") {
+              familyData = JSON.parse(familyData);
+            }
+
+            // Step 3: Loop through each person in the family JSON and collect emails
+            const familyMembers = familyData?.people || [];
+            console.log("Family members found:", familyMembers.length);
+            console.log(
+              "Full family JSON:",
+              JSON.stringify(familyData, null, 2)
+            );
+
+            for (const person of familyMembers) {
+              console.log(
+                "Processing family member:",
+                JSON.stringify(person, null, 2)
+              );
+              if (person.email && person.email !== userEmail) {
+                familyEmails.push(person.email);
+                console.log("Added family email:", person.email);
+              } else {
+                console.log(
+                  "Skipped person - email:",
+                  person.email,
+                  "userEmail:",
+                  userEmail
+                );
+              }
+            }
+          }
+
+          console.log("All family emails to check:", familyEmails);
+
+          // Step 4: Get user's own recipes (all) + public recipes from non-family members
+          let query, params;
+
+          if (familyEmails.length > 0) {
+            // If user has family, exclude family members from public recipes to avoid duplicates
+            const familyEmailPlaceholders = familyEmails
+              .map(() => "?")
+              .join(",");
+            query = `SELECT * FROM recipes WHERE user_email = ? OR (is_public = TRUE AND user_email NOT IN (${familyEmailPlaceholders}))`;
+            params = [userEmail, ...familyEmails];
+          } else {
+            // If no family, get user's recipes + all public recipes
+            query =
+              "SELECT * FROM recipes WHERE user_email = ? OR is_public = TRUE";
+            params = [userEmail];
+          }
+
+          console.log("Step 4 Query:", query);
+          console.log("Step 4 Params:", params);
+
+          const [userAndPublicRecipes] = await pool.query(query, params);
+          allRecipes.push(...userAndPublicRecipes);
+          console.log(
+            "Found",
+            userAndPublicRecipes.length,
+            "user + public recipes"
+          );
+
+          // Step 5: For each family member email, get their shared_family recipes
+          if (familyEmails.length > 0) {
+            for (const familyEmail of familyEmails) {
+              console.log(
+                "Checking shared recipes for family member:",
+                familyEmail
+              );
+              const familyQuery =
+                "SELECT * FROM recipes WHERE user_email = ? AND shared_family = TRUE";
+              console.log("Family Query:", familyQuery);
+              console.log("Family Query Params:", [familyEmail]);
+
+              const [familyRecipes] = await pool.query(familyQuery, [
+                familyEmail,
+              ]);
+              console.log(
+                "Found",
+                familyRecipes.length,
+                "shared recipes from",
+                familyEmail
+              );
+
+              // Log details of found recipes
+              familyRecipes.forEach((recipe) => {
+                const recipeData =
+                  typeof recipe.json === "string"
+                    ? JSON.parse(recipe.json)
+                    : recipe.json;
+                console.log(
+                  `  - Recipe: "${recipeData.title}" from ${recipe.user_email}, shared_family: ${recipe.shared_family}`
+                );
+              });
+
+              allRecipes.push(...familyRecipes);
+            }
+          } else {
+            console.log("No family emails found, skipping family recipe check");
+          }
+
+          // Sort all recipes by created date
+          allRecipes.sort((a, b) => new Date(b.created) - new Date(a.created));
+          console.log(
+            "Total recipes after combining all sources:",
+            allRecipes.length
+          );
+        } else {
+          console.log("No user found with email:", userEmail);
+          // Fallback: just get public recipes
+          const [publicRecipes] = await pool.query(
+            "SELECT * FROM recipes WHERE is_public = TRUE ORDER BY created DESC"
+          );
+          allRecipes = publicRecipes;
+        }
       } else {
         // Not logged in: only get public recipes
-        query =
-          "SELECT * FROM recipes WHERE is_public = TRUE ORDER BY created DESC";
-        params = [];
+        const [publicRecipes] = await pool.query(
+          "SELECT * FROM recipes WHERE is_public = TRUE ORDER BY created DESC"
+        );
+        allRecipes = publicRecipes;
         console.log("Using public-only query");
       }
 
-      // Get recipes from database
-      const [rows] = await pool.query(query, params);
-
       // Parse the JSON data and add any missing fields for frontend compatibility
-      const recipes = rows.map((row) => {
+      const recipes = allRecipes.map((row) => {
         // Check if row.json is already an object or needs parsing
         const recipe =
           typeof row.json === "string" ? JSON.parse(row.json) : row.json;
@@ -69,7 +195,8 @@ export default async function handler(req, res) {
           personalNotes: userEmail ? recipe.personalNotes || "" : "", // Only show personal notes to the owner
           isFavorite:
             userEmail === row.user_email ? recipe.isFavorite || false : false, // Only show favorite status to owner
-          isPublic: row.is_public, // Add public status for frontend
+          public: row.is_public, // Use 'public' property to match frontend interface
+          shared_family: row.shared_family, // Include shared_family property for frontend filtering
         };
       });
 
