@@ -132,189 +132,191 @@ const FieldNoteForm: React.FC<FieldNoteFormProps> = ({
   };
 
   return (
-    <div className="p-4 pt-12 max-w-4xl mx-auto">
-      <form onSubmit={handleSubmit} style={{ width: "100%" }}>
-        {/* Title Field */}
-        <TextField
-          fullWidth
-          label="Title"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          variant="outlined"
-          required
-          placeholder="Enter field note title..."
-          sx={{ mb: 2 }}
-        />
-
-        {/* Visibility Controls */}
-        <div className="flex flex-wrap gap-4 mb-4">
-          <FormControlLabel
-            control={
-              <Switch
-                checked={makePublic}
-                onChange={(e) => setMakePublic(e.target.checked)}
-                color="primary"
-              />
-            }
-            label="Make Public"
-            sx={{ minWidth: "160px" }}
+    <div className="p-4 pt-4 max-w-4xl mx-auto">
+      <div className="bg-gray-100 p-4 rounded-lg">
+        <form onSubmit={handleSubmit} style={{ width: "100%" }}>
+          {/* Title Field */}
+          <TextField
+            fullWidth
+            label="Title"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            variant="outlined"
+            required
+            placeholder="Enter field note title..."
+            sx={{ mb: 2 }}
           />
-          <FormControlLabel
-            control={
-              <Switch
-                checked={shareWithFamily}
-                onChange={(e) => setShareWithFamily(e.target.checked)}
-                color="primary"
-              />
-            }
-            label="Share with Family"
-            sx={{ minWidth: "180px" }}
+
+          {/* Visibility Controls */}
+          <div className="flex flex-wrap gap-2 sm:gap-4 mb-4">
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={makePublic}
+                  onChange={(e) => setMakePublic(e.target.checked)}
+                  color="primary"
+                />
+              }
+              label="Make Public"
+              sx={{ minWidth: "160px" }}
+            />
+            <FormControlLabel
+              control={
+                <Switch
+                  checked={shareWithFamily}
+                  onChange={(e) => setShareWithFamily(e.target.checked)}
+                  color="primary"
+                />
+              }
+              label="Share with Family"
+              sx={{ minWidth: "180px" }}
+            />
+          </div>
+
+          <TextField
+            fullWidth
+            label="Content"
+            value={content}
+            onChange={(e) => setContent(e.target.value)}
+            variant="outlined"
+            multiline
+            rows={12}
+            required
+            placeholder="Write your field note content here..."
+            sx={{ mb: 2 }}
           />
-        </div>
 
-        <TextField
-          fullWidth
-          label="Content"
-          value={content}
-          onChange={(e) => setContent(e.target.value)}
-          variant="outlined"
-          multiline
-          rows={12}
-          required
-          placeholder="Write your field note content here..."
-          sx={{ mb: 2 }}
-        />
+          <TextField
+            fullWidth
+            label="Tags (space or comma separated)"
+            value={tags}
+            onChange={(e) => setTags(e.target.value)}
+            variant="outlined"
+            placeholder="hiking brewing recipes photography"
+            helperText="Add tags to help categorize and find your field note"
+            sx={{ mb: 2 }}
+          />
 
-        <TextField
-          fullWidth
-          label="Tags (space or comma separated)"
-          value={tags}
-          onChange={(e) => setTags(e.target.value)}
-          variant="outlined"
-          placeholder="hiking brewing recipes photography"
-          helperText="Add tags to help categorize and find your field note"
-          sx={{ mb: 2 }}
-        />
-
-        <FormControl fullWidth variant="outlined" sx={{ mb: 4 }}>
-          <InputLabel>Mood</InputLabel>
-          <Select
-            value={mood}
-            onChange={(e) => setMood(e.target.value)}
-            label="Mood"
-          >
-            {renderMoodMenuItems()}
-          </Select>
-        </FormControl>
-
-        {/* Image Upload Section */}
-        <Box sx={{ mb: 4 }}>
-          <Typography variant="h6" gutterBottom>
-            Images (up to 4)
-          </Typography>
-
-          {/* Upload Button */}
-          {images.length < 4 && (
-            <Button
-              variant="outlined"
-              component="label"
-              startIcon={<CloudUploadIcon />}
-              sx={{ mb: 2 }}
+          <FormControl fullWidth variant="outlined" sx={{ mb: 4 }}>
+            <InputLabel>Mood</InputLabel>
+            <Select
+              value={mood}
+              onChange={(e) => setMood(e.target.value)}
+              label="Mood"
             >
-              Upload Images
-              <input
-                type="file"
-                hidden
-                multiple
-                accept="image/*"
-                onChange={handleImageUpload}
-              />
-            </Button>
-          )}
+              {renderMoodMenuItems()}
+            </Select>
+          </FormControl>
 
-          {/* Image Previews */}
-          {images.length > 0 && (
-            <Box
-              sx={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))",
-                gap: 2,
-              }}
-            >
-              {images.map((image, imageIndex) => (
-                <Box
-                  key={`image-${imageIndex}`}
-                  sx={{
-                    position: "relative",
-                    border: "1px solid #ddd",
-                    borderRadius: 1,
-                    overflow: "hidden",
-                  }}
-                >
-                  <Image
-                    src={image}
-                    alt={`Upload ${imageIndex + 1}`}
-                    width={150}
-                    height={150}
-                    style={{
-                      width: "100%",
-                      height: "150px",
-                      objectFit: "cover",
-                    }}
-                  />
-                  <IconButton
-                    size="small"
-                    onClick={() => removeImage(imageIndex)}
+          {/* Image Upload Section */}
+          <Box sx={{ mb: 4 }}>
+            <Typography variant="h6" gutterBottom>
+              Images (up to 4)
+            </Typography>
+
+            {/* Upload Button */}
+            {images.length < 4 && (
+              <Button
+                variant="outlined"
+                component="label"
+                startIcon={<CloudUploadIcon />}
+                sx={{ mb: 2 }}
+              >
+                Upload Images
+                <input
+                  type="file"
+                  hidden
+                  multiple
+                  accept="image/*"
+                  onChange={handleImageUpload}
+                />
+              </Button>
+            )}
+
+            {/* Image Previews */}
+            {images.length > 0 && (
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fill, minmax(150px, 1fr))",
+                  gap: 2,
+                }}
+              >
+                {images.map((image, imageIndex) => (
+                  <Box
+                    key={`image-${imageIndex}`}
                     sx={{
-                      position: "absolute",
-                      top: 4,
-                      right: 4,
-                      backgroundColor: "rgba(255, 255, 255, 0.8)",
-                      "&:hover": {
-                        backgroundColor: "rgba(255, 255, 255, 0.9)",
-                      },
+                      position: "relative",
+                      border: "1px solid #ddd",
+                      borderRadius: 1,
+                      overflow: "hidden",
                     }}
                   >
-                    <DeleteIcon fontSize="small" />
-                  </IconButton>
-                </Box>
-              ))}
-            </Box>
-          )}
-        </Box>
+                    <Image
+                      src={image}
+                      alt={`Upload ${imageIndex + 1}`}
+                      width={150}
+                      height={150}
+                      style={{
+                        width: "100%",
+                        height: "150px",
+                        objectFit: "cover",
+                      }}
+                    />
+                    <IconButton
+                      size="small"
+                      onClick={() => removeImage(imageIndex)}
+                      sx={{
+                        position: "absolute",
+                        top: 4,
+                        right: 4,
+                        backgroundColor: "rgba(255, 255, 255, 0.8)",
+                        "&:hover": {
+                          backgroundColor: "rgba(255, 255, 255, 0.9)",
+                        },
+                      }}
+                    >
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  </Box>
+                ))}
+              </Box>
+            )}
+          </Box>
 
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "row",
-            gap: 16,
-            marginBottom: 32,
-          }}
-        >
-          <Button
-            type="submit"
-            variant="contained"
-            size="medium"
-            disabled={!title.trim() || !content.trim() || isSubmitting}
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "row",
+              gap: 16,
+              marginBottom: 32,
+            }}
           >
-            {isSubmitting
-              ? isEditing
-                ? "Saving..."
-                : "Creating..."
-              : isEditing
-              ? "Save Changes"
-              : "Create Field Note"}
-          </Button>
-          <Button
-            variant="outlined"
-            size="medium"
-            onClick={onCancel}
-            disabled={isSubmitting}
-          >
-            Cancel
-          </Button>
-        </div>
-      </form>
+            <Button
+              type="submit"
+              variant="contained"
+              size="medium"
+              disabled={!title.trim() || !content.trim() || isSubmitting}
+            >
+              {isSubmitting
+                ? isEditing
+                  ? "Saving..."
+                  : "Creating..."
+                : isEditing
+                ? "Save Changes"
+                : "Create Field Note"}
+            </Button>
+            <Button
+              variant="outlined"
+              size="medium"
+              onClick={onCancel}
+              disabled={isSubmitting}
+            >
+              Cancel
+            </Button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 };

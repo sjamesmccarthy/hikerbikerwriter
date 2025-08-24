@@ -632,12 +632,12 @@ const RecipeBuilder: React.FC = () => {
               {/* Basic Info */}
               <Card>
                 <CardContent>
-                  <Typography variant="h6" sx={{ mb: 2 }}>
+                  {/* <Typography variant="h6" sx={{ mb: 2 }}>
                     Basic Information
-                  </Typography>
+                  </Typography> */}
 
                   {/* Photo Upload */}
-                  <div className="mt-4">
+                  <div className="mt-0">
                     <Typography variant="subtitle1" gutterBottom>
                       Recipe Photo
                     </Typography>
@@ -1189,7 +1189,41 @@ const RecipeBuilder: React.FC = () => {
 
           {/* Action Buttons */}
           <div className="mt-8 pt-6 border-t border-gray-200">
-            <div className="flex flex-row-reverse justify-between items-center">
+            {/* Import Recipe Section - Mobile: Above buttons, Desktop: Left side */}
+            {!editId && (
+              <div className="mb-4 sm:hidden">
+                <div className="flex flex-col gap-2">
+                  <TextField
+                    label={
+                      <span style={{ fontFamily: "monospace" }}>
+                        Import Recipe URL
+                      </span>
+                    }
+                    value={importUrl}
+                    onChange={(e) => setImportUrl(e.target.value)}
+                    placeholder="https://example.com/recipe"
+                    size="small"
+                    fullWidth
+                    sx={{
+                      "& .MuiInputBase-input": {
+                        fontFamily: "monospace",
+                      },
+                    }}
+                  />
+                  <Button
+                    variant="outlined"
+                    onClick={handleImportRecipe}
+                    disabled={!importUrl || isImporting}
+                    fullWidth
+                  >
+                    {isImporting ? "Importing..." : "Import"}
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Desktop Layout */}
+            <div className="hidden sm:flex flex-row-reverse justify-between items-center">
               <div className="flex items-center gap-2">
                 {editId && (
                   <IconButton
@@ -1241,6 +1275,30 @@ const RecipeBuilder: React.FC = () => {
                   </Button>
                 </div>
               )}
+            </div>
+
+            {/* Mobile Layout - Action Buttons */}
+            <div className="flex sm:hidden justify-center items-center gap-2">
+              {editId && (
+                <IconButton
+                  onClick={handleDelete}
+                  color="error"
+                  title="Delete Recipe"
+                >
+                  <DeleteIcon />
+                </IconButton>
+              )}
+              <Link href="/recipes">
+                <Button variant="outlined">Cancel</Button>
+              </Link>
+              <Button
+                variant="contained"
+                startIcon={<SaveIcon />}
+                onClick={handleSave}
+                disabled={saving}
+              >
+                {saving ? "Saving..." : editId ? "Update" : "Save"}
+              </Button>
             </div>
           </div>
         </div>

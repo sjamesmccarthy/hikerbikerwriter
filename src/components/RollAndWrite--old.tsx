@@ -1055,7 +1055,7 @@ const RollAndWrite: React.FC = () => {
 
                   <div className="space-y-4">
                     {session && (
-                      <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-1 sm:gap-2">
                         <FormControlLabel
                           control={
                             <Switch

@@ -526,7 +526,7 @@ const RollAndWrite: React.FC = () => {
 
                 {/* Writing Form */}
                 {showForm && (
-                  <div className="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+                  <div className="bg-gray-100 p-6 rounded-lg">
                     <div className="mb-4">
                       <div className="flex items-center justify-between mb-2">
                         <div
@@ -559,7 +559,7 @@ const RollAndWrite: React.FC = () => {
                     />
 
                     {/* Visibility Toggles */}
-                    <div className="mb-4 flex flex-wrap items-center gap-4">
+                    <div className="mb-4 mt-4 flex flex-wrap items-center gap-1 sm:gap-2">
                       <FormControlLabel
                         control={
                           <Switch

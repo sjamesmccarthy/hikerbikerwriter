@@ -346,16 +346,19 @@ const FieldNoteDetail: React.FC<FieldNoteDetailProps> = ({ slug }) => {
               </h1>
 
               {/* Metadata */}
-              <div className="flex flex-wrap items-center gap-2 text-sm text-gray-500 mb-6">
-                <span>By {fieldNote.author}</span>
+              <div className="space-y-1 text-sm text-gray-500 mb-6">
+                <div>
+                  By {fieldNote.author} on {formatDate(fieldNote.date)}
+                </div>
                 {fieldNote.mood && (
-                  <span className="text-lg">
-                    {getMoodEmoji(fieldNote.mood)}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span>Feeling</span>
+                    <span className="text-lg">
+                      {getMoodEmoji(fieldNote.mood)}
+                    </span>
+                    <span>{fieldNote.mood}</span>
+                  </div>
                 )}
-                <span className="text-sm text-gray-500">
-                  {formatDate(fieldNote.date)}
-                </span>
               </div>
 
               {/* Content */}

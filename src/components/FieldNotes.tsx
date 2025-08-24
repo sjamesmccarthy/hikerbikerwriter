@@ -693,7 +693,7 @@ const FieldNotes: React.FC = () => {
                           </div>
 
                           {/* Visibility Controls */}
-                          <div className="flex flex-wrap gap-4 mb-3">
+                          <div className="flex flex-wrap gap-1 sm:gap-4 mb-3">
                             <FormControlLabel
                               control={
                                 <Switch
@@ -995,117 +995,116 @@ const FieldNotes: React.FC = () => {
                           )}
 
                           <hr className="border-gray-300 mb-4" />
-                          <div className="flex flex-col">
-                            {/* Top line: name + mood + edit/delete icons (right justified) */}
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center gap-2">
-                                {note.author && (
-                                  <span className="text-sm text-gray-500 font-mono">
-                                    By {note.author}
-                                  </span>
-                                )}
-                                {note.mood && (
-                                  <span className="text-xl" title={note.mood}>
-                                    {getMoodEmoji(note.mood)}
-                                  </span>
-                                )}
-                              </div>
-                              {session && (
-                                <div className="flex gap-2">
-                                  <IconButton
-                                    size="small"
-                                    color="primary"
-                                    aria-label="Edit Entry"
-                                    onClick={() => {
-                                      setEditId(note.id);
-                                      setEditTitle(note.title);
-                                      setEditContent(note.content);
-                                      setEditTags(note.tags || "");
-                                      setEditMood(note.mood || "");
-                                      setEditImages(note.images || []);
-                                      setEditMakePublic(
-                                        note.is_public || false
-                                      );
-                                      setEditShareWithFamily(
-                                        note.share_with_family ||
-                                          note.shared_family ||
-                                          false
-                                      );
-                                    }}
-                                  >
-                                    <EditNoteOutlinedIcon />
-                                  </IconButton>
-                                  <IconButton
-                                    size="small"
-                                    aria-label="Delete Entry"
-                                    sx={{ color: "gray" }}
-                                    onClick={async () => {
-                                      try {
-                                        const res = await fetch(
-                                          "/api/fieldnotes",
-                                          {
-                                            method: "DELETE",
-                                            headers: {
-                                              "Content-Type":
-                                                "application/json",
-                                            },
-                                            body: JSON.stringify({
-                                              id: note.id,
-                                              slug: note.slug,
-                                              userEmail: session?.user?.email,
-                                            }),
-                                          }
-                                        );
-                                        if (res.ok) {
-                                          setNotes(
-                                            notes.filter(
-                                              (n) => n.id !== note.id
-                                            )
-                                          );
-                                        } else if (res.status === 500) {
-                                          setDatabaseError(
-                                            "Database connection error during delete - Please check if the database is running"
-                                          );
-                                        } else {
-                                          const errorData = await res
-                                            .json()
-                                            .catch(() => ({
-                                              error: "Delete failed",
-                                            }));
-                                          alert(
-                                            `Error deleting fieldnote: ${
-                                              errorData.error || "Unknown error"
-                                            }`
-                                          );
-                                        }
-                                      } catch (error) {
-                                        console.error("Delete error:", error);
-                                        setDatabaseError(
-                                          "Failed to connect to server during delete"
-                                        );
-                                      }
-                                    }}
-                                  >
-                                    <DeleteIcon sx={{ fontSize: 16 }} />
-                                  </IconButton>
-                                </div>
+                          <div className="flex items-center justify-between">
+                            {/* Left side: author + date, then mood */}
+                            <div className="flex flex-col">
+                              <p className="text-sm text-gray-500 font-mono mt-0 mb-0">
+                                {note.author && `By ${note.author} on `}
+                                <span className="hidden sm:inline">
+                                  {new Date(note.date).toLocaleDateString(
+                                    "en-US",
+                                    {
+                                      weekday: "long",
+                                      year: "numeric",
+                                      month: "long",
+                                      day: "numeric",
+                                    }
+                                  )}
+                                </span>
+                                <span className="sm:hidden">
+                                  {new Date(note.date).toLocaleDateString(
+                                    "en-US",
+                                    {
+                                      year: "numeric",
+                                      month: "2-digit",
+                                      day: "2-digit",
+                                    }
+                                  )}
+                                </span>
+                              </p>
+                              {note.mood && (
+                                <p className="text-sm text-gray-500 font-mono mt-1 mb-0">
+                                  Feeling {getMoodEmoji(note.mood)} {note.mood}
+                                </p>
                               )}
                             </div>
 
-                            {/* Bottom line: date */}
-                            <div>
-                              <p className="text-sm text-gray-500 font-mono mt-0 mb-0">
-                                {new Date(note.date).toLocaleDateString(
-                                  "en-US",
-                                  {
-                                    weekday: "long",
-                                    year: "numeric",
-                                    month: "long",
-                                    day: "numeric",
-                                  }
-                                )}
-                              </p>
-                            </div>
+                            {/* Right side: edit/delete icons */}
+                            {session && (
+                              <div className="flex gap-2">
+                                <IconButton
+                                  size="small"
+                                  color="primary"
+                                  aria-label="Edit Entry"
+                                  onClick={() => {
+                                    setEditId(note.id);
+                                    setEditTitle(note.title);
+                                    setEditContent(note.content);
+                                    setEditTags(note.tags || "");
+                                    setEditMood(note.mood || "");
+                                    setEditImages(note.images || []);
+                                    setEditMakePublic(note.is_public || false);
+                                    setEditShareWithFamily(
+                                      note.share_with_family ||
+                                        note.shared_family ||
+                                        false
+                                    );
+                                  }}
+                                >
+                                  {/* <EditNoteOutlinedIcon /> */}
+                                </IconButton>
+                                <IconButton
+                                  size="small"
+                                  aria-label="Delete Entry"
+                                  sx={{ color: "gray" }}
+                                  onClick={async () => {
+                                    try {
+                                      const res = await fetch(
+                                        "/api/fieldnotes",
+                                        {
+                                          method: "DELETE",
+                                          headers: {
+                                            "Content-Type": "application/json",
+                                          },
+                                          body: JSON.stringify({
+                                            id: note.id,
+                                            slug: note.slug,
+                                            userEmail: session?.user?.email,
+                                          }),
+                                        }
+                                      );
+                                      if (res.ok) {
+                                        setNotes(
+                                          notes.filter((n) => n.id !== note.id)
+                                        );
+                                      } else if (res.status === 500) {
+                                        setDatabaseError(
+                                          "Database connection error during delete - Please check if the database is running"
+                                        );
+                                      } else {
+                                        const errorData = await res
+                                          .json()
+                                          .catch(() => ({
+                                            error: "Delete failed",
+                                          }));
+                                        alert(
+                                          `Error deleting fieldnote: ${
+                                            errorData.error || "Unknown error"
+                                          }`
+                                        );
+                                      }
+                                    } catch (error) {
+                                      console.error("Delete error:", error);
+                                      setDatabaseError(
+                                        "Failed to connect to server during delete"
+                                      );
+                                    }
+                                  }}
+                                >
+                                  {/* <DeleteIcon sx={{ fontSize: 16 }} /> */}
+                                </IconButton>
+                              </div>
+                            )}
                           </div>
                         </>
                       )}
@@ -1121,27 +1120,129 @@ const FieldNotes: React.FC = () => {
                   </div>
                 ) : (
                   filteredNotes.map((note) => (
-                    <Link
+                    <div
                       key={note.id}
-                      href={`/fieldnotes/${note.slug}`}
-                      className="bg-white border border-gray-200 rounded-xl p-4 text-left mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between transition-colors"
+                      className="bg-white border border-gray-200 rounded-xl p-4 text-left mb-4 transition-colors"
                     >
-                      <span className="font-bold text-gray-900 font-mono text-base hover:text-blue-600 transition-colors flex items-center gap-2">
-                        {note.is_public && (
-                          <PublicIcon sx={{ fontSize: 16, color: "gray" }} />
+                      <Link
+                        href={`/fieldnotes/${note.slug}`}
+                        className="block transition-colors"
+                      >
+                        <span className="font-bold text-gray-900 font-mono text-base hover:text-blue-600 transition-colors flex items-center gap-2">
+                          {note.is_public && (
+                            <PublicIcon sx={{ fontSize: 16, color: "gray" }} />
+                          )}
+                          {note.title}
+                        </span>
+                      </Link>
+
+                      <div className="flex items-center justify-between mt-2">
+                        <div className="flex flex-col">
+                          <span className="text-sm text-gray-500 font-mono">
+                            {note.author && `By ${note.author} on `}
+                            <span className="hidden sm:inline">
+                              {new Date(note.date).toLocaleDateString("en-US", {
+                                weekday: "long",
+                                year: "numeric",
+                                month: "long",
+                                day: "numeric",
+                              })}
+                            </span>
+                            <span className="sm:hidden">
+                              {new Date(note.date).toLocaleDateString("en-US", {
+                                year: "numeric",
+                                month: "2-digit",
+                                day: "2-digit",
+                              })}
+                            </span>
+                          </span>
+                          {note.mood && (
+                            <span className="text-sm text-gray-500 font-mono mt-1">
+                              Feeling {getMoodEmoji(note.mood)} {note.mood}
+                            </span>
+                          )}
+                        </div>
+
+                        {session && (
+                          <div className="hidden sm:flex gap-2">
+                            <IconButton
+                              size="small"
+                              color="primary"
+                              aria-label="Edit Entry"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setEditId(note.id);
+                                setEditTitle(note.title);
+                                setEditContent(note.content);
+                                setEditTags(note.tags || "");
+                                setEditMood(note.mood || "");
+                                setEditImages(note.images || []);
+                                setEditMakePublic(note.is_public || false);
+                                setEditShareWithFamily(
+                                  note.share_with_family ||
+                                    note.shared_family ||
+                                    false
+                                );
+                              }}
+                            >
+                              <EditNoteOutlinedIcon />
+                            </IconButton>
+                            <IconButton
+                              size="small"
+                              aria-label="Delete Entry"
+                              sx={{ color: "gray" }}
+                              onClick={async (e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                try {
+                                  const res = await fetch("/api/fieldnotes", {
+                                    method: "DELETE",
+                                    headers: {
+                                      "Content-Type": "application/json",
+                                    },
+                                    body: JSON.stringify({
+                                      id: note.id,
+                                      slug: note.slug,
+                                      userEmail: session?.user?.email,
+                                    }),
+                                  });
+                                  if (res.ok) {
+                                    setNotes(
+                                      notes.filter((n) => n.id !== note.id)
+                                    );
+                                  } else if (res.status === 500) {
+                                    setDatabaseError(
+                                      "Database connection error during delete - Please check if the database is running"
+                                    );
+                                  } else {
+                                    const errorData = await res
+                                      .json()
+                                      .catch(() => ({
+                                        error: "Delete failed",
+                                      }));
+                                    alert(
+                                      `Error deleting fieldnote: ${
+                                        errorData.error || "Unknown error"
+                                      }`
+                                    );
+                                  }
+                                } catch (error) {
+                                  console.error("Delete error:", error);
+                                  setDatabaseError(
+                                    "Failed to connect to server during delete"
+                                  );
+                                }
+                              }}
+                            >
+                              <DeleteIcon sx={{ fontSize: 16 }} />
+                            </IconButton>
+                          </div>
                         )}
-                        {note.title}
-                      </span>
-                      <span className="text-sm text-gray-500 font-mono">
-                        {note.author && `By ${note.author} • `}
-                        {new Date(note.date).toLocaleDateString("en-US", {
-                          weekday: "long",
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                        })}
-                      </span>
-                    </Link>
+
+                        {/* Remove mobile edit button in minimized view - users can click title to navigate */}
+                      </div>
+                    </div>
                   ))
                 )}
               </div>

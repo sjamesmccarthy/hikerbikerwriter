@@ -1812,7 +1812,7 @@ export default function JobTracker() {
                               Last Changed
                             </TableCell>
                             <TableCell style={{ width: "10%" }}>
-                              Days Since
+                              Days Open
                             </TableCell>
                             <TableCell style={{ width: "10%" }}>
                               Status
@@ -2316,7 +2316,7 @@ export default function JobTracker() {
                         {/* Card Info */}
                         <div className="grid grid-cols-2 gap-3 text-sm mb-3">
                           <div>
-                            <span className="text-gray-500">Applied:</span>
+                            <span className="text-gray-500">Date Changed</span>
                             <div className="font-medium">
                               {parseLocalDate(
                                 opportunity.dateApplied
@@ -2324,7 +2324,7 @@ export default function JobTracker() {
                             </div>
                           </div>
                           <div>
-                            <span className="text-gray-500">Days Since:</span>
+                            <span className="text-gray-500">Days Open:</span>
                             <div className="font-medium">
                               {getDaysSinceApplied(opportunity.dateApplied)}{" "}
                               days
@@ -3136,7 +3136,7 @@ export default function JobTracker() {
             </div>
             <div className="w-full">
               <TextField
-                label="Date Applied"
+                label="Date Changed"
                 type="date"
                 fullWidth
                 variant="outlined"
@@ -3364,7 +3364,7 @@ export default function JobTracker() {
             size="large"
             style={{ minWidth: "120px" }}
           >
-            {editingOpportunity ? "Update Opportunity" : "Add Opportunity"}
+            {editingOpportunity ? "Update" : "Add"}
           </Button>
         </DialogActions>
       </Dialog>
