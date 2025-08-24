@@ -216,8 +216,8 @@ const Homepage: React.FC = () => {
       className="min-h-screen flex flex-col transition-all duration-1000"
       style={backgroundStyle}
     >
-      {/* User Profile / Sign In - Upper Right Corner */}
-      <div className="absolute top-16 right-16 z-10">
+      {/* User Profile / Sign In - Top Header */}
+      <div className="w-full flex justify-center px-4 pt-4 sm:absolute sm:top-16 sm:right-16 sm:w-auto sm:px-0 sm:pt-0 z-10">
         {session?.user ? (
           <Link href="/user/profile">
             <div className="flex items-center gap-2 rounded-lg px-3 py-2 transition-all duration-200">
@@ -265,7 +265,7 @@ const Homepage: React.FC = () => {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col items-center justify-center pt-16 px-8 pb-8 sm:p-8">
+      <div className="flex-1 flex flex-col items-center justify-center pt-4 px-8 pb-8 sm:pt-16 sm:p-8">
         <div className="w-[80vw] max-w-4xl flex flex-col items-center space-y-8">
           {/* Weather Widget - Centered Above Logo */}
           <div className="flex justify-center mb-4">
