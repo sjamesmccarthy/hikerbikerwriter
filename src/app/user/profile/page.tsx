@@ -944,20 +944,70 @@ function AppSummaries({
   const buildIngredientsSection = (recipe: Record<string, unknown>): string => {
     let content = "\nIngredients:\n";
 
-    if (recipe.ingredients) {
-      if (Array.isArray(recipe.ingredients)) {
-        if (recipe.ingredients.length > 0) {
-          recipe.ingredients.forEach((ingredient: unknown, idx: number) => {
-            const ingredientText = toSafeString(ingredient);
-            if (ingredientText.trim()) {
-              content += `${idx + 1}. ${ingredientText}\n`;
+    // Debug logging to see what's in the recipe object
+    console.log("Recipe object keys:", Object.keys(recipe));
+    console.log("Recipe.ingredients:", recipe.ingredients);
+    console.log("Recipe.ingredients type:", typeof recipe.ingredients);
+    console.log(
+      "Recipe.ingredients isArray:",
+      Array.isArray(recipe.ingredients)
+    );
+
+    // Try multiple possible field names for ingredients
+    const possibleIngredients =
+      recipe.ingredients ||
+      recipe.ingredient_list ||
+      recipe.ingredientList ||
+      recipe.components;
+
+    if (possibleIngredients) {
+      if (Array.isArray(possibleIngredients)) {
+        console.log("Ingredients array length:", possibleIngredients.length);
+        if (possibleIngredients.length > 0) {
+          possibleIngredients.forEach((ingredient: unknown, idx: number) => {
+            console.log(`Ingredient ${idx}:`, ingredient);
+
+            // Check if ingredient is an object with name, amount, unit properties
+            if (typeof ingredient === "object" && ingredient !== null) {
+              const ing = ingredient as {
+                name?: string;
+                amount?: number;
+                unit?: string;
+              };
+              if (ing.name) {
+                let ingredientText = ing.name;
+                if (ing.amount && ing.unit) {
+                  ingredientText = `${ing.amount} ${ing.unit} ${ing.name}`;
+                } else if (ing.amount) {
+                  ingredientText = `${ing.amount} ${ing.name}`;
+                }
+                content += `${idx + 1}. ${ingredientText}\n`;
+              }
+            } else {
+              // Handle simple string ingredients
+              const ingredientText = toSafeString(ingredient);
+              if (ingredientText.trim()) {
+                content += `${idx + 1}. ${ingredientText}\n`;
+              }
             }
           });
         } else {
           content += "No ingredients listed\n";
         }
+      } else if (typeof possibleIngredients === "string") {
+        // If ingredients is a string, split by newlines or semicolons
+        const ingredientLines = possibleIngredients
+          .split(/[\n;]/)
+          .filter((line) => line.trim());
+        if (ingredientLines.length > 0) {
+          ingredientLines.forEach((ingredient, idx) => {
+            content += `${idx + 1}. ${ingredient.trim()}\n`;
+          });
+        } else {
+          content += toSafeString(possibleIngredients) + "\n";
+        }
       } else {
-        content += toSafeString(recipe.ingredients) + "\n";
+        content += toSafeString(possibleIngredients) + "\n";
       }
     } else {
       content += "No ingredients listed\n";
@@ -972,21 +1022,67 @@ function AppSummaries({
   ): string => {
     let content = "\nInstructions:\n";
 
-    const instructions = recipe.instructions || recipe.steps;
-    if (instructions) {
-      if (Array.isArray(instructions)) {
-        if (instructions.length > 0) {
-          instructions.forEach((instruction: unknown, idx: number) => {
-            const instructionText = toSafeString(instruction);
-            if (instructionText.trim()) {
-              content += `${idx + 1}. ${instructionText}\n`;
+    // Debug logging
+    console.log("Recipe.steps:", recipe.steps);
+    console.log("Recipe.instructions:", recipe.instructions);
+    console.log("Recipe.steps type:", typeof recipe.steps);
+    console.log("Recipe.steps isArray:", Array.isArray(recipe.steps));
+
+    // Try multiple possible field names for instructions
+    const possibleInstructions =
+      recipe.instructions ||
+      recipe.steps ||
+      recipe.directions ||
+      recipe.method ||
+      recipe.preparation;
+
+    if (possibleInstructions) {
+      if (Array.isArray(possibleInstructions)) {
+        console.log("Instructions array length:", possibleInstructions.length);
+        if (possibleInstructions.length > 0) {
+          possibleInstructions.forEach((instruction: unknown, idx: number) => {
+            console.log(`Instruction ${idx}:`, instruction);
+
+            // Check if instruction is an object with step property
+            if (typeof instruction === "object" && instruction !== null) {
+              const inst = instruction as {
+                step?: string;
+                superSmoke?: boolean;
+              };
+              if (inst.step) {
+                content += `${idx + 1}. ${inst.step}\n`;
+                if (inst.superSmoke) {
+                  content += `   (Note: Super Smoke enabled)\n`;
+                }
+              }
+            } else {
+              // Handle simple string instructions
+              const instructionText = toSafeString(instruction);
+              if (instructionText.trim()) {
+                content += `${idx + 1}. ${instructionText}\n`;
+              }
             }
           });
         } else {
           content += "No instructions provided\n";
         }
+      } else if (typeof possibleInstructions === "string") {
+        // If instructions is a string, split by newlines or numbered steps
+        const instructionLines = possibleInstructions
+          .split(/\n|\d+\./)
+          .filter((line) => line.trim());
+        if (instructionLines.length > 0) {
+          instructionLines.forEach((instruction, idx) => {
+            const cleaned = instruction.trim();
+            if (cleaned) {
+              content += `${idx + 1}. ${cleaned}\n`;
+            }
+          });
+        } else {
+          content += toSafeString(possibleInstructions) + "\n";
+        }
       } else {
-        content += toSafeString(instructions) + "\n";
+        content += toSafeString(possibleInstructions) + "\n";
       }
     } else {
       content += "No instructions provided\n";
