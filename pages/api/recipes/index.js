@@ -90,6 +90,7 @@ export default async function handler(req, res) {
         sourceTitle,
         type,
         recommendedPellets,
+        category,
         photo,
         prepTime,
         cookTime,
@@ -101,6 +102,8 @@ export default async function handler(req, res) {
         public: isPublic,
         userEmail,
         userName,
+        familyPhoto,
+        familyNotes,
       } = req.body;
 
       if (!userEmail) {

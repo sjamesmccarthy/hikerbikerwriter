@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -158,8 +158,10 @@ const RecipeViewer: React.FC<RecipeViewerProps> = ({}) => {
   const [activeCookingType, setActiveCookingType] = useState<string>("All");
   const [activeCookTime, setActiveCookTime] = useState<string>("All");
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
+  const [showPublicRecipes, setShowPublicRecipes] = useState(false);
   const [showFamilyOnly, setShowFamilyOnly] = useState(false);
   const [hasFamilyMembers, setHasFamilyMembers] = useState(false);
+  const autoSwitchApplied = useRef(false);
   const [familyMembers, setFamilyMembers] = useState<
     Array<{ name: string; email: string; relationship: string }>
   >([]);
@@ -264,6 +266,24 @@ const RecipeViewer: React.FC<RecipeViewerProps> = ({}) => {
       fetchRecipes();
     }
   }, [session, status]);
+
+  // Auto-enable public filter if user has no recipes
+  useEffect(() => {
+    if (
+      session?.user?.email &&
+      recipes.length > 0 &&
+      !autoSwitchApplied.current
+    ) {
+      // Check if user has any of their own recipes
+      const userRecipes = recipes.filter(
+        (recipe) => recipe.userEmail === session.user?.email
+      );
+      if (userRecipes.length === 0) {
+        setShowPublicRecipes(true);
+        autoSwitchApplied.current = true;
+      }
+    }
+  }, [recipes, session?.user?.email]);
 
   // Check if user has family members
   useEffect(() => {
@@ -415,6 +435,22 @@ const RecipeViewer: React.FC<RecipeViewerProps> = ({}) => {
         recipe.description.toLowerCase().includes(searchTerm.toLowerCase());
       const favoriteMatch = !showFavoritesOnly || recipe.favorite;
 
+      // Ownership filtering logic
+      let ownershipMatch = true;
+      if (!session?.user?.email) {
+        // When not logged in, show only public recipes
+        ownershipMatch = Boolean(recipe.public);
+      } else {
+        // When logged in
+        if (showPublicRecipes) {
+          // Show public recipes (excluding user's own unless they're also public)
+          ownershipMatch = Boolean(recipe.public);
+        } else {
+          // Default: show only user's own recipes
+          ownershipMatch = recipe.userEmail === session.user.email;
+        }
+      }
+
       let familyMatch = !showFamilyOnly;
       if (showFamilyOnly) {
         if (selectedFamilyMember === "All") {
@@ -442,6 +478,7 @@ const RecipeViewer: React.FC<RecipeViewerProps> = ({}) => {
         cookTimeMatch &&
         searchMatch &&
         favoriteMatch &&
+        ownershipMatch &&
         familyMatch
       );
     }
@@ -695,9 +732,13 @@ const RecipeViewer: React.FC<RecipeViewerProps> = ({}) => {
                   <span className="text-blue-600 font-bold text-3xl">
                     {filteredRecipes.length} Public{" "}
                   </span>
+                ) : showPublicRecipes ? (
+                  <span className="text-blue-600 font-bold text-3xl">
+                    {filteredRecipes.length} Public{" "}
+                  </span>
                 ) : (
                   <span className="text-black font-bold text-3xl">
-                    {filteredRecipes.length}{" "}
+                    {filteredRecipes.length} Your{" "}
                   </span>
                 )}
                 recipes
@@ -875,6 +916,23 @@ const RecipeViewer: React.FC<RecipeViewerProps> = ({}) => {
                             <FavoriteBorderIcon sx={{ fontSize: 16 }} />
                           )}
                           Favorites Only
+                        </button>
+                      )}
+
+                      {/* Public filter button for logged in users */}
+                      {session?.user?.email && (
+                        <button
+                          onClick={() => {
+                            setShowPublicRecipes(!showPublicRecipes);
+                          }}
+                          className={`px-3 py-2 rounded text-sm font-medium transition-colors flex items-center gap-1 ${
+                            showPublicRecipes
+                              ? "bg-green-100 text-green-700 border border-green-300"
+                              : "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200"
+                          }`}
+                        >
+                          <PublicIcon sx={{ fontSize: 16 }} />
+                          Public
                         </button>
                       )}
 

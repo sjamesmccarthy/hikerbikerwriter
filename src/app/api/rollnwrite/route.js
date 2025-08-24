@@ -5,11 +5,17 @@ export async function GET(request) {
   try {
     const { searchParams } = new URL(request.url);
     const userEmail = searchParams.get("userEmail");
+    const includePublic = searchParams.get("includePublic");
 
     let query, params;
 
-    if (userEmail) {
-      // Logged in user - get their entries
+    if (userEmail && includePublic === "true") {
+      // Logged in user requesting both their own entries and public entries
+      query =
+        "SELECT * FROM rollnwrite WHERE user_email = ? OR is_public = 1 ORDER BY created DESC";
+      params = [userEmail];
+    } else if (userEmail) {
+      // Logged in user - get their entries only
       query =
         "SELECT * FROM rollnwrite WHERE user_email = ? ORDER BY created DESC";
       params = [userEmail];

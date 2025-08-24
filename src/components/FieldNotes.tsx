@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -159,7 +159,9 @@ const FieldNotes: React.FC = () => {
   const [filterMood, setFilterMood] = useState("any");
   const [sortBy, setSortBy] = useState("DESC"); // ASC, DESC, FAVORITE
   const [showFamilyOnly, setShowFamilyOnly] = useState(false);
+  const [showPublicNotes, setShowPublicNotes] = useState(false);
   const [hasFamilyMembers, setHasFamilyMembers] = useState(false);
+  const autoSwitchApplied = useRef(false);
   const [familyMembers, setFamilyMembers] = useState<
     Array<{ name: string; email: string; relationship: string }>
   >([]);
@@ -192,10 +194,12 @@ const FieldNotes: React.FC = () => {
 
       let url = "/api/fieldnotes";
       if (session?.user?.email) {
-        // Logged in user - fetch their notes
-        url += `?userEmail=${encodeURIComponent(session.user.email)}`;
+        // Logged in user - fetch both their own notes and public notes
+        url += `?userEmail=${encodeURIComponent(
+          session.user.email
+        )}&includePublic=true`;
       }
-      // If not logged in, fetch public notes (no userEmail parameter)
+      // If not logged in, fetch public notes only (no userEmail parameter)
 
       try {
         const res = await fetch(url);
@@ -238,6 +242,24 @@ const FieldNotes: React.FC = () => {
       fetchNotes();
     }
   }, [session, status]);
+
+  // Auto-enable public filter if user has no field notes
+  useEffect(() => {
+    if (
+      session?.user?.email &&
+      notes.length > 0 &&
+      !autoSwitchApplied.current
+    ) {
+      // Check if user has any of their own notes
+      const userNotes = notes.filter(
+        (note) => note.userEmail === session.user?.email
+      );
+      if (userNotes.length === 0) {
+        setShowPublicNotes(true);
+        autoSwitchApplied.current = true;
+      }
+    }
+  }, [notes, session?.user?.email]);
 
   // Check if user has family members
   useEffect(() => {
@@ -327,6 +349,21 @@ const FieldNotes: React.FC = () => {
           const moodMatch =
             filterMood === "any" ? true : note.mood === filterMood;
 
+          // Ownership filtering for logged-in users
+          let ownershipMatch = true;
+          if (session?.user?.email) {
+            if (showPublicNotes) {
+              // Show all public notes (including user's own public notes)
+              ownershipMatch = Boolean(note.is_public);
+            } else {
+              // Show user's own notes (default)
+              ownershipMatch = note.userEmail === session.user.email;
+            }
+          } else {
+            // For non-logged-in users, show only public notes
+            ownershipMatch = Boolean(note.is_public);
+          }
+
           let familyMatch = !showFamilyOnly;
           if (showFamilyOnly) {
             if (selectedFamilyMember === "All") {
@@ -347,7 +384,7 @@ const FieldNotes: React.FC = () => {
             }
           }
 
-          return tagMatch && moodMatch && familyMatch;
+          return tagMatch && moodMatch && ownershipMatch && familyMatch;
         })
         .sort((a, b) => {
           switch (sortBy) {
@@ -720,9 +757,26 @@ const FieldNotes: React.FC = () => {
                       </FormControl>
                     </div>
 
-                    {/* Right-aligned family filters */}
-                    {session?.user?.email && hasFamilyMembers && (
-                      <div className="flex items-center gap-2">
+                    {/* Right-aligned filters */}
+                    <div className="flex items-center gap-2">
+                      {/* Public filter for logged-in users */}
+                      {session?.user?.email && (
+                        <button
+                          onClick={() => setShowPublicNotes(!showPublicNotes)}
+                          className={`px-3 py-2 rounded text-sm font-medium transition-colors flex items-center gap-1 ${
+                            showPublicNotes
+                              ? "bg-green-100 text-green-700 border border-green-300"
+                              : "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200"
+                          }`}
+                          style={{ fontFamily: "monospace" }}
+                        >
+                          <PublicIcon sx={{ fontSize: 16 }} />
+                          Public
+                        </button>
+                      )}
+
+                      {/* Family filters */}
+                      {session?.user?.email && hasFamilyMembers && (
                         <button
                           onClick={() => {
                             const newFamily = !showFamilyOnly;
@@ -742,9 +796,13 @@ const FieldNotes: React.FC = () => {
                           <PeopleIcon sx={{ fontSize: 16 }} />
                           Family Only
                         </button>
+                      )}
 
-                        {/* Family member select dropdown */}
-                        {showFamilyOnly && familyMembers.length > 0 && (
+                      {/* Family member select dropdown */}
+                      {session?.user?.email &&
+                        hasFamilyMembers &&
+                        showFamilyOnly &&
+                        familyMembers.length > 0 && (
                           <FormControl size="small" sx={{ minWidth: 160 }}>
                             <InputLabel
                               sx={{
@@ -786,21 +844,65 @@ const FieldNotes: React.FC = () => {
                                     <span style={{ fontFamily: "monospace" }}>
                                       {member.name}
                                     </span>
-                                    {member.relationship && (
-                                      <span
-                                        className="ml-2 text-xs text-gray-500"
-                                        style={{ fontFamily: "monospace" }}
-                                      >
-                                        ({member.relationship})
-                                      </span>
-                                    )}
                                   </div>
                                 </MenuItem>
                               ))}
                             </Select>
                           </FormControl>
                         )}
-                      </div>
+                    </div>
+                    {showFamilyOnly && familyMembers.length > 0 && (
+                      <FormControl size="small" sx={{ minWidth: 160 }}>
+                        <InputLabel
+                          sx={{
+                            fontFamily: "monospace",
+                            fontSize: "0.875rem",
+                          }}
+                        >
+                          Family Member
+                        </InputLabel>
+                        <Select
+                          value={selectedFamilyMember}
+                          label="Family Member"
+                          onChange={(e) => {
+                            const newFamilyMember = e.target.value;
+                            setSelectedFamilyMember(newFamilyMember);
+                          }}
+                          sx={{
+                            fontFamily: "monospace",
+                            fontSize: "0.875rem",
+                            "& .MuiSelect-select": {
+                              fontFamily: "monospace",
+                            },
+                          }}
+                        >
+                          <MenuItem value="All">
+                            <div className="flex items-center">
+                              <PeopleIcon sx={{ fontSize: 16, mr: 1 }} />
+                              <span style={{ fontFamily: "monospace" }}>
+                                All Family
+                              </span>
+                            </div>
+                          </MenuItem>
+                          {familyMembers.map((member) => (
+                            <MenuItem key={member.email} value={member.name}>
+                              <div className="flex items-center">
+                                <span style={{ fontFamily: "monospace" }}>
+                                  {member.name}
+                                </span>
+                                {member.relationship && (
+                                  <span
+                                    className="ml-2 text-xs text-gray-500"
+                                    style={{ fontFamily: "monospace" }}
+                                  >
+                                    ({member.relationship})
+                                  </span>
+                                )}
+                              </div>
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
                     )}
                   </div>
 
@@ -837,6 +939,20 @@ const FieldNotes: React.FC = () => {
             {/* Notes List - now conditionally rendered based on minimized state */}
             {!minimized ? (
               <div className="w-full mb-8">
+                {/* Intro text showing current view context */}
+                {session?.user?.email && showFamilyOnly && (
+                  <div className="mx-4 mb-4 text-center">
+                    <p
+                      className="text-sm text-gray-600"
+                      style={{ fontFamily: "monospace" }}
+                    >
+                      {selectedFamilyMember === "All"
+                        ? "Showing all family field notes"
+                        : `Showing field notes from ${selectedFamilyMember}`}
+                    </p>
+                  </div>
+                )}
+
                 {loadingNotes ? (
                   <div className="text-center text-gray-400 font-mono py-8">
                     Loading notes...

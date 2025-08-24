@@ -2172,10 +2172,23 @@ function AppSummaries({
                       {/* Icons section - responsive layout like Me card */}
                       <div className="flex flex-row items-center gap-4 mt-4 sm:mt-0 justify-end sm:ml-auto">
                         <div className="relative flex items-center">
-                          <CasinoIcon
-                            fontSize="medium"
-                            style={{ color: "#757575" }}
-                          />
+                          {(shared.roll_and_write ?? 0) > 0 ? (
+                            <Link
+                              href={`/rollandwrite?family=true&familyMember=${encodeURIComponent(
+                                person.name
+                              )}`}
+                            >
+                              <CasinoIcon
+                                fontSize="medium"
+                                style={{ color: "#757575", cursor: "pointer" }}
+                              />
+                            </Link>
+                          ) : (
+                            <CasinoIcon
+                              fontSize="medium"
+                              style={{ color: "#757575" }}
+                            />
+                          )}
                           <span
                             className="absolute -top-2 -right-2"
                             style={{
@@ -2199,10 +2212,23 @@ function AppSummaries({
                           </span>
                         </div>
                         <div className="relative flex items-center">
-                          <StickyNote2Icon
-                            fontSize="medium"
-                            style={{ color: "#757575" }}
-                          />
+                          {(shared.field_notes ?? 0) > 0 ? (
+                            <Link
+                              href={`/fieldnotes?family=true&familyMember=${encodeURIComponent(
+                                person.name
+                              )}`}
+                            >
+                              <StickyNote2Icon
+                                fontSize="medium"
+                                style={{ color: "#757575", cursor: "pointer" }}
+                              />
+                            </Link>
+                          ) : (
+                            <StickyNote2Icon
+                              fontSize="medium"
+                              style={{ color: "#757575" }}
+                            />
+                          )}
                           <span
                             className="absolute -top-2 -right-2"
                             style={{
@@ -2226,10 +2252,23 @@ function AppSummaries({
                           </span>
                         </div>
                         <div className="relative flex items-center">
-                          <RestaurantIcon
-                            fontSize="medium"
-                            style={{ color: "#757575" }}
-                          />
+                          {(shared.recipes ?? 0) > 0 ? (
+                            <Link
+                              href={`/recipes?family=true&familyMember=${encodeURIComponent(
+                                person.name
+                              )}`}
+                            >
+                              <RestaurantIcon
+                                fontSize="medium"
+                                style={{ color: "#757575", cursor: "pointer" }}
+                              />
+                            </Link>
+                          ) : (
+                            <RestaurantIcon
+                              fontSize="medium"
+                              style={{ color: "#757575" }}
+                            />
+                          )}
                           <span
                             className="absolute -top-2 -right-2"
                             style={{

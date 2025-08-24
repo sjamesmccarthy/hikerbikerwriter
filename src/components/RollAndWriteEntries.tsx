@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
@@ -62,7 +62,9 @@ const RollAndWriteEntries: React.FC = () => {
   const [userFavorites, setUserFavorites] = useState<Set<string>>(new Set());
   const [sortBy, setSortBy] = useState("newest"); // newest, oldest, favorited
   const [showFamilyOnly, setShowFamilyOnly] = useState(false);
+  const [showPublicNotes, setShowPublicNotes] = useState(false);
   const [hasFamilyMembers, setHasFamilyMembers] = useState(false);
+  const autoSwitchApplied = useRef(false);
   const [familyMembers, setFamilyMembers] = useState<
     Array<{ name: string; email: string; relationship: string }>
   >([]);
@@ -121,6 +123,7 @@ const RollAndWriteEntries: React.FC = () => {
         const params = new URLSearchParams();
         if (session?.user?.email) {
           params.set("userEmail", session.user.email);
+          params.set("includePublic", "true");
         }
         const queryString = params.toString();
         let url = "/api/rollnwrite";
@@ -146,6 +149,24 @@ const RollAndWriteEntries: React.FC = () => {
       fetchEntries();
     }
   }, [session, status]);
+
+  // Auto-enable public filter if user has no entries
+  useEffect(() => {
+    if (
+      session?.user?.email &&
+      entries.length > 0 &&
+      !autoSwitchApplied.current
+    ) {
+      // Check if user has any of their own entries
+      const userEntries = entries.filter(
+        (entry) => entry.userEmail === session.user?.email
+      );
+      if (userEntries.length === 0) {
+        setShowPublicNotes(true);
+        autoSwitchApplied.current = true;
+      }
+    }
+  }, [entries, session?.user?.email]);
 
   // Load user favorites from localStorage
   useEffect(() => {
@@ -545,8 +566,26 @@ const RollAndWriteEntries: React.FC = () => {
                     </FormControl>
 
                     {/* Family filters for logged in users with family members */}
-                    {session?.user?.email && hasFamilyMembers && (
-                      <div className="flex items-center gap-2">
+                    {/* Filter buttons */}
+                    <div className="flex items-center gap-2">
+                      {/* Public filter for logged-in users */}
+                      {session?.user?.email && (
+                        <button
+                          onClick={() => setShowPublicNotes(!showPublicNotes)}
+                          className={`px-3 py-2 rounded text-sm font-medium transition-colors flex items-center gap-1 ${
+                            showPublicNotes
+                              ? "bg-green-100 text-green-700 border border-green-300"
+                              : "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200"
+                          }`}
+                          style={{ fontFamily: "monospace" }}
+                        >
+                          <PublicIcon sx={{ fontSize: 16 }} />
+                          Public
+                        </button>
+                      )}
+
+                      {/* Family filters */}
+                      {session?.user?.email && hasFamilyMembers && (
                         <button
                           onClick={() => {
                             const newFamily = !showFamilyOnly;
@@ -566,9 +605,13 @@ const RollAndWriteEntries: React.FC = () => {
                           <PeopleIcon sx={{ fontSize: 16 }} />
                           Family Only
                         </button>
+                      )}
 
-                        {/* Family member select dropdown */}
-                        {showFamilyOnly && familyMembers.length > 0 && (
+                      {/* Family member select dropdown */}
+                      {session?.user?.email &&
+                        hasFamilyMembers &&
+                        showFamilyOnly &&
+                        familyMembers.length > 0 && (
                           <FormControl size="small" sx={{ minWidth: 160 }}>
                             <InputLabel
                               sx={{
@@ -624,8 +667,7 @@ const RollAndWriteEntries: React.FC = () => {
                             </Select>
                           </FormControl>
                         )}
-                      </div>
-                    )}
+                    </div>
                   </div>
 
                   {/* Right side: Roll Them Dice button */}
@@ -694,6 +736,21 @@ const RollAndWriteEntries: React.FC = () => {
                 (() => {
                   // Filter entries based on family settings
                   const filteredEntries = entries.filter((entry) => {
+                    // Ownership filtering for logged-in users
+                    let ownershipMatch = true;
+                    if (session?.user?.email) {
+                      if (showPublicNotes) {
+                        // Show all public entries (including user's own public entries)
+                        ownershipMatch = Boolean(entry.is_public);
+                      } else {
+                        // Show user's own entries (default)
+                        ownershipMatch = entry.userEmail === session.user.email;
+                      }
+                    } else {
+                      // For non-logged-in users, show only public entries
+                      ownershipMatch = Boolean(entry.is_public);
+                    }
+
                     let familyMatch = !showFamilyOnly;
                     if (showFamilyOnly) {
                       if (selectedFamilyMember === "All") {
@@ -713,7 +770,7 @@ const RollAndWriteEntries: React.FC = () => {
                         }
                       }
                     }
-                    return familyMatch;
+                    return ownershipMatch && familyMatch;
                   });
 
                   // Sort filtered entries based on selected sort option

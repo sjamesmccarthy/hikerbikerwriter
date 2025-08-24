@@ -142,17 +142,83 @@ function extractSteps(html: string): Array<{ step: string }> {
   // Look for common recipe step patterns
   const stepsList: Array<{ step: string }> = [];
 
-  // Try to find steps in ordered lists or divs with step classes
-  const regex =
+  // First try to find schema.org recipe instructions
+  const schemaMatch = html.match(/"recipeInstructions":\s*\[(.*?)\]/);
+  if (schemaMatch) {
+    try {
+      const instructions = JSON.parse(`[${schemaMatch[1]}]`);
+      instructions.forEach((instruction: any) => {
+        let stepText = "";
+        if (typeof instruction === "string") {
+          stepText = instruction;
+        } else if (instruction.text) {
+          stepText = instruction.text;
+        }
+        if (stepText) {
+          const cleaned = stepText.replace(/<[^>]+>/g, "").trim();
+          if (cleaned) {
+            stepsList.push({ step: cleaned });
+          }
+        }
+      });
+      if (stepsList.length > 0) {
+        return stepsList;
+      }
+    } catch (e) {
+      console.error("Error parsing schema.org instructions:", e);
+    }
+  }
+
+  // Try to find steps in ordered lists or divs with step/instruction classes
+  let regex =
     /<li[^>]*class="[^"]*instruction[^"]*"[^>]*>(.*?)<\/li>|<div[^>]*class="[^"]*step[^"]*"[^>]*>(.*?)<\/div>/gi;
   let match;
 
   while ((match = regex.exec(html)) !== null) {
     const step = match[1] || match[2];
     if (step) {
-      stepsList.push({
-        step: step.trim(),
-      });
+      const cleaned = step.replace(/<[^>]+>/g, "").trim();
+      if (cleaned) {
+        stepsList.push({ step: cleaned });
+      }
+    }
+  }
+
+  // If no steps found yet, look for content under headings that contain "Steps" or "Instructions"
+  if (stepsList.length === 0) {
+    // Find headings containing "Steps", "Instructions", "Directions", etc.
+    const headingRegex =
+      /<(h[1-6])[^>]*>.*?(steps|instructions|directions|method|preparation).*?<\/h[1-6]>/gi;
+    const headingMatches = [...html.matchAll(headingRegex)];
+
+    for (const headingMatch of headingMatches) {
+      const headingIndex = headingMatch.index!;
+      const nextHeadingRegex = /<h[1-6][^>]*>/gi;
+      nextHeadingRegex.lastIndex = headingIndex + headingMatch[0].length;
+      const nextHeading = nextHeadingRegex.exec(html);
+
+      // Extract content between this heading and the next heading (or end of document)
+      const endIndex = nextHeading ? nextHeading.index : html.length;
+      const sectionHtml = html.slice(
+        headingIndex + headingMatch[0].length,
+        endIndex
+      );
+
+      // Look for ordered list items or numbered paragraphs in this section
+      const stepRegex = /<(li|p)[^>]*>(.*?)<\/\1>/gi;
+      let stepMatch;
+
+      while ((stepMatch = stepRegex.exec(sectionHtml)) !== null) {
+        const stepText = stepMatch[2].replace(/<[^>]+>/g, "").trim();
+        if (stepText && stepText.length > 10) {
+          // Filter out very short content
+          stepsList.push({ step: stepText });
+        }
+      }
+
+      if (stepsList.length > 0) {
+        break; // Found steps, stop looking
+      }
     }
   }
 
