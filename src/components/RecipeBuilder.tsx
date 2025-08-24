@@ -626,79 +626,39 @@ const RecipeBuilder: React.FC = () => {
 
         {/* Main Content */}
         <div className="max-w-4xl mx-auto p-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Left Column */}
-            <div className="space-y-6">
-              {/* Basic Info */}
-              <Card>
-                <CardContent>
-                  {/* <Typography variant="h6" sx={{ mb: 2 }}>
+          <div className="bg-gray-100 p-4 rounded-lg">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+              {/* Left Column */}
+              <div className="space-y-6">
+                {/* Basic Info */}
+                <Card sx={{ boxShadow: "none", border: "none" }}>
+                  <CardContent>
+                    {/* <Typography variant="h6" sx={{ mb: 2 }}>
                     Basic Information
                   </Typography> */}
 
-                  {/* Photo Upload */}
-                  <div className="mt-0">
-                    <Typography variant="subtitle1" gutterBottom>
-                      Recipe Photo
-                    </Typography>
-                    <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                      {photo && !imageError ? (
-                        <div className="space-y-4">
-                          <Image
-                            src={photo}
-                            alt="Recipe preview"
-                            width={400}
-                            height={192}
-                            className="w-full h-48 object-cover rounded-lg"
-                            onError={() => setImageError(true)}
-                          />
-                          <Button
-                            variant="outlined"
-                            startIcon={<PhotoCameraIcon />}
-                            component="label"
-                          >
-                            Change Photo
-                            <input
-                              type="file"
-                              hidden
-                              accept="image/*"
-                              onChange={handlePhotoUpload}
+                    {/* Photo Upload */}
+                    <div className="mt-0">
+                      <Typography variant="subtitle1" gutterBottom>
+                        Recipe Photo
+                      </Typography>
+                      <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                        {photo && !imageError ? (
+                          <div className="space-y-4">
+                            <Image
+                              src={photo}
+                              alt="Recipe preview"
+                              width={400}
+                              height={192}
+                              className="w-full h-48 object-cover rounded-lg"
+                              onError={() => setImageError(true)}
                             />
-                          </Button>
-                        </div>
-                      ) : photo && imageError ? (
-                        <div className="space-y-4">
-                          <div className="w-full h-48 bg-gray-100 flex items-center justify-center rounded-lg">
-                            <LocalDiningIcon
-                              sx={{ fontSize: 48, color: "#9CA3AF" }}
-                            />
-                          </div>
-                          <Button
-                            variant="outlined"
-                            startIcon={<PhotoCameraIcon />}
-                            component="label"
-                          >
-                            Change Photo
-                            <input
-                              type="file"
-                              hidden
-                              accept="image/*"
-                              onChange={handlePhotoUpload}
-                            />
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="space-y-4">
-                          <PhotoCameraIcon
-                            sx={{ fontSize: 48, color: "gray" }}
-                          />
-                          <div>
                             <Button
-                              variant="contained"
+                              variant="outlined"
                               startIcon={<PhotoCameraIcon />}
                               component="label"
                             >
-                              Upload Photo
+                              Change Photo
                               <input
                                 type="file"
                                 hidden
@@ -707,179 +667,190 @@ const RecipeBuilder: React.FC = () => {
                               />
                             </Button>
                           </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <FormControl fullWidth margin="normal" sx={{ mt: 4 }}>
-                    <InputLabel>Category</InputLabel>
-                    <Select
-                      value={category}
-                      label="Category"
-                      onChange={(e) => setCategory(e.target.value)}
-                    >
-                      {categoryOptions.map((option: string) => (
-                        <MenuItem key={option} value={option}>
-                          {option}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-
-                  <FormControl fullWidth margin="normal" sx={{ mt: 2 }}>
-                    <InputLabel>Cooking Type</InputLabel>
-                    <Select
-                      value={type}
-                      label="Cooking Type"
-                      onChange={(e) =>
-                        setType(
-                          e.target.value as "Smoker" | "Flat-top" | "Grill"
-                        )
-                      }
-                    >
-                      {typeOptions.map((option: string) => (
-                        <MenuItem key={option} value={option}>
-                          {option}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-
-                  {type === "Smoker" && (
-                    <TextField
-                      fullWidth
-                      label="Recommended Pellets"
-                      value={recommendedPellets}
-                      onChange={(e) => setRecommendedPellets(e.target.value)}
-                      margin="normal"
-                    />
-                  )}
-
-                  <TextField
-                    fullWidth
-                    label="Recipe Title"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    margin="normal"
-                    required
-                  />
-
-                  <TextField
-                    fullWidth
-                    label="Recipe Source URL"
-                    value={source}
-                    onChange={(e) => setSource(e.target.value)}
-                    margin="normal"
-                    placeholder="e.g., www.foodnetwork.com"
-                  />
-                  <TextField
-                    fullWidth
-                    label="Recipe Source Title"
-                    value={sourceTitle}
-                    onChange={(e) => setSourceTitle(e.target.value)}
-                    margin="normal"
-                    placeholder="e.g., The Best Chocolate Chip Cookies"
-                  />
-
-                  <TextField
-                    fullWidth
-                    label="Description"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    margin="normal"
-                    multiline
-                    rows={3}
-                    required
-                  />
-
-                  <div className="flex flex-col">
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={favorite}
-                          onChange={(e) => setFavorite(e.target.checked)}
-                        />
-                      }
-                      label="Mark as Favorite"
-                      sx={{ mt: 2 }}
-                    />
-
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={isPublic}
-                          onChange={(e) => setIsPublic(e.target.checked)}
-                        />
-                      }
-                      label="Mark as Public"
-                      sx={{ mt: 1 }}
-                    />
-                    <FormControlLabel
-                      control={
-                        <Switch
-                          checked={sharedFamily}
-                          onChange={(e) => setSharedFamily(e.target.checked)}
-                        />
-                      }
-                      label="Make Shareable With Family"
-                      sx={{ mt: 1 }}
-                    />
-
-                    {/* Family Recipe Section */}
-                    {sharedFamily && (
-                      <div className="mt-4 space-y-4">
-                        <Typography variant="subtitle1" sx={{ mb: 2 }}>
-                          Family Recipe Details
-                        </Typography>
-
-                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
-                          {familyPhoto && !familyPhotoError ? (
-                            <div className="space-y-4">
-                              <Image
-                                src={familyPhoto}
-                                alt="Family recipe card"
-                                width={400}
-                                height={192}
-                                className="w-full h-48 object-cover rounded-lg"
-                                onError={() => setFamilyPhotoError(true)}
+                        ) : photo && imageError ? (
+                          <div className="space-y-4">
+                            <div className="w-full h-48 bg-gray-100 flex items-center justify-center rounded-lg">
+                              <LocalDiningIcon
+                                sx={{ fontSize: 48, color: "#9CA3AF" }}
                               />
+                            </div>
+                            <Button
+                              variant="outlined"
+                              startIcon={<PhotoCameraIcon />}
+                              component="label"
+                            >
+                              Change Photo
+                              <input
+                                type="file"
+                                hidden
+                                accept="image/*"
+                                onChange={handlePhotoUpload}
+                              />
+                            </Button>
+                          </div>
+                        ) : (
+                          <div className="space-y-4">
+                            <PhotoCameraIcon
+                              sx={{ fontSize: 48, color: "gray" }}
+                            />
+                            <div>
                               <Button
-                                variant="outlined"
+                                variant="contained"
                                 startIcon={<PhotoCameraIcon />}
                                 component="label"
                               >
-                                Change Family Recipe Photo
+                                Upload Photo
                                 <input
                                   type="file"
                                   hidden
                                   accept="image/*"
-                                  onChange={(e) => {
-                                    const file = e.target.files?.[0];
-                                    if (file) {
-                                      const reader = new FileReader();
-                                      reader.onloadend = () => {
-                                        setFamilyPhoto(reader.result as string);
-                                        setFamilyPhotoError(false);
-                                      };
-                                      reader.readAsDataURL(file);
-                                    }
-                                  }}
+                                  onChange={handlePhotoUpload}
                                 />
                               </Button>
                             </div>
-                          ) : (
-                            <div className="space-y-4">
-                              <PhotoCameraIcon
-                                sx={{ fontSize: 48, color: "gray" }}
-                              />
-                              <div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <FormControl fullWidth margin="normal" sx={{ mt: 4 }}>
+                      <InputLabel>Category</InputLabel>
+                      <Select
+                        value={category}
+                        label="Category"
+                        onChange={(e) => setCategory(e.target.value)}
+                      >
+                        {categoryOptions.map((option: string) => (
+                          <MenuItem key={option} value={option}>
+                            {option}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+
+                    <FormControl fullWidth margin="normal" sx={{ mt: 2 }}>
+                      <InputLabel>Cooking Type</InputLabel>
+                      <Select
+                        value={type}
+                        label="Cooking Type"
+                        onChange={(e) =>
+                          setType(
+                            e.target.value as "Smoker" | "Flat-top" | "Grill"
+                          )
+                        }
+                      >
+                        {typeOptions.map((option: string) => (
+                          <MenuItem key={option} value={option}>
+                            {option}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+
+                    {type === "Smoker" && (
+                      <TextField
+                        fullWidth
+                        label="Recommended Pellets"
+                        value={recommendedPellets}
+                        onChange={(e) => setRecommendedPellets(e.target.value)}
+                        margin="normal"
+                      />
+                    )}
+
+                    <TextField
+                      fullWidth
+                      label="Recipe Title"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      margin="normal"
+                      required
+                    />
+
+                    <TextField
+                      fullWidth
+                      label="Recipe Source URL"
+                      value={source}
+                      onChange={(e) => setSource(e.target.value)}
+                      margin="normal"
+                      placeholder="e.g., www.foodnetwork.com"
+                    />
+                    <TextField
+                      fullWidth
+                      label="Recipe Source Title"
+                      value={sourceTitle}
+                      onChange={(e) => setSourceTitle(e.target.value)}
+                      margin="normal"
+                      placeholder="e.g., The Best Chocolate Chip Cookies"
+                    />
+
+                    <TextField
+                      fullWidth
+                      label="Description"
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      margin="normal"
+                      multiline
+                      rows={3}
+                      required
+                    />
+
+                    <div className="flex flex-col">
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={favorite}
+                            onChange={(e) => setFavorite(e.target.checked)}
+                          />
+                        }
+                        label="Mark as Favorite"
+                        sx={{ mt: 2 }}
+                      />
+
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={isPublic}
+                            onChange={(e) => setIsPublic(e.target.checked)}
+                          />
+                        }
+                        label="Mark as Public"
+                        sx={{ mt: 1 }}
+                      />
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={sharedFamily}
+                            onChange={(e) => setSharedFamily(e.target.checked)}
+                          />
+                        }
+                        label="Make Shareable With Family"
+                        sx={{ mt: 1 }}
+                      />
+
+                      {/* Family Recipe Section */}
+                      {sharedFamily && (
+                        <div className="mt-4 space-y-4">
+                          <Typography variant="subtitle1" sx={{ mb: 2 }}>
+                            Family Recipe Details
+                          </Typography>
+
+                          <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                            {familyPhoto && !familyPhotoError ? (
+                              <div className="space-y-4">
+                                <Image
+                                  src={familyPhoto}
+                                  alt="Family recipe card"
+                                  width={400}
+                                  height={192}
+                                  className="w-full h-48 object-cover rounded-lg"
+                                  onError={() => setFamilyPhotoError(true)}
+                                />
                                 <Button
-                                  variant="contained"
+                                  variant="outlined"
                                   startIcon={<PhotoCameraIcon />}
                                   component="label"
                                 >
-                                  Upload Family Recipe Photo
+                                  Change Family Recipe Photo
                                   <input
                                     type="file"
                                     hidden
@@ -900,184 +871,171 @@ const RecipeBuilder: React.FC = () => {
                                   />
                                 </Button>
                               </div>
-                            </div>
-                          )}
+                            ) : (
+                              <div className="space-y-4">
+                                <PhotoCameraIcon
+                                  sx={{ fontSize: 48, color: "gray" }}
+                                />
+                                <div>
+                                  <Button
+                                    variant="contained"
+                                    startIcon={<PhotoCameraIcon />}
+                                    component="label"
+                                  >
+                                    Upload Family Recipe Photo
+                                    <input
+                                      type="file"
+                                      hidden
+                                      accept="image/*"
+                                      onChange={(e) => {
+                                        const file = e.target.files?.[0];
+                                        if (file) {
+                                          const reader = new FileReader();
+                                          reader.onloadend = () => {
+                                            setFamilyPhoto(
+                                              reader.result as string
+                                            );
+                                            setFamilyPhotoError(false);
+                                          };
+                                          reader.readAsDataURL(file);
+                                        }
+                                      }}
+                                    />
+                                  </Button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+
+                          <TextField
+                            fullWidth
+                            label="Family Recipe Notes"
+                            value={familyNotes}
+                            onChange={(e) => setFamilyNotes(e.target.value)}
+                            multiline
+                            rows={4}
+                            placeholder="Share the story behind this recipe, special memories, or family traditions associated with it..."
+                          />
                         </div>
-
-                        <TextField
-                          fullWidth
-                          label="Family Recipe Notes"
-                          value={familyNotes}
-                          onChange={(e) => setFamilyNotes(e.target.value)}
-                          multiline
-                          rows={4}
-                          placeholder="Share the story behind this recipe, special memories, or family traditions associated with it..."
-                        />
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Right Column */}
-            <div className="space-y-6">
-              {/* Timing & Servings */}
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" sx={{ mb: 2 }}>
-                    Timing & Servings
-                  </Typography>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <TextField
-                      label="Servings"
-                      type="number"
-                      value={servings}
-                      onChange={(e) =>
-                        setServings(parseInt(e.target.value) || 1)
-                      }
-                      sx={{ "& input": { min: 1 } }}
-                      size="small"
-                    />
-                    <TextField
-                      label="Prep Time (min)"
-                      type="number"
-                      value={prepTime}
-                      onChange={(e) =>
-                        setPrepTime(parseInt(e.target.value) || 0)
-                      }
-                      sx={{ "& input": { min: 0 } }}
-                      size="small"
-                    />
-                    <TextField
-                      label="Cook Hours"
-                      type="number"
-                      value={cookHours}
-                      onChange={(e) => {
-                        const hours = parseInt(e.target.value) || 0;
-                        setCookHours(hours);
-                        setCookTime(hours * 60 + cookMinutes);
-                      }}
-                      sx={{ "& input": { min: 0 } }}
-                      size="small"
-                    />
-                    <TextField
-                      label="Cook Minutes"
-                      type="number"
-                      value={cookMinutes}
-                      onChange={(e) => {
-                        const minutes = parseInt(e.target.value) || 0;
-                        setCookMinutes(minutes);
-                        setCookTime(cookHours * 60 + minutes);
-                      }}
-                      sx={{ "& input": { min: 0, max: 59 } }}
-                      size="small"
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-
-              {/* Ingredients */}
-              <Card>
-                <CardContent>
-                  <div className="mb-4">
-                    <Typography variant="h6">Ingredients</Typography>
-                  </div>
-
-                  <div className="space-y-3">
-                    {ingredients.map((ingredient, index) => (
-                      <div
-                        key={ingredient.id}
-                        className="flex gap-2 items-center"
-                      >
-                        <TextField
-                          placeholder="Ingredient name"
-                          value={ingredient.name || ""}
-                          onChange={(e) =>
-                            handleIngredientChange(
-                              index,
-                              "name",
-                              e.target.value
-                            )
-                          }
-                          size="small"
-                          sx={{ flex: 2 }}
-                        />
-                        <TextField
-                          placeholder="Amount (e.g., 1, ½, 2¾, 1/3)"
-                          value={ingredient.amount || ""}
-                          onChange={(e) =>
-                            handleIngredientChange(
-                              index,
-                              "amount",
-                              e.target.value
-                            )
-                          }
-                          size="small"
-                          sx={{ flex: 1 }}
-                        />
-                        <TextField
-                          placeholder="Unit"
-                          value={ingredient.unit || ""}
-                          onChange={(e) =>
-                            handleIngredientChange(
-                              index,
-                              "unit",
-                              e.target.value
-                            )
-                          }
-                          size="small"
-                          sx={{ flex: 1 }}
-                        />
-                        <IconButton
-                          onClick={() => removeIngredient(index)}
-                          disabled={ingredients.length === 1}
-                          size="small"
-                          sx={{
-                            color: "#9ca3af",
-                            "&:hover": {
-                              color: "#ef4444",
-                              backgroundColor: "rgba(239, 68, 68, 0.04)",
-                            },
-                          }}
-                        >
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </div>
-                    ))}
-
-                    {/* Add button at bottom left */}
-                    <div className="flex justify-start mt-3">
-                      <IconButton
-                        onClick={addIngredient}
-                        color="primary"
-                        size="small"
-                      >
-                        <AddIcon />
-                      </IconButton>
+                      )}
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
+              </div>
 
-              {/* Steps */}
-              <Card>
-                <CardContent>
-                  <div className="mb-4">
-                    <Typography variant="h6">Instructions</Typography>
-                  </div>
+              {/* Right Column */}
+              <div className="space-y-6">
+                {/* Timing & Servings */}
+                <Card sx={{ boxShadow: "none", border: "none" }}>
+                  <CardContent>
+                    <Typography variant="h6" sx={{ mb: 2 }}>
+                      Timing & Servings
+                    </Typography>
 
-                  <div className="space-y-4">
-                    {steps.map((step, index) => (
-                      <div key={step.id} className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="font-bold text-black">
-                            Step {index + 1}
-                          </span>
+                    <div className="grid grid-cols-2 gap-4">
+                      <TextField
+                        label="Servings"
+                        type="number"
+                        value={servings}
+                        onChange={(e) =>
+                          setServings(parseInt(e.target.value) || 1)
+                        }
+                        sx={{ "& input": { min: 1 } }}
+                        size="small"
+                      />
+                      <TextField
+                        label="Prep Time (min)"
+                        type="number"
+                        value={prepTime}
+                        onChange={(e) =>
+                          setPrepTime(parseInt(e.target.value) || 0)
+                        }
+                        sx={{ "& input": { min: 0 } }}
+                        size="small"
+                      />
+                      <TextField
+                        label="Cook Hours"
+                        type="number"
+                        value={cookHours}
+                        onChange={(e) => {
+                          const hours = parseInt(e.target.value) || 0;
+                          setCookHours(hours);
+                          setCookTime(hours * 60 + cookMinutes);
+                        }}
+                        sx={{ "& input": { min: 0 } }}
+                        size="small"
+                      />
+                      <TextField
+                        label="Cook Minutes"
+                        type="number"
+                        value={cookMinutes}
+                        onChange={(e) => {
+                          const minutes = parseInt(e.target.value) || 0;
+                          setCookMinutes(minutes);
+                          setCookTime(cookHours * 60 + minutes);
+                        }}
+                        sx={{ "& input": { min: 0, max: 59 } }}
+                        size="small"
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Ingredients */}
+                <Card sx={{ boxShadow: "none", border: "none" }}>
+                  <CardContent>
+                    <div className="mb-4">
+                      <Typography variant="h6">Ingredients</Typography>
+                    </div>
+
+                    <div className="space-y-3">
+                      {ingredients.map((ingredient, index) => (
+                        <div
+                          key={ingredient.id}
+                          className="flex gap-2 items-center"
+                        >
+                          <TextField
+                            placeholder="Ingredient name"
+                            value={ingredient.name || ""}
+                            onChange={(e) =>
+                              handleIngredientChange(
+                                index,
+                                "name",
+                                e.target.value
+                              )
+                            }
+                            size="small"
+                            sx={{ flex: 2 }}
+                          />
+                          <TextField
+                            placeholder="Amount (e.g., 1, ½, 2¾, 1/3)"
+                            value={ingredient.amount || ""}
+                            onChange={(e) =>
+                              handleIngredientChange(
+                                index,
+                                "amount",
+                                e.target.value
+                              )
+                            }
+                            size="small"
+                            sx={{ flex: 1 }}
+                          />
+                          <TextField
+                            placeholder="Unit"
+                            value={ingredient.unit || ""}
+                            onChange={(e) =>
+                              handleIngredientChange(
+                                index,
+                                "unit",
+                                e.target.value
+                              )
+                            }
+                            size="small"
+                            sx={{ flex: 1 }}
+                          />
                           <IconButton
-                            onClick={() => removeStep(index)}
-                            disabled={steps.length === 1}
+                            onClick={() => removeIngredient(index)}
+                            disabled={ingredients.length === 1}
                             size="small"
                             sx={{
                               color: "#9ca3af",
@@ -1090,141 +1048,244 @@ const RecipeBuilder: React.FC = () => {
                             <DeleteIcon fontSize="small" />
                           </IconButton>
                         </div>
-                        <TextField
-                          placeholder="Describe this step..."
-                          value={step.step || ""}
-                          onChange={(e) =>
-                            handleStepChange(index, "step", e.target.value)
-                          }
-                          multiline
-                          rows={2}
+                      ))}
+
+                      {/* Add button at bottom left */}
+                      <div className="flex justify-start mt-3">
+                        <IconButton
+                          onClick={addIngredient}
+                          color="primary"
                           size="small"
-                          fullWidth
-                        />
-
-                        {type === "Smoker" && (
-                          <div className="flex gap-4 items-center mt-3 p-3 bg-gray-50 rounded">
-                            <TextField
-                              placeholder="Temp (°F)"
-                              type="number"
-                              value={step.temperature || ""}
-                              onChange={(e) =>
-                                handleStepChange(
-                                  index,
-                                  "temperature",
-                                  e.target.value ? parseInt(e.target.value) : ""
-                                )
-                              }
-                              size="small"
-                              sx={{ width: 120 }}
-                            />
-                            <TextField
-                              placeholder="Time (min)"
-                              type="number"
-                              value={step.time || ""}
-                              onChange={(e) =>
-                                handleStepChange(
-                                  index,
-                                  "time",
-                                  e.target.value ? parseInt(e.target.value) : ""
-                                )
-                              }
-                              size="small"
-                              sx={{ width: 120 }}
-                            />
-                            <FormControlLabel
-                              control={
-                                <Switch
-                                  checked={step.superSmoke || false}
-                                  onChange={(e) =>
-                                    handleStepChange(
-                                      index,
-                                      "superSmoke",
-                                      e.target.checked
-                                    )
-                                  }
-                                  size="small"
-                                />
-                              }
-                              label="Super Smoke"
-                              sx={{ ml: 2 }}
-                            />
-                          </div>
-                        )}
+                        >
+                          <AddIcon />
+                        </IconButton>
                       </div>
-                    ))}
-
-                    {/* Add button at bottom left */}
-                    <div className="flex justify-start mt-3">
-                      <IconButton
-                        onClick={addStep}
-                        color="primary"
-                        size="small"
-                      >
-                        <AddIcon />
-                      </IconButton>
                     </div>
-                  </div>
-                </CardContent>
-              </Card>
+                  </CardContent>
+                </Card>
 
-              {/* My Notes */}
-              <Card>
-                <CardContent>
-                  <Typography variant="h6" sx={{ mb: 2 }}>
-                    My Notes
-                  </Typography>
-                  <TextField
-                    fullWidth
-                    placeholder="Add any personal notes, tips, or variations..."
-                    value={myNotes}
-                    onChange={(e) => setMyNotes(e.target.value)}
-                    multiline
-                    rows={4}
-                  />
-                </CardContent>
-              </Card>
+                {/* Steps */}
+                <Card sx={{ boxShadow: "none", border: "none" }}>
+                  <CardContent>
+                    <div className="mb-4">
+                      <Typography variant="h6">Instructions</Typography>
+                    </div>
+
+                    <div className="space-y-4">
+                      {steps.map((step, index) => (
+                        <div key={step.id} className="space-y-2">
+                          <div className="flex items-center justify-between">
+                            <span className="font-bold text-black">
+                              Step {index + 1}
+                            </span>
+                            <IconButton
+                              onClick={() => removeStep(index)}
+                              disabled={steps.length === 1}
+                              size="small"
+                              sx={{
+                                color: "#9ca3af",
+                                "&:hover": {
+                                  color: "#ef4444",
+                                  backgroundColor: "rgba(239, 68, 68, 0.04)",
+                                },
+                              }}
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </div>
+                          <TextField
+                            placeholder="Describe this step..."
+                            value={step.step || ""}
+                            onChange={(e) =>
+                              handleStepChange(index, "step", e.target.value)
+                            }
+                            multiline
+                            rows={2}
+                            size="small"
+                            fullWidth
+                          />
+
+                          {type === "Smoker" && (
+                            <div className="flex gap-4 items-center mt-3 p-3 bg-gray-50 rounded">
+                              <TextField
+                                placeholder="Temp (°F)"
+                                type="number"
+                                value={step.temperature || ""}
+                                onChange={(e) =>
+                                  handleStepChange(
+                                    index,
+                                    "temperature",
+                                    e.target.value
+                                      ? parseInt(e.target.value)
+                                      : ""
+                                  )
+                                }
+                                size="small"
+                                sx={{ width: 120 }}
+                              />
+                              <TextField
+                                placeholder="Time (min)"
+                                type="number"
+                                value={step.time || ""}
+                                onChange={(e) =>
+                                  handleStepChange(
+                                    index,
+                                    "time",
+                                    e.target.value
+                                      ? parseInt(e.target.value)
+                                      : ""
+                                  )
+                                }
+                                size="small"
+                                sx={{ width: 120 }}
+                              />
+                              <FormControlLabel
+                                control={
+                                  <Switch
+                                    checked={step.superSmoke || false}
+                                    onChange={(e) =>
+                                      handleStepChange(
+                                        index,
+                                        "superSmoke",
+                                        e.target.checked
+                                      )
+                                    }
+                                    size="small"
+                                  />
+                                }
+                                label="Super Smoke"
+                                sx={{ ml: 2 }}
+                              />
+                            </div>
+                          )}
+                        </div>
+                      ))}
+
+                      {/* Add button at bottom left */}
+                      <div className="flex justify-start mt-3">
+                        <IconButton
+                          onClick={addStep}
+                          color="primary"
+                          size="small"
+                        >
+                          <AddIcon />
+                        </IconButton>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* My Notes */}
+                <Card sx={{ boxShadow: "none", border: "none" }}>
+                  <CardContent>
+                    <Typography variant="h6" sx={{ mb: 2 }}>
+                      My Notes
+                    </Typography>
+                    <TextField
+                      fullWidth
+                      placeholder="Add any personal notes, tips, or variations..."
+                      value={myNotes}
+                      onChange={(e) => setMyNotes(e.target.value)}
+                      multiline
+                      rows={4}
+                    />
+                  </CardContent>
+                </Card>
+              </div>
             </div>
-          </div>
 
-          {/* Action Buttons */}
-          <div className="mt-8 pt-6 border-t border-gray-200">
-            {/* Import Recipe Section - Mobile: Above buttons, Desktop: Left side */}
-            {!editId && (
-              <div className="mb-4 sm:hidden">
-                <div className="flex flex-col gap-2">
-                  <TextField
-                    label={
-                      <span style={{ fontFamily: "monospace" }}>
-                        Import Recipe URL
-                      </span>
-                    }
-                    value={importUrl}
-                    onChange={(e) => setImportUrl(e.target.value)}
-                    placeholder="https://example.com/recipe"
-                    size="small"
-                    fullWidth
-                    sx={{
-                      "& .MuiInputBase-input": {
-                        fontFamily: "monospace",
-                      },
-                    }}
-                  />
+            {/* Action Buttons */}
+            <div className="mt-8 pt-6 border-t border-gray-200">
+              {/* Import Recipe Section - Mobile: Above buttons, Desktop: Left side */}
+              {!editId && (
+                <div className="mb-4 sm:hidden">
+                  <div className="flex flex-col gap-2">
+                    <TextField
+                      label={
+                        <span style={{ fontFamily: "monospace" }}>
+                          Import Recipe URL
+                        </span>
+                      }
+                      value={importUrl}
+                      onChange={(e) => setImportUrl(e.target.value)}
+                      placeholder="https://example.com/recipe"
+                      size="small"
+                      fullWidth
+                      sx={{
+                        "& .MuiInputBase-input": {
+                          fontFamily: "monospace",
+                        },
+                      }}
+                    />
+                    <Button
+                      variant="outlined"
+                      onClick={handleImportRecipe}
+                      disabled={!importUrl || isImporting}
+                      fullWidth
+                    >
+                      {isImporting ? "Importing..." : "Import"}
+                    </Button>
+                  </div>
+                </div>
+              )}
+
+              {/* Desktop Layout */}
+              <div className="hidden sm:flex flex-row-reverse justify-between items-center">
+                <div className="flex items-center gap-2">
+                  {editId && (
+                    <IconButton
+                      onClick={handleDelete}
+                      color="error"
+                      title="Delete Recipe"
+                    >
+                      <DeleteIcon />
+                    </IconButton>
+                  )}
+                  <Link href="/recipes">
+                    <Button variant="outlined">Cancel</Button>
+                  </Link>
                   <Button
-                    variant="outlined"
-                    onClick={handleImportRecipe}
-                    disabled={!importUrl || isImporting}
-                    fullWidth
+                    variant="contained"
+                    // startIcon={<SaveIcon />}
+                    onClick={handleSave}
+                    disabled={saving}
                   >
-                    {isImporting ? "Importing..." : "Import"}
+                    {saving ? "Saving..." : editId ? "Update" : "Add Recipe"}
                   </Button>
                 </div>
-              </div>
-            )}
 
-            {/* Desktop Layout */}
-            <div className="hidden sm:flex flex-row-reverse justify-between items-center">
-              <div className="flex items-center gap-2">
+                {!editId && (
+                  <div className="flex items-center gap-2">
+                    <TextField
+                      label={
+                        <span style={{ fontFamily: "monospace" }}>
+                          Import Recipe URL
+                        </span>
+                      }
+                      value={importUrl}
+                      onChange={(e) => setImportUrl(e.target.value)}
+                      placeholder="https://example.com/recipe"
+                      size="small"
+                      sx={{
+                        width: "400px",
+                        "& .MuiInputBase-input": {
+                          fontFamily: "monospace",
+                        },
+                      }}
+                    />
+                    <Button
+                      variant="outlined"
+                      onClick={handleImportRecipe}
+                      disabled={!importUrl || isImporting}
+                    >
+                      {isImporting ? "Importing..." : "Import"}
+                    </Button>
+                  </div>
+                )}
+              </div>
+
+              {/* Mobile Layout - Action Buttons */}
+              <div className="flex sm:hidden justify-center items-center gap-2">
                 {editId && (
                   <IconButton
                     onClick={handleDelete}
@@ -1234,71 +1295,21 @@ const RecipeBuilder: React.FC = () => {
                     <DeleteIcon />
                   </IconButton>
                 )}
-                <Link href="/recipes">
-                  <Button variant="outlined">Cancel</Button>
+                <Link href="/recipes" className="w-1/2 sm:w-auto">
+                  <Button variant="outlined" fullWidth className="w-full">
+                    Cancel
+                  </Button>
                 </Link>
                 <Button
                   variant="contained"
-                  startIcon={<SaveIcon />}
+                  // startIcon={<SaveIcon />}
                   onClick={handleSave}
                   disabled={saving}
+                  className="w-1/2 sm:w-auto"
                 >
-                  {saving ? "Saving..." : editId ? "Update" : "Save"}
+                  {saving ? "Saving..." : editId ? "Update" : "Add Recipe"}
                 </Button>
               </div>
-
-              {!editId && (
-                <div className="flex items-center gap-2">
-                  <TextField
-                    label={
-                      <span style={{ fontFamily: "monospace" }}>
-                        Import Recipe URL
-                      </span>
-                    }
-                    value={importUrl}
-                    onChange={(e) => setImportUrl(e.target.value)}
-                    placeholder="https://example.com/recipe"
-                    size="small"
-                    sx={{
-                      width: "400px",
-                      "& .MuiInputBase-input": {
-                        fontFamily: "monospace",
-                      },
-                    }}
-                  />
-                  <Button
-                    variant="outlined"
-                    onClick={handleImportRecipe}
-                    disabled={!importUrl || isImporting}
-                  >
-                    {isImporting ? "Importing..." : "Import"}
-                  </Button>
-                </div>
-              )}
-            </div>
-
-            {/* Mobile Layout - Action Buttons */}
-            <div className="flex sm:hidden justify-center items-center gap-2">
-              {editId && (
-                <IconButton
-                  onClick={handleDelete}
-                  color="error"
-                  title="Delete Recipe"
-                >
-                  <DeleteIcon />
-                </IconButton>
-              )}
-              <Link href="/recipes">
-                <Button variant="outlined">Cancel</Button>
-              </Link>
-              <Button
-                variant="contained"
-                startIcon={<SaveIcon />}
-                onClick={handleSave}
-                disabled={saving}
-              >
-                {saving ? "Saving..." : editId ? "Update" : "Save"}
-              </Button>
             </div>
           </div>
         </div>

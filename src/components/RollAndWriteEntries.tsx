@@ -481,9 +481,9 @@ const RollAndWriteEntries: React.FC = () => {
             {/* Filter and Create New Entry Button - Only show when there are entries */}
             {!loadingEntries && entries.length > 0 && (
               <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
-                <div className="w-full flex items-center justify-between">
+                <div className="w-full flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                   {/* Left side: Sort dropdown and Family filters */}
-                  <div className="flex items-center gap-4">
+                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">
                     <FormControl size="small" sx={{ minWidth: 140 }}>
                       <InputLabel
                         sx={{ fontFamily: "monospace", fontSize: "0.875rem" }}
@@ -606,10 +606,10 @@ const RollAndWriteEntries: React.FC = () => {
                   </div>
 
                   {/* Right side: Roll Them Dice button */}
-                  <div>
+                  <div className="w-full sm:w-auto flex justify-center sm:justify-end">
                     <Link
                       href="/rollandwrite/roll?autoroll=true"
-                      className="px-4 py-2 rounded bg-blue-600 text-white font-mono text-sm hover:bg-blue-700 transition"
+                      className="w-full px-2 py-2 rounded bg-blue-600 text-white text-center font-mono text-sm hover:bg-blue-700 transition"
                     >
                       Roll Them Dice
                     </Link>

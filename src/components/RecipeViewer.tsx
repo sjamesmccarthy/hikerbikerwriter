@@ -1013,7 +1013,7 @@ const RecipeViewer: React.FC<RecipeViewerProps> = ({}) => {
                       {filteredRecipes.map((recipe) => (
                         <div
                           key={recipe.id}
-                          className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow relative"
+                          className="bg-white border border-gray-200 rounded-xl overflow-hidden transition-all duration-300 relative hover:scale-105"
                         >
                           {/* Edit button for logged in users - only show for their own recipes */}
                           {session &&

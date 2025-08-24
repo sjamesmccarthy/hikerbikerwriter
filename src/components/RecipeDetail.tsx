@@ -920,7 +920,7 @@ const RecipeDetail = React.memo(function RecipeDetail({
 
           {/* Recipe Content */}
           <div className="space-y-4">
-            <Accordion defaultExpanded>
+            <Accordion defaultExpanded elevation={0}>
               <AccordionSummary
                 expandIcon={<ExpandMoreIcon />}
                 sx={{ backgroundColor: "rgb(249 250 251)" }}
@@ -982,7 +982,7 @@ const RecipeDetail = React.memo(function RecipeDetail({
             </div>
 
             {/* Steps */}
-            <Accordion defaultExpanded>
+            <Accordion defaultExpanded elevation={0}>
               <AccordionSummary
                 expandIcon={<ExpandMoreIcon />}
                 sx={{ backgroundColor: "rgb(249 250 251)" }}
@@ -1037,7 +1037,7 @@ const RecipeDetail = React.memo(function RecipeDetail({
 
             {/* My Notes */}
             {recipe.myNotes && (
-              <Accordion>
+              <Accordion elevation={0}>
                 <AccordionSummary
                   expandIcon={<ExpandMoreIcon />}
                   sx={{ backgroundColor: "rgb(249 250 251)" }}

@@ -1031,9 +1031,9 @@ const FieldNotes: React.FC = () => {
                             )}
                           </div>
 
-                          <div className="flex gap-2 justify-end mb-2">
+                          <div className="flex gap-2 justify-center sm:justify-end mb-2">
                             <button
-                              className="px-3 py-1 rounded bg-blue-600 text-white font-mono text-sm hover:bg-blue-700 transition"
+                              className="w-1/2 sm:w-auto px-3 py-2 rounded bg-blue-600 text-white font-mono text-sm hover:bg-blue-700 transition"
                               onClick={async () => {
                                 try {
                                   console.log(
@@ -1127,7 +1127,7 @@ const FieldNotes: React.FC = () => {
                               Update
                             </button>
                             <button
-                              className="px-3 py-1 rounded bg-gray-200 text-gray-800 font-mono text-sm hover:bg-gray-300 transition"
+                              className="w-1/2 sm:w-auto px-3 py-2 rounded bg-gray-200 text-gray-800 font-mono text-sm hover:bg-gray-300 transition"
                               onClick={() => {
                                 setEditId(null);
                                 setEditTitle("");
@@ -1245,7 +1245,7 @@ const FieldNotes: React.FC = () => {
                                     );
                                   }}
                                 >
-                                  {/* <EditNoteOutlinedIcon /> */}
+                                  <EditNoteOutlinedIcon />
                                 </IconButton>
                                 <IconButton
                                   size="small"
@@ -1295,7 +1295,7 @@ const FieldNotes: React.FC = () => {
                                     }
                                   }}
                                 >
-                                  {/* <DeleteIcon sx={{ fontSize: 16 }} /> */}
+                                  <DeleteIcon sx={{ fontSize: 16 }} />
                                 </IconButton>
                               </div>
                             )}
@@ -1383,6 +1383,8 @@ const FieldNotes: React.FC = () => {
                                     note.shared_family ||
                                     false
                                 );
+                                // Switch to expanded view to show the edit form
+                                setMinimized(false);
                               }}
                             >
                               <EditNoteOutlinedIcon />

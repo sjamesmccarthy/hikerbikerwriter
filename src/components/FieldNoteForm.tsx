@@ -284,33 +284,28 @@ const FieldNoteForm: React.FC<FieldNoteFormProps> = ({
             )}
           </Box>
 
-          <div
-            style={{
-              display: "flex",
-              flexDirection: "row",
-              gap: 16,
-              marginBottom: 32,
-            }}
-          >
+          <div className="flex gap-4 mb-4 justify-center sm:justify-start">
             <Button
               type="submit"
               variant="contained"
               size="medium"
               disabled={!title.trim() || !content.trim() || isSubmitting}
+              className="w-1/2 sm:w-auto"
             >
               {isSubmitting
                 ? isEditing
                   ? "Saving..."
                   : "Creating..."
                 : isEditing
-                ? "Save Changes"
-                : "Create Field Note"}
+                ? "Update"
+                : "Add Note"}
             </Button>
             <Button
               variant="outlined"
               size="medium"
               onClick={onCancel}
               disabled={isSubmitting}
+              className="w-1/2 sm:w-auto"
             >
               Cancel
             </Button>
