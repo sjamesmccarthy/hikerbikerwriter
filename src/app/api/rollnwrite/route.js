@@ -7,30 +7,141 @@ export async function GET(request) {
     const userEmail = searchParams.get("userEmail");
     const includePublic = searchParams.get("includePublic");
 
-    let query, params;
+    console.log(
+      "GET /api/rollnwrite - userEmail:",
+      userEmail,
+      "includePublic:",
+      includePublic
+    );
 
-    if (userEmail && includePublic === "true") {
-      // Logged in user requesting both their own entries and public entries
-      query =
-        "SELECT * FROM rollnwrite WHERE user_email = ? OR is_public = 1 ORDER BY created DESC";
-      params = [userEmail];
-    } else if (userEmail) {
-      // Logged in user - get their entries only
-      query =
-        "SELECT * FROM rollnwrite WHERE user_email = ? ORDER BY created DESC";
-      params = [userEmail];
+    let allEntries = [];
+
+    if (
+      userEmail &&
+      userEmail !== "undefined" &&
+      userEmail !== "" &&
+      userEmail !== "null"
+    ) {
+      // Step 1: Get the user's person_id
+      console.log("Looking up person_id for user:", userEmail);
+      const [userRows] = await pool.execute(
+        "SELECT person_id FROM users WHERE email = ?",
+        [userEmail]
+      );
+
+      if (userRows.length > 0) {
+        const personId = userRows[0].person_id;
+        console.log("Found person_id:", personId);
+
+        // Step 2: Get the familyline data for this person_id
+        const [familyRows] = await pool.execute(
+          "SELECT json FROM familyline WHERE person_id = ?",
+          [personId]
+        );
+
+        let familyEmails = [];
+        if (familyRows.length > 0) {
+          console.log("Found familyline data");
+          let familyData = familyRows[0].json;
+          if (typeof familyData === "string") {
+            familyData = JSON.parse(familyData);
+          }
+
+          // Step 3: Loop through each person in the family JSON and collect emails
+          const familyMembers = familyData?.people || [];
+          console.log("Family members found:", familyMembers.length);
+
+          for (const person of familyMembers) {
+            if (person.email && person.email !== userEmail) {
+              familyEmails.push(person.email);
+              console.log("Added family email:", person.email);
+            }
+          }
+        }
+
+        console.log("All family emails to check:", familyEmails);
+
+        // Step 4: Get user's own entries + public entries (if requested)
+        let query, params;
+        if (includePublic === "true") {
+          if (familyEmails.length > 0) {
+            // If user has family, exclude family members from public entries to avoid duplicates
+            const familyEmailPlaceholders = familyEmails
+              .map(() => "?")
+              .join(",");
+            query = `SELECT * FROM rollnwrite WHERE user_email = ? OR (is_public = 1 AND user_email NOT IN (${familyEmailPlaceholders}))`;
+            params = [userEmail, ...familyEmails];
+          } else {
+            // If no family, get user's entries + all public entries
+            query =
+              "SELECT * FROM rollnwrite WHERE user_email = ? OR is_public = 1";
+            params = [userEmail];
+          }
+        } else {
+          // Just user's own entries
+          query = "SELECT * FROM rollnwrite WHERE user_email = ?";
+          params = [userEmail];
+        }
+
+        console.log("Step 4 Query:", query);
+        console.log("Step 4 Params:", params);
+
+        const [userAndPublicEntries] = await pool.execute(query, params);
+        allEntries.push(...userAndPublicEntries);
+        console.log(
+          "Found",
+          userAndPublicEntries.length,
+          "user + public roll and write entries"
+        );
+
+        // Step 5: For each family member email, get their shared_family entries
+        if (familyEmails.length > 0) {
+          for (const familyEmail of familyEmails) {
+            console.log(
+              "Checking shared roll and write entries for family member:",
+              familyEmail
+            );
+            const [familyEntries] = await pool.execute(
+              "SELECT * FROM rollnwrite WHERE user_email = ? AND shared_family = 1",
+              [familyEmail]
+            );
+            allEntries.push(...familyEntries);
+            console.log(
+              "Found",
+              familyEntries.length,
+              "shared roll and write entries from",
+              familyEmail
+            );
+          }
+        }
+
+        // Sort all entries by created date
+        allEntries.sort((a, b) => new Date(b.created) - new Date(a.created));
+        console.log(
+          "Total roll and write entries after combining all sources:",
+          allEntries.length
+        );
+      } else {
+        console.log("No user found with email:", userEmail);
+        // Fallback: just get public entries
+        if (includePublic === "true") {
+          const [publicEntries] = await pool.execute(
+            "SELECT * FROM rollnwrite WHERE is_public = 1 ORDER BY created DESC"
+          );
+          allEntries = publicEntries;
+        }
+      }
     } else {
       // Not logged in - get public entries only
-      query =
-        "SELECT * FROM rollnwrite WHERE is_public = 1 ORDER BY created DESC";
-      params = [];
+      const [publicEntries] = await pool.execute(
+        "SELECT * FROM rollnwrite WHERE is_public = 1 ORDER BY created DESC"
+      );
+      allEntries = publicEntries;
+      console.log("Using public-only query");
     }
 
-    // Get rollnwrite entries from database based on login status
-    const [rows] = await pool.execute(query, params);
-
     // Parse the JSON data and add any missing fields for frontend compatibility
-    const entries = rows.map((row) => {
+    const entries = allEntries.map((row) => {
       // Check if row.json is already an object or needs parsing
       const entry =
         typeof row.json === "string" ? JSON.parse(row.json) : row.json;

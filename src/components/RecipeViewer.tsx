@@ -465,9 +465,10 @@ const RecipeViewer: React.FC<RecipeViewerProps> = ({}) => {
         console.log("selectedFamilyMember:", selectedFamilyMember);
 
         if (selectedFamilyMember === "All") {
-          // Show all family recipes (recipes with shared_family enabled)
+          // Show all family recipes (recipes with shared_family enabled) but exclude logged-in user's recipes
           familyMatch =
-            recipe.shared_family === 1 || recipe.shared_family === true;
+            (recipe.shared_family === 1 || recipe.shared_family === true) &&
+            recipe.userEmail !== session?.user?.email;
           console.log("Family match result (All):", familyMatch);
         } else {
           // Show recipes from the selected family member
@@ -1194,6 +1195,27 @@ const RecipeViewer: React.FC<RecipeViewerProps> = ({}) => {
                                 <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 min-h-[3rem] flex items-start uppercase">
                                   {recipe.title}
                                 </h3>
+
+                                {/* Show family member name for shared family recipes */}
+                                {(recipe.shared_family === 1 ||
+                                  recipe.shared_family === true) &&
+                                  recipe.userEmail !== session?.user?.email && (
+                                    <div className="text-sm text-blue-600 font-medium mb-2 flex items-center">
+                                      <PeopleIcon
+                                        sx={{ fontSize: 16, mr: 0.5 }}
+                                      />
+                                      {(() => {
+                                        const familyMember = familyMembers.find(
+                                          (member) =>
+                                            member.email === recipe.userEmail
+                                        );
+                                        return familyMember
+                                          ? familyMember.name
+                                          : recipe.userEmail;
+                                      })()}
+                                    </div>
+                                  )}
+
                                 <div className="w-full h-px bg-gray-200 mb-2"></div>
                                 <div className="flex items-center text-sm text-gray-500 mt-auto">
                                   <AccessTimeIcon
@@ -1218,16 +1240,37 @@ const RecipeViewer: React.FC<RecipeViewerProps> = ({}) => {
                     className="bg-white border border-gray-200 rounded-xl p-4 text-left mb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between"
                   >
                     <Link href={`/recipes/${recipe.slug}`} className="flex-1">
-                      <span className="font-bold text-gray-900 font-mono text-base uppercase flex items-center gap-2">
+                      <div className="flex flex-col">
+                        <span className="font-bold text-gray-900 font-mono text-base uppercase flex items-center gap-2">
+                          {(recipe.shared_family === 1 ||
+                            recipe.shared_family === true) && (
+                            <PeopleIcon
+                              sx={{ fontSize: 16, color: "#3b82f6" }}
+                            />
+                          )}
+                          {recipe.public && (
+                            <PublicIcon sx={{ fontSize: 16, color: "gray" }} />
+                          )}
+                          {recipe.title}
+                        </span>
+
+                        {/* Show family member name for shared family recipes */}
                         {(recipe.shared_family === 1 ||
-                          recipe.shared_family === true) && (
-                          <PeopleIcon sx={{ fontSize: 16, color: "#3b82f6" }} />
-                        )}
-                        {recipe.public && (
-                          <PublicIcon sx={{ fontSize: 16, color: "gray" }} />
-                        )}
-                        {recipe.title}
-                      </span>
+                          recipe.shared_family === true) &&
+                          recipe.userEmail !== session?.user?.email && (
+                            <span className="text-sm text-blue-600 font-medium mt-1">
+                              by{" "}
+                              {(() => {
+                                const familyMember = familyMembers.find(
+                                  (member) => member.email === recipe.userEmail
+                                );
+                                return familyMember
+                                  ? familyMember.name
+                                  : recipe.userEmail;
+                              })()}
+                            </span>
+                          )}
+                      </div>
                     </Link>
                     <span className="text-sm text-gray-500 font-mono">
                       {formatTime(getTotalTime(recipe))}

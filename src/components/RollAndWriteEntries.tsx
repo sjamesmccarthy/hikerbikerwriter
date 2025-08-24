@@ -742,6 +742,9 @@ const RollAndWriteEntries: React.FC = () => {
                       if (showPublicNotes) {
                         // Show all public entries (including user's own public entries)
                         ownershipMatch = Boolean(entry.is_public);
+                      } else if (showFamilyOnly) {
+                        // When viewing family content, allow family shared entries regardless of ownership
+                        ownershipMatch = true;
                       } else {
                         // Show user's own entries (default)
                         ownershipMatch = entry.userEmail === session.user.email;
@@ -754,8 +757,10 @@ const RollAndWriteEntries: React.FC = () => {
                     let familyMatch = !showFamilyOnly;
                     if (showFamilyOnly) {
                       if (selectedFamilyMember === "All") {
-                        // Show all family entries (entries with shared_family enabled)
-                        familyMatch = Boolean(entry.shared_family);
+                        // Show all family entries (entries with shared_family enabled) but exclude logged-in user's entries
+                        familyMatch =
+                          Boolean(entry.shared_family) &&
+                          entry.userEmail !== session?.user?.email;
                       } else {
                         // Show entries from the selected family member
                         const selectedMemberData = familyMembers.find(
@@ -865,6 +870,19 @@ const RollAndWriteEntries: React.FC = () => {
                               <span className="text-xs text-gray-500 font-mono">
                                 By {entry.by}
                               </span>
+                              {/* Show family member name for family shared content */}
+                              {showFamilyOnly &&
+                                entry.shared_family &&
+                                entry.userEmail !== session?.user?.email && (
+                                  <span className="text-xs text-blue-600 font-mono">
+                                    (
+                                    {familyMembers.find(
+                                      (member) =>
+                                        member.email === entry.userEmail
+                                    )?.name || "Family Member"}
+                                    )
+                                  </span>
+                                )}
                               <span className="text-xs text-gray-500 font-mono">
                                 on {formatDate(entry.createdAt)}
                               </span>

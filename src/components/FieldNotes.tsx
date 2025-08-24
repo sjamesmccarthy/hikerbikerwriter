@@ -355,6 +355,11 @@ const FieldNotes: React.FC = () => {
             if (showPublicNotes) {
               // Show all public notes (including user's own public notes)
               ownershipMatch = Boolean(note.is_public);
+            } else if (showFamilyOnly) {
+              // When showing family notes, allow family shared notes OR user's own notes
+              const isFamilyShared = Boolean(note.shared_family);
+              const isUserOwned = note.userEmail === session.user.email;
+              ownershipMatch = isFamilyShared || isUserOwned;
             } else {
               // Show user's own notes (default)
               ownershipMatch = note.userEmail === session.user.email;
@@ -367,8 +372,10 @@ const FieldNotes: React.FC = () => {
           let familyMatch = !showFamilyOnly;
           if (showFamilyOnly) {
             if (selectedFamilyMember === "All") {
-              // Show all family notes (notes with shared_family enabled)
-              familyMatch = Boolean(note.shared_family);
+              // Show all family notes (notes with shared_family enabled) but exclude logged-in user's notes
+              familyMatch =
+                Boolean(note.shared_family) &&
+                note.userEmail !== session?.user?.email;
             } else {
               // Show notes from the selected family member
               const selectedMemberData = familyMembers.find(
@@ -851,59 +858,6 @@ const FieldNotes: React.FC = () => {
                           </FormControl>
                         )}
                     </div>
-                    {showFamilyOnly && familyMembers.length > 0 && (
-                      <FormControl size="small" sx={{ minWidth: 160 }}>
-                        <InputLabel
-                          sx={{
-                            fontFamily: "monospace",
-                            fontSize: "0.875rem",
-                          }}
-                        >
-                          Family Member
-                        </InputLabel>
-                        <Select
-                          value={selectedFamilyMember}
-                          label="Family Member"
-                          onChange={(e) => {
-                            const newFamilyMember = e.target.value;
-                            setSelectedFamilyMember(newFamilyMember);
-                          }}
-                          sx={{
-                            fontFamily: "monospace",
-                            fontSize: "0.875rem",
-                            "& .MuiSelect-select": {
-                              fontFamily: "monospace",
-                            },
-                          }}
-                        >
-                          <MenuItem value="All">
-                            <div className="flex items-center">
-                              <PeopleIcon sx={{ fontSize: 16, mr: 1 }} />
-                              <span style={{ fontFamily: "monospace" }}>
-                                All Family
-                              </span>
-                            </div>
-                          </MenuItem>
-                          {familyMembers.map((member) => (
-                            <MenuItem key={member.email} value={member.name}>
-                              <div className="flex items-center">
-                                <span style={{ fontFamily: "monospace" }}>
-                                  {member.name}
-                                </span>
-                                {member.relationship && (
-                                  <span
-                                    className="ml-2 text-xs text-gray-500"
-                                    style={{ fontFamily: "monospace" }}
-                                  >
-                                    ({member.relationship})
-                                  </span>
-                                )}
-                              </div>
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                    )}
                   </div>
 
                   {/* Category Filters */}
