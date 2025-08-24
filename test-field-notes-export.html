@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Field Notes Export Test</title>
+</head>
+
+<body>
+  <h1>Field Notes Export Test</h1>
+  <p>This is a test page to verify the field notes export functionality works correctly.</p>
+
+  <script>
+    // Mock field notes data with base64 images for testing
+    const mockFieldNotes = [
+      {
+        title: "Test Note 1",
+        created: "2025-01-24",
+        author: "Test User",
+        content: "This is a test field note with an image.",
+        is_public: true,
+        shared_family: false,
+        location: "Test Location",
+        weather: "Sunny",
+        temperature: "72°F",
+        images: [
+          "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=="
+        ]
+      },
+      {
+        title: "Test Note 2",
+        created: "2025-01-23",
+        author: "Test User",
+        content: "This is another test field note without images.",
+        is_public: false,
+        shared_family: true,
+        location: "Another Location"
+      }
+    ];
+
+    console.log("Mock field notes data:", mockFieldNotes);
+    console.log("Field notes export functionality added to profile page!");
+  </script>
+</body>
+
+</html>

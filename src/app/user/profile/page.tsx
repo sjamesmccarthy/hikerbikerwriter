@@ -38,11 +38,6 @@ interface BrewSession {
   savedAt: string;
 }
 
-interface Job {
-  closed: number;
-  status: string;
-}
-
 // Import the JSON data
 import relationshipsData from "@/data/relationships.json";
 import networksData from "@/data/people-networks.json";
@@ -199,33 +194,6 @@ export default function UserProfilePage() {
     setIsAppsMenuOpen(false);
     setOpenSubmenu(null);
   };
-
-  // if (status === "loading") {
-  //   return (
-  //     <div className="min-h-screen flex items-center justify-center">
-  //       <div className="text-center">
-  //         <span className="text-lg text-gray-500">Loading...</span>
-  //       </div>
-  //     </div>
-  //   );
-  // }
-  // if (status !== "authenticated" && status !== "unauthenticated") {
-  //   return (
-  //     <div className="min-h-screen flex items-center justify-center">
-  //       <div className="text-center">
-  //         <h2 className="text-2xl font-bold mb-4">
-  //           Please sign in to view your profile.
-  //         </h2>
-  //         <button
-  //           onClick={() => signIn("google")}
-  //           className="px-4 py-2 bg-blue-600 text-white rounded"
-  //         >
-  //           Sign In With Google
-  //         </button>
-  //       </div>
-  //     </div>
-  //   );
-  // }
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -554,6 +522,534 @@ function AppSummaries({
     }
   };
 
+  // Helper function to determine image file extension
+  const getImageExtension = (mimeType: string): string => {
+    if (mimeType.includes("jpeg") || mimeType.includes("jpg")) return "jpg";
+    if (mimeType.includes("png")) return "png";
+    if (mimeType.includes("gif")) return "gif";
+    return "jpg";
+  };
+
+  // Helper function to process a single image
+  const processImage = (
+    imageData: unknown,
+    imageCounter: number,
+    imageFolder: unknown
+  ): string => {
+    try {
+      let base64Data: string;
+      let mimeType: string;
+
+      if (
+        typeof imageData === "string" &&
+        imageData.startsWith("data:image/")
+      ) {
+        [mimeType, base64Data] = imageData.split(",");
+      } else if (
+        typeof imageData === "object" &&
+        imageData !== null &&
+        "data" in imageData
+      ) {
+        const objData = imageData as { data: string };
+        [mimeType, base64Data] = objData.data.split(",");
+      } else {
+        return `- [Unsupported image format]\n`;
+      }
+
+      const extension = getImageExtension(mimeType);
+      const fileName = `image_${imageCounter}.${extension}`;
+
+      // Convert base64 to binary and add to zip
+      const binaryData = atob(base64Data);
+      const bytes = new Uint8Array(binaryData.length);
+      for (let j = 0; j < binaryData.length; j++) {
+        bytes[j] = binaryData.charCodeAt(j);
+      }
+
+      if (
+        imageFolder &&
+        typeof imageFolder === "object" &&
+        "file" in imageFolder
+      ) {
+        (
+          imageFolder as { file: (name: string, data: Uint8Array) => void }
+        ).file(fileName, bytes);
+      }
+      return `- ${fileName}\n`;
+    } catch (imageError) {
+      console.warn(`Failed to process image:`, imageError);
+      return `- [Image processing failed]\n`;
+    }
+  };
+
+  // Helper function to safely convert to string
+  const toSafeString = (value: unknown): string => {
+    if (value === null || value === undefined) return "";
+    if (typeof value === "string") return value;
+    if (typeof value === "number" || typeof value === "boolean")
+      return String(value);
+    return "";
+  };
+
+  // Helper function to build field note content
+  const buildFieldNoteContent = (
+    note: Record<string, unknown>,
+    index: number
+  ): string => {
+    let content = `Entry ${index + 1}\n`;
+    content += `-`.repeat(50) + "\n";
+    content += `Title: ${toSafeString(note.title) || "Untitled"}\n`;
+    content += `Date: ${
+      toSafeString(note.created) || toSafeString(note.date) || "Unknown date"
+    }\n`;
+    content += `Author: ${
+      toSafeString(note.author) || toSafeString(note.by) || "Anonymous"
+    }\n`;
+    content += `Public: ${note.is_public ? "Yes" : "No"}\n`;
+    content += `Shared with Family: ${note.shared_family ? "Yes" : "No"}\n`;
+
+    if (note.location) content += `Location: ${toSafeString(note.location)}\n`;
+    if (note.weather) content += `Weather: ${toSafeString(note.weather)}\n`;
+    if (note.temperature)
+      content += `Temperature: ${toSafeString(note.temperature)}\n`;
+
+    content += "\nContent:\n";
+    content +=
+      toSafeString(note.content) || toSafeString(note.text) || "No content";
+    content += "\n";
+
+    return content;
+  };
+
+  // Function to handle Field Notes download with image extraction
+  const handleFieldNotesDownload = async () => {
+    try {
+      const res = await fetch(
+        `/api/fieldnotes?userEmail=${encodeURIComponent(userEmail)}`
+      );
+      if (!res.ok) throw new Error("Failed to fetch field notes");
+
+      const fieldNotes = await res.json();
+      if (!Array.isArray(fieldNotes) || fieldNotes.length === 0) {
+        alert("No field notes found to download.");
+        return;
+      }
+
+      const JSZip = (await import("jszip")).default;
+      const zip = new JSZip();
+
+      let textContent = "FIELD NOTES EXPORT\n";
+      textContent += `Exported on: ${new Date().toISOString()}\n`;
+      textContent += `Total entries: ${fieldNotes.length}\n\n`;
+      textContent += "=" + "=".repeat(70) + "\n\n";
+
+      let imageCounter = 1;
+      const imageFolder = zip.folder("images");
+
+      for (let i = 0; i < fieldNotes.length; i++) {
+        const note = fieldNotes[i];
+        textContent += buildFieldNoteContent(note, i);
+
+        // Extract images if they exist
+        if (note.images && Array.isArray(note.images)) {
+          textContent += "\nImages:\n";
+
+          for (const imageData of note.images) {
+            const imageResult = processImage(
+              imageData,
+              imageCounter,
+              imageFolder
+            );
+            textContent += imageResult;
+            if (!imageResult.includes("[")) {
+              imageCounter++;
+            }
+          }
+        }
+
+        textContent += "\n" + "=" + "=".repeat(70) + "\n\n";
+      }
+
+      // Add the text file to the zip
+      zip.file("field-notes.txt", textContent);
+
+      // Generate and download the zip file
+      const zipBlob = await zip.generateAsync({ type: "blob" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(zipBlob);
+      link.setAttribute(
+        "download",
+        `field-notes-export-${new Date().toISOString().split("T")[0]}.zip`
+      );
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error("Error downloading field notes:", error);
+      alert("Failed to download field notes. Please try again.");
+    }
+  };
+
+  // Helper function to process recipe photos
+  const processRecipePhotos = (
+    recipe: Record<string, unknown>,
+    recipeFolder: unknown
+  ): void => {
+    // Process main recipe photo
+    if (
+      recipe.photo &&
+      typeof recipe.photo === "string" &&
+      recipe.photo.startsWith("data:image/")
+    ) {
+      try {
+        const [mimeType, base64Data] = recipe.photo.split(",");
+        const extension = getImageExtension(mimeType);
+        const fileName = `recipe-photo.${extension}`;
+
+        const binaryData = atob(base64Data);
+        const bytes = new Uint8Array(binaryData.length);
+        for (let j = 0; j < binaryData.length; j++) {
+          bytes[j] = binaryData.charCodeAt(j);
+        }
+
+        if (
+          recipeFolder &&
+          typeof recipeFolder === "object" &&
+          "file" in recipeFolder
+        ) {
+          (
+            recipeFolder as { file: (name: string, data: Uint8Array) => void }
+          ).file(fileName, bytes);
+        }
+      } catch (error) {
+        console.warn(
+          `Failed to process recipe photo for ${recipe.title}:`,
+          error
+        );
+      }
+    }
+
+    // Process family photo if it exists
+    if (
+      recipe.familyPhoto &&
+      typeof recipe.familyPhoto === "string" &&
+      recipe.familyPhoto.startsWith("data:image/")
+    ) {
+      try {
+        const [mimeType, base64Data] = recipe.familyPhoto.split(",");
+        const extension = getImageExtension(mimeType);
+        const fileName = `family-photo.${extension}`;
+
+        const binaryData = atob(base64Data);
+        const bytes = new Uint8Array(binaryData.length);
+        for (let j = 0; j < binaryData.length; j++) {
+          bytes[j] = binaryData.charCodeAt(j);
+        }
+
+        if (
+          recipeFolder &&
+          typeof recipeFolder === "object" &&
+          "file" in recipeFolder
+        ) {
+          (
+            recipeFolder as { file: (name: string, data: Uint8Array) => void }
+          ).file(fileName, bytes);
+        }
+      } catch (error) {
+        console.warn(
+          `Failed to process family photo for ${recipe.title}:`,
+          error
+        );
+      }
+    }
+  };
+
+  // Helper function to process additional recipe images
+  const processAdditionalImages = (
+    recipe: Record<string, unknown>,
+    recipeFolder: unknown
+  ): void => {
+    if (recipe.images && Array.isArray(recipe.images)) {
+      let imageCounter = 1;
+      for (const imageData of recipe.images) {
+        const imageResult = processRecipeImage(
+          imageData,
+          imageCounter,
+          recipeFolder
+        );
+        if (imageResult.success) {
+          imageCounter++;
+        }
+      }
+    }
+  };
+
+  // Function to handle Recipes download with image extraction
+  const handleRecipesDownload = async () => {
+    try {
+      const res = await fetch(
+        `/api/recipes?userEmail=${encodeURIComponent(userEmail)}`
+      );
+      if (!res.ok) throw new Error("Failed to fetch recipes");
+
+      const recipes = await res.json();
+      if (!Array.isArray(recipes) || recipes.length === 0) {
+        alert("No recipes found to download.");
+        return;
+      }
+
+      const JSZip = (await import("jszip")).default;
+      const zip = new JSZip();
+
+      // Create a main index file
+      let indexContent = "RECIPES EXPORT\n";
+      indexContent += `Exported on: ${new Date().toISOString()}\n`;
+      indexContent += `Total recipes: ${recipes.length}\n\n`;
+      indexContent += "Recipe Index:\n";
+      indexContent += "=" + "=".repeat(50) + "\n";
+
+      for (let i = 0; i < recipes.length; i++) {
+        const recipe = recipes[i];
+        const folderName = `recipe-${i + 1}-${(recipe.title || "untitled")
+          .replace(/[^a-zA-Z0-9]/g, "-")
+          .toLowerCase()}`;
+
+        indexContent += `${i + 1}. ${
+          recipe.title || "Untitled"
+        } (folder: ${folderName})\n`;
+
+        // Create individual folder for each recipe
+        const recipeFolder = zip.folder(folderName);
+        if (!recipeFolder) continue;
+
+        // Create the recipe text file
+        const recipeContent = buildRecipeContent(recipe, i);
+        recipeFolder.file("recipe.txt", recipeContent);
+
+        // Process all recipe images
+        processRecipePhotos(recipe, recipeFolder);
+        processAdditionalImages(recipe, recipeFolder);
+      }
+
+      // Add the index file to the root of the zip
+      zip.file("00-recipe-index.txt", indexContent);
+
+      // Generate and download the zip file
+      const zipBlob = await zip.generateAsync({ type: "blob" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(zipBlob);
+      link.setAttribute(
+        "download",
+        `recipes-export-${new Date().toISOString().split("T")[0]}.zip`
+      );
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (error) {
+      console.error("Error downloading recipes:", error);
+      alert("Failed to download recipes. Please try again.");
+    }
+  };
+
+  // Helper function to process recipe images
+  const processRecipeImage = (
+    imageData: unknown,
+    imageCounter: number,
+    recipeFolder: unknown
+  ): { success: boolean } => {
+    try {
+      let base64Data: string;
+      let mimeType: string;
+
+      if (
+        typeof imageData === "string" &&
+        imageData.startsWith("data:image/")
+      ) {
+        [mimeType, base64Data] = imageData.split(",");
+      } else if (
+        typeof imageData === "object" &&
+        imageData !== null &&
+        "data" in imageData
+      ) {
+        const objData = imageData as { data: string };
+        [mimeType, base64Data] = objData.data.split(",");
+      } else {
+        return { success: false };
+      }
+
+      const extension = getImageExtension(mimeType);
+      const fileName = `additional-image-${imageCounter}.${extension}`;
+
+      // Convert base64 to binary and add to recipe folder
+      const binaryData = atob(base64Data);
+      const bytes = new Uint8Array(binaryData.length);
+      for (let j = 0; j < binaryData.length; j++) {
+        bytes[j] = binaryData.charCodeAt(j);
+      }
+
+      if (
+        recipeFolder &&
+        typeof recipeFolder === "object" &&
+        "file" in recipeFolder
+      ) {
+        (
+          recipeFolder as { file: (name: string, data: Uint8Array) => void }
+        ).file(fileName, bytes);
+      }
+      return { success: true };
+    } catch (imageError) {
+      console.warn(`Failed to process additional image:`, imageError);
+      return { success: false };
+    }
+  };
+
+  // Helper function to build recipe metadata
+  const buildRecipeMetadata = (recipe: Record<string, unknown>): string => {
+    let content = `Title: ${toSafeString(recipe.title) || "Untitled"}\n`;
+    content += `Date Created: ${
+      toSafeString(recipe.created) ||
+      toSafeString(recipe.dateAdded) ||
+      "Unknown date"
+    }\n`;
+    content += `Author: ${
+      toSafeString(recipe.author) ||
+      toSafeString(recipe.userName) ||
+      toSafeString(recipe.userEmail) ||
+      "Anonymous"
+    }\n`;
+    content += `Public: ${recipe.isPublic || recipe.public ? "Yes" : "No"}\n`;
+    content += `Shared with Family: ${recipe.shared_family ? "Yes" : "No"}\n`;
+
+    if (recipe.type) content += `Type: ${toSafeString(recipe.type)}\n`;
+    if (recipe.category)
+      content += `Category: ${toSafeString(recipe.category)}\n`;
+    if (recipe.source) content += `Source: ${toSafeString(recipe.source)}\n`;
+    if (recipe.sourceTitle)
+      content += `Source Title: ${toSafeString(recipe.sourceTitle)}\n`;
+    if (recipe.prepTime)
+      content += `Prep Time: ${toSafeString(recipe.prepTime)} minutes\n`;
+    if (recipe.cookTime)
+      content += `Cook Time: ${toSafeString(recipe.cookTime)} minutes\n`;
+    if (recipe.servings)
+      content += `Servings: ${toSafeString(recipe.servings)}\n`;
+    if (recipe.recommendedPellets)
+      content += `Recommended Pellets: ${toSafeString(
+        recipe.recommendedPellets
+      )}\n`;
+
+    return content;
+  };
+
+  // Helper function to build recipe ingredients section
+  const buildIngredientsSection = (recipe: Record<string, unknown>): string => {
+    let content = "\nIngredients:\n";
+
+    if (recipe.ingredients) {
+      if (Array.isArray(recipe.ingredients)) {
+        if (recipe.ingredients.length > 0) {
+          recipe.ingredients.forEach((ingredient: unknown, idx: number) => {
+            const ingredientText = toSafeString(ingredient);
+            if (ingredientText.trim()) {
+              content += `${idx + 1}. ${ingredientText}\n`;
+            }
+          });
+        } else {
+          content += "No ingredients listed\n";
+        }
+      } else {
+        content += toSafeString(recipe.ingredients) + "\n";
+      }
+    } else {
+      content += "No ingredients listed\n";
+    }
+
+    return content;
+  };
+
+  // Helper function to build recipe instructions section
+  const buildInstructionsSection = (
+    recipe: Record<string, unknown>
+  ): string => {
+    let content = "\nInstructions:\n";
+
+    const instructions = recipe.instructions || recipe.steps;
+    if (instructions) {
+      if (Array.isArray(instructions)) {
+        if (instructions.length > 0) {
+          instructions.forEach((instruction: unknown, idx: number) => {
+            const instructionText = toSafeString(instruction);
+            if (instructionText.trim()) {
+              content += `${idx + 1}. ${instructionText}\n`;
+            }
+          });
+        } else {
+          content += "No instructions provided\n";
+        }
+      } else {
+        content += toSafeString(instructions) + "\n";
+      }
+    } else {
+      content += "No instructions provided\n";
+    }
+
+    return content;
+  };
+
+  // Helper function to build recipe notes and images section
+  const buildNotesAndImagesSection = (
+    recipe: Record<string, unknown>
+  ): string => {
+    let content = "";
+
+    // Add personal notes if available
+    const notes = recipe.notes || recipe.myNotes || recipe.personalNotes;
+    if (notes) {
+      content += "\nNotes:\n";
+      content += toSafeString(notes) + "\n";
+    }
+
+    // Add image references
+    content += "\nImages in this folder:\n";
+    if (recipe.photo) content += "- recipe-photo.[jpg/png/gif]\n";
+    if (recipe.familyPhoto) content += "- family-photo.[jpg/png/gif]\n";
+    if (
+      recipe.images &&
+      Array.isArray(recipe.images) &&
+      recipe.images.length > 0
+    ) {
+      for (let i = 1; i <= recipe.images.length; i++) {
+        content += `- additional-image-${i}.[jpg/png/gif]\n`;
+      }
+    }
+
+    return content;
+  };
+
+  // Helper function to build recipe ingredients and instructions
+  const buildRecipeDetails = (recipe: Record<string, unknown>): string => {
+    let content = "\nDescription:\n";
+    content += toSafeString(recipe.description) || "No description";
+    content += "\n";
+
+    content += buildIngredientsSection(recipe);
+    content += buildInstructionsSection(recipe);
+    content += buildNotesAndImagesSection(recipe);
+
+    return content;
+  };
+
+  // Helper function to build recipe content
+  const buildRecipeContent = (
+    recipe: Record<string, unknown>,
+    index: number
+  ): string => {
+    let content = `Recipe ${index + 1}\n`;
+    content += `-`.repeat(50) + "\n";
+    content += buildRecipeMetadata(recipe);
+    content += buildRecipeDetails(recipe);
+    return content;
+  };
+
   const handleAddPerson = async (user: SearchUser) => {
     console.log("handleAddPerson called with:", {
       user,
@@ -874,7 +1370,14 @@ function AppSummaries({
         {/* Field Notes Card */}
         <div className="relative flex flex-col items-center justify-center bg-blue-50 p-6 transition-all duration-200 hover:shadow-lg hover:-translate-y-1 cursor-pointer min-h-[140px]">
           <div className="absolute top-2 right-2">
-            <SimCardDownloadIcon fontSize="small" className="text-gray-400" />
+            <SimCardDownloadIcon
+              fontSize="small"
+              className="text-gray-400 hover:text-gray-600 cursor-pointer"
+              onClick={(e) => {
+                e.preventDefault();
+                handleFieldNotesDownload();
+              }}
+            />
           </div>
           <StickyNote2Icon fontSize="large" className="mb-2 text-gray-700" />
           <Link
@@ -903,7 +1406,14 @@ function AppSummaries({
         {/* Recipes Card */}
         <div className="relative flex flex-col items-center justify-center bg-blue-50 p-6 transition-all duration-200 hover:shadow-lg hover:-translate-y-1 cursor-pointer min-h-[140px]">
           <div className="absolute top-2 right-2">
-            <SimCardDownloadIcon fontSize="small" className="text-gray-400" />
+            <SimCardDownloadIcon
+              fontSize="small"
+              className="text-gray-400 hover:text-gray-600 cursor-pointer"
+              onClick={(e) => {
+                e.preventDefault();
+                handleRecipesDownload();
+              }}
+            />
           </div>
           <RestaurantIcon fontSize="large" className="mb-2 text-gray-700" />
           <Link
