@@ -35,6 +35,7 @@ export async function GET(request) {
         is_public: row.is_public,
         shared_family: Boolean(row.shared_family),
         favorite: row.favorite || 0,
+        userEmail: row.user_email, // Add userEmail field for family filtering
       };
     });
 

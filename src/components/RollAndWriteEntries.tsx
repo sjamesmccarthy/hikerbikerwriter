@@ -24,6 +24,7 @@ import {
   TextFields as TextIcon,
   NetworkCheck as NetworkIcon,
   Favorite as FavoriteIcon,
+  People as PeopleIcon,
 } from "@mui/icons-material";
 import { FormControl, InputLabel, Select, MenuItem } from "@mui/material";
 import { renderFooter } from "./shared/footerHelpers";
@@ -37,6 +38,8 @@ interface RollAndWriteEntry {
   is_public?: boolean;
   by?: string;
   favorite: number;
+  shared_family?: boolean;
+  userEmail?: string;
 }
 
 interface AppMenuItem {
@@ -58,6 +61,13 @@ const RollAndWriteEntries: React.FC = () => {
   const [loadingEntries, setLoadingEntries] = useState(true);
   const [userFavorites, setUserFavorites] = useState<Set<string>>(new Set());
   const [sortBy, setSortBy] = useState("newest"); // newest, oldest, favorited
+  const [showFamilyOnly, setShowFamilyOnly] = useState(false);
+  const [hasFamilyMembers, setHasFamilyMembers] = useState(false);
+  const [familyMembers, setFamilyMembers] = useState<
+    Array<{ name: string; email: string; relationship: string }>
+  >([]);
+  const [selectedFamilyMember, setSelectedFamilyMember] =
+    useState<string>("All");
   const { data: session, status } = useSession();
   const router = useRouter();
 
@@ -147,6 +157,56 @@ const RollAndWriteEntries: React.FC = () => {
       console.error("Error loading favorites from localStorage:", error);
     }
   }, []);
+
+  // Check if user has family members
+  useEffect(() => {
+    async function checkFamilyMembers() {
+      if (session?.user?.email) {
+        try {
+          // Fetch family data to check if user has family members
+          const res = await fetch(
+            `/api/familyline?email=${encodeURIComponent(session.user.email)}`
+          );
+          if (res.ok) {
+            const familyData = await res.json();
+            // Parse the JSON data - it might be double-encoded
+            let parsedJson = familyData?.json;
+            if (typeof parsedJson === "string") {
+              parsedJson = JSON.parse(parsedJson);
+            }
+            // Check if family data has people array with members
+            const hasPeople =
+              parsedJson?.people &&
+              Array.isArray(parsedJson.people) &&
+              parsedJson.people.length > 0;
+            setHasFamilyMembers(hasPeople);
+
+            // If user has family members, fetch the family members list
+            if (hasPeople) {
+              const membersRes = await fetch(
+                `/api/family-members?email=${encodeURIComponent(
+                  session.user.email
+                )}`
+              );
+              if (membersRes.ok) {
+                const members = await membersRes.json();
+                setFamilyMembers(members);
+              }
+            }
+          }
+        } catch (error) {
+          console.error("Error checking family members:", error);
+          setHasFamilyMembers(false);
+          setFamilyMembers([]);
+        }
+      } else {
+        setHasFamilyMembers(false);
+        setFamilyMembers([]);
+      }
+    }
+
+    checkFamilyMembers();
+  }, [session]);
 
   // Delete entry
   const deleteEntry = async (id: string) => {
@@ -422,8 +482,8 @@ const RollAndWriteEntries: React.FC = () => {
             {!loadingEntries && entries.length > 0 && (
               <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
                 <div className="w-full flex items-center justify-between">
-                  {/* Filter dropdown on the left */}
-                  <div className="flex items-center">
+                  {/* Left side: Sort dropdown and Family filters */}
+                  <div className="flex items-center gap-4">
                     <FormControl size="small" sx={{ minWidth: 140 }}>
                       <InputLabel
                         sx={{ fontFamily: "monospace", fontSize: "0.875rem" }}
@@ -460,9 +520,92 @@ const RollAndWriteEntries: React.FC = () => {
                         </MenuItem>
                       </Select>
                     </FormControl>
+
+                    {/* Family filters for logged in users with family members */}
+                    {session?.user?.email && hasFamilyMembers && (
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => {
+                            const newFamily = !showFamilyOnly;
+                            setShowFamilyOnly(newFamily);
+                            if (!newFamily) {
+                              // Reset family member selection when turning off family filter
+                              setSelectedFamilyMember("All");
+                            }
+                          }}
+                          className={`px-3 py-2 rounded text-sm font-medium transition-colors flex items-center gap-1 ${
+                            showFamilyOnly
+                              ? "bg-blue-100 text-blue-700 border border-blue-300"
+                              : "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200"
+                          }`}
+                          style={{ fontFamily: "monospace" }}
+                        >
+                          <PeopleIcon sx={{ fontSize: 16 }} />
+                          Family Only
+                        </button>
+
+                        {/* Family member select dropdown */}
+                        {showFamilyOnly && familyMembers.length > 0 && (
+                          <FormControl size="small" sx={{ minWidth: 160 }}>
+                            <InputLabel
+                              sx={{
+                                fontFamily: "monospace",
+                                fontSize: "0.875rem",
+                              }}
+                            >
+                              Family Member
+                            </InputLabel>
+                            <Select
+                              value={selectedFamilyMember}
+                              label="Family Member"
+                              onChange={(e) => {
+                                const newFamilyMember = e.target.value;
+                                setSelectedFamilyMember(newFamilyMember);
+                              }}
+                              sx={{
+                                fontFamily: "monospace",
+                                fontSize: "0.875rem",
+                                "& .MuiSelect-select": {
+                                  fontFamily: "monospace",
+                                },
+                              }}
+                            >
+                              <MenuItem value="All">
+                                <div className="flex items-center">
+                                  <PeopleIcon sx={{ fontSize: 16, mr: 1 }} />
+                                  <span style={{ fontFamily: "monospace" }}>
+                                    All Family
+                                  </span>
+                                </div>
+                              </MenuItem>
+                              {familyMembers.map((member) => (
+                                <MenuItem
+                                  key={member.email}
+                                  value={member.name}
+                                >
+                                  <div className="flex items-center">
+                                    <span style={{ fontFamily: "monospace" }}>
+                                      {member.name}
+                                    </span>
+                                    {member.relationship && (
+                                      <span
+                                        className="ml-2 text-xs text-gray-500"
+                                        style={{ fontFamily: "monospace" }}
+                                      >
+                                        ({member.relationship})
+                                      </span>
+                                    )}
+                                  </div>
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
+                        )}
+                      </div>
+                    )}
                   </div>
 
-                  {/* Roll Them Dice button on the right */}
+                  {/* Right side: Roll Them Dice button */}
                   <div>
                     <Link
                       href="/rollandwrite/roll?autoroll=true"
@@ -526,8 +669,32 @@ const RollAndWriteEntries: React.FC = () => {
                 })()
               ) : (
                 (() => {
-                  // Sort entries based on selected sort option
-                  const sortedEntries = [...entries].sort((a, b) => {
+                  // Filter entries based on family settings
+                  const filteredEntries = entries.filter((entry) => {
+                    let familyMatch = !showFamilyOnly;
+                    if (showFamilyOnly) {
+                      if (selectedFamilyMember === "All") {
+                        // Show all family entries (entries with shared_family enabled)
+                        familyMatch = Boolean(entry.shared_family);
+                      } else {
+                        // Show entries from the selected family member
+                        const selectedMemberData = familyMembers.find(
+                          (member) => member.name === selectedFamilyMember
+                        );
+                        if (selectedMemberData) {
+                          familyMatch =
+                            Boolean(entry.shared_family) &&
+                            entry.userEmail === selectedMemberData.email;
+                        } else {
+                          familyMatch = false;
+                        }
+                      }
+                    }
+                    return familyMatch;
+                  });
+
+                  // Sort filtered entries based on selected sort option
+                  const sortedEntries = [...filteredEntries].sort((a, b) => {
                     switch (sortBy) {
                       case "oldest":
                         return (
