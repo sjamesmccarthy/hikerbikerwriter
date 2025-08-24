@@ -35,6 +35,7 @@ export async function GET(request) {
         shared_family: Boolean(row.shared_family), // Add shared_family from database column
         author:
           fieldnote.by || fieldnote.author || row.user_email || "Anonymous", // Map 'by' field to 'author'
+        userEmail: row.user_email, // Add userEmail field for family filtering
       };
     });
 

@@ -23,6 +23,7 @@ import {
   ColorLens as ColorIcon,
   TextFields as TextIcon,
   NetworkCheck as NetworkIcon,
+  People as PeopleIcon,
 } from "@mui/icons-material";
 import EditNoteOutlinedIcon from "@mui/icons-material/EditNoteOutlined";
 import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
@@ -58,6 +59,7 @@ type Note = {
   is_public?: boolean;
   shared_family?: boolean;
   share_with_family?: boolean;
+  userEmail?: string;
 };
 
 interface AppMenuItem {
@@ -155,6 +157,13 @@ const FieldNotes: React.FC = () => {
   const [minimized, setMinimized] = useState(false);
   const [filterMood, setFilterMood] = useState("any");
   const [sortBy, setSortBy] = useState("DESC"); // ASC, DESC, FAVORITE
+  const [showFamilyOnly, setShowFamilyOnly] = useState(false);
+  const [hasFamilyMembers, setHasFamilyMembers] = useState(false);
+  const [familyMembers, setFamilyMembers] = useState<
+    Array<{ name: string; email: string; relationship: string }>
+  >([]);
+  const [selectedFamilyMember, setSelectedFamilyMember] =
+    useState<string>("All");
 
   // Set minimized state based on screen size on initial load
   useEffect(() => {
@@ -229,6 +238,56 @@ const FieldNotes: React.FC = () => {
     }
   }, [session, status]);
 
+  // Check if user has family members
+  useEffect(() => {
+    async function checkFamilyMembers() {
+      if (session?.user?.email) {
+        try {
+          // Fetch family data to check if user has family members
+          const res = await fetch(
+            `/api/familyline?email=${encodeURIComponent(session.user.email)}`
+          );
+          if (res.ok) {
+            const familyData = await res.json();
+            // Parse the JSON data - it might be double-encoded
+            let parsedJson = familyData?.json;
+            if (typeof parsedJson === "string") {
+              parsedJson = JSON.parse(parsedJson);
+            }
+            // Check if family data has people array with members
+            const hasPeople =
+              parsedJson?.people &&
+              Array.isArray(parsedJson.people) &&
+              parsedJson.people.length > 0;
+            setHasFamilyMembers(hasPeople);
+
+            // If user has family members, fetch the family members list
+            if (hasPeople) {
+              const membersRes = await fetch(
+                `/api/family-members?email=${encodeURIComponent(
+                  session.user.email
+                )}`
+              );
+              if (membersRes.ok) {
+                const members = await membersRes.json();
+                setFamilyMembers(members);
+              }
+            }
+          }
+        } catch (error) {
+          console.error("Error checking family members:", error);
+          setHasFamilyMembers(false);
+          setFamilyMembers([]);
+        }
+      } else {
+        setHasFamilyMembers(false);
+        setFamilyMembers([]);
+      }
+    }
+
+    checkFamilyMembers();
+  }, [session]);
+
   // Filter and sort notes by activeTag before rendering - ensure notes is an array
   const filteredNotes = Array.isArray(notes)
     ? notes
@@ -244,7 +303,28 @@ const FieldNotes: React.FC = () => {
               : false;
           const moodMatch =
             filterMood === "any" ? true : note.mood === filterMood;
-          return tagMatch && moodMatch;
+
+          let familyMatch = !showFamilyOnly;
+          if (showFamilyOnly) {
+            if (selectedFamilyMember === "All") {
+              // Show all family notes (notes with shared_family enabled)
+              familyMatch = Boolean(note.shared_family);
+            } else {
+              // Show notes from the selected family member
+              const selectedMemberData = familyMembers.find(
+                (member) => member.name === selectedFamilyMember
+              );
+              if (selectedMemberData) {
+                familyMatch =
+                  Boolean(note.shared_family) &&
+                  note.userEmail === selectedMemberData.email;
+              } else {
+                familyMatch = false;
+              }
+            }
+          }
+
+          return tagMatch && moodMatch && familyMatch;
         })
         .sort((a, b) => {
           switch (sortBy) {
@@ -482,114 +562,223 @@ const FieldNotes: React.FC = () => {
               <div className="w-full bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4 text-left">
                 <div className="flex flex-col gap-3">
                   {/* Date, Mood, and Sort Filters */}
-                  <div className="flex flex-wrap gap-4 items-center">
-                    <FormControl size="small" sx={{ minWidth: 120 }}>
-                      <InputLabel
-                        sx={{ fontFamily: "monospace", fontSize: "0.875rem" }}
-                      >
-                        Date
-                      </InputLabel>
-                      <Select
-                        defaultValue="all"
-                        label="Date"
-                        sx={{
-                          fontFamily: "monospace",
-                          fontSize: "0.875rem",
-                          "& .MuiSelect-select": { fontFamily: "monospace" },
-                        }}
-                      >
-                        <MenuItem
-                          value="all"
+                  <div className="flex flex-wrap gap-4 items-center justify-between">
+                    <div className="flex flex-wrap gap-4 items-center">
+                      <FormControl size="small" sx={{ minWidth: 120 }}>
+                        <InputLabel
                           sx={{ fontFamily: "monospace", fontSize: "0.875rem" }}
                         >
-                          All Time
-                        </MenuItem>
-                        <MenuItem
-                          value="week"
-                          sx={{ fontFamily: "monospace", fontSize: "0.875rem" }}
+                          Date
+                        </InputLabel>
+                        <Select
+                          defaultValue="all"
+                          label="Date"
+                          sx={{
+                            fontFamily: "monospace",
+                            fontSize: "0.875rem",
+                            "& .MuiSelect-select": { fontFamily: "monospace" },
+                          }}
                         >
-                          This Week
-                        </MenuItem>
-                        <MenuItem
-                          value="month"
-                          sx={{ fontFamily: "monospace", fontSize: "0.875rem" }}
-                        >
-                          This Month
-                        </MenuItem>
-                        <MenuItem
-                          value="year"
-                          sx={{ fontFamily: "monospace", fontSize: "0.875rem" }}
-                        >
-                          This Year
-                        </MenuItem>
-                      </Select>
-                    </FormControl>
+                          <MenuItem
+                            value="all"
+                            sx={{
+                              fontFamily: "monospace",
+                              fontSize: "0.875rem",
+                            }}
+                          >
+                            All Time
+                          </MenuItem>
+                          <MenuItem
+                            value="week"
+                            sx={{
+                              fontFamily: "monospace",
+                              fontSize: "0.875rem",
+                            }}
+                          >
+                            This Week
+                          </MenuItem>
+                          <MenuItem
+                            value="month"
+                            sx={{
+                              fontFamily: "monospace",
+                              fontSize: "0.875rem",
+                            }}
+                          >
+                            This Month
+                          </MenuItem>
+                          <MenuItem
+                            value="year"
+                            sx={{
+                              fontFamily: "monospace",
+                              fontSize: "0.875rem",
+                            }}
+                          >
+                            This Year
+                          </MenuItem>
+                        </Select>
+                      </FormControl>
 
-                    <FormControl size="small" sx={{ minWidth: 120 }}>
-                      <InputLabel
-                        sx={{ fontFamily: "monospace", fontSize: "0.875rem" }}
-                      >
-                        Mood
-                      </InputLabel>
-                      <Select
-                        value={filterMood}
-                        label="Mood"
-                        onChange={(e) => setFilterMood(e.target.value)}
-                        sx={{
-                          fontFamily: "monospace",
-                          fontSize: "0.875rem",
-                          "& .MuiSelect-select": { fontFamily: "monospace" },
-                        }}
-                      >
-                        <MenuItem
-                          value="any"
+                      <FormControl size="small" sx={{ minWidth: 120 }}>
+                        <InputLabel
                           sx={{ fontFamily: "monospace", fontSize: "0.875rem" }}
                         >
-                          Any
-                        </MenuItem>
-                        {renderMoodMenuItemsWithSx(
-                          { fontFamily: "monospace", fontSize: "0.875rem" },
-                          false
+                          Mood
+                        </InputLabel>
+                        <Select
+                          value={filterMood}
+                          label="Mood"
+                          onChange={(e) => setFilterMood(e.target.value)}
+                          sx={{
+                            fontFamily: "monospace",
+                            fontSize: "0.875rem",
+                            "& .MuiSelect-select": { fontFamily: "monospace" },
+                          }}
+                        >
+                          <MenuItem
+                            value="any"
+                            sx={{
+                              fontFamily: "monospace",
+                              fontSize: "0.875rem",
+                            }}
+                          >
+                            Any
+                          </MenuItem>
+                          {renderMoodMenuItemsWithSx(
+                            { fontFamily: "monospace", fontSize: "0.875rem" },
+                            false
+                          )}
+                        </Select>
+                      </FormControl>
+
+                      <FormControl size="small" sx={{ minWidth: 120 }}>
+                        <InputLabel
+                          sx={{ fontFamily: "monospace", fontSize: "0.875rem" }}
+                        >
+                          Sort By
+                        </InputLabel>
+                        <Select
+                          value={sortBy}
+                          label="Sort By"
+                          onChange={(e) => setSortBy(e.target.value)}
+                          sx={{
+                            fontFamily: "monospace",
+                            fontSize: "0.875rem",
+                            "& .MuiSelect-select": { fontFamily: "monospace" },
+                          }}
+                        >
+                          <MenuItem
+                            value="DESC"
+                            sx={{
+                              fontFamily: "monospace",
+                              fontSize: "0.875rem",
+                            }}
+                          >
+                            Newest First
+                          </MenuItem>
+                          <MenuItem
+                            value="ASC"
+                            sx={{
+                              fontFamily: "monospace",
+                              fontSize: "0.875rem",
+                            }}
+                          >
+                            Oldest First
+                          </MenuItem>
+                          <MenuItem
+                            value="FAVORITE"
+                            sx={{
+                              fontFamily: "monospace",
+                              fontSize: "0.875rem",
+                            }}
+                          >
+                            Favorites First
+                          </MenuItem>
+                        </Select>
+                      </FormControl>
+                    </div>
+
+                    {/* Right-aligned family filters */}
+                    {session?.user?.email && hasFamilyMembers && (
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => {
+                            const newFamily = !showFamilyOnly;
+                            setShowFamilyOnly(newFamily);
+                            if (!newFamily) {
+                              // Reset family member selection when turning off family filter
+                              setSelectedFamilyMember("All");
+                            }
+                          }}
+                          className={`px-3 py-2 rounded text-sm font-medium transition-colors flex items-center gap-1 ${
+                            showFamilyOnly
+                              ? "bg-blue-100 text-blue-700 border border-blue-300"
+                              : "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200"
+                          }`}
+                          style={{ fontFamily: "monospace" }}
+                        >
+                          <PeopleIcon sx={{ fontSize: 16 }} />
+                          Family Only
+                        </button>
+
+                        {/* Family member select dropdown */}
+                        {showFamilyOnly && familyMembers.length > 0 && (
+                          <FormControl size="small" sx={{ minWidth: 160 }}>
+                            <InputLabel
+                              sx={{
+                                fontFamily: "monospace",
+                                fontSize: "0.875rem",
+                              }}
+                            >
+                              Family Member
+                            </InputLabel>
+                            <Select
+                              value={selectedFamilyMember}
+                              label="Family Member"
+                              onChange={(e) => {
+                                const newFamilyMember = e.target.value;
+                                setSelectedFamilyMember(newFamilyMember);
+                              }}
+                              sx={{
+                                fontFamily: "monospace",
+                                fontSize: "0.875rem",
+                                "& .MuiSelect-select": {
+                                  fontFamily: "monospace",
+                                },
+                              }}
+                            >
+                              <MenuItem value="All">
+                                <div className="flex items-center">
+                                  <PeopleIcon sx={{ fontSize: 16, mr: 1 }} />
+                                  <span style={{ fontFamily: "monospace" }}>
+                                    All Family
+                                  </span>
+                                </div>
+                              </MenuItem>
+                              {familyMembers.map((member) => (
+                                <MenuItem
+                                  key={member.email}
+                                  value={member.name}
+                                >
+                                  <div className="flex items-center">
+                                    <span style={{ fontFamily: "monospace" }}>
+                                      {member.name}
+                                    </span>
+                                    {member.relationship && (
+                                      <span
+                                        className="ml-2 text-xs text-gray-500"
+                                        style={{ fontFamily: "monospace" }}
+                                      >
+                                        ({member.relationship})
+                                      </span>
+                                    )}
+                                  </div>
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
                         )}
-                      </Select>
-                    </FormControl>
-
-                    <FormControl size="small" sx={{ minWidth: 120 }}>
-                      <InputLabel
-                        sx={{ fontFamily: "monospace", fontSize: "0.875rem" }}
-                      >
-                        Sort By
-                      </InputLabel>
-                      <Select
-                        value={sortBy}
-                        label="Sort By"
-                        onChange={(e) => setSortBy(e.target.value)}
-                        sx={{
-                          fontFamily: "monospace",
-                          fontSize: "0.875rem",
-                          "& .MuiSelect-select": { fontFamily: "monospace" },
-                        }}
-                      >
-                        <MenuItem
-                          value="DESC"
-                          sx={{ fontFamily: "monospace", fontSize: "0.875rem" }}
-                        >
-                          Newest First
-                        </MenuItem>
-                        <MenuItem
-                          value="ASC"
-                          sx={{ fontFamily: "monospace", fontSize: "0.875rem" }}
-                        >
-                          Oldest First
-                        </MenuItem>
-                        <MenuItem
-                          value="FAVORITE"
-                          sx={{ fontFamily: "monospace", fontSize: "0.875rem" }}
-                        >
-                          Favorites First
-                        </MenuItem>
-                      </Select>
-                    </FormControl>
+                      </div>
+                    )}
                   </div>
 
                   {/* Category Filters */}
