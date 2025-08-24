@@ -447,15 +447,15 @@ export default function JobTracker() {
         // Prioritize recently created opportunities (within last hour)
         const aCreated = a.createdAt ? new Date(a.createdAt).getTime() : 0;
         const bCreated = b.createdAt ? new Date(b.createdAt).getTime() : 0;
-        const oneHourAgo = Date.now() - (60 * 60 * 1000);
-        
+        const oneHourAgo = Date.now() - 60 * 60 * 1000;
+
         const aIsRecent = aCreated > oneHourAgo;
         const bIsRecent = bCreated > oneHourAgo;
-        
+
         if (aIsRecent && !bIsRecent) return -1;
         if (!aIsRecent && bIsRecent) return 1;
         if (aIsRecent && bIsRecent) return bCreated - aCreated;
-        
+
         // Default to sorting by dateApplied
         return (
           new Date(b.dateApplied).getTime() - new Date(a.dateApplied).getTime()
