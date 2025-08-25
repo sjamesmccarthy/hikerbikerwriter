@@ -1121,6 +1121,100 @@ export default function JobTracker() {
     saveJobData(updatedSearch);
   };
 
+  const handleExportLogData = () => {
+    if (!currentSearch) return;
+
+    const filteredLogEntries = getFilteredLogEntries();
+
+    if (filteredLogEntries.length === 0) {
+      alert("No log entries to export with current filters.");
+      return;
+    }
+
+    // Create ASCII formatted text
+    let asciiContent = "";
+
+    // Add header
+    asciiContent += "=".repeat(80) + "\n";
+    asciiContent += `JOB SEARCH LOG: ${currentSearch.name}\n`;
+    asciiContent += "=".repeat(80) + "\n";
+    asciiContent += `Export Date: ${new Date().toLocaleDateString()}\n`;
+    asciiContent += `Total Entries: ${filteredLogEntries.length}\n`;
+
+    // Add date range if filters are applied
+    if (logStartDate || logEndDate) {
+      asciiContent += `Date Range: ${logStartDate || "Start"} to ${
+        logEndDate || "End"
+      }\n`;
+    }
+
+    if (logSearchQuery) {
+      asciiContent += `Search Filter: "${logSearchQuery}"\n`;
+    }
+
+    asciiContent += "=".repeat(80) + "\n\n";
+
+    // Add log entries
+    filteredLogEntries.forEach((logEntry, index) => {
+      const entryDate = new Date(logEntry.date);
+      const formattedDate = entryDate.toLocaleDateString();
+      const formattedTime = entryDate.toLocaleTimeString();
+
+      asciiContent += `[${index + 1}] ${formattedDate} ${formattedTime}\n`;
+      asciiContent += `-`.repeat(50) + "\n";
+      asciiContent += `Type: ${logEntry.type
+        .replace(/_/g, " ")
+        .toUpperCase()}\n`;
+      asciiContent += `Description: ${logEntry.description}\n`;
+
+      if (logEntry.notes) {
+        asciiContent += `Notes: ${logEntry.notes}\n`;
+      }
+
+      if (logEntry.opportunityId) {
+        const opportunity = currentSearch.opportunities.find(
+          (opp) => opp.id === logEntry.opportunityId
+        );
+        if (opportunity) {
+          asciiContent += `Related Opportunity: ${opportunity.position} at ${opportunity.company}\n`;
+        }
+      }
+
+      if (logEntry.recruiterId) {
+        const recruiter = currentSearch.recruiters.find(
+          (rec) => rec.id === logEntry.recruiterId
+        );
+        if (recruiter) {
+          asciiContent += `Recruiter: ${recruiter.name} (${recruiter.company})\n`;
+        }
+      }
+
+      if (logEntry.otherContact) {
+        asciiContent += `Contact: ${logEntry.otherContact}\n`;
+      }
+
+      asciiContent += "\n";
+    });
+
+    asciiContent += "=".repeat(80) + "\n";
+    asciiContent += "End of Log Export\n";
+    asciiContent += "=".repeat(80) + "\n";
+
+    // Create and download the file
+    const blob = new Blob([asciiContent], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${currentSearch.name
+      .replace(/[^a-z0-9]/gi, "_")
+      .toLowerCase()}_log_export_${new Date().toISOString().split("T")[0]}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const handleExportSearch = () => {
     if (!currentSearch) return;
 
@@ -3069,6 +3163,15 @@ export default function JobTracker() {
                           InputLabelProps={{ shrink: true }}
                           sx={{ flex: 1 }}
                         />
+                        <Button
+                          variant="outlined"
+                          onClick={handleExportLogData}
+                          size="small"
+                          sx={{ whiteSpace: "nowrap", minWidth: "auto" }}
+                          title="Export filtered log data as text file"
+                        >
+                          <FileDownloadIcon />
+                        </Button>
                         <Button
                           variant="outlined"
                           onClick={() => {
