@@ -1235,13 +1235,20 @@ const RecipeViewer: React.FC<RecipeViewerProps> = () => {
                                       sx={{ fontSize: 16, mr: 0.5 }}
                                     />
                                     {(() => {
+                                      // First priority: family member name from familyMembers array
                                       const familyMember = familyMembers.find(
                                         (member) =>
                                           member.email === recipe.userEmail
                                       );
-                                      return familyMember
-                                        ? familyMember.name
-                                        : recipe.author || recipe.userEmail;
+                                      if (familyMember?.name) {
+                                        return familyMember.name;
+                                      }
+                                      // Second priority: recipe author field
+                                      if (recipe.author) {
+                                        return recipe.author;
+                                      }
+                                      // Last resort: email
+                                      return recipe.userEmail;
                                     })()}
                                   </div>
                                 )}
@@ -1289,12 +1296,19 @@ const RecipeViewer: React.FC<RecipeViewerProps> = () => {
                               )}
                               Shared by{" "}
                               {(() => {
+                                // First priority: family member name from familyMembers array
                                 const familyMember = familyMembers.find(
                                   (member) => member.email === recipe.userEmail
                                 );
-                                return familyMember
-                                  ? familyMember.name
-                                  : recipe.author || recipe.userEmail;
+                                if (familyMember?.name) {
+                                  return familyMember.name;
+                                }
+                                // Second priority: recipe author field
+                                if (recipe.author) {
+                                  return recipe.author;
+                                }
+                                // Last resort: email
+                                return recipe.userEmail;
                               })()}
                             </span>
                           )}
