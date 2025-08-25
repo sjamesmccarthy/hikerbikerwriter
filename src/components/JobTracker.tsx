@@ -837,6 +837,17 @@ export default function JobTracker() {
     setShowOpportunityDialog(true);
   };
 
+  const handleAddLogEntry = () => {
+    const now = new Date();
+    // Format datetime-local value (YYYY-MM-DDTHH:MM)
+    const localDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
+      .toISOString()
+      .slice(0, 16);
+    
+    setLogForm({ date: localDateTime });
+    setShowLogDialog(true);
+  };
+
   const handleAddInterview = (opportunity: JobOpportunity) => {
     const today = getLocalDateString(); // Get today's date in YYYY-MM-DD format
     setCurrentOpportunityForInterview(opportunity);
@@ -3082,7 +3093,7 @@ export default function JobTracker() {
                       <Button
                         variant="contained"
                         startIcon={<AddIcon />}
-                        onClick={() => setShowLogDialog(true)}
+                        onClick={() => handleAddLogEntry()}
                         className="bg-blue-600 hover:bg-blue-700 w-full"
                         size="large"
                       >
@@ -3107,7 +3118,7 @@ export default function JobTracker() {
                       <Button
                         variant="contained"
                         startIcon={<AddIcon />}
-                        onClick={() => setShowLogDialog(true)}
+                        onClick={() => handleAddLogEntry()}
                         className="bg-blue-600 hover:bg-blue-700"
                         size="large"
                       >
@@ -4879,6 +4890,14 @@ export default function JobTracker() {
                 !logForm.type ||
                 !logForm.description ||
                 !logForm.date
+              )
+                return;
+
+              // Additional validation for email type with "other" contact
+              if (
+                logForm.type === "email" &&
+                showEmailRecruiterOther &&
+                !emailOtherContact.trim()
               )
                 return;
 
