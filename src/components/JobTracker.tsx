@@ -31,6 +31,7 @@ import {
   FileDownload as FileDownloadIcon,
   TableChart as TableChartIcon,
   Close as CloseIcon,
+  Search as SearchIcon,
 } from "@mui/icons-material";
 import {
   FormControl,
@@ -60,6 +61,8 @@ import {
   Box,
   Avatar,
   Pagination,
+  Menu,
+  InputAdornment,
 } from "@mui/material";
 import { renderFooter } from "./shared/footerHelpers";
 
@@ -99,6 +102,24 @@ interface Contact {
   notes?: string;
 }
 
+interface LogEntry {
+  id: string;
+  date: string;
+  type:
+    | "phone_call"
+    | "email"
+    | "status_change"
+    | "interview"
+    | "application"
+    | "follow_up"
+    | "other";
+  description: string;
+  notes?: string;
+  opportunityId?: string; // Optional link to specific opportunity
+  recruiterId?: string; // Optional link to recruiter (mainly for phone calls)
+  otherContact?: string; // For email type when "other" contact is selected
+}
+
 interface Recruiter {
   id: string;
   name: string;
@@ -126,6 +147,7 @@ interface JobData {
   opportunities?: JobOpportunity[];
   recruiters?: Recruiter[];
   resources?: OnlineResource[];
+  log?: LogEntry[];
 }
 
 interface JobSearch {
@@ -135,6 +157,7 @@ interface JobSearch {
   opportunities: JobOpportunity[];
   recruiters: Recruiter[];
   resources: OnlineResource[];
+  log: LogEntry[];
   created: string;
   closed?: number;
   closedDate?: string;
@@ -199,7 +222,11 @@ export default function JobTracker() {
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState<number>(1);
-  const [itemsPerPage, setItemsPerPage] = useState<number>(20);
+  const [itemsPerPage, setItemsPerPage] = useState<number>(10);
+
+  // Log pagination state
+  const [logCurrentPage, setLogCurrentPage] = useState<number>(1);
+  const [logItemsPerPage, setLogItemsPerPage] = useState<number>(10);
 
   // Dialog states
   const [showNewSearchDialog, setShowNewSearchDialog] = useState(false);
@@ -208,6 +235,7 @@ export default function JobTracker() {
   const [showResourceDialog, setShowResourceDialog] = useState(false);
   const [showInterviewDialog, setShowInterviewDialog] = useState(false);
   const [showContactDialog, setShowContactDialog] = useState(false);
+  const [showLogDialog, setShowLogDialog] = useState(false);
 
   // Editing states
   const [editingOpportunity, setEditingOpportunity] =
@@ -222,6 +250,11 @@ export default function JobTracker() {
     useState<JobOpportunity | null>(null);
   const [currentOpportunityForContact, setCurrentOpportunityForContact] =
     useState<JobOpportunity | null>(null);
+  const [editingLog, setEditingLog] = useState<LogEntry | null>(null);
+
+  // Email recruiter selection state
+  const [showEmailRecruiterOther, setShowEmailRecruiterOther] = useState(false);
+  const [emailOtherContact, setEmailOtherContact] = useState("");
 
   // Form states
   const [newSearchName, setNewSearchName] = useState("");
@@ -232,7 +265,26 @@ export default function JobTracker() {
   const [resourceForm, setResourceForm] = useState<Partial<OnlineResource>>({});
   const [interviewForm, setInterviewForm] = useState<Partial<Interview>>({});
   const [contactForm, setContactForm] = useState<Partial<Contact>>({});
+  const [logForm, setLogForm] = useState<Partial<LogEntry>>({});
   const [isJobSourceOther, setIsJobSourceOther] = useState(false);
+
+  // Collapse states
+  const [isRecruitersExpanded, setIsRecruitersExpanded] = useState(false);
+  const [isResourcesExpanded, setIsResourcesExpanded] = useState(false);
+  const [isLogExpanded, setIsLogExpanded] = useState(true);
+
+  // Status change state
+  const [statusChangeAnchor, setStatusChangeAnchor] =
+    useState<HTMLElement | null>(null);
+  const [
+    selectedOpportunityForStatusChange,
+    setSelectedOpportunityForStatusChange,
+  ] = useState<JobOpportunity | null>(null);
+
+  // Log date filter state
+  const [logStartDate, setLogStartDate] = useState("");
+  const [logEndDate, setLogEndDate] = useState("");
+  const [logSearchQuery, setLogSearchQuery] = useState("");
 
   // Apps menu state
   const [isAppsMenuOpen, setIsAppsMenuOpen] = useState(false);
@@ -308,6 +360,7 @@ export default function JobTracker() {
             opportunities: job.opportunities || [],
             recruiters: job.recruiters || [],
             resources: job.resources || [],
+            log: job.log || [],
             created: job.created || new Date().toISOString(), // Use existing created or current time
             closed: job.closed,
           };
@@ -357,6 +410,7 @@ export default function JobTracker() {
         opportunities: searchData.opportunities,
         recruiters: searchData.recruiters,
         resources: searchData.resources,
+        log: searchData.log || [],
         created: searchData.created,
         closedDate: searchData.closedDate,
       };
@@ -507,6 +561,75 @@ export default function JobTracker() {
     setCurrentPage(1);
   };
 
+  // Helper function to get filtered log entries
+  const getFilteredLogEntries = () => {
+    let logEntries = (currentSearch?.log || []).sort(
+      (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+    );
+
+    // Apply search query filtering
+    if (logSearchQuery.trim()) {
+      const query = logSearchQuery.toLowerCase();
+      logEntries = logEntries.filter((entry) => {
+        return (
+          entry.type.toLowerCase().includes(query) ||
+          entry.description.toLowerCase().includes(query) ||
+          (entry.notes && entry.notes.toLowerCase().includes(query)) ||
+          (entry.otherContact &&
+            entry.otherContact.toLowerCase().includes(query))
+        );
+      });
+    }
+
+    // Apply date filtering
+    if (logStartDate || logEndDate) {
+      logEntries = logEntries.filter((entry) => {
+        const entryDate = new Date(entry.date);
+        const startDate = logStartDate ? new Date(logStartDate) : null;
+        const endDate = logEndDate ? new Date(logEndDate) : null;
+
+        // Set end date to end of day for inclusive comparison
+        if (endDate) {
+          endDate.setHours(23, 59, 59, 999);
+        }
+
+        // Check date range
+        if (startDate && entryDate < startDate) return false;
+        if (endDate && entryDate > endDate) return false;
+        return true;
+      });
+    }
+
+    return logEntries;
+  };
+
+  // Log pagination functions
+  const getLogTotalPages = () => {
+    const filteredEntries = getFilteredLogEntries();
+    return Math.ceil(filteredEntries.length / logItemsPerPage);
+  };
+
+  const getLogPaginationInfo = () => {
+    const filteredEntries = getFilteredLogEntries();
+    const totalItems = filteredEntries.length;
+    const startItem =
+      totalItems === 0 ? 0 : (logCurrentPage - 1) * logItemsPerPage + 1;
+    const endItem = Math.min(logCurrentPage * logItemsPerPage, totalItems);
+    return `Showing ${startItem}-${endItem} of ${totalItems} log entries`;
+  };
+
+  const handleLogItemsPerPageChange = (event: SelectChangeEvent) => {
+    setLogItemsPerPage(parseInt(event.target.value));
+    setLogCurrentPage(1);
+  };
+
+  const getPaginatedLogEntries = () => {
+    const filteredEntries = getFilteredLogEntries();
+    const startIndex = (logCurrentPage - 1) * logItemsPerPage;
+    const endIndex = startIndex + logItemsPerPage;
+    return filteredEntries.slice(startIndex, endIndex);
+  };
+
   const handleItemsPerPageChange = (event: SelectChangeEvent) => {
     setItemsPerPage(Number(event.target.value));
     setCurrentPage(1); // Reset to first page when changing page size
@@ -522,6 +645,7 @@ export default function JobTracker() {
       opportunities: [],
       recruiters: [],
       resources: [],
+      log: [],
       created: new Date().toISOString(), // This will be handled by database
     };
 
@@ -562,12 +686,24 @@ export default function JobTracker() {
         notes: opportunityForm.notes,
       };
 
-      const updatedSearch = {
+      let updatedSearch = {
         ...currentSearch,
         opportunities: currentSearch.opportunities.map((opp) =>
           opp.id === editingOpportunity.id ? updatedOpportunity : opp
         ),
       };
+
+      // Add automated log entry if status changed
+      if (statusChanged) {
+        updatedSearch = addAutomatedLogEntry(
+          updatedSearch,
+          editingOpportunity.id,
+          editingOpportunity.status,
+          opportunityForm.status || editingOpportunity.status,
+          opportunityForm.company || editingOpportunity.company,
+          opportunityForm.position || editingOpportunity.position
+        );
+      }
 
       setCurrentSearch(updatedSearch);
       saveJobData(updatedSearch);
@@ -579,7 +715,7 @@ export default function JobTracker() {
         position: opportunityForm.position,
         dateApplied: opportunityForm.dateApplied || getLocalDateString(),
         createdAt: new Date().toISOString(), // Track when opportunity was added
-        status: opportunityForm.status || "applied",
+        status: opportunityForm.status || "saved",
         description: opportunityForm.description,
         jobUrl: opportunityForm.jobUrl,
         jobSource: opportunityForm.jobSource,
@@ -590,10 +726,20 @@ export default function JobTracker() {
         notes: opportunityForm.notes,
       };
 
-      const updatedSearch = {
+      let updatedSearch = {
         ...currentSearch,
         opportunities: [...currentSearch.opportunities, newOpportunity],
       };
+
+      // Add automated log entry for new application
+      updatedSearch = addAutomatedLogEntry(
+        updatedSearch,
+        newOpportunity.id,
+        "", // No previous status for new opportunities
+        newOpportunity.status,
+        newOpportunity.company,
+        newOpportunity.position
+      );
 
       setCurrentSearch(updatedSearch);
       saveJobData(updatedSearch);
@@ -617,6 +763,48 @@ export default function JobTracker() {
 
     setCurrentSearch(updatedSearch);
     saveJobData(updatedSearch);
+  };
+
+  const handleQuickStatusChange = (
+    opportunity: JobOpportunity,
+    newStatus:
+      | "saved"
+      | "applied"
+      | "interview"
+      | "offer"
+      | "rejected"
+      | "closed"
+  ) => {
+    if (!currentSearch || opportunity.status === newStatus) return;
+
+    const updatedOpportunity: JobOpportunity = {
+      ...opportunity,
+      status: newStatus,
+    };
+
+    let updatedSearch = {
+      ...currentSearch,
+      opportunities: currentSearch.opportunities.map((opp) =>
+        opp.id === opportunity.id ? updatedOpportunity : opp
+      ),
+    };
+
+    // Add automated log entry for status change
+    updatedSearch = addAutomatedLogEntry(
+      updatedSearch,
+      opportunity.id,
+      opportunity.status,
+      newStatus,
+      opportunity.company,
+      opportunity.position
+    );
+
+    setCurrentSearch(updatedSearch);
+    saveJobData(updatedSearch);
+
+    // Close the menu
+    setStatusChangeAnchor(null);
+    setSelectedOpportunityForStatusChange(null);
   };
 
   const handleEditOpportunity = (opportunity: JobOpportunity) => {
@@ -674,6 +862,10 @@ export default function JobTracker() {
       notes: interviewForm.notes,
     };
 
+    const originalOpportunity = currentSearch.opportunities.find(
+      (opp) => opp.id === currentOpportunityForInterview.id
+    );
+
     const updatedOpportunities = currentSearch.opportunities.map((opp) =>
       opp.id === currentOpportunityForInterview.id
         ? {
@@ -684,10 +876,22 @@ export default function JobTracker() {
         : opp
     );
 
-    const updatedSearch = {
+    let updatedSearch = {
       ...currentSearch,
       opportunities: updatedOpportunities,
     };
+
+    // Add automated log entry if status changed to interview
+    if (originalOpportunity && originalOpportunity.status !== "interview") {
+      updatedSearch = addAutomatedLogEntry(
+        updatedSearch,
+        currentOpportunityForInterview.id,
+        originalOpportunity.status,
+        "interview",
+        currentOpportunityForInterview.company,
+        currentOpportunityForInterview.position
+      );
+    }
 
     setCurrentSearch(updatedSearch);
     saveJobData(updatedSearch);
@@ -786,10 +990,33 @@ export default function JobTracker() {
       return opp;
     });
 
-    const updatedSearch = {
+    let updatedSearch = {
       ...currentSearch,
       opportunities: updatedOpportunities,
     };
+
+    // Add automated log entry if status changed due to interview deletion
+    const changedOpportunity = updatedOpportunities.find(
+      (opp) => opp.id === opportunityId
+    );
+    const originalOpportunity = currentSearch.opportunities.find(
+      (opp) => opp.id === opportunityId
+    );
+
+    if (
+      changedOpportunity &&
+      originalOpportunity &&
+      changedOpportunity.status !== originalOpportunity.status
+    ) {
+      updatedSearch = addAutomatedLogEntry(
+        updatedSearch,
+        opportunityId,
+        originalOpportunity.status,
+        changedOpportunity.status,
+        changedOpportunity.company,
+        changedOpportunity.position
+      );
+    }
 
     setCurrentSearch(updatedSearch);
     saveJobData(updatedSearch);
@@ -844,6 +1071,54 @@ export default function JobTracker() {
     setEditingResource(resource);
     setResourceForm(resource);
     setShowResourceDialog(true);
+  };
+
+  // Log handler functions
+  const addAutomatedLogEntry = (
+    searchData: JobSearch,
+    opportunityId: string,
+    oldStatus: string,
+    newStatus: string,
+    companyName: string,
+    position: string
+  ) => {
+    const newLogEntry: LogEntry = {
+      id: Date.now().toString(),
+      type: "status_change",
+      date: new Date().toISOString(),
+      description: oldStatus
+        ? `Status changed from "${
+            statusLabels[oldStatus as keyof typeof statusLabels] || oldStatus
+          }" to "${
+            statusLabels[newStatus as keyof typeof statusLabels] || newStatus
+          }"`
+        : `Application submitted - Status set to "${
+            statusLabels[newStatus as keyof typeof statusLabels] || newStatus
+          }"`,
+      notes: `Automated entry for ${position} at ${companyName}`,
+      opportunityId: opportunityId,
+    };
+
+    return {
+      ...searchData,
+      log: [...(searchData.log || []), newLogEntry],
+    };
+  };
+
+  const handleDeleteLog = (logId: string) => {
+    if (!currentSearch) return;
+
+    const updatedLog = currentSearch.log.filter(
+      (logEntry) => logEntry.id !== logId
+    );
+
+    const updatedSearch = {
+      ...currentSearch,
+      log: updatedLog,
+    };
+
+    setCurrentSearch(updatedSearch);
+    saveJobData(updatedSearch);
   };
 
   const handleExportSearch = () => {
@@ -1857,8 +2132,15 @@ export default function JobTracker() {
                                       backgroundColor:
                                         statusColors[opportunity.status],
                                       color: "white",
+                                      cursor: "pointer",
                                     }}
                                     size="small"
+                                    onClick={(e) => {
+                                      setStatusChangeAnchor(e.currentTarget);
+                                      setSelectedOpportunityForStatusChange(
+                                        opportunity
+                                      );
+                                    }}
                                   />
                                 </TableCell>
                                 <TableCell style={{ textAlign: "right" }}>
@@ -2297,8 +2579,15 @@ export default function JobTracker() {
                                 backgroundColor:
                                   statusColors[opportunity.status],
                                 color: "white",
+                                cursor: "pointer",
                               }}
                               size="small"
+                              onClick={(e) => {
+                                setStatusChangeAnchor(e.currentTarget);
+                                setSelectedOpportunityForStatusChange(
+                                  opportunity
+                                );
+                              }}
                             />
                             <IconButton
                               onClick={() =>
@@ -2665,6 +2954,7 @@ export default function JobTracker() {
                             onChange={handleItemsPerPageChange}
                             variant="outlined"
                           >
+                            <MenuItem value="10">10</MenuItem>
                             <MenuItem value="20">20</MenuItem>
                             <MenuItem value="50">50</MenuItem>
                             <MenuItem value="100">100</MenuItem>
@@ -2678,124 +2968,681 @@ export default function JobTracker() {
               </div>
             </div>
 
+            {/* Tracking Log Section */}
+            <div className="mb-8">
+              <div className="bg-gray-50 rounded-lg p-4">
+                <div className="mb-4">
+                  {/* Mobile layout: Stack vertically */}
+                  <div className="block md:hidden">
+                    <div
+                      className="flex items-center gap-2 cursor-pointer mb-4"
+                      onClick={() => setIsLogExpanded(!isLogExpanded)}
+                    >
+                      {isLogExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                      <Typography variant="h6" className="text-gray-700">
+                        ({(currentSearch.log || []).length}) Tracking Log
+                      </Typography>
+                    </div>
+
+                    {isLogExpanded && (
+                      <Button
+                        variant="contained"
+                        startIcon={<AddIcon />}
+                        onClick={() => setShowLogDialog(true)}
+                        className="bg-blue-600 hover:bg-blue-700 w-full"
+                        size="large"
+                      >
+                        Add Log Entry
+                      </Button>
+                    )}
+                  </div>
+
+                  {/* Desktop layout: Same line with button right-justified */}
+                  <div className="hidden md:flex justify-between items-center">
+                    <div
+                      className="flex items-center gap-2 cursor-pointer"
+                      onClick={() => setIsLogExpanded(!isLogExpanded)}
+                    >
+                      {isLogExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
+                      <Typography variant="h6" className="text-gray-700">
+                        ({(currentSearch.log || []).length}) Tracking Log
+                      </Typography>
+                    </div>
+
+                    {isLogExpanded && (
+                      <Button
+                        variant="contained"
+                        startIcon={<AddIcon />}
+                        onClick={() => setShowLogDialog(true)}
+                        className="bg-blue-600 hover:bg-blue-700"
+                        size="large"
+                      >
+                        Add Log Entry
+                      </Button>
+                    )}
+                  </div>
+                </div>
+
+                {isLogExpanded && (
+                  <>
+                    {/* Filter Controls */}
+                    <div className="mb-4 flex flex-col sm:flex-row gap-3">
+                      <TextField
+                        placeholder="Search log entries..."
+                        value={logSearchQuery}
+                        onChange={(e) => {
+                          setLogSearchQuery(e.target.value);
+                          setLogCurrentPage(1);
+                        }}
+                        size="small"
+                        InputProps={{
+                          startAdornment: (
+                            <InputAdornment position="start">
+                              <SearchIcon />
+                            </InputAdornment>
+                          ),
+                        }}
+                        sx={{ flex: 1 }}
+                      />
+                      <div className="flex gap-2" style={{ width: "50%" }}>
+                        <TextField
+                          type="date"
+                          label="Start Date"
+                          value={logStartDate}
+                          onChange={(e) => {
+                            setLogStartDate(e.target.value);
+                            setLogCurrentPage(1);
+                          }}
+                          size="small"
+                          InputLabelProps={{ shrink: true }}
+                          sx={{ flex: 1 }}
+                        />
+                        <TextField
+                          type="date"
+                          label="End Date"
+                          value={logEndDate}
+                          onChange={(e) => {
+                            setLogEndDate(e.target.value);
+                            setLogCurrentPage(1);
+                          }}
+                          size="small"
+                          InputLabelProps={{ shrink: true }}
+                          sx={{ flex: 1 }}
+                        />
+                        <Button
+                          variant="outlined"
+                          onClick={() => {
+                            setLogStartDate("");
+                            setLogEndDate("");
+                            setLogSearchQuery("");
+                            setLogCurrentPage(1);
+                          }}
+                          size="small"
+                          sx={{ whiteSpace: "nowrap" }}
+                        >
+                          Clear
+                        </Button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-3">
+                      {getPaginatedLogEntries().map((logEntry) => {
+                        return (
+                          <div
+                            key={logEntry.id}
+                            className="bg-white rounded-lg p-3"
+                          >
+                            {/* Mobile layout: Stack content vertically */}
+                            <div className="block md:hidden">
+                              {/* Line 1: Status and Date */}
+                              <div className="flex items-center gap-2 mb-1">
+                                <Chip
+                                  label={logEntry.type
+                                    .replace("_", " ")
+                                    .toUpperCase()}
+                                  size="small"
+                                  sx={{ fontSize: "12px" }}
+                                  color={
+                                    logEntry.type === "interview"
+                                      ? "warning"
+                                      : logEntry.type === "phone_call"
+                                      ? "info"
+                                      : logEntry.type === "status_change"
+                                      ? "success"
+                                      : "default"
+                                  }
+                                />
+                                <Typography
+                                  sx={{ fontSize: "12px", color: "black" }}
+                                >
+                                  {new Date(logEntry.date).toLocaleDateString(
+                                    "en-US",
+                                    {
+                                      month: "short",
+                                      day: "numeric",
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                    }
+                                  )}
+                                </Typography>
+                              </div>
+
+                              {/* Line 2: Position/Company (if available) */}
+                              {logEntry.opportunityId && (
+                                <Typography
+                                  sx={{
+                                    fontSize: "12px",
+                                    color: "black",
+                                    marginBottom: "4px",
+                                  }}
+                                >
+                                  {(() => {
+                                    const opportunity =
+                                      currentSearch.opportunities.find(
+                                        (opp) =>
+                                          opp.id === logEntry.opportunityId
+                                      );
+                                    if (opportunity) {
+                                      return `${opportunity.position} at ${opportunity.company}`;
+                                    }
+                                    return "Unknown Position at Unknown Company";
+                                  })()}
+                                </Typography>
+                              )}
+
+                              {/* Line 3: Description/Notes */}
+                              {logEntry.type === "phone_call" ? (
+                                <div>
+                                  <Typography
+                                    sx={{
+                                      fontSize: "12px",
+                                      color: "black",
+                                      fontWeight: "medium",
+                                      marginBottom: "2px",
+                                    }}
+                                  >
+                                    {logEntry.recruiterId
+                                      ? `${
+                                          currentSearch.recruiters.find(
+                                            (rec) =>
+                                              rec.id === logEntry.recruiterId
+                                          )?.name || "Unknown Recruiter"
+                                        } Call`
+                                      : "Recruiter Call"}
+                                  </Typography>
+                                  <Typography
+                                    sx={{
+                                      fontSize: "12px",
+                                      color: "black",
+                                    }}
+                                  >
+                                    {logEntry.description}
+                                  </Typography>
+                                </div>
+                              ) : logEntry.type === "email" ? (
+                                <div>
+                                  <Typography
+                                    sx={{
+                                      fontSize: "12px",
+                                      color: "black",
+                                      fontWeight: "medium",
+                                      marginBottom: "2px",
+                                    }}
+                                  >
+                                    {logEntry.otherContact
+                                      ? `Email to ${logEntry.otherContact}`
+                                      : logEntry.recruiterId
+                                      ? `Email to ${
+                                          currentSearch.recruiters.find(
+                                            (rec) =>
+                                              rec.id === logEntry.recruiterId
+                                          )?.name || "Unknown Recruiter"
+                                        }`
+                                      : "Email"}
+                                  </Typography>
+                                  <Typography
+                                    sx={{
+                                      fontSize: "12px",
+                                      color: "black",
+                                    }}
+                                  >
+                                    {logEntry.description}
+                                  </Typography>
+                                </div>
+                              ) : (
+                                <Typography
+                                  sx={{
+                                    fontSize: "12px",
+                                    color: "black",
+                                  }}
+                                >
+                                  {logEntry.description}
+                                </Typography>
+                              )}
+
+                              {/* Notes if available */}
+                              {logEntry.notes && (
+                                <Typography
+                                  sx={{
+                                    fontSize: "12px",
+                                    color: "gray",
+                                    marginTop: "4px",
+                                    fontStyle: "italic",
+                                  }}
+                                >
+                                  {logEntry.notes}
+                                </Typography>
+                              )}
+                            </div>
+
+                            {/* Desktop layout: Keep existing layout */}
+                            <div className="hidden md:flex items-start justify-between">
+                              {/* Log entry content */}
+                              <div className="flex-1">
+                                {/* First line: Type, Date, and context */}
+                                <div className="flex items-center gap-3">
+                                  <Chip
+                                    label={logEntry.type
+                                      .replace("_", " ")
+                                      .toUpperCase()}
+                                    size="small"
+                                    sx={{ fontSize: "12px" }}
+                                    color={
+                                      logEntry.type === "interview"
+                                        ? "warning"
+                                        : logEntry.type === "phone_call"
+                                        ? "info"
+                                        : logEntry.type === "status_change"
+                                        ? "success"
+                                        : "default"
+                                    }
+                                  />
+                                  <Typography
+                                    sx={{ fontSize: "12px", color: "black" }}
+                                  >
+                                    {new Date(logEntry.date).toLocaleDateString(
+                                      "en-US",
+                                      {
+                                        month: "short",
+                                        day: "numeric",
+                                        hour: "2-digit",
+                                        minute: "2-digit",
+                                      }
+                                    )}
+                                  </Typography>
+                                  {logEntry.type === "phone_call" ? (
+                                    <Typography
+                                      sx={{
+                                        fontSize: "12px",
+                                        color: "black",
+                                        fontWeight: "medium",
+                                      }}
+                                    >
+                                      {logEntry.recruiterId
+                                        ? `${
+                                            currentSearch.recruiters.find(
+                                              (rec) =>
+                                                rec.id === logEntry.recruiterId
+                                            )?.name || "Unknown Recruiter"
+                                          } Call`
+                                        : "Recruiter Call"}
+                                    </Typography>
+                                  ) : logEntry.type === "email" ? (
+                                    <Typography
+                                      sx={{
+                                        fontSize: "12px",
+                                        color: "black",
+                                        fontWeight: "medium",
+                                      }}
+                                    >
+                                      {logEntry.otherContact
+                                        ? `Email to ${logEntry.otherContact}`
+                                        : logEntry.recruiterId
+                                        ? `Email to ${
+                                            currentSearch.recruiters.find(
+                                              (rec) =>
+                                                rec.id === logEntry.recruiterId
+                                            )?.name || "Unknown Recruiter"
+                                          }`
+                                        : "Email"}
+                                    </Typography>
+                                  ) : (
+                                    <Typography
+                                      sx={{
+                                        fontSize: "12px",
+                                        color: "black",
+                                        fontWeight: "medium",
+                                      }}
+                                    >
+                                      {logEntry.description}
+                                    </Typography>
+                                  )}
+                                </div>
+
+                                {/* Phone call description on separate line */}
+                                {logEntry.type === "phone_call" && (
+                                  <Typography
+                                    sx={{
+                                      fontSize: "12px",
+                                      color: "black",
+                                      marginTop: "4px",
+                                    }}
+                                  >
+                                    {logEntry.description}
+                                  </Typography>
+                                )}
+
+                                {/* Email description on separate line */}
+                                {logEntry.type === "email" && (
+                                  <Typography
+                                    sx={{
+                                      fontSize: "12px",
+                                      color: "black",
+                                      marginTop: "4px",
+                                    }}
+                                  >
+                                    {logEntry.description}
+                                  </Typography>
+                                )}
+
+                                {/* Second line: Company and Position */}
+                                {logEntry.opportunityId && (
+                                  <Typography
+                                    sx={{
+                                      fontSize: "12px",
+                                      color: "black",
+                                      marginTop: "8px",
+                                    }}
+                                  >
+                                    {(() => {
+                                      const opportunity =
+                                        currentSearch.opportunities.find(
+                                          (opp) =>
+                                            opp.id === logEntry.opportunityId
+                                        );
+                                      if (opportunity) {
+                                        return `${opportunity.position} at ${opportunity.company}`;
+                                      }
+                                      return "Unknown Position at Unknown Company";
+                                    })()}
+                                  </Typography>
+                                )}
+
+                                {/* Recruiter info if applicable (not for phone calls since it's already shown) */}
+                                {logEntry.recruiterId &&
+                                  logEntry.type !== "phone_call" && (
+                                    <Typography
+                                      sx={{
+                                        fontSize: "12px",
+                                        color: "black",
+                                        marginTop: "2px",
+                                      }}
+                                    >
+                                      Recruiter:{" "}
+                                      {currentSearch.recruiters.find(
+                                        (rec) => rec.id === logEntry.recruiterId
+                                      )?.name || "Unknown Recruiter"}
+                                    </Typography>
+                                  )}
+
+                                {/* Notes if available */}
+                                {logEntry.notes && (
+                                  <Typography
+                                    sx={{
+                                      fontSize: "12px",
+                                      color: "gray",
+                                      marginTop: "4px",
+                                      fontStyle: "italic",
+                                    }}
+                                  >
+                                    {logEntry.notes}
+                                  </Typography>
+                                )}
+                              </div>
+
+                              {/* Actions - Only visible on desktop */}
+                              <div className="flex space-x-1">
+                                <IconButton
+                                  size="small"
+                                  onClick={() => {
+                                    setEditingLog(logEntry);
+                                    setLogForm(logEntry);
+                                    // Handle email editing state
+                                    if (
+                                      logEntry.type === "email" &&
+                                      logEntry.otherContact
+                                    ) {
+                                      setShowEmailRecruiterOther(true);
+                                      setEmailOtherContact(
+                                        logEntry.otherContact
+                                      );
+                                    } else {
+                                      setShowEmailRecruiterOther(false);
+                                      setEmailOtherContact("");
+                                    }
+                                    setShowLogDialog(true);
+                                  }}
+                                  sx={{ color: "gray" }}
+                                >
+                                  <EditIcon fontSize="small" />
+                                </IconButton>
+                                <IconButton
+                                  size="small"
+                                  onClick={() => handleDeleteLog(logEntry.id)}
+                                  sx={{ color: "gray" }}
+                                >
+                                  <DeleteIcon fontSize="small" />
+                                </IconButton>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+
+                      {(currentSearch?.log || []).length === 0 && (
+                        <div className="text-center py-8 text-gray-500">
+                          <LogIcon className="mx-auto mb-2" fontSize="large" />
+                          <Typography>No log entries added yet</Typography>
+                        </div>
+                      )}
+
+                      {/* Log Pagination */}
+                      {(currentSearch?.log || []).length > 0 && (
+                        <div className="mt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+                          <Typography variant="body2" className="text-gray-600">
+                            {getLogPaginationInfo()}
+                          </Typography>
+
+                          <div className="flex flex-col sm:flex-row items-center gap-4">
+                            {getLogTotalPages() > 1 && (
+                              <Pagination
+                                count={getLogTotalPages()}
+                                page={logCurrentPage}
+                                onChange={(event, value) =>
+                                  setLogCurrentPage(value)
+                                }
+                                color="primary"
+                                showFirstButton
+                                showLastButton
+                              />
+                            )}
+
+                            <div className="flex items-center gap-2">
+                              <Typography
+                                variant="body2"
+                                className="text-gray-600"
+                              >
+                                Items per page:
+                              </Typography>
+                              <FormControl
+                                size="small"
+                                style={{ minWidth: 80 }}
+                              >
+                                <Select
+                                  value={logItemsPerPage.toString()}
+                                  onChange={handleLogItemsPerPageChange}
+                                  variant="outlined"
+                                >
+                                  <MenuItem value="5">5</MenuItem>
+                                  <MenuItem value="10">10</MenuItem>
+                                  <MenuItem value="25">25</MenuItem>
+                                  <MenuItem value="50">50</MenuItem>
+                                </Select>
+                              </FormControl>
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+
             {/* Recruiters and Resources Row */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {/* Recruiters Section */}
               <div className="w-full">
                 <div className="bg-gray-50 rounded-lg p-4">
                   <div className="flex justify-between items-center mb-4">
-                    <Button
-                      variant="contained"
-                      startIcon={<AddIcon />}
-                      onClick={() => setShowRecruiterDialog(true)}
-                      className="bg-purple-600 hover:bg-purple-700 w-full md:w-auto"
-                      size="large"
+                    <div
+                      className="flex items-center gap-4 cursor-pointer flex-1"
+                      onClick={() =>
+                        setIsRecruitersExpanded(!isRecruitersExpanded)
+                      }
                     >
-                      Add Recruiter
-                    </Button>
+                      <div className="flex items-center gap-2">
+                        {isRecruitersExpanded ? (
+                          <ExpandLessIcon />
+                        ) : (
+                          <ExpandMoreIcon />
+                        )}
+                        <Typography variant="h6" className="text-gray-700">
+                          ({currentSearch.recruiters.length}) Recruiters
+                        </Typography>
+                      </div>
+                    </div>
+                    {isRecruitersExpanded && (
+                      <Button
+                        variant="contained"
+                        startIcon={<AddIcon />}
+                        onClick={() => setShowRecruiterDialog(true)}
+                        className="bg-purple-600 hover:bg-purple-700"
+                        size="large"
+                      >
+                        Add Recruiter
+                      </Button>
+                    )}
                   </div>
 
-                  <div className="space-y-3">
-                    {currentSearch.recruiters.map((recruiter) => (
-                      <div
-                        key={recruiter.id}
-                        className="bg-gray-100 rounded-lg p-3"
-                      >
-                        <div>
-                          {/* Mobile: Icons above content, Desktop: Icons on the right */}
-                          <div className="flex flex-col md:flex-row md:items-start md:justify-between">
-                            {/* Icons - Mobile: top, Desktop: right */}
-                            <div className="flex space-x-1 justify-end md:order-2 md:self-start mb-2 md:mb-0">
-                              {recruiter.notes?.trim() && (
+                  {isRecruitersExpanded && (
+                    <div className="space-y-3">
+                      {currentSearch.recruiters.map((recruiter) => (
+                        <div
+                          key={recruiter.id}
+                          className="bg-gray-100 rounded-lg p-3"
+                        >
+                          <div>
+                            {/* Mobile: Icons above content, Desktop: Icons on the right */}
+                            <div className="flex flex-col md:flex-row md:items-start md:justify-between">
+                              {/* Icons - Mobile: top, Desktop: right */}
+                              <div className="flex space-x-1 justify-end md:order-2 md:self-start mb-2 md:mb-0">
+                                {recruiter.notes?.trim() && (
+                                  <IconButton
+                                    size="small"
+                                    className="text-orange-500 hover:text-orange-600"
+                                    onClick={() =>
+                                      handleEditRecruiter(recruiter)
+                                    }
+                                    title="View/Edit Notes"
+                                  >
+                                    <NotesIcon fontSize="small" />
+                                  </IconButton>
+                                )}
                                 <IconButton
                                   size="small"
-                                  className="text-orange-500 hover:text-orange-600"
+                                  className="text-gray-400 hover:text-gray-600"
                                   onClick={() => handleEditRecruiter(recruiter)}
-                                  title="View/Edit Notes"
+                                  title="Edit Recruiter"
                                 >
-                                  <NotesIcon fontSize="small" />
+                                  <EditIcon fontSize="small" />
                                 </IconButton>
-                              )}
-                              <IconButton
-                                size="small"
-                                className="text-gray-400 hover:text-gray-600"
-                                onClick={() => handleEditRecruiter(recruiter)}
-                                title="Edit Recruiter"
-                              >
-                                <EditIcon fontSize="small" />
-                              </IconButton>
-                              <IconButton
-                                size="small"
-                                className="text-gray-400 hover:text-red-500"
-                                onClick={() =>
-                                  handleDeleteRecruiter(recruiter.id)
-                                }
-                                title="Delete Recruiter"
-                              >
-                                <DeleteIcon fontSize="small" />
-                              </IconButton>
-                            </div>
-
-                            {/* Content - Mobile: below icons, Desktop: left side */}
-                            <div className="flex items-start space-x-3 flex-1 md:order-1">
-                              <div className="hidden md:block">
-                                <Avatar className="bg-purple-100 text-purple-600 mt-1">
-                                  <PersonIcon />
-                                </Avatar>
+                                <IconButton
+                                  size="small"
+                                  className="text-gray-400 hover:text-red-500"
+                                  onClick={() =>
+                                    handleDeleteRecruiter(recruiter.id)
+                                  }
+                                  title="Delete Recruiter"
+                                >
+                                  <DeleteIcon fontSize="small" />
+                                </IconButton>
                               </div>
-                              <div className="flex-1 min-h-[80px]">
-                                <Typography
-                                  variant="subtitle1"
-                                  className="font-semibold leading-5"
-                                >
-                                  {recruiter.name}
-                                </Typography>
-                                <Typography
-                                  variant="body2"
-                                  className="text-gray-600 leading-5 mt-1"
-                                >
-                                  {recruiter.company}
-                                </Typography>
-                                {recruiter.specialty && (
+
+                              {/* Content - Mobile: below icons, Desktop: left side */}
+                              <div className="flex items-start space-x-3 flex-1 md:order-1">
+                                <div className="hidden md:block">
+                                  <Avatar className="bg-purple-100 text-purple-600 mt-1">
+                                    <PersonIcon />
+                                  </Avatar>
+                                </div>
+                                <div className="flex-1 min-h-[80px]">
                                   <Typography
-                                    variant="caption"
-                                    className="text-gray-500 leading-4 block mt-1"
+                                    variant="subtitle1"
+                                    className="font-semibold leading-5"
                                   >
-                                    {recruiter.specialty}
+                                    {recruiter.name}
                                   </Typography>
-                                )}
-                                <div className="flex flex-col space-y-1 mt-2">
-                                  {recruiter.email && (
-                                    <a
-                                      href={`mailto:${recruiter.email}`}
-                                      className="text-blue-600 hover:underline text-sm"
+                                  <Typography
+                                    variant="body2"
+                                    className="text-gray-600 leading-5 mt-1"
+                                  >
+                                    {recruiter.company}
+                                  </Typography>
+                                  {recruiter.specialty && (
+                                    <Typography
+                                      variant="caption"
+                                      className="text-gray-500 leading-4 block mt-1"
                                     >
-                                      {recruiter.email}
-                                    </a>
+                                      {recruiter.specialty}
+                                    </Typography>
                                   )}
-                                  {recruiter.phone && (
-                                    <a
-                                      href={`tel:${recruiter.phone}`}
-                                      className="text-blue-600 hover:underline text-sm"
-                                    >
-                                      {formatPhoneNumber(recruiter.phone)}
-                                    </a>
-                                  )}
+                                  <div className="flex flex-col space-y-1 mt-2">
+                                    {recruiter.email && (
+                                      <a
+                                        href={`mailto:${recruiter.email}`}
+                                        className="text-blue-600 hover:underline text-sm"
+                                      >
+                                        {recruiter.email}
+                                      </a>
+                                    )}
+                                    {recruiter.phone && (
+                                      <a
+                                        href={`tel:${recruiter.phone}`}
+                                        className="text-blue-600 hover:underline text-sm"
+                                      >
+                                        {formatPhoneNumber(recruiter.phone)}
+                                      </a>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
 
-                    {currentSearch.recruiters.length === 0 && (
-                      <div className="text-center py-8 text-gray-500">
-                        <PersonIcon className="mx-auto mb-2" fontSize="large" />
-                        <Typography>No recruiters added yet</Typography>
-                      </div>
-                    )}
-                  </div>
+                      {currentSearch.recruiters.length === 0 && (
+                        <div className="text-center py-8 text-gray-500">
+                          <PersonIcon
+                            className="mx-auto mb-2"
+                            fontSize="large"
+                          />
+                          <Typography>No recruiters added yet</Typography>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -2803,74 +3650,98 @@ export default function JobTracker() {
               <div className="w-full">
                 <div className="bg-gray-50 rounded-lg p-4">
                   <div className="flex justify-between items-center mb-4">
-                    <Button
-                      variant="contained"
-                      startIcon={<AddIcon />}
-                      onClick={() => setShowResourceDialog(true)}
-                      className="bg-teal-600 hover:bg-teal-700 w-full md:w-auto"
-                      size="large"
+                    <div
+                      className="flex items-center gap-4 cursor-pointer flex-1"
+                      onClick={() =>
+                        setIsResourcesExpanded(!isResourcesExpanded)
+                      }
                     >
-                      Add Resource
-                    </Button>
+                      <div className="flex items-center gap-2">
+                        {isResourcesExpanded ? (
+                          <ExpandLessIcon />
+                        ) : (
+                          <ExpandMoreIcon />
+                        )}
+                        <Typography variant="h6" className="text-gray-700">
+                          ({currentSearch.resources.length}) Resources
+                        </Typography>
+                      </div>
+                    </div>
+                    {isResourcesExpanded && (
+                      <Button
+                        variant="contained"
+                        startIcon={<AddIcon />}
+                        onClick={() => setShowResourceDialog(true)}
+                        className="bg-teal-600 hover:bg-teal-700"
+                        size="large"
+                      >
+                        Add Resource
+                      </Button>
+                    )}
                   </div>
 
-                  <div className="space-y-3">
-                    {currentSearch.resources.map((resource) => (
-                      <div
-                        key={resource.id}
-                        className="bg-gray-100 rounded-lg p-3"
-                      >
-                        <div>
-                          <div className="flex items-start justify-between">
-                            <div>
-                              <div className="flex items-center gap-2 mb-2">
-                                <a
-                                  href={resource.url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  className="text-blue-600 hover:underline"
+                  {isResourcesExpanded && (
+                    <div className="space-y-3">
+                      {currentSearch.resources.map((resource) => (
+                        <div
+                          key={resource.id}
+                          className="bg-gray-100 rounded-lg p-3"
+                        >
+                          <div>
+                            <div className="flex items-start justify-between">
+                              <div>
+                                <div className="flex items-center gap-2 mb-2">
+                                  <a
+                                    href={resource.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-600 hover:underline"
+                                  >
+                                    {resource.name}
+                                  </a>
+                                  <Chip
+                                    label={resource.category}
+                                    size="small"
+                                  />
+                                </div>
+                                <Typography
+                                  variant="body2"
+                                  className="text-gray-600"
                                 >
-                                  {resource.name}
-                                </a>
-                                <Chip label={resource.category} size="small" />
+                                  {resource.description}
+                                </Typography>
                               </div>
-                              <Typography
-                                variant="body2"
-                                className="text-gray-600"
-                              >
-                                {resource.description}
-                              </Typography>
-                            </div>
-                            <div className="flex gap-1">
-                              <IconButton
-                                size="small"
-                                style={{ color: "#6b7280" }}
-                                onClick={() => handleEditResource(resource)}
-                              >
-                                <EditIcon fontSize="small" />
-                              </IconButton>
-                              <IconButton
-                                size="small"
-                                style={{ color: "#6b7280" }}
-                                onClick={() =>
-                                  handleDeleteResource(resource.id)
-                                }
-                              >
-                                <DeleteIcon fontSize="small" />
-                              </IconButton>
+                              <div className="flex gap-1">
+                                <IconButton
+                                  size="small"
+                                  style={{ color: "#6b7280" }}
+                                  onClick={() => handleEditResource(resource)}
+                                >
+                                  <EditIcon fontSize="small" />
+                                </IconButton>
+                                <IconButton
+                                  size="small"
+                                  style={{ color: "#6b7280" }}
+                                  onClick={() =>
+                                    handleDeleteResource(resource.id)
+                                  }
+                                >
+                                  <DeleteIcon fontSize="small" />
+                                </IconButton>
+                              </div>
                             </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
 
-                    {currentSearch.resources.length === 0 && (
-                      <div className="text-center py-8 text-gray-500">
-                        <LinkIcon className="mx-auto mb-2" fontSize="large" />
-                        <Typography>No resources added yet</Typography>
-                      </div>
-                    )}
-                  </div>
+                      {currentSearch.resources.length === 0 && (
+                        <div className="text-center py-8 text-gray-500">
+                          <LinkIcon className="mx-auto mb-2" fontSize="large" />
+                          <Typography>No resources added yet</Typography>
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -3160,7 +4031,7 @@ export default function JobTracker() {
               <FormControl fullWidth variant="outlined">
                 <InputLabel>Status</InputLabel>
                 <Select
-                  value={opportunityForm.status || "applied"}
+                  value={opportunityForm.status || "saved"}
                   label="Status"
                   onChange={(e) =>
                     setOpportunityForm({
@@ -3717,6 +4588,260 @@ export default function JobTracker() {
         </DialogActions>
       </Dialog>
 
+      {/* Add/Edit Log Entry Dialog */}
+      <Dialog
+        open={showLogDialog}
+        onClose={() => {
+          setShowLogDialog(false);
+          setEditingLog(null);
+          setLogForm({});
+          setShowEmailRecruiterOther(false);
+          setEmailOtherContact("");
+        }}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          {editingLog ? "Edit Log Entry" : "Add Log Entry"}
+        </DialogTitle>
+        <DialogContent>
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              gap: 3,
+              mt: 2,
+              mb: 2,
+            }}
+          >
+            <FormControl fullWidth>
+              <InputLabel>Entry Type</InputLabel>
+              <Select
+                value={logForm.type || ""}
+                onChange={(e) =>
+                  setLogForm({
+                    ...logForm,
+                    type: e.target.value as LogEntry["type"],
+                  })
+                }
+                label="Entry Type"
+              >
+                <MenuItem value="phone_call">Phone Call</MenuItem>
+                <MenuItem value="email">Email</MenuItem>
+                <MenuItem value="follow_up">Follow Up</MenuItem>
+                <MenuItem value="other">Other</MenuItem>
+              </Select>
+            </FormControl>
+
+            {logForm.type === "phone_call" && (
+              <FormControl fullWidth>
+                <InputLabel>Recruiter (Optional)</InputLabel>
+                <Select
+                  value={logForm.recruiterId || ""}
+                  onChange={(e) =>
+                    setLogForm({ ...logForm, recruiterId: e.target.value })
+                  }
+                  label="Recruiter (Optional)"
+                >
+                  <MenuItem value="">None</MenuItem>
+                  {currentSearch?.recruiters.map((recruiter) => (
+                    <MenuItem key={recruiter.id} value={recruiter.id}>
+                      {recruiter.name} - {recruiter.company}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            )}
+
+            {logForm.type === "email" && (
+              <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                {!showEmailRecruiterOther ? (
+                  <FormControl fullWidth>
+                    <InputLabel>Email Contact</InputLabel>
+                    <Select
+                      value={logForm.recruiterId || ""}
+                      onChange={(e) => {
+                        if (e.target.value === "other") {
+                          setShowEmailRecruiterOther(true);
+                          setLogForm({ ...logForm, recruiterId: "" });
+                        } else {
+                          setLogForm({
+                            ...logForm,
+                            recruiterId: e.target.value,
+                          });
+                        }
+                      }}
+                      label="Email Contact"
+                    >
+                      <MenuItem value="">None</MenuItem>
+                      {currentSearch?.recruiters.map((recruiter) => (
+                        <MenuItem key={recruiter.id} value={recruiter.id}>
+                          {recruiter.name} - {recruiter.company}
+                        </MenuItem>
+                      ))}
+                      <MenuItem value="other">Other Contact...</MenuItem>
+                    </Select>
+                  </FormControl>
+                ) : (
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                    <IconButton
+                      onClick={() => {
+                        setShowEmailRecruiterOther(false);
+                        setEmailOtherContact("");
+                      }}
+                      size="small"
+                    >
+                      <ArrowBackIcon />
+                    </IconButton>
+                    <TextField
+                      fullWidth
+                      label="Other Contact Name"
+                      value={emailOtherContact}
+                      onChange={(e) => setEmailOtherContact(e.target.value)}
+                      placeholder="Enter contact name"
+                    />
+                  </Box>
+                )}
+              </Box>
+            )}
+
+            <TextField
+              fullWidth
+              label="Date & Time"
+              type="datetime-local"
+              value={logForm.date || ""}
+              onChange={(e) => setLogForm({ ...logForm, date: e.target.value })}
+              InputLabelProps={{ shrink: true }}
+            />
+
+            <FormControl fullWidth>
+              <InputLabel>Related Opportunity (Optional)</InputLabel>
+              <Select
+                value={logForm.opportunityId || ""}
+                onChange={(e) =>
+                  setLogForm({ ...logForm, opportunityId: e.target.value })
+                }
+                label="Related Opportunity (Optional)"
+              >
+                <MenuItem value="">None</MenuItem>
+                {currentSearch?.opportunities.map((opp) => (
+                  <MenuItem key={opp.id} value={opp.id}>
+                    {opp.company} - {opp.position}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            <TextField
+              fullWidth
+              label="Description"
+              value={logForm.description || ""}
+              onChange={(e) =>
+                setLogForm({ ...logForm, description: e.target.value })
+              }
+              required
+            />
+
+            <TextField
+              fullWidth
+              label="Notes (Optional)"
+              value={logForm.notes || ""}
+              onChange={(e) =>
+                setLogForm({ ...logForm, notes: e.target.value })
+              }
+              multiline
+              rows={3}
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ justifyContent: "center", gap: 2, pb: 3 }}>
+          <Button
+            onClick={() => {
+              setShowLogDialog(false);
+              setEditingLog(null);
+              setLogForm({});
+              setShowEmailRecruiterOther(false);
+              setEmailOtherContact("");
+            }}
+            variant="outlined"
+            size="large"
+            style={{ minWidth: "120px" }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={() => {
+              if (
+                !currentSearch ||
+                !logForm.type ||
+                !logForm.description ||
+                !logForm.date
+              )
+                return;
+
+              if (editingLog) {
+                // Update existing log entry
+                const updatedLogEntry = {
+                  ...editingLog,
+                  ...logForm,
+                  otherContact: showEmailRecruiterOther
+                    ? emailOtherContact
+                    : undefined,
+                };
+
+                const updatedLog = currentSearch.log.map((entry) =>
+                  entry.id === editingLog.id ? updatedLogEntry : entry
+                );
+
+                const updatedSearch = {
+                  ...currentSearch,
+                  log: updatedLog,
+                };
+
+                setCurrentSearch(updatedSearch);
+                saveJobData(updatedSearch);
+              } else {
+                // Add new log entry
+                const newLogEntry: LogEntry = {
+                  id: Date.now().toString(),
+                  type: logForm.type,
+                  date: logForm.date,
+                  description: logForm.description,
+                  notes: logForm.notes,
+                  opportunityId: logForm.opportunityId,
+                  recruiterId: logForm.recruiterId,
+                  otherContact: showEmailRecruiterOther
+                    ? emailOtherContact
+                    : undefined,
+                };
+
+                const updatedSearch = {
+                  ...currentSearch,
+                  log: [...(currentSearch.log || []), newLogEntry],
+                };
+
+                setCurrentSearch(updatedSearch);
+                saveJobData(updatedSearch);
+
+                // Expand the log section to show the new entry
+                setIsLogExpanded(true);
+              }
+
+              setShowLogDialog(false);
+              setEditingLog(null);
+              setLogForm({});
+              setShowEmailRecruiterOther(false);
+              setEmailOtherContact("");
+            }}
+            variant="contained"
+            size="large"
+            style={{ minWidth: "120px" }}
+          >
+            {editingLog ? "Update Entry" : "Add Entry"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       {/* Add Interview Dialog */}
       <Dialog
         open={showInterviewDialog}
@@ -4037,6 +5162,66 @@ export default function JobTracker() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Quick Status Change Menu */}
+      <Menu
+        anchorEl={statusChangeAnchor}
+        open={Boolean(statusChangeAnchor)}
+        onClose={() => {
+          setStatusChangeAnchor(null);
+          setSelectedOpportunityForStatusChange(null);
+        }}
+      >
+        <MenuItem
+          onClick={() =>
+            selectedOpportunityForStatusChange &&
+            handleQuickStatusChange(selectedOpportunityForStatusChange, "saved")
+          }
+        >
+          Saved
+        </MenuItem>
+        <MenuItem
+          onClick={() =>
+            selectedOpportunityForStatusChange &&
+            handleQuickStatusChange(
+              selectedOpportunityForStatusChange,
+              "applied"
+            )
+          }
+        >
+          Applied
+        </MenuItem>
+        <MenuItem
+          onClick={() =>
+            selectedOpportunityForStatusChange &&
+            handleQuickStatusChange(selectedOpportunityForStatusChange, "offer")
+          }
+        >
+          Offer
+        </MenuItem>
+        <MenuItem
+          onClick={() =>
+            selectedOpportunityForStatusChange &&
+            handleQuickStatusChange(
+              selectedOpportunityForStatusChange,
+              "rejected"
+            )
+          }
+        >
+          Rejected
+        </MenuItem>
+        <MenuItem
+          onClick={() =>
+            selectedOpportunityForStatusChange &&
+            handleQuickStatusChange(
+              selectedOpportunityForStatusChange,
+              "closed"
+            )
+          }
+        >
+          Closed
+        </MenuItem>
+      </Menu>
 
       {renderFooter()}
     </div>
