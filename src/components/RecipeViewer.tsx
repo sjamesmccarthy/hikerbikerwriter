@@ -1195,7 +1195,7 @@ const RecipeViewer: React.FC<RecipeViewerProps> = () => {
                                 )}
 
                                 {/* Public icon - show for public recipes */}
-                                {recipe.public && (
+                                {Boolean(recipe.public) && (
                                   <div className="w-8 h-8 rounded-full bg-white/80 flex items-center justify-center">
                                     <PublicIcon
                                       sx={{ fontSize: 20, color: "gray" }}
@@ -1286,6 +1286,26 @@ const RecipeViewer: React.FC<RecipeViewerProps> = () => {
                     <Link href={`/recipes/${recipe.slug}`} className="flex-1">
                       <div className="flex flex-col">
                         <span className="font-bold text-gray-900 font-mono text-base uppercase flex items-center gap-2">
+                          {/* Public icon for minimized view */}
+                          {Boolean(recipe.public) && (
+                            <PublicIcon sx={{ fontSize: 16, color: "gray" }} />
+                          )}
+                          {/* Family icon for minimized view */}
+                          {(recipe.shared_family === 1 ||
+                            recipe.shared_family === true) && (
+                            <PeopleIcon
+                              sx={{
+                                fontSize: 16,
+                                color:
+                                  showFamilyOnly &&
+                                  (recipe.shared_family === 1 ||
+                                    recipe.shared_family === true) &&
+                                  recipe.userEmail !== session?.user?.email
+                                    ? "#3b82f6"
+                                    : "gray",
+                              }}
+                            />
+                          )}
                           {recipe.title}
                         </span>
 
@@ -1297,7 +1317,7 @@ const RecipeViewer: React.FC<RecipeViewerProps> = () => {
                               <PeopleIcon
                                 sx={{ fontSize: 16, mr: 0.5, color: "#2563eb" }}
                               />
-                              {recipe.public === true && (
+                              {Boolean(recipe.public) && (
                                 <PublicIcon
                                   sx={{
                                     fontSize: 16,
