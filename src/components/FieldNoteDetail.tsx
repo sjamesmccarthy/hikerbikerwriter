@@ -372,39 +372,59 @@ const FieldNoteDetail: React.FC<FieldNoteDetailProps> = ({ slug }) => {
                 </div>
               )}
 
-              {/* Tags and Action Icons */}
-              {(formatTags(fieldNote.tags || "").length > 0 ||
-                (session && !isEditing)) && (
-                <>
-                  <hr className="border-gray-200" />
-                  <div className="flex items-center justify-between">
-                    <div className="flex flex-wrap gap-2">
-                      {formatTags(fieldNote.tags || "").map((tag) => (
-                        <Chip
-                          key={tag}
-                          label={tag}
-                          size="small"
-                          variant="outlined"
-                          className="bg-gray-50"
-                        />
-                      ))}
-                    </div>
-                    {session && !isEditing && (
-                      <div className="flex items-center space-x-2 ml-4">
-                        <IconButton onClick={handleEdit} size="small">
-                          <EditIcon className="w-5 h-5" />
-                        </IconButton>
-                        <IconButton
-                          onClick={() => setIsDeleteDialogOpen(true)}
-                          size="small"
-                          color="error"
-                        >
-                          <DeleteIcon className="w-5 h-5" />
-                        </IconButton>
+              {/* Tags and Action Icons - Hide entire section on mobile if only showing action icons */}
+              <div className="hidden md:block">
+                {(formatTags(fieldNote.tags || "").length > 0 ||
+                  (session && !isEditing)) && (
+                  <>
+                    <hr className="border-gray-200" />
+                    <div className="flex items-center justify-between">
+                      <div className="flex flex-wrap gap-2">
+                        {formatTags(fieldNote.tags || "").map((tag) => (
+                          <Chip
+                            key={tag}
+                            label={tag}
+                            size="small"
+                            variant="outlined"
+                            className="bg-gray-50"
+                          />
+                        ))}
                       </div>
-                    )}
+                      {session && !isEditing && (
+                        <div className="flex items-center space-x-2 ml-4">
+                          <IconButton onClick={handleEdit} size="small">
+                            <EditIcon className="w-5 h-5" />
+                          </IconButton>
+                          <IconButton
+                            onClick={() => setIsDeleteDialogOpen(true)}
+                            size="small"
+                            color="error"
+                          >
+                            <DeleteIcon className="w-5 h-5" />
+                          </IconButton>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Mobile-only action icons without tags */}
+              {session && !isEditing && (
+                <div className="md:hidden flex justify-end pt-4">
+                  <div className="flex items-center space-x-2">
+                    <IconButton onClick={handleEdit} size="small">
+                      <EditIcon className="w-5 h-5" />
+                    </IconButton>
+                    <IconButton
+                      onClick={() => setIsDeleteDialogOpen(true)}
+                      size="small"
+                      color="error"
+                    >
+                      <DeleteIcon className="w-5 h-5" />
+                    </IconButton>
                   </div>
-                </>
+                </div>
               )}
             </div>
           </div>

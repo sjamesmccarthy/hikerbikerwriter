@@ -629,160 +629,297 @@ const FieldNotes: React.FC = () => {
               <div className="w-full bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4 text-left">
                 <div className="flex flex-col gap-3">
                   {/* Date, Mood, and Sort Filters */}
-                  <div className="flex flex-wrap gap-4 items-center justify-between">
-                    <div className="flex flex-wrap gap-4 items-center">
-                      <FormControl size="small" sx={{ minWidth: 120 }}>
-                        <InputLabel
-                          sx={{ fontFamily: "monospace", fontSize: "0.875rem" }}
+                  <div className="flex flex-col gap-3">
+                    {/* Mobile layout with responsive rows */}
+                    <div className="flex flex-col md:flex-row md:flex-wrap gap-3 md:gap-4 md:items-center md:justify-between">
+                      {/* First row on mobile: Date and Mood (50% each) */}
+                      <div className="flex gap-2 md:contents">
+                        <FormControl
+                          size="small"
+                          className="flex-1 md:flex-none"
+                          sx={{ minWidth: { xs: 0, md: 120 } }}
                         >
-                          Date
-                        </InputLabel>
-                        <Select
-                          defaultValue="all"
-                          label="Date"
-                          sx={{
-                            fontFamily: "monospace",
-                            fontSize: "0.875rem",
-                            "& .MuiSelect-select": { fontFamily: "monospace" },
-                          }}
-                        >
-                          <MenuItem
-                            value="all"
+                          <InputLabel
                             sx={{
                               fontFamily: "monospace",
                               fontSize: "0.875rem",
                             }}
                           >
-                            All Time
-                          </MenuItem>
-                          <MenuItem
-                            value="week"
+                            Date
+                          </InputLabel>
+                          <Select
+                            defaultValue="all"
+                            label="Date"
                             sx={{
                               fontFamily: "monospace",
                               fontSize: "0.875rem",
+                              "& .MuiSelect-select": {
+                                fontFamily: "monospace",
+                              },
                             }}
                           >
-                            This Week
-                          </MenuItem>
-                          <MenuItem
-                            value="month"
-                            sx={{
-                              fontFamily: "monospace",
-                              fontSize: "0.875rem",
-                            }}
-                          >
-                            This Month
-                          </MenuItem>
-                          <MenuItem
-                            value="year"
-                            sx={{
-                              fontFamily: "monospace",
-                              fontSize: "0.875rem",
-                            }}
-                          >
-                            This Year
-                          </MenuItem>
-                        </Select>
-                      </FormControl>
+                            <MenuItem
+                              value="all"
+                              sx={{
+                                fontFamily: "monospace",
+                                fontSize: "0.875rem",
+                              }}
+                            >
+                              All Time
+                            </MenuItem>
+                            <MenuItem
+                              value="week"
+                              sx={{
+                                fontFamily: "monospace",
+                                fontSize: "0.875rem",
+                              }}
+                            >
+                              This Week
+                            </MenuItem>
+                            <MenuItem
+                              value="month"
+                              sx={{
+                                fontFamily: "monospace",
+                                fontSize: "0.875rem",
+                              }}
+                            >
+                              This Month
+                            </MenuItem>
+                            <MenuItem
+                              value="year"
+                              sx={{
+                                fontFamily: "monospace",
+                                fontSize: "0.875rem",
+                              }}
+                            >
+                              This Year
+                            </MenuItem>
+                          </Select>
+                        </FormControl>
 
-                      <FormControl size="small" sx={{ minWidth: 120 }}>
-                        <InputLabel
-                          sx={{ fontFamily: "monospace", fontSize: "0.875rem" }}
+                        <FormControl
+                          size="small"
+                          className="flex-1 md:flex-none"
+                          sx={{ minWidth: { xs: 0, md: 120 } }}
                         >
-                          Mood
-                        </InputLabel>
-                        <Select
-                          value={filterMood}
-                          label="Mood"
-                          onChange={(e) => setFilterMood(e.target.value)}
-                          sx={{
-                            fontFamily: "monospace",
-                            fontSize: "0.875rem",
-                            "& .MuiSelect-select": { fontFamily: "monospace" },
-                          }}
-                        >
-                          <MenuItem
-                            value="any"
+                          <InputLabel
                             sx={{
                               fontFamily: "monospace",
                               fontSize: "0.875rem",
                             }}
                           >
-                            Any
-                          </MenuItem>
-                          {renderMoodMenuItemsWithSx(
-                            { fontFamily: "monospace", fontSize: "0.875rem" },
-                            false
+                            Mood
+                          </InputLabel>
+                          <Select
+                            value={filterMood}
+                            label="Mood"
+                            onChange={(e) => setFilterMood(e.target.value)}
+                            sx={{
+                              fontFamily: "monospace",
+                              fontSize: "0.875rem",
+                              "& .MuiSelect-select": {
+                                fontFamily: "monospace",
+                              },
+                            }}
+                          >
+                            <MenuItem
+                              value="any"
+                              sx={{
+                                fontFamily: "monospace",
+                                fontSize: "0.875rem",
+                              }}
+                            >
+                              Any
+                            </MenuItem>
+                            {renderMoodMenuItemsWithSx(
+                              { fontFamily: "monospace", fontSize: "0.875rem" },
+                              false
+                            )}
+                          </Select>
+                        </FormControl>
+                      </div>
+
+                      {/* Second row on mobile: Sort By and Public (50% each) */}
+                      <div className="flex gap-2 md:contents">
+                        <FormControl
+                          size="small"
+                          className="flex-1 md:flex-none"
+                          sx={{ minWidth: { xs: 0, md: 120 } }}
+                        >
+                          <InputLabel
+                            sx={{
+                              fontFamily: "monospace",
+                              fontSize: "0.875rem",
+                            }}
+                          >
+                            Sort By
+                          </InputLabel>
+                          <Select
+                            value={sortBy}
+                            label="Sort By"
+                            onChange={(e) => setSortBy(e.target.value)}
+                            sx={{
+                              fontFamily: "monospace",
+                              fontSize: "0.875rem",
+                              "& .MuiSelect-select": {
+                                fontFamily: "monospace",
+                              },
+                            }}
+                          >
+                            <MenuItem
+                              value="DESC"
+                              sx={{
+                                fontFamily: "monospace",
+                                fontSize: "0.875rem",
+                              }}
+                            >
+                              Newest First
+                            </MenuItem>
+                            <MenuItem
+                              value="ASC"
+                              sx={{
+                                fontFamily: "monospace",
+                                fontSize: "0.875rem",
+                              }}
+                            >
+                              Oldest First
+                            </MenuItem>
+                            <MenuItem
+                              value="FAVORITE"
+                              sx={{
+                                fontFamily: "monospace",
+                                fontSize: "0.875rem",
+                              }}
+                            >
+                              Favorites First
+                            </MenuItem>
+                          </Select>
+                        </FormControl>
+
+                        {/* Public filter (50% width on mobile) */}
+                        {session?.user?.email && (
+                          <button
+                            onClick={() => setShowPublicNotes(!showPublicNotes)}
+                            className={`flex-1 md:flex-none px-3 py-2 rounded text-sm font-medium transition-colors flex items-center justify-center gap-1 ${
+                              showPublicNotes
+                                ? "bg-green-100 text-green-700 border border-green-300"
+                                : "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200"
+                            }`}
+                            style={{ fontFamily: "monospace" }}
+                          >
+                            <PublicIcon sx={{ fontSize: 16 }} />
+                            Public
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Right-aligned filters - Desktop only */}
+                      <div className="hidden md:flex items-center gap-2">
+                        {/* Public filter for desktop */}
+                        {session?.user?.email && (
+                          <button
+                            onClick={() => setShowPublicNotes(!showPublicNotes)}
+                            className={`px-3 py-2 rounded text-sm font-medium transition-colors flex items-center gap-1 ${
+                              showPublicNotes
+                                ? "bg-green-100 text-green-700 border border-green-300"
+                                : "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200"
+                            }`}
+                            style={{ fontFamily: "monospace" }}
+                          >
+                            <PublicIcon sx={{ fontSize: 16 }} />
+                            Public
+                          </button>
+                        )}
+
+                        {/* Family filters */}
+                        {session?.user?.email && hasFamilyMembers && (
+                          <button
+                            onClick={() => {
+                              const newFamily = !showFamilyOnly;
+                              setShowFamilyOnly(newFamily);
+                              if (!newFamily) {
+                                // Reset family member selection when turning off family filter
+                                setSelectedFamilyMember("All");
+                              }
+                            }}
+                            className={`px-3 py-2 rounded text-sm font-medium transition-colors flex items-center gap-1 ${
+                              showFamilyOnly
+                                ? "bg-blue-100 text-blue-700 border border-blue-300"
+                                : "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200"
+                            }`}
+                            style={{ fontFamily: "monospace" }}
+                          >
+                            <PeopleIcon sx={{ fontSize: 16 }} />
+                            Family Only
+                          </button>
+                        )}
+
+                        {/* Family member select dropdown */}
+                        {session?.user?.email &&
+                          hasFamilyMembers &&
+                          showFamilyOnly &&
+                          familyMembers.length > 0 && (
+                            <FormControl size="small" sx={{ minWidth: 160 }}>
+                              <InputLabel
+                                sx={{
+                                  fontFamily: "monospace",
+                                  fontSize: "0.875rem",
+                                }}
+                              >
+                                Family Member
+                              </InputLabel>
+                              <Select
+                                value={selectedFamilyMember}
+                                label="Family Member"
+                                onChange={(e) => {
+                                  const newFamilyMember = e.target.value;
+                                  setSelectedFamilyMember(newFamilyMember);
+                                }}
+                                sx={{
+                                  fontFamily: "monospace",
+                                  fontSize: "0.875rem",
+                                  "& .MuiSelect-select": {
+                                    fontFamily: "monospace",
+                                  },
+                                }}
+                              >
+                                <MenuItem value="All">
+                                  <div className="flex items-center">
+                                    <PeopleIcon sx={{ fontSize: 16, mr: 1 }} />
+                                    <span style={{ fontFamily: "monospace" }}>
+                                      All Family
+                                    </span>
+                                  </div>
+                                </MenuItem>
+                                {familyMembers.map((member) => (
+                                  <MenuItem
+                                    key={member.email}
+                                    value={member.name}
+                                  >
+                                    <div className="flex items-center">
+                                      <span style={{ fontFamily: "monospace" }}>
+                                        {member.name}
+                                      </span>
+                                      {member.relationship && (
+                                        <span
+                                          className="ml-2 text-xs text-gray-500"
+                                          style={{ fontFamily: "monospace" }}
+                                        >
+                                          ({member.relationship})
+                                        </span>
+                                      )}
+                                    </div>
+                                  </MenuItem>
+                                ))}
+                              </Select>
+                            </FormControl>
                           )}
-                        </Select>
-                      </FormControl>
-
-                      <FormControl size="small" sx={{ minWidth: 120 }}>
-                        <InputLabel
-                          sx={{ fontFamily: "monospace", fontSize: "0.875rem" }}
-                        >
-                          Sort By
-                        </InputLabel>
-                        <Select
-                          value={sortBy}
-                          label="Sort By"
-                          onChange={(e) => setSortBy(e.target.value)}
-                          sx={{
-                            fontFamily: "monospace",
-                            fontSize: "0.875rem",
-                            "& .MuiSelect-select": { fontFamily: "monospace" },
-                          }}
-                        >
-                          <MenuItem
-                            value="DESC"
-                            sx={{
-                              fontFamily: "monospace",
-                              fontSize: "0.875rem",
-                            }}
-                          >
-                            Newest First
-                          </MenuItem>
-                          <MenuItem
-                            value="ASC"
-                            sx={{
-                              fontFamily: "monospace",
-                              fontSize: "0.875rem",
-                            }}
-                          >
-                            Oldest First
-                          </MenuItem>
-                          <MenuItem
-                            value="FAVORITE"
-                            sx={{
-                              fontFamily: "monospace",
-                              fontSize: "0.875rem",
-                            }}
-                          >
-                            Favorites First
-                          </MenuItem>
-                        </Select>
-                      </FormControl>
+                      </div>
                     </div>
 
-                    {/* Right-aligned filters */}
-                    <div className="flex items-center gap-2">
-                      {/* Public filter for logged-in users */}
-                      {session?.user?.email && (
-                        <button
-                          onClick={() => setShowPublicNotes(!showPublicNotes)}
-                          className={`px-3 py-2 rounded text-sm font-medium transition-colors flex items-center gap-1 ${
-                            showPublicNotes
-                              ? "bg-green-100 text-green-700 border border-green-300"
-                              : "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200"
-                          }`}
-                          style={{ fontFamily: "monospace" }}
-                        >
-                          <PublicIcon sx={{ fontSize: 16 }} />
-                          Public
-                        </button>
-                      )}
-
-                      {/* Family filters */}
+                    {/* Third row on mobile: Family filters */}
+                    <div className="flex items-center gap-2 md:hidden">
+                      {/* Family filters for mobile */}
                       {session?.user?.email && hasFamilyMembers && (
                         <button
                           onClick={() => {
@@ -805,12 +942,16 @@ const FieldNotes: React.FC = () => {
                         </button>
                       )}
 
-                      {/* Family member select dropdown */}
+                      {/* Family member select dropdown for mobile - fills remaining space */}
                       {session?.user?.email &&
                         hasFamilyMembers &&
                         showFamilyOnly &&
                         familyMembers.length > 0 && (
-                          <FormControl size="small" sx={{ minWidth: 160 }}>
+                          <FormControl
+                            size="small"
+                            className="flex-1"
+                            sx={{ minWidth: { xs: 0, md: 160 } }}
+                          >
                             <InputLabel
                               sx={{
                                 fontFamily: "monospace",
@@ -851,6 +992,14 @@ const FieldNotes: React.FC = () => {
                                     <span style={{ fontFamily: "monospace" }}>
                                       {member.name}
                                     </span>
+                                    {member.relationship && (
+                                      <span
+                                        className="ml-2 text-xs text-gray-500"
+                                        style={{ fontFamily: "monospace" }}
+                                      >
+                                        ({member.relationship})
+                                      </span>
+                                    )}
                                   </div>
                                 </MenuItem>
                               ))}
@@ -860,8 +1009,8 @@ const FieldNotes: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Category Filters */}
-                  <div className="flex flex-wrap gap-2">
+                  {/* Category Filters - Hidden on mobile */}
+                  <div className="hidden sm:flex flex-wrap gap-2">
                     {[
                       "All",
                       "Hiking",
@@ -1241,17 +1390,7 @@ const FieldNotes: React.FC = () => {
                             href={`/fieldnotes/${note.slug}`}
                             className="block rounded-lg transition-colors"
                           >
-                            <h3 className="font-bold text-gray-900 font-mono mb-1 hover:text-blue-600 transition-colors flex items-center gap-2">
-                              {note.is_public && (
-                                <PublicIcon
-                                  sx={{ fontSize: 16, color: "gray" }}
-                                />
-                              )}
-                              {note.shared_family && (
-                                <PeopleIcon
-                                  sx={{ fontSize: 16, color: "#3b82f6" }}
-                                />
-                              )}
+                            <h3 className="font-bold text-gray-900 font-mono mb-1 hover:text-blue-600 transition-colors">
                               {note.title}
                             </h3>
                           </Link>
@@ -1285,8 +1424,63 @@ const FieldNotes: React.FC = () => {
                           <div className="flex items-center justify-between">
                             {/* Left side: author + date, then mood */}
                             <div className="flex flex-col">
-                              <p className="text-sm text-gray-500 font-mono mt-0 mb-0">
-                                {note.author && `By ${note.author} on `}
+                              <p className="text-sm text-gray-500 font-mono mt-0 mb-0 flex items-center gap-1">
+                                {note.is_public && (
+                                  <PublicIcon
+                                    sx={{ fontSize: 16, color: "gray" }}
+                                  />
+                                )}
+                                {note.shared_family && (
+                                  <PeopleIcon
+                                    sx={{
+                                      fontSize: 16,
+                                      color:
+                                        showFamilyOnly &&
+                                        note.shared_family &&
+                                        note.userEmail !== session?.user?.email
+                                          ? "#3b82f6"
+                                          : "gray",
+                                    }}
+                                  />
+                                )}
+                                <span
+                                  className={
+                                    showFamilyOnly &&
+                                    note.shared_family &&
+                                    note.userEmail !== session?.user?.email
+                                      ? "text-blue-600 hidden sm:inline"
+                                      : "text-gray-500 hidden sm:inline"
+                                  }
+                                >
+                                  {/* Use "Shared by" for family shared notes, otherwise "By" */}
+                                  {showFamilyOnly &&
+                                  note.shared_family &&
+                                  note.userEmail !== session?.user?.email
+                                    ? "Shared by"
+                                    : "By"}
+                                </span>{" "}
+                                <span
+                                  className={
+                                    showFamilyOnly &&
+                                    note.shared_family &&
+                                    note.userEmail !== session?.user?.email
+                                      ? "text-blue-600"
+                                      : "text-gray-500"
+                                  }
+                                >
+                                  {
+                                    // For shared_family notes from other family members, use the family member's name
+                                    showFamilyOnly &&
+                                    note.shared_family &&
+                                    note.userEmail !== session?.user?.email
+                                      ? familyMembers.find(
+                                          (member) =>
+                                            member.email === note.userEmail
+                                        )?.name || "Family Member"
+                                      : note.author
+                                  }
+                                </span>{" "}
+                                on
                                 <span className="hidden sm:inline">
                                   {new Date(note.date).toLocaleDateString(
                                     "en-US",
@@ -1415,23 +1609,70 @@ const FieldNotes: React.FC = () => {
                         href={`/fieldnotes/${note.slug}`}
                         className="block transition-colors"
                       >
-                        <span className="font-bold text-gray-900 font-mono text-base hover:text-blue-600 transition-colors flex items-center gap-2">
-                          {note.is_public && (
-                            <PublicIcon sx={{ fontSize: 16, color: "gray" }} />
-                          )}
-                          {note.shared_family && (
-                            <PeopleIcon
-                              sx={{ fontSize: 16, color: "#3b82f6" }}
-                            />
-                          )}
+                        <span className="font-bold text-gray-900 font-mono text-base hover:text-blue-600 transition-colors">
                           {note.title}
                         </span>
                       </Link>
 
                       <div className="flex items-center justify-between mt-2">
                         <div className="flex flex-col">
-                          <span className="text-sm text-gray-500 font-mono">
-                            {note.author && `By ${note.author} on `}
+                          <span className="text-sm text-gray-500 font-mono flex items-center gap-1">
+                            {note.is_public && (
+                              <PublicIcon
+                                sx={{ fontSize: 16, color: "gray" }}
+                              />
+                            )}
+                            {note.shared_family && (
+                              <PeopleIcon
+                                sx={{
+                                  fontSize: 16,
+                                  color:
+                                    showFamilyOnly &&
+                                    note.shared_family &&
+                                    note.userEmail !== session?.user?.email
+                                      ? "#3b82f6"
+                                      : "gray",
+                                }}
+                              />
+                            )}
+                            <span
+                              className={
+                                showFamilyOnly &&
+                                note.shared_family &&
+                                note.userEmail !== session?.user?.email
+                                  ? "text-blue-600 hidden sm:inline"
+                                  : "text-gray-500 hidden sm:inline"
+                              }
+                            >
+                              {/* Use "Shared by" for family shared notes, otherwise "By" */}
+                              {showFamilyOnly &&
+                              note.shared_family &&
+                              note.userEmail !== session?.user?.email
+                                ? "Shared by"
+                                : "By"}
+                            </span>{" "}
+                            <span
+                              className={
+                                showFamilyOnly &&
+                                note.shared_family &&
+                                note.userEmail !== session?.user?.email
+                                  ? "text-blue-600"
+                                  : "text-gray-500"
+                              }
+                            >
+                              {
+                                // For shared_family notes from other family members, use the family member's name
+                                showFamilyOnly &&
+                                note.shared_family &&
+                                note.userEmail !== session?.user?.email
+                                  ? familyMembers.find(
+                                      (member) =>
+                                        member.email === note.userEmail
+                                    )?.name || "Family Member"
+                                  : note.author
+                              }
+                            </span>{" "}
+                            on
                             <span className="hidden sm:inline">
                               {new Date(note.date).toLocaleDateString("en-US", {
                                 weekday: "long",

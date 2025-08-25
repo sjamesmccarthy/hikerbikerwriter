@@ -526,53 +526,65 @@ const RollAndWriteEntries: React.FC = () => {
             {!loadingEntries && entries.length > 0 && (
               <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
                 <div className="w-full flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                  {/* Left side: Sort dropdown and Family filters */}
-                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 w-full sm:w-auto">
-                    <FormControl size="small" sx={{ minWidth: 140 }}>
-                      <InputLabel
-                        sx={{ fontFamily: "monospace", fontSize: "0.875rem" }}
+                  {/* Left side: Sort dropdown and filters */}
+                  <div className="flex flex-col gap-4 w-full md:w-auto">
+                    {/* First row: Sort dropdown and Public filter (50% each on mobile) */}
+                    <div className="flex gap-2">
+                      <FormControl
+                        size="small"
+                        className="flex-1 md:flex-none"
+                        sx={{ minWidth: { xs: 0, md: 140 } }}
                       >
-                        Sort By
-                      </InputLabel>
-                      <Select
-                        value={sortBy}
-                        label="Sort By"
-                        onChange={(e) => setSortBy(e.target.value)}
-                        sx={{
-                          fontFamily: "monospace",
-                          fontSize: "0.875rem",
-                          "& .MuiSelect-select": { fontFamily: "monospace" },
-                        }}
-                      >
-                        <MenuItem
-                          value="newest"
+                        <InputLabel
                           sx={{ fontFamily: "monospace", fontSize: "0.875rem" }}
                         >
-                          Newest
-                        </MenuItem>
-                        <MenuItem
-                          value="oldest"
-                          sx={{ fontFamily: "monospace", fontSize: "0.875rem" }}
+                          Sort By
+                        </InputLabel>
+                        <Select
+                          value={sortBy}
+                          label="Sort By"
+                          onChange={(e) => setSortBy(e.target.value)}
+                          sx={{
+                            fontFamily: "monospace",
+                            fontSize: "0.875rem",
+                            "& .MuiSelect-select": { fontFamily: "monospace" },
+                          }}
                         >
-                          Oldest
-                        </MenuItem>
-                        <MenuItem
-                          value="favorited"
-                          sx={{ fontFamily: "monospace", fontSize: "0.875rem" }}
-                        >
-                          Most Favorited
-                        </MenuItem>
-                      </Select>
-                    </FormControl>
+                          <MenuItem
+                            value="newest"
+                            sx={{
+                              fontFamily: "monospace",
+                              fontSize: "0.875rem",
+                            }}
+                          >
+                            Newest
+                          </MenuItem>
+                          <MenuItem
+                            value="oldest"
+                            sx={{
+                              fontFamily: "monospace",
+                              fontSize: "0.875rem",
+                            }}
+                          >
+                            Oldest
+                          </MenuItem>
+                          <MenuItem
+                            value="favorited"
+                            sx={{
+                              fontFamily: "monospace",
+                              fontSize: "0.875rem",
+                            }}
+                          >
+                            Most Favorited
+                          </MenuItem>
+                        </Select>
+                      </FormControl>
 
-                    {/* Family filters for logged in users with family members */}
-                    {/* Filter buttons */}
-                    <div className="flex items-center gap-2">
-                      {/* Public filter for logged-in users */}
+                      {/* Public filter for logged-in users (50% width on mobile) */}
                       {session?.user?.email && (
                         <button
                           onClick={() => setShowPublicNotes(!showPublicNotes)}
-                          className={`px-3 py-2 rounded text-sm font-medium transition-colors flex items-center gap-1 ${
+                          className={`flex-1 md:flex-none px-3 py-2 rounded text-sm font-medium transition-colors flex items-center justify-center gap-1 ${
                             showPublicNotes
                               ? "bg-green-100 text-green-700 border border-green-300"
                               : "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200"
@@ -583,9 +595,11 @@ const RollAndWriteEntries: React.FC = () => {
                           Public
                         </button>
                       )}
+                    </div>
 
-                      {/* Family filters */}
-                      {session?.user?.email && hasFamilyMembers && (
+                    {/* Second row: Family filters */}
+                    {session?.user?.email && hasFamilyMembers && (
+                      <div className="flex items-center gap-2">
                         <button
                           onClick={() => {
                             const newFamily = !showFamilyOnly;
@@ -605,14 +619,14 @@ const RollAndWriteEntries: React.FC = () => {
                           <PeopleIcon sx={{ fontSize: 16 }} />
                           Family Only
                         </button>
-                      )}
 
-                      {/* Family member select dropdown */}
-                      {session?.user?.email &&
-                        hasFamilyMembers &&
-                        showFamilyOnly &&
-                        familyMembers.length > 0 && (
-                          <FormControl size="small" sx={{ minWidth: 160 }}>
+                        {/* Family member select dropdown - fills remaining space on mobile */}
+                        {showFamilyOnly && familyMembers.length > 0 && (
+                          <FormControl
+                            size="small"
+                            className="flex-1 md:flex-none"
+                            sx={{ minWidth: { xs: 0, md: 160 } }}
+                          >
                             <InputLabel
                               sx={{
                                 fontFamily: "monospace",
@@ -667,7 +681,8 @@ const RollAndWriteEntries: React.FC = () => {
                             </Select>
                           </FormControl>
                         )}
-                    </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* Right side: Roll Them Dice button */}
@@ -802,24 +817,8 @@ const RollAndWriteEntries: React.FC = () => {
                       key={entry.id}
                       className="bg-white border border-gray-200 rounded-xl p-3 text-left mb-4 relative"
                     >
-                      {/* Icons in upper-right corner - Family and Favorite */}
+                      {/* Icons in upper-right corner - Favorite only */}
                       <div className="absolute top-2 right-2 flex items-center gap-1">
-                        {/* Family icon if shared with family */}
-                        {entry.shared_family && (
-                          <div
-                            className="p-1 text-blue-500"
-                            title="Shared with family"
-                            style={{ minWidth: "24px", minHeight: "32px" }}
-                          >
-                            <PeopleIcon
-                              sx={{
-                                fontSize: 16,
-                                color: "#3b82f6",
-                              }}
-                            />
-                          </div>
-                        )}
-
                         {/* Favorite heart icon */}
                         <button
                           onClick={() =>
@@ -861,31 +860,75 @@ const RollAndWriteEntries: React.FC = () => {
                       {(entry.by || session) && (
                         <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">
                           {entry.by ? (
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-1">
+                              {/* Show people icon for user's own shared family entries */}
+                              {entry.shared_family &&
+                                entry.userEmail === session?.user?.email && (
+                                  <PeopleIcon
+                                    sx={{ fontSize: 16, color: "gray" }}
+                                  />
+                                )}
                               {Boolean(entry.is_public) && (
                                 <PublicIcon
                                   sx={{ fontSize: 16, color: "gray" }}
                                 />
                               )}
-                              <span className="text-xs text-gray-500 font-mono">
-                                By {entry.by}
-                              </span>
-                              {/* Show family member name for family shared content */}
-                              {showFamilyOnly &&
-                                entry.shared_family &&
-                                entry.userEmail !== session?.user?.email && (
-                                  <span className="text-xs text-blue-600 font-mono">
-                                    (
-                                    {familyMembers.find(
-                                      (member) =>
-                                        member.email === entry.userEmail
-                                    )?.name || "Family Member"}
-                                    )
+                              <div className="flex flex-row items-center gap-1">
+                                <span className="text-xs font-mono flex items-center gap-1">
+                                  <span
+                                    className={`hidden sm:inline ${
+                                      showFamilyOnly &&
+                                      entry.shared_family &&
+                                      entry.userEmail !== session?.user?.email
+                                        ? "text-blue-600"
+                                        : "text-gray-500"
+                                    }`}
+                                  >
+                                    {/* Use "Shared by" for family shared entries, otherwise "By" */}
+                                    {showFamilyOnly &&
+                                    entry.shared_family &&
+                                    entry.userEmail !== session?.user?.email
+                                      ? "Shared by"
+                                      : "By"}
                                   </span>
-                                )}
-                              <span className="text-xs text-gray-500 font-mono">
-                                on {formatDate(entry.createdAt)}
-                              </span>
+                                  {/* Show shared icon for family shared content */}
+                                  {showFamilyOnly &&
+                                    entry.shared_family &&
+                                    entry.userEmail !==
+                                      session?.user?.email && (
+                                      <PeopleIcon
+                                        sx={{
+                                          fontSize: 14,
+                                          color: "#3b82f6",
+                                        }}
+                                      />
+                                    )}
+                                  <span
+                                    className={
+                                      showFamilyOnly &&
+                                      entry.shared_family &&
+                                      entry.userEmail !== session?.user?.email
+                                        ? "text-blue-600"
+                                        : "text-gray-500"
+                                    }
+                                  >
+                                    {
+                                      // For shared_family entries from other family members, use the family member's name
+                                      showFamilyOnly &&
+                                      entry.shared_family &&
+                                      entry.userEmail !== session?.user?.email
+                                        ? familyMembers.find(
+                                            (member) =>
+                                              member.email === entry.userEmail
+                                          )?.name || "Family Member"
+                                        : entry.by
+                                    }
+                                  </span>
+                                </span>
+                                <span className="text-xs text-gray-500 font-mono">
+                                  on {formatDate(entry.createdAt)}
+                                </span>
+                              </div>
                             </div>
                           ) : (
                             <div></div>

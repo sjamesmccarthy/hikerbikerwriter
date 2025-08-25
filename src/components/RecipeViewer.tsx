@@ -832,69 +832,88 @@ const RecipeViewer: React.FC<RecipeViewerProps> = () => {
                     sx={{ minWidth: 200 }}
                   />
 
-                  {/* Category, Cooking Type, and Filter buttons */}
-                  <div className="flex flex-wrap gap-4 items-center justify-between">
-                    <div className="flex flex-wrap gap-4 items-center">
-                      <FormControl size="small" sx={{ minWidth: 120 }}>
-                        <InputLabel>Category</InputLabel>
-                        <Select
-                          value={activeCategory}
-                          label="Category"
-                          open={openSelect === "category"}
-                          onOpen={() => setOpenSelect("category")}
-                          onClose={() => setOpenSelect(null)}
-                          onChange={(e) => setActiveCategory(e.target.value)}
-                          MenuProps={{
-                            PaperProps: {
-                              style: {
-                                zIndex: 10000,
-                              },
-                            },
-                          }}
+                  {/* Category, Cooking Type, and Sort By row */}
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                    {/* Mobile: Custom responsive layout, Desktop: Normal flex */}
+                    <div className="flex flex-col md:flex-row md:flex-wrap gap-2 md:gap-4 md:items-center">
+                      {/* First row: Category and Cooking Type (50% each on mobile) */}
+                      <div className="flex gap-2 md:contents">
+                        <FormControl
+                          size="small"
+                          className="flex-1 md:flex-none"
+                          sx={{ minWidth: { xs: 0, md: 120 } }}
                         >
-                          {categories.map((category) => (
-                            <MenuItem key={category} value={category}>
-                              <div className="flex items-center">
-                                {getCategoryIcon(category)}
-                                {category}
-                              </div>
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-
-                      <FormControl size="small" sx={{ minWidth: 120 }}>
-                        <InputLabel>Cooking Type</InputLabel>
-                        <Select
-                          value={activeCookingType}
-                          label="Cooking Type"
-                          open={openSelect === "cookingType"}
-                          onOpen={() => setOpenSelect("cookingType")}
-                          onClose={() => setOpenSelect(null)}
-                          onChange={(e) => setActiveCookingType(e.target.value)}
-                          MenuProps={{
-                            PaperProps: {
-                              style: {
-                                zIndex: 10000,
+                          <InputLabel>Category</InputLabel>
+                          <Select
+                            value={activeCategory}
+                            label="Category"
+                            open={openSelect === "category"}
+                            onOpen={() => setOpenSelect("category")}
+                            onClose={() => setOpenSelect(null)}
+                            onChange={(e) => setActiveCategory(e.target.value)}
+                            MenuProps={{
+                              PaperProps: {
+                                style: {
+                                  zIndex: 10000,
+                                },
                               },
-                            },
-                          }}
-                        >
-                          {cookingTypes.map((type) => (
-                            <MenuItem key={type} value={type}>
-                              <div className="flex items-center">
-                                {getCookingTypeIcon(type)}
-                                {type === "All"
-                                  ? "All"
-                                  : type.charAt(0).toUpperCase() +
-                                    type.slice(1)}
-                              </div>
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
+                            }}
+                          >
+                            {categories.map((category) => (
+                              <MenuItem key={category} value={category}>
+                                <div className="flex items-center">
+                                  {getCategoryIcon(category)}
+                                  {category}
+                                </div>
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
 
-                      <FormControl size="small" sx={{ minWidth: 140 }}>
+                        <FormControl
+                          size="small"
+                          className="flex-1 md:flex-none"
+                          sx={{ minWidth: { xs: 0, md: 120 } }}
+                        >
+                          <InputLabel>Cooking Type</InputLabel>
+                          <Select
+                            value={activeCookingType}
+                            label="Cooking Type"
+                            open={openSelect === "cookingType"}
+                            onOpen={() => setOpenSelect("cookingType")}
+                            onClose={() => setOpenSelect(null)}
+                            onChange={(e) =>
+                              setActiveCookingType(e.target.value)
+                            }
+                            MenuProps={{
+                              PaperProps: {
+                                style: {
+                                  zIndex: 10000,
+                                },
+                              },
+                            }}
+                          >
+                            {cookingTypes.map((type) => (
+                              <MenuItem key={type} value={type}>
+                                <div className="flex items-center">
+                                  {getCookingTypeIcon(type)}
+                                  {type === "All"
+                                    ? "All"
+                                    : type.charAt(0).toUpperCase() +
+                                      type.slice(1)}
+                                </div>
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+                      </div>
+
+                      {/* Second row: Cook Time (100% width on mobile) */}
+                      <FormControl
+                        size="small"
+                        className="w-full md:w-auto"
+                        sx={{ minWidth: { xs: 0, md: 140 } }}
+                      >
                         <InputLabel>Cook Time</InputLabel>
                         <Select
                           value={activeCookTime}
@@ -923,8 +942,8 @@ const RecipeViewer: React.FC<RecipeViewerProps> = () => {
                       </FormControl>
                     </div>
 
-                    {/* Right-aligned filter buttons */}
-                    <div className="flex gap-2">
+                    {/* Public and Favorites filter buttons (50% each on mobile) */}
+                    <div className="flex gap-2 md:flex-wrap">
                       {/* Only show Favorites Only button for logged in users */}
                       {session?.user?.email && (
                         <button
@@ -937,7 +956,7 @@ const RecipeViewer: React.FC<RecipeViewerProps> = () => {
                               selectedFamilyMember
                             );
                           }}
-                          className={`px-3 py-2 rounded text-sm font-medium transition-colors flex items-center gap-1 ${
+                          className={`flex-1 md:flex-none px-3 py-2 rounded text-sm font-medium transition-colors flex items-center justify-center gap-1 ${
                             showFavoritesOnly
                               ? "bg-red-100 text-red-700 border border-red-300"
                               : "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200"
@@ -948,7 +967,10 @@ const RecipeViewer: React.FC<RecipeViewerProps> = () => {
                           ) : (
                             <FavoriteBorderIcon sx={{ fontSize: 16 }} />
                           )}
-                          Favorites Only
+                          <span className="hidden sm:inline">
+                            Favorites Only
+                          </span>
+                          <span className="sm:hidden">Favorites</span>
                         </button>
                       )}
 
@@ -958,7 +980,7 @@ const RecipeViewer: React.FC<RecipeViewerProps> = () => {
                           onClick={() => {
                             setShowPublicRecipes(!showPublicRecipes);
                           }}
-                          className={`px-3 py-2 rounded text-sm font-medium transition-colors flex items-center gap-1 ${
+                          className={`flex-1 md:flex-none px-3 py-2 rounded text-sm font-medium transition-colors flex items-center justify-center gap-1 ${
                             showPublicRecipes
                               ? "bg-green-100 text-green-700 border border-green-300"
                               : "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200"
@@ -968,89 +990,90 @@ const RecipeViewer: React.FC<RecipeViewerProps> = () => {
                           Public
                         </button>
                       )}
-
-                      {/* Family filters for logged in users with family members */}
-                      {session?.user?.email && hasFamilyMembers && (
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={() => {
-                              const newFamily = !showFamilyOnly;
-                              setShowFamilyOnly(newFamily);
-                              if (!newFamily) {
-                                // Reset family member selection when turning off family filter
-                                setSelectedFamilyMember("All");
-                              }
-                              updateURLWithFilters(
-                                newFamily,
-                                showFavoritesOnly,
-                                newFamily ? selectedFamilyMember : undefined
-                              );
-                            }}
-                            className={`px-3 py-2 rounded text-sm font-medium transition-colors flex items-center gap-1 ${
-                              showFamilyOnly
-                                ? "bg-blue-100 text-blue-700 border border-blue-300"
-                                : "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200"
-                            }`}
-                          >
-                            <PeopleIcon sx={{ fontSize: 16 }} />
-                            Family Only
-                          </button>
-
-                          {/* Family member select dropdown */}
-                          {showFamilyOnly && familyMembers.length > 0 && (
-                            <FormControl size="small" sx={{ minWidth: 160 }}>
-                              <InputLabel>Family Member</InputLabel>
-                              <Select
-                                value={selectedFamilyMember}
-                                label="Family Member"
-                                open={openSelect === "familyMember"}
-                                onOpen={() => setOpenSelect("familyMember")}
-                                onClose={() => setOpenSelect(null)}
-                                onChange={(e) => {
-                                  const newFamilyMember = e.target.value;
-                                  setSelectedFamilyMember(newFamilyMember);
-                                  updateURLWithFilters(
-                                    showFamilyOnly,
-                                    showFavoritesOnly,
-                                    newFamilyMember
-                                  );
-                                }}
-                                MenuProps={{
-                                  PaperProps: {
-                                    style: {
-                                      zIndex: 10000,
-                                    },
-                                  },
-                                }}
-                              >
-                                <MenuItem value="All">
-                                  <div className="flex items-center">
-                                    <PeopleIcon sx={{ fontSize: 16, mr: 1 }} />
-                                    All Family
-                                  </div>
-                                </MenuItem>
-                                {familyMembers.map((member) => (
-                                  <MenuItem
-                                    key={member.email}
-                                    value={member.name}
-                                  >
-                                    <div className="flex items-center">
-                                      <span>{member.name}</span>
-                                      {member.relationship && (
-                                        <span className="ml-2 text-xs text-gray-500">
-                                          ({member.relationship})
-                                        </span>
-                                      )}
-                                    </div>
-                                  </MenuItem>
-                                ))}
-                              </Select>
-                            </FormControl>
-                          )}
-                        </div>
-                      )}
                     </div>
                   </div>
+
+                  {/* Family filters row - new line on mobile */}
+                  {session?.user?.email && hasFamilyMembers && (
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        onClick={() => {
+                          const newFamily = !showFamilyOnly;
+                          setShowFamilyOnly(newFamily);
+                          if (!newFamily) {
+                            // Reset family member selection when turning off family filter
+                            setSelectedFamilyMember("All");
+                          }
+                          updateURLWithFilters(
+                            newFamily,
+                            showFavoritesOnly,
+                            newFamily ? selectedFamilyMember : undefined
+                          );
+                        }}
+                        className={`px-3 py-2 rounded text-sm font-medium transition-colors flex items-center gap-1 ${
+                          showFamilyOnly
+                            ? "bg-blue-100 text-blue-700 border border-blue-300"
+                            : "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200"
+                        }`}
+                      >
+                        <PeopleIcon sx={{ fontSize: 16 }} />
+                        Family Only
+                      </button>
+
+                      {/* Family member select dropdown - fills remaining space on mobile */}
+                      {showFamilyOnly && familyMembers.length > 0 && (
+                        <FormControl
+                          size="small"
+                          className="flex-1 md:flex-none"
+                          sx={{ minWidth: { xs: 0, md: 160 } }}
+                        >
+                          <InputLabel>Family Member</InputLabel>
+                          <Select
+                            value={selectedFamilyMember}
+                            label="Family Member"
+                            open={openSelect === "familyMember"}
+                            onOpen={() => setOpenSelect("familyMember")}
+                            onClose={() => setOpenSelect(null)}
+                            onChange={(e) => {
+                              const newFamilyMember = e.target.value;
+                              setSelectedFamilyMember(newFamilyMember);
+                              updateURLWithFilters(
+                                showFamilyOnly,
+                                showFavoritesOnly,
+                                newFamilyMember
+                              );
+                            }}
+                            MenuProps={{
+                              PaperProps: {
+                                style: {
+                                  zIndex: 10000,
+                                },
+                              },
+                            }}
+                          >
+                            <MenuItem value="All">
+                              <div className="flex items-center">
+                                <PeopleIcon sx={{ fontSize: 16, mr: 1 }} />
+                                All Family
+                              </div>
+                            </MenuItem>
+                            {familyMembers.map((member) => (
+                              <MenuItem key={member.email} value={member.name}>
+                                <div className="flex items-center">
+                                  <span>{member.name}</span>
+                                  {member.relationship && (
+                                    <span className="ml-2 text-xs text-gray-500">
+                                      ({member.relationship})
+                                    </span>
+                                  )}
+                                </div>
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -1149,7 +1172,17 @@ const RecipeViewer: React.FC<RecipeViewerProps> = () => {
                                   recipe.shared_family === true) && (
                                   <div className="w-8 h-8 rounded-full bg-white/80 flex items-center justify-center">
                                     <PeopleIcon
-                                      sx={{ fontSize: 20, color: "#3b82f6" }}
+                                      sx={{
+                                        fontSize: 20,
+                                        color:
+                                          showFamilyOnly &&
+                                          (recipe.shared_family === 1 ||
+                                            recipe.shared_family === true) &&
+                                          recipe.userEmail !==
+                                            session?.user?.email
+                                            ? "#3b82f6"
+                                            : "gray",
+                                      }}
                                     />
                                   </div>
                                 )}
@@ -1241,7 +1274,16 @@ const RecipeViewer: React.FC<RecipeViewerProps> = () => {
                           {(recipe.shared_family === 1 ||
                             recipe.shared_family === true) && (
                             <PeopleIcon
-                              sx={{ fontSize: 16, color: "#3b82f6" }}
+                              sx={{
+                                fontSize: 16,
+                                color:
+                                  showFamilyOnly &&
+                                  (recipe.shared_family === 1 ||
+                                    recipe.shared_family === true) &&
+                                  recipe.userEmail !== session?.user?.email
+                                    ? "#3b82f6"
+                                    : "gray",
+                              }}
                             />
                           )}
                           {recipe.public && (
