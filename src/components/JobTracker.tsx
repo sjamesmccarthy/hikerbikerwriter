@@ -840,10 +840,12 @@ export default function JobTracker() {
   const handleAddLogEntry = () => {
     const now = new Date();
     // Format datetime-local value (YYYY-MM-DDTHH:MM)
-    const localDateTime = new Date(now.getTime() - now.getTimezoneOffset() * 60000)
+    const localDateTime = new Date(
+      now.getTime() - now.getTimezoneOffset() * 60000
+    )
       .toISOString()
       .slice(0, 16);
-    
+
     setLogForm({ date: localDateTime });
     setShowLogDialog(true);
   };
@@ -2184,7 +2186,15 @@ export default function JobTracker() {
                       <Typography>No opportunities found</Typography>
                     </div>
                   ) : (
-                    <TableContainer component={Paper}>
+                    <TableContainer
+                      component={Paper}
+                      elevation={0}
+                      sx={{
+                        boxShadow: "none",
+                        border: "none",
+                        outline: "none",
+                      }}
+                    >
                       <Table>
                         <TableHead>
                           <TableRow>
@@ -2218,6 +2228,14 @@ export default function JobTracker() {
                                   }10`,
                                 }}
                                 className="cursor-pointer hover:bg-gray-50"
+                                sx={{
+                                  "& td, & th": {
+                                    borderBottom: "1px solid #F9FAFB", // Tailwind gray-200
+                                  },
+                                  "&:last-child td, &:last-child th": {
+                                    borderBottom: 0,
+                                  },
+                                }}
                               >
                                 <TableCell>{opportunity.company}</TableCell>
                                 <TableCell>{opportunity.position}</TableCell>
@@ -2391,7 +2409,7 @@ export default function JobTracker() {
                                                 (interview) => (
                                                   <div
                                                     key={interview.id}
-                                                    className="border border-gray-200 rounded p-3 bg-gray-50"
+                                                    className="rounded p-3 bg-gray-50"
                                                   >
                                                     <div className="flex justify-between">
                                                       <div className="flex-1">
@@ -2501,7 +2519,7 @@ export default function JobTracker() {
                                                 (contact) => (
                                                   <div
                                                     key={contact.id}
-                                                    className="border border-gray-200 rounded p-3 bg-gray-50"
+                                                    className="rounded p-3 bg-gray-50"
                                                   >
                                                     <div className="flex justify-between items-center">
                                                       <div className="flex-1">
@@ -2653,11 +2671,19 @@ export default function JobTracker() {
                   {paginatedOpportunities.map((opportunity) => (
                     <Card
                       key={opportunity.id}
-                      className="border border-gray-200"
+                      elevation={0}
+                      sx={{
+                        boxShadow: "none",
+                        border: "none",
+                        outline: "none",
+                      }}
                       style={{
                         backgroundColor: `${
                           statusColors[opportunity.status]
                         }08`,
+                        boxShadow: "none",
+                        border: "none",
+                        outline: "none",
                       }}
                     >
                       <CardContent className="p-4">
@@ -2847,7 +2873,7 @@ export default function JobTracker() {
                                     {opportunity.interviews.map((interview) => (
                                       <div
                                         key={interview.id}
-                                        className="border border-gray-200 rounded p-2 bg-gray-50"
+                                        className="rounded p-2 bg-gray-50"
                                       >
                                         <div className="flex justify-between items-start">
                                           <div className="flex-1">
@@ -2928,7 +2954,7 @@ export default function JobTracker() {
                                     {opportunity.contacts.map((contact) => (
                                       <div
                                         key={contact.id}
-                                        className="border border-gray-200 rounded p-2 bg-gray-50"
+                                        className="rounded p-2 bg-gray-50"
                                       >
                                         <div className="flex justify-between items-start">
                                           <div className="flex-1">
@@ -3925,10 +3951,7 @@ export default function JobTracker() {
                 {searches
                   .filter((search) => search.closed || !search.isActive)
                   .map((search) => (
-                    <Card
-                      key={search.id}
-                      className="p-4 border border-slate-200"
-                    >
+                    <Card key={search.id} className="p-4">
                       <div className="flex justify-between items-center">
                         <div className="flex-1">
                           <Typography
