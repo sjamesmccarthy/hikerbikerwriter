@@ -1271,24 +1271,6 @@ const RecipeViewer: React.FC<RecipeViewerProps> = () => {
                     <Link href={`/recipes/${recipe.slug}`} className="flex-1">
                       <div className="flex flex-col">
                         <span className="font-bold text-gray-900 font-mono text-base uppercase flex items-center gap-2">
-                          {(recipe.shared_family === 1 ||
-                            recipe.shared_family === true) && (
-                            <PeopleIcon
-                              sx={{
-                                fontSize: 16,
-                                color:
-                                  showFamilyOnly &&
-                                  (recipe.shared_family === 1 ||
-                                    recipe.shared_family === true) &&
-                                  recipe.userEmail !== session?.user?.email
-                                    ? "#3b82f6"
-                                    : "gray",
-                              }}
-                            />
-                          )}
-                          {recipe.public && (
-                            <PublicIcon sx={{ fontSize: 16, color: "gray" }} />
-                          )}
                           {recipe.title}
                         </span>
 
@@ -1296,8 +1278,14 @@ const RecipeViewer: React.FC<RecipeViewerProps> = () => {
                         {(recipe.shared_family === 1 ||
                           recipe.shared_family === true) &&
                           recipe.userEmail !== session?.user?.email && (
-                            <span className="text-sm text-blue-600 font-medium mt-1">
-                              by{" "}
+                            <span className="text-sm text-blue-600 font-medium mt-1 flex items-center">
+                              <PeopleIcon sx={{ fontSize: 16, mr: 0.5, color: "gray" }} />
+                              {recipe.public === true && (
+                                <PublicIcon
+                                  sx={{ fontSize: 16, mr: 0.5, color: "gray" }}
+                                />
+                              )}
+                              Shared by{" "}
                               {(() => {
                                 const familyMember = familyMembers.find(
                                   (member) => member.email === recipe.userEmail
@@ -1310,8 +1298,9 @@ const RecipeViewer: React.FC<RecipeViewerProps> = () => {
                           )}
                       </div>
                     </Link>
-                    <span className="text-sm text-gray-500 font-mono">
-                      {formatTime(getTotalTime(recipe))}
+                    <span className="text-sm text-gray-500 font-mono flex items-center">
+                      <AccessTimeIcon sx={{ fontSize: 16, mr: 0.5 }} />
+                      {formatTime(getTotalTime(recipe))} total
                     </span>
                   </div>
                 ))}
