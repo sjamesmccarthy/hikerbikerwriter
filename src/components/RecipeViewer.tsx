@@ -1241,7 +1241,7 @@ const RecipeViewer: React.FC<RecipeViewerProps> = () => {
                                       );
                                       return familyMember
                                         ? familyMember.name
-                                        : recipe.userEmail;
+                                        : recipe.author || recipe.userEmail;
                                     })()}
                                   </div>
                                 )}
@@ -1279,7 +1279,9 @@ const RecipeViewer: React.FC<RecipeViewerProps> = () => {
                           recipe.shared_family === true) &&
                           recipe.userEmail !== session?.user?.email && (
                             <span className="text-sm text-blue-600 font-medium mt-1 flex items-center">
-                              <PeopleIcon sx={{ fontSize: 16, mr: 0.5, color: "gray" }} />
+                              <PeopleIcon
+                                sx={{ fontSize: 16, mr: 0.5, color: "gray" }}
+                              />
                               {recipe.public === true && (
                                 <PublicIcon
                                   sx={{ fontSize: 16, mr: 0.5, color: "gray" }}
@@ -1292,7 +1294,7 @@ const RecipeViewer: React.FC<RecipeViewerProps> = () => {
                                 );
                                 return familyMember
                                   ? familyMember.name
-                                  : recipe.userEmail;
+                                  : recipe.author || recipe.userEmail;
                               })()}
                             </span>
                           )}
