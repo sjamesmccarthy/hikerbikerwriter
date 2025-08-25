@@ -100,12 +100,12 @@ export default async function handler(req, res) {
             const familyEmailPlaceholders = familyEmails
               .map(() => "?")
               .join(",");
-            query = `SELECT * FROM recipes WHERE user_email = ? OR (is_public = TRUE AND user_email NOT IN (${familyEmailPlaceholders}))`;
+            query = `SELECT r.*, u.name as user_name FROM recipes r LEFT JOIN users u ON r.user_email = u.email WHERE r.user_email = ? OR (r.is_public = TRUE AND r.user_email NOT IN (${familyEmailPlaceholders}))`;
             params = [userEmail, ...familyEmails];
           } else {
             // If no family, get user's recipes + all public recipes
             query =
-              "SELECT * FROM recipes WHERE user_email = ? OR is_public = TRUE";
+              "SELECT r.*, u.name as user_name FROM recipes r LEFT JOIN users u ON r.user_email = u.email WHERE r.user_email = ? OR r.is_public = TRUE";
             params = [userEmail];
           }
 
@@ -128,7 +128,7 @@ export default async function handler(req, res) {
                 familyEmail
               );
               const familyQuery =
-                "SELECT * FROM recipes WHERE user_email = ? AND shared_family = TRUE";
+                "SELECT r.*, u.name as user_name FROM recipes r LEFT JOIN users u ON r.user_email = u.email WHERE r.user_email = ? AND r.shared_family = TRUE";
               console.log("Family Query:", familyQuery);
               console.log("Family Query Params:", [familyEmail]);
 
@@ -169,14 +169,14 @@ export default async function handler(req, res) {
           console.log("No user found with email:", userEmail);
           // Fallback: just get public recipes
           const [publicRecipes] = await pool.query(
-            "SELECT * FROM recipes WHERE is_public = TRUE ORDER BY created DESC"
+            "SELECT r.*, u.name as user_name FROM recipes r LEFT JOIN users u ON r.user_email = u.email WHERE r.is_public = TRUE ORDER BY r.created DESC"
           );
           allRecipes = publicRecipes;
         }
       } else {
         // Not logged in: only get public recipes
         const [publicRecipes] = await pool.query(
-          "SELECT * FROM recipes WHERE is_public = TRUE ORDER BY created DESC"
+          "SELECT r.*, u.name as user_name FROM recipes r LEFT JOIN users u ON r.user_email = u.email WHERE r.is_public = TRUE ORDER BY r.created DESC"
         );
         allRecipes = publicRecipes;
         console.log("Using public-only query");
@@ -190,6 +190,7 @@ export default async function handler(req, res) {
         return {
           ...recipe,
           id: recipe.id || row.id, // Use JSON id or fallback to database id
+          author: row.user_name || recipe.author || "Unknown", // Use current user name from database
           userEmail: recipe.userEmail || row.user_email, // Use recipe's actual owner
           dateAdded: recipe.dateAdded || row.created,
           personalNotes: userEmail ? recipe.personalNotes || "" : "", // Only show personal notes to the owner

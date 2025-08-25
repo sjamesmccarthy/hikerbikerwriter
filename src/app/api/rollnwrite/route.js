@@ -69,17 +69,18 @@ export async function GET(request) {
             const familyEmailPlaceholders = familyEmails
               .map(() => "?")
               .join(",");
-            query = `SELECT * FROM rollnwrite WHERE user_email = ? OR (is_public = 1 AND user_email NOT IN (${familyEmailPlaceholders}))`;
+            query = `SELECT r.*, u.name as user_name FROM rollnwrite r LEFT JOIN users u ON r.user_email = u.email WHERE r.user_email = ? OR (r.is_public = 1 AND r.user_email NOT IN (${familyEmailPlaceholders}))`;
             params = [userEmail, ...familyEmails];
           } else {
             // If no family, get user's entries + all public entries
             query =
-              "SELECT * FROM rollnwrite WHERE user_email = ? OR is_public = 1";
+              "SELECT r.*, u.name as user_name FROM rollnwrite r LEFT JOIN users u ON r.user_email = u.email WHERE r.user_email = ? OR r.is_public = 1";
             params = [userEmail];
           }
         } else {
           // Just user's own entries
-          query = "SELECT * FROM rollnwrite WHERE user_email = ?";
+          query =
+            "SELECT r.*, u.name as user_name FROM rollnwrite r LEFT JOIN users u ON r.user_email = u.email WHERE r.user_email = ?";
           params = [userEmail];
         }
 
@@ -102,7 +103,7 @@ export async function GET(request) {
               familyEmail
             );
             const [familyEntries] = await pool.execute(
-              "SELECT * FROM rollnwrite WHERE user_email = ? AND shared_family = 1",
+              "SELECT r.*, u.name as user_name FROM rollnwrite r LEFT JOIN users u ON r.user_email = u.email WHERE r.user_email = ? AND r.shared_family = 1",
               [familyEmail]
             );
             allEntries.push(...familyEntries);
@@ -126,7 +127,7 @@ export async function GET(request) {
         // Fallback: just get public entries
         if (includePublic === "true") {
           const [publicEntries] = await pool.execute(
-            "SELECT * FROM rollnwrite WHERE is_public = 1 ORDER BY created DESC"
+            "SELECT r.*, u.name as user_name FROM rollnwrite r LEFT JOIN users u ON r.user_email = u.email WHERE r.is_public = 1 ORDER BY r.created DESC"
           );
           allEntries = publicEntries;
         }
@@ -134,7 +135,7 @@ export async function GET(request) {
     } else {
       // Not logged in - get public entries only
       const [publicEntries] = await pool.execute(
-        "SELECT * FROM rollnwrite WHERE is_public = 1 ORDER BY created DESC"
+        "SELECT r.*, u.name as user_name FROM rollnwrite r LEFT JOIN users u ON r.user_email = u.email WHERE r.is_public = 1 ORDER BY r.created DESC"
       );
       allEntries = publicEntries;
       console.log("Using public-only query");
@@ -148,6 +149,7 @@ export async function GET(request) {
       return {
         ...entry,
         id: row.id.toString(),
+        by: row.user_name || entry.by || "Unknown", // Use current user name from database
         createdAt: row.created,
         is_public: row.is_public,
         shared_family: Boolean(row.shared_family),
@@ -276,10 +278,11 @@ export async function PUT(request) {
     let query, params;
     if (slug) {
       query =
-        "SELECT * FROM rollnwrite WHERE user_email = ? AND JSON_EXTRACT(json, '$.slug') = ?";
+        "SELECT r.*, u.name as user_name FROM rollnwrite r LEFT JOIN users u ON r.user_email = u.email WHERE r.user_email = ? AND JSON_EXTRACT(r.json, '$.slug') = ?";
       params = [userEmail, slug];
     } else if (id) {
-      query = "SELECT * FROM rollnwrite WHERE user_email = ? AND id = ?";
+      query =
+        "SELECT r.*, u.name as user_name FROM rollnwrite r LEFT JOIN users u ON r.user_email = u.email WHERE r.user_email = ? AND r.id = ?";
       params = [userEmail, id];
     } else {
       return NextResponse.json(

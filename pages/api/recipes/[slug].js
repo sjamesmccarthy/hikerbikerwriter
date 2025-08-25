@@ -21,7 +21,7 @@ export default async function handler(req, res) {
       ) {
         // Logged in user: can access their own recipes or public recipes
         query =
-          "SELECT * FROM recipes WHERE (user_email = ? OR is_public = TRUE) AND JSON_EXTRACT(json, '$.slug') = ?";
+          "SELECT r.*, u.name as user_name FROM recipes r LEFT JOIN users u ON r.user_email = u.email WHERE (r.user_email = ? OR r.is_public = TRUE) AND JSON_EXTRACT(r.json, '$.slug') = ?";
         params = [userEmail, slug];
         console.log(
           "Using authenticated query for user:",
@@ -32,7 +32,7 @@ export default async function handler(req, res) {
       } else {
         // Not logged in: can only access public recipes
         query =
-          "SELECT * FROM recipes WHERE is_public = TRUE AND JSON_EXTRACT(json, '$.slug') = ?";
+          "SELECT r.*, u.name as user_name FROM recipes r LEFT JOIN users u ON r.user_email = u.email WHERE r.is_public = TRUE AND JSON_EXTRACT(r.json, '$.slug') = ?";
         params = [slug];
         console.log("Using public-only query for slug:", slug);
       }
@@ -55,6 +55,7 @@ export default async function handler(req, res) {
       // Ensure compatibility with frontend expectations
       const responseData = {
         ...recipe,
+        author: row.user_name || recipe.author || "Unknown", // Use current user name from database
         userEmail: recipe.userEmail || row.user_email,
         dateAdded: recipe.dateAdded || row.created,
         personalNotes: isOwner ? recipe.personalNotes || "" : "", // Only show personal notes to owner

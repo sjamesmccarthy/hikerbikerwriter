@@ -15,20 +15,22 @@ export async function GET(request, { params }) {
       // 2. It's public OR
       // 3. It's shared with family
       query = `
-        SELECT * FROM fieldnotes 
-        WHERE JSON_EXTRACT(json, '$.slug') = ?
+        SELECT f.*, u.name as user_name FROM fieldnotes f 
+        LEFT JOIN users u ON f.user_email = u.email
+        WHERE JSON_EXTRACT(f.json, '$.slug') = ?
         AND (
-          user_email = ?
-          OR is_public = 1
-          OR shared_family = 1
+          f.user_email = ?
+          OR f.is_public = 1
+          OR f.shared_family = 1
         )`;
       params_array = [slug, userEmail];
     } else {
       // Not logged in - get public fieldnote only
       query = `
-        SELECT * FROM fieldnotes 
-        WHERE JSON_EXTRACT(json, '$.slug') = ?
-        AND is_public = 1`;
+        SELECT f.*, u.name as user_name FROM fieldnotes f 
+        LEFT JOIN users u ON f.user_email = u.email
+        WHERE JSON_EXTRACT(f.json, '$.slug') = ?
+        AND f.is_public = 1`;
       params_array = [slug];
     }
 
@@ -78,7 +80,12 @@ export async function GET(request, { params }) {
     // Ensure compatibility with frontend expectations and use consistent field names
     const mergedFieldNote = {
       ...fieldNote,
-      author: fieldNote.by || fieldNote.author || userEmail || "Anonymous",
+      author:
+        rows[0].user_name ||
+        fieldNote.by ||
+        fieldNote.author ||
+        userEmail ||
+        "Anonymous",
       personalNotes: fieldNote.personalNotes || "",
       isFavorite: fieldNote.isFavorite || false,
       dateAdded: fieldNote.dateAdded || rows[0].created,

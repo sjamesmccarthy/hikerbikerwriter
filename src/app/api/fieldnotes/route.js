@@ -69,17 +69,18 @@ export async function GET(request) {
             const familyEmailPlaceholders = familyEmails
               .map(() => "?")
               .join(",");
-            query = `SELECT * FROM fieldnotes WHERE user_email = ? OR (is_public = 1 AND user_email NOT IN (${familyEmailPlaceholders}))`;
+            query = `SELECT f.*, u.name as user_name FROM fieldnotes f LEFT JOIN users u ON f.user_email = u.email WHERE f.user_email = ? OR (f.is_public = 1 AND f.user_email NOT IN (${familyEmailPlaceholders}))`;
             params = [userEmail, ...familyEmails];
           } else {
             // If no family, get user's notes + all public notes
             query =
-              "SELECT * FROM fieldnotes WHERE user_email = ? OR is_public = 1";
+              "SELECT f.*, u.name as user_name FROM fieldnotes f LEFT JOIN users u ON f.user_email = u.email WHERE f.user_email = ? OR f.is_public = 1";
             params = [userEmail];
           }
         } else {
           // Just user's own field notes
-          query = "SELECT * FROM fieldnotes WHERE user_email = ?";
+          query =
+            "SELECT f.*, u.name as user_name FROM fieldnotes f LEFT JOIN users u ON f.user_email = u.email WHERE f.user_email = ?";
           params = [userEmail];
         }
 
@@ -102,7 +103,7 @@ export async function GET(request) {
               familyEmail
             );
             const [familyFieldnotes] = await pool.execute(
-              "SELECT * FROM fieldnotes WHERE user_email = ? AND shared_family = 1",
+              "SELECT f.*, u.name as user_name FROM fieldnotes f LEFT JOIN users u ON f.user_email = u.email WHERE f.user_email = ? AND f.shared_family = 1",
               [familyEmail]
             );
             allFieldnotes.push(...familyFieldnotes);
@@ -126,7 +127,7 @@ export async function GET(request) {
         // Fallback: just get public field notes
         if (includePublic === "true") {
           const [publicFieldnotes] = await pool.execute(
-            "SELECT * FROM fieldnotes WHERE is_public = 1 ORDER BY created DESC"
+            "SELECT f.*, u.name as user_name FROM fieldnotes f LEFT JOIN users u ON f.user_email = u.email WHERE f.is_public = 1 ORDER BY f.created DESC"
           );
           allFieldnotes = publicFieldnotes;
         }
@@ -134,7 +135,7 @@ export async function GET(request) {
     } else {
       // Not logged in - get public field notes only
       const [publicFieldnotes] = await pool.execute(
-        "SELECT * FROM fieldnotes WHERE is_public = 1 ORDER BY created DESC"
+        "SELECT f.*, u.name as user_name FROM fieldnotes f LEFT JOIN users u ON f.user_email = u.email WHERE f.is_public = 1 ORDER BY f.created DESC"
       );
       allFieldnotes = publicFieldnotes;
       console.log("Using public-only query");
@@ -151,7 +152,11 @@ export async function GET(request) {
         is_public: Boolean(row.is_public), // Add is_public from database column
         shared_family: Boolean(row.shared_family), // Add shared_family from database column
         author:
-          fieldnote.by || fieldnote.author || row.user_email || "Anonymous", // Map 'by' field to 'author'
+          row.user_name ||
+          fieldnote.by ||
+          fieldnote.author ||
+          row.user_email ||
+          "Anonymous", // Use database name first, then fallback to JSON data
         userEmail: row.user_email, // Add userEmail field for family filtering
         author_email: fieldnote.author_email || row.user_email, // Add author_email field for backwards compatibility
       };
@@ -279,11 +284,11 @@ export async function PUT(request) {
     let query, params;
     if (slug) {
       query =
-        "SELECT * FROM fieldnotes WHERE user_email = ? AND JSON_EXTRACT(json, '$.slug') = ?";
+        "SELECT f.*, u.name as user_name FROM fieldnotes f LEFT JOIN users u ON f.user_email = u.email WHERE f.user_email = ? AND JSON_EXTRACT(f.json, '$.slug') = ?";
       params = [userEmail, slug];
     } else if (id) {
       query =
-        "SELECT * FROM fieldnotes WHERE user_email = ? AND JSON_EXTRACT(json, '$.id') = ?";
+        "SELECT f.*, u.name as user_name FROM fieldnotes f LEFT JOIN users u ON f.user_email = u.email WHERE f.user_email = ? AND JSON_EXTRACT(f.json, '$.id') = ?";
       params = [userEmail, id];
     } else {
       return NextResponse.json(
@@ -327,7 +332,22 @@ export async function PUT(request) {
       ]
     );
 
-    return NextResponse.json(updatedFieldNote);
+    // Return the updated field note with author field mapped for frontend consistency
+    const responseFieldNote = {
+      ...updatedFieldNote,
+      author: row.user_name || authorName || userEmail || "Anonymous",
+      userEmail: userEmail,
+      is_public: Boolean(
+        updates.is_public !== undefined ? updates.is_public : row.is_public
+      ),
+      shared_family: Boolean(
+        updates.shared_family !== undefined
+          ? updates.shared_family
+          : row.shared_family
+      ),
+    };
+
+    return NextResponse.json(responseFieldNote);
   } catch (error) {
     console.error("Error in PUT /api/fieldnotes:", error);
     return NextResponse.json(
