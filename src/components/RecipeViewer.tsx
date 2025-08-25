@@ -79,6 +79,7 @@ type Recipe = {
   }>;
   myNotes?: string;
   author: string;
+  author_email?: string;
   favorite: boolean;
   public?: boolean;
   shared_family?: boolean | number;
@@ -823,19 +824,22 @@ const RecipeViewer: React.FC<RecipeViewerProps> = () => {
                 style={{ zIndex: 1000 }}
               >
                 <div className="flex flex-col gap-3">
-                  {/* Search */}
-                  <TextField
-                    size="small"
-                    label="Search recipes"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    sx={{ minWidth: 200 }}
-                  />
+                  {/* Search and Filters Row */}
+                  <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4">
+                    {/* Search - fills remaining space on desktop */}
+                    <TextField
+                      size="small"
+                      label="Search recipes"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      sx={{
+                        minWidth: { xs: 200, md: 180 },
+                        flex: { md: 1 },
+                      }}
+                    />
 
-                  {/* Category, Cooking Type, and Sort By row */}
-                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                    {/* Mobile: Custom responsive layout, Desktop: Normal flex */}
-                    <div className="flex flex-col md:flex-row md:flex-wrap gap-2 md:gap-4 md:items-center">
+                    {/* Category, Cooking Type, and Cook Time on same line for desktop */}
+                    <div className="flex flex-col md:flex-row gap-2 md:gap-3 md:items-center md:flex-shrink-0">
                       {/* First row: Category and Cooking Type (50% each on mobile) */}
                       <div className="flex gap-2 md:contents">
                         <FormControl
@@ -908,7 +912,7 @@ const RecipeViewer: React.FC<RecipeViewerProps> = () => {
                         </FormControl>
                       </div>
 
-                      {/* Second row: Cook Time (100% width on mobile) */}
+                      {/* Cook Time - now on same row for desktop */}
                       <FormControl
                         size="small"
                         className="w-full md:w-auto"
@@ -941,139 +945,153 @@ const RecipeViewer: React.FC<RecipeViewerProps> = () => {
                         </Select>
                       </FormControl>
                     </div>
+                  </div>
 
-                    {/* Public and Favorites filter buttons (50% each on mobile) */}
-                    <div className="flex gap-2 md:flex-wrap">
-                      {/* Only show Favorites Only button for logged in users */}
-                      {session?.user?.email && (
-                        <button
-                          onClick={() => {
-                            const newFavorites = !showFavoritesOnly;
-                            setShowFavoritesOnly(newFavorites);
-                            updateURLWithFilters(
-                              showFamilyOnly,
-                              newFavorites,
-                              selectedFamilyMember
-                            );
-                          }}
-                          className={`flex-1 md:flex-none px-3 py-2 rounded text-sm font-medium transition-colors flex items-center justify-center gap-1 ${
-                            showFavoritesOnly
-                              ? "bg-red-100 text-red-700 border border-red-300"
-                              : "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200"
-                          }`}
-                        >
-                          {showFavoritesOnly ? (
-                            <FavoriteIcon sx={{ fontSize: 16 }} />
-                          ) : (
-                            <FavoriteBorderIcon sx={{ fontSize: 16 }} />
+                  {/* Filter buttons row */}
+                  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                    <div className="flex-1"></div>
+
+                    {/* Filter buttons row - responsive layout */}
+                    <div className="flex flex-col md:flex-row gap-2 md:gap-4 md:items-center">
+                      {/* First row on mobile: Favorites and Public buttons (50% each) */}
+                      <div className="flex gap-2 md:contents">
+                        {/* Only show Favorites Only button for logged in users */}
+                        {session?.user?.email && (
+                          <button
+                            onClick={() => {
+                              const newFavorites = !showFavoritesOnly;
+                              setShowFavoritesOnly(newFavorites);
+                              updateURLWithFilters(
+                                showFamilyOnly,
+                                newFavorites,
+                                selectedFamilyMember
+                              );
+                            }}
+                            className={`flex-1 md:flex-none px-3 py-2 rounded text-sm font-medium transition-colors flex items-center justify-center gap-1 ${
+                              showFavoritesOnly
+                                ? "bg-red-100 text-red-700 border border-red-300"
+                                : "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200"
+                            }`}
+                          >
+                            {showFavoritesOnly ? (
+                              <FavoriteIcon sx={{ fontSize: 16 }} />
+                            ) : (
+                              <FavoriteBorderIcon sx={{ fontSize: 16 }} />
+                            )}
+                            <span className="hidden sm:inline">
+                              Favorites Only
+                            </span>
+                            <span className="sm:hidden">Favorites</span>
+                          </button>
+                        )}
+
+                        {/* Public filter button for logged in users */}
+                        {session?.user?.email && (
+                          <button
+                            onClick={() => {
+                              setShowPublicRecipes(!showPublicRecipes);
+                            }}
+                            className={`flex-1 md:flex-none px-3 py-2 rounded text-sm font-medium transition-colors flex items-center justify-center gap-1 ${
+                              showPublicRecipes
+                                ? "bg-green-100 text-green-700 border border-green-300"
+                                : "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200"
+                            }`}
+                          >
+                            <PublicIcon sx={{ fontSize: 16 }} />
+                            Public
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Second row on mobile, same row on desktop: Family filters */}
+                      {session?.user?.email && hasFamilyMembers && (
+                        <div className="flex gap-2 md:contents">
+                          <button
+                            onClick={() => {
+                              const newFamily = !showFamilyOnly;
+                              setShowFamilyOnly(newFamily);
+                              if (!newFamily) {
+                                // Reset family member selection when turning off family filter
+                                setSelectedFamilyMember("All");
+                              }
+                              updateURLWithFilters(
+                                newFamily,
+                                showFavoritesOnly,
+                                newFamily ? selectedFamilyMember : undefined
+                              );
+                            }}
+                            className={`flex-1 md:flex-none px-3 py-2 rounded text-sm font-medium transition-colors flex items-center justify-center gap-1 ${
+                              showFamilyOnly
+                                ? "bg-blue-100 text-blue-700 border border-blue-300"
+                                : "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200"
+                            }`}
+                          >
+                            <PeopleIcon sx={{ fontSize: 16 }} />
+                            <span className="hidden sm:inline">
+                              Family Only
+                            </span>
+                            <span className="sm:hidden">Family</span>
+                          </button>
+
+                          {/* Family member select dropdown */}
+                          {showFamilyOnly && familyMembers.length > 0 && (
+                            <FormControl
+                              size="small"
+                              className="flex-1 md:flex-none"
+                              sx={{ minWidth: { xs: 0, md: 160 } }}
+                            >
+                              <InputLabel>Family Member</InputLabel>
+                              <Select
+                                value={selectedFamilyMember}
+                                label="Family Member"
+                                open={openSelect === "familyMember"}
+                                onOpen={() => setOpenSelect("familyMember")}
+                                onClose={() => setOpenSelect(null)}
+                                onChange={(e) => {
+                                  const newFamilyMember = e.target.value;
+                                  setSelectedFamilyMember(newFamilyMember);
+                                  updateURLWithFilters(
+                                    showFamilyOnly,
+                                    showFavoritesOnly,
+                                    newFamilyMember
+                                  );
+                                }}
+                                MenuProps={{
+                                  PaperProps: {
+                                    style: {
+                                      zIndex: 10000,
+                                    },
+                                  },
+                                }}
+                              >
+                                <MenuItem value="All">
+                                  <div className="flex items-center">
+                                    <PeopleIcon sx={{ fontSize: 16, mr: 1 }} />
+                                    All Family
+                                  </div>
+                                </MenuItem>
+                                {familyMembers.map((member) => (
+                                  <MenuItem
+                                    key={member.email}
+                                    value={member.name}
+                                  >
+                                    <div className="flex items-center">
+                                      <span>{member.name}</span>
+                                      {member.relationship && (
+                                        <span className="ml-2 text-xs text-gray-500">
+                                          ({member.relationship})
+                                        </span>
+                                      )}
+                                    </div>
+                                  </MenuItem>
+                                ))}
+                              </Select>
+                            </FormControl>
                           )}
-                          <span className="hidden sm:inline">
-                            Favorites Only
-                          </span>
-                          <span className="sm:hidden">Favorites</span>
-                        </button>
-                      )}
-
-                      {/* Public filter button for logged in users */}
-                      {session?.user?.email && (
-                        <button
-                          onClick={() => {
-                            setShowPublicRecipes(!showPublicRecipes);
-                          }}
-                          className={`flex-1 md:flex-none px-3 py-2 rounded text-sm font-medium transition-colors flex items-center justify-center gap-1 ${
-                            showPublicRecipes
-                              ? "bg-green-100 text-green-700 border border-green-300"
-                              : "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200"
-                          }`}
-                        >
-                          <PublicIcon sx={{ fontSize: 16 }} />
-                          Public
-                        </button>
+                        </div>
                       )}
                     </div>
                   </div>
-
-                  {/* Family filters row - new line on mobile */}
-                  {session?.user?.email && hasFamilyMembers && (
-                    <div className="flex flex-wrap items-center gap-2">
-                      <button
-                        onClick={() => {
-                          const newFamily = !showFamilyOnly;
-                          setShowFamilyOnly(newFamily);
-                          if (!newFamily) {
-                            // Reset family member selection when turning off family filter
-                            setSelectedFamilyMember("All");
-                          }
-                          updateURLWithFilters(
-                            newFamily,
-                            showFavoritesOnly,
-                            newFamily ? selectedFamilyMember : undefined
-                          );
-                        }}
-                        className={`px-3 py-2 rounded text-sm font-medium transition-colors flex items-center gap-1 ${
-                          showFamilyOnly
-                            ? "bg-blue-100 text-blue-700 border border-blue-300"
-                            : "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200"
-                        }`}
-                      >
-                        <PeopleIcon sx={{ fontSize: 16 }} />
-                        Family Only
-                      </button>
-
-                      {/* Family member select dropdown - fills remaining space on mobile */}
-                      {showFamilyOnly && familyMembers.length > 0 && (
-                        <FormControl
-                          size="small"
-                          className="flex-1 md:flex-none"
-                          sx={{ minWidth: { xs: 0, md: 160 } }}
-                        >
-                          <InputLabel>Family Member</InputLabel>
-                          <Select
-                            value={selectedFamilyMember}
-                            label="Family Member"
-                            open={openSelect === "familyMember"}
-                            onOpen={() => setOpenSelect("familyMember")}
-                            onClose={() => setOpenSelect(null)}
-                            onChange={(e) => {
-                              const newFamilyMember = e.target.value;
-                              setSelectedFamilyMember(newFamilyMember);
-                              updateURLWithFilters(
-                                showFamilyOnly,
-                                showFavoritesOnly,
-                                newFamilyMember
-                              );
-                            }}
-                            MenuProps={{
-                              PaperProps: {
-                                style: {
-                                  zIndex: 10000,
-                                },
-                              },
-                            }}
-                          >
-                            <MenuItem value="All">
-                              <div className="flex items-center">
-                                <PeopleIcon sx={{ fontSize: 16, mr: 1 }} />
-                                All Family
-                              </div>
-                            </MenuItem>
-                            {familyMembers.map((member) => (
-                              <MenuItem key={member.email} value={member.name}>
-                                <div className="flex items-center">
-                                  <span>{member.name}</span>
-                                  {member.relationship && (
-                                    <span className="ml-2 text-xs text-gray-500">
-                                      ({member.relationship})
-                                    </span>
-                                  )}
-                                </div>
-                              </MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
-                      )}
-                    </div>
-                  )}
                 </div>
               </div>
             )}
@@ -1234,6 +1252,7 @@ const RecipeViewer: React.FC<RecipeViewerProps> = () => {
                                     <PeopleIcon
                                       sx={{ fontSize: 16, mr: 0.5 }}
                                     />
+                                    Shared by{" "}
                                     {(() => {
                                       // First priority: family member name from familyMembers array
                                       const familyMember = familyMembers.find(
@@ -1287,11 +1306,15 @@ const RecipeViewer: React.FC<RecipeViewerProps> = () => {
                           recipe.userEmail !== session?.user?.email && (
                             <span className="text-sm text-blue-600 font-medium mt-1 flex items-center">
                               <PeopleIcon
-                                sx={{ fontSize: 16, mr: 0.5, color: "gray" }}
+                                sx={{ fontSize: 16, mr: 0.5, color: "#2563eb" }}
                               />
                               {recipe.public === true && (
                                 <PublicIcon
-                                  sx={{ fontSize: 16, mr: 0.5, color: "gray" }}
+                                  sx={{
+                                    fontSize: 16,
+                                    mr: 0.5,
+                                    color: "#2563eb",
+                                  }}
                                 />
                               )}
                               Shared by{" "}

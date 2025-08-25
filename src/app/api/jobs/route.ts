@@ -19,6 +19,7 @@ interface JobData extends RowDataPacket {
   company?: string;
   title?: string;
   json: string;
+  created: string; // Database created timestamp
   opportunities?: Opportunity[];
 }
 
@@ -53,7 +54,7 @@ export async function GET(request: Request) {
 
     // Get all jobs for the user
     const [jobs] = await pool.query<JobData[]>(
-      `SELECT id, json, closed
+      `SELECT id, json, closed, created
        FROM jobs
        WHERE user_id = ?`,
       [userId]
@@ -73,6 +74,7 @@ export async function GET(request: Request) {
             status: jobData.status || "",
             opportunities: jobData.opportunities || [],
             ...jobData,
+            created: job.created, // Use database created timestamp instead of JSON
           };
         } catch (e) {
           console.error("Error parsing job JSON:", e);

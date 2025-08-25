@@ -122,6 +122,7 @@ interface JobData {
   closed: number;
   status: string;
   searchName?: string;
+  created?: string; // Database created timestamp
   opportunities?: JobOpportunity[];
   recruiters?: Recruiter[];
   resources?: OnlineResource[];
@@ -307,7 +308,7 @@ export default function JobTracker() {
             opportunities: job.opportunities || [],
             recruiters: job.recruiters || [],
             resources: job.resources || [],
-            created: new Date().toISOString(),
+            created: job.created || new Date().toISOString(), // Use existing created or current time
             closed: job.closed,
           };
         });
@@ -521,7 +522,7 @@ export default function JobTracker() {
       opportunities: [],
       recruiters: [],
       resources: [],
-      created: new Date().toISOString(),
+      created: new Date().toISOString(), // This will be handled by database
     };
 
     // Set all other searches to inactive
@@ -1720,15 +1721,15 @@ export default function JobTracker() {
                     Add Opportunity
                   </Button>
 
-                  <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+                  <div className="flex flex-col sm:flex-row gap-2 w-full md:flex-1">
                     <TextField
                       size="small"
                       label="Search"
                       placeholder="Search company, position..."
                       value={searchQuery}
                       onChange={(e) => handleSearchChange(e.target.value)}
-                      className="w-full sm:w-auto"
-                      style={{ minWidth: 300, maxWidth: 400 }}
+                      className="w-full md:flex-1"
+                      style={{ minWidth: 300 }}
                       variant="outlined"
                     />
 
@@ -1769,22 +1770,27 @@ export default function JobTracker() {
                       </Select>
                     </FormControl>
 
-                    <IconButton
+                    <Button
                       onClick={handleExportAsPDF}
                       size="small"
                       title="Download PDF Summary"
+                      startIcon={<FileDownloadIcon />}
                       sx={{
                         border: "1px solid #e0e0e0",
                         borderRadius: "4px",
                         padding: "8px",
                         color: "#1976d2",
+                        minWidth: "auto",
+                        "& .MuiButton-startIcon": {
+                          marginRight: { xs: "8px", sm: "0px" },
+                        },
                         "&:hover": {
                           backgroundColor: "#f5f5f5",
                         },
                       }}
                     >
-                      <FileDownloadIcon />
-                    </IconButton>
+                      <span className="sm:hidden">Download PDF Summary</span>
+                    </Button>
                   </div>
                 </div>
 

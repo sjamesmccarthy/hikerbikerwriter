@@ -153,6 +153,7 @@ export async function GET(request) {
         author:
           fieldnote.by || fieldnote.author || row.user_email || "Anonymous", // Map 'by' field to 'author'
         userEmail: row.user_email, // Add userEmail field for family filtering
+        author_email: fieldnote.author_email || row.user_email, // Add author_email field for backwards compatibility
       };
     });
 
@@ -177,6 +178,25 @@ export async function POST(request) {
       );
     }
 
+    // Look up the user in the database to get their name
+    let authorName = userName || userEmail; // fallback to userName or email
+    try {
+      const [userRows] = await pool.execute(
+        "SELECT name FROM users WHERE email = ?",
+        [userEmail]
+      );
+
+      if (userRows.length > 0) {
+        authorName = userRows[0].name;
+        console.log("Found user name from database:", authorName);
+      } else {
+        console.log("User not found in database, using fallback:", authorName);
+      }
+    } catch (dbError) {
+      console.error("Error looking up user:", dbError);
+      // Continue with fallback name
+    }
+
     // Generate ID and slug for new fieldnote
     const id = Date.now();
     const slug =
@@ -192,7 +212,8 @@ export async function POST(request) {
       slug: slug,
       title: fieldNoteData.title || "",
       content: fieldNoteData.content || "",
-      by: userName || userEmail,
+      by: authorName,
+      author_email: userEmail,
       tags: fieldNoteData.tags || "",
       mood: fieldNoteData.mood || "",
       images: fieldNoteData.images || [],
@@ -235,6 +256,25 @@ export async function PUT(request) {
       );
     }
 
+    // Look up the user in the database to get their name
+    let authorName = userName || userEmail; // fallback to userName or email
+    try {
+      const [userRows] = await pool.execute(
+        "SELECT name FROM users WHERE email = ?",
+        [userEmail]
+      );
+
+      if (userRows.length > 0) {
+        authorName = userRows[0].name;
+        console.log("Found user name from database:", authorName);
+      } else {
+        console.log("User not found in database, using fallback:", authorName);
+      }
+    } catch (dbError) {
+      console.error("Error looking up user:", dbError);
+      // Continue with fallback name
+    }
+
     // Find the fieldnote by slug or id
     let query, params;
     if (slug) {
@@ -269,7 +309,8 @@ export async function PUT(request) {
     const updatedFieldNote = {
       ...existingFieldNote,
       ...updates,
-      by: userName || existingFieldNote.by || userEmail,
+      by: authorName,
+      author_email: userEmail,
       updatedAt: new Date().toISOString(),
     };
 

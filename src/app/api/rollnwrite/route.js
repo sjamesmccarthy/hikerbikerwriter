@@ -153,6 +153,7 @@ export async function GET(request) {
         shared_family: Boolean(row.shared_family),
         favorite: row.favorite || 0,
         userEmail: row.user_email, // Add userEmail field for family filtering
+        author_email: entry.author_email || row.user_email, // Add author_email field for backwards compatibility
       };
     });
 
@@ -177,6 +178,25 @@ export async function POST(request) {
       );
     }
 
+    // Look up the user in the database to get their name
+    let authorName = userName || userEmail; // fallback to userName or email
+    try {
+      const [userRows] = await pool.execute(
+        "SELECT name FROM users WHERE email = ?",
+        [userEmail]
+      );
+
+      if (userRows.length > 0) {
+        authorName = userRows[0].name;
+        console.log("Found user name from database:", authorName);
+      } else {
+        console.log("User not found in database, using fallback:", authorName);
+      }
+    } catch (dbError) {
+      console.error("Error looking up user:", dbError);
+      // Continue with fallback name
+    }
+
     // Generate ID and slug for new entry
     const id = Date.now();
     const slug = entryData.slug || `roll-entry-${id}`;
@@ -191,7 +211,8 @@ export async function POST(request) {
       content: entryData.content || "",
       dice1: entryData.dice1 || 0,
       dice2: entryData.dice2 || 0,
-      by: userName || userEmail,
+      by: authorName,
+      author_email: userEmail,
       date: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
       personalNotes: entryData.personalNotes || "",
@@ -232,6 +253,25 @@ export async function PUT(request) {
       );
     }
 
+    // Look up the user in the database to get their name
+    let authorName = userName || userEmail; // fallback to userName or email
+    try {
+      const [userRows] = await pool.execute(
+        "SELECT name FROM users WHERE email = ?",
+        [userEmail]
+      );
+
+      if (userRows.length > 0) {
+        authorName = userRows[0].name;
+        console.log("Found user name from database:", authorName);
+      } else {
+        console.log("User not found in database, using fallback:", authorName);
+      }
+    } catch (dbError) {
+      console.error("Error looking up user:", dbError);
+      // Continue with fallback name
+    }
+
     // Find the entry by slug or id
     let query, params;
     if (slug) {
@@ -265,7 +305,8 @@ export async function PUT(request) {
     const updatedEntry = {
       ...existingEntry,
       ...updates,
-      by: userName || existingEntry.by || userEmail,
+      by: authorName,
+      author_email: userEmail,
       updatedAt: new Date().toISOString(),
     };
 

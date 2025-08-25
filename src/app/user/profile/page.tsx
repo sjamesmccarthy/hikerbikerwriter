@@ -80,6 +80,8 @@ export default function UserProfilePage() {
   );
   const [isAppsMenuOpen, setIsAppsMenuOpen] = useState(false);
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
+  const [isEditingName, setIsEditingName] = useState(false);
+  const [editedName, setEditedName] = useState<string>("");
 
   React.useEffect(() => {
     let mounted = true;
@@ -147,6 +149,49 @@ export default function UserProfilePage() {
       </div>
     );
   }
+
+  // Function to handle name update
+  const handleNameUpdate = async () => {
+    if (!session?.user?.email || !editedName.trim()) return;
+
+    try {
+      const response = await fetch("/api/users/update-name", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: session.user.email,
+          name: editedName.trim(),
+        }),
+      });
+
+      if (response.ok) {
+        setNameFromFB(editedName.trim());
+        setIsEditingName(false);
+      } else {
+        console.error("Failed to update name");
+        // Reset the edited name to the current name
+        setEditedName(nameFromFB || "");
+      }
+    } catch (error) {
+      console.error("Error updating name:", error);
+      // Reset the edited name to the current name
+      setEditedName(nameFromFB || "");
+    }
+  };
+
+  // Function to handle edit mode
+  const handleEditStart = () => {
+    setEditedName(nameFromFB || "");
+    setIsEditingName(true);
+  };
+
+  // Function to handle edit cancel
+  const handleEditCancel = () => {
+    setEditedName("");
+    setIsEditingName(false);
+  };
 
   // Apps menu configuration
   const apps = [
@@ -352,7 +397,87 @@ export default function UserProfilePage() {
                   className="rounded-full border border-gray-300 mb-4"
                 />
               )}
-              <h1 className="text-2xl font-bold mb-2">{nameFromFB ?? ""}</h1>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
+                {isEditingName ? (
+                  <>
+                    <TextField
+                      value={editedName}
+                      onChange={(e) => setEditedName(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          handleNameUpdate();
+                        } else if (e.key === "Escape") {
+                          handleEditCancel();
+                        }
+                      }}
+                      size="small"
+                      autoFocus
+                      variant="outlined"
+                      className="w-full sm:w-auto"
+                      sx={{
+                        "& .MuiInputBase-input": {
+                          textAlign: "left",
+                          fontSize: "1.5rem",
+                          fontWeight: "bold",
+                        },
+                        "& .MuiInputBase-root": {
+                          height: "40px",
+                        },
+                      }}
+                    />
+                    <div className="flex gap-2 w-full sm:w-auto">
+                      <Button
+                        onClick={handleNameUpdate}
+                        variant="contained"
+                        className="flex-1 sm:flex-none"
+                        sx={{
+                          minWidth: "auto",
+                          px: 2,
+                          height: "40px",
+                          textTransform: "none",
+                        }}
+                      >
+                        Save
+                      </Button>
+                      <Button
+                        onClick={handleEditCancel}
+                        variant="outlined"
+                        className="flex-1 sm:flex-none"
+                        sx={{
+                          minWidth: "auto",
+                          px: 2,
+                          height: "40px",
+                          textTransform: "none",
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    {/* Mobile: Edit icon on the right */}
+                    <div className="flex items-center sm:hidden">
+                      <h1 className="text-2xl font-bold">{nameFromFB ?? ""}</h1>
+                      <EditNoteIcon
+                        onClick={handleEditStart}
+                        className="text-gray-500 hover:text-gray-700 cursor-pointer ml-2"
+                        fontSize="small"
+                      />
+                    </div>
+
+                    {/* Desktop: Edit icon on the right */}
+                    <div className="hidden sm:flex sm:items-center">
+                      <h1 className="text-2xl font-bold">{nameFromFB ?? ""}</h1>
+                      <EditNoteIcon
+                        onClick={handleEditStart}
+                        className="text-gray-500 hover:text-gray-700 cursor-pointer ml-2"
+                        fontSize="small"
+                      />
+                    </div>
+                  </>
+                )}
+              </div>
               <p className="text-gray-600 mb-2">
                 {session?.user?.email ?? ""}
                 {isAdminRemote === true && (

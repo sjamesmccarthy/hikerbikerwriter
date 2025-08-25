@@ -241,6 +241,15 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: "Missing required fields" });
       }
 
+      // Look up the user's name from the database
+      const [userRows] = await pool.query(
+        "SELECT name FROM users WHERE email = ?",
+        [userEmail]
+      );
+
+      const authorName =
+        userRows.length > 0 ? userRows[0].name : userName || userEmail;
+
       const slug = generateSlug(title);
       const timestamp = Date.now();
       const id = timestamp;
@@ -273,7 +282,8 @@ export default async function handler(req, res) {
         ingredients: ingredients || [],
         steps: steps || [],
         myNotes: notes || "",
-        author: userName || userEmail,
+        author: authorName,
+        author_email: userEmail,
         favorite: favorite || false,
         public: isPublic || false,
         shared_family:
@@ -347,6 +357,14 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: "Missing required fields" });
       }
 
+      // Look up the user's name from the database
+      const [userRows] = await pool.query(
+        "SELECT name FROM users WHERE email = ?",
+        [userEmail]
+      );
+
+      const authorName = userRows.length > 0 ? userRows[0].name : userEmail;
+
       // Find the recipe by slug
       const [rows] = await pool.query(
         "SELECT * FROM recipes WHERE user_email = ? AND JSON_EXTRACT(json, '$.slug') = ?",
@@ -379,7 +397,8 @@ export default async function handler(req, res) {
         ingredients: ingredients || [],
         steps: steps || [],
         myNotes: notes || "",
-        author: req.body.userName || userEmail,
+        author: authorName,
+        author_email: userEmail,
         favorite: favorite || false,
         public: isPublic || false,
         shared_family:

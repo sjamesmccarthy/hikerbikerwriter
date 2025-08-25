@@ -26,7 +26,14 @@ import {
   Favorite as FavoriteIcon,
   People as PeopleIcon,
 } from "@mui/icons-material";
-import { FormControl, InputLabel, Select, MenuItem } from "@mui/material";
+import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
+import {
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  IconButton,
+} from "@mui/material";
 import { renderFooter } from "./shared/footerHelpers";
 
 interface RollAndWriteEntry {
@@ -70,6 +77,7 @@ const RollAndWriteEntries: React.FC = () => {
   >([]);
   const [selectedFamilyMember, setSelectedFamilyMember] =
     useState<string>("All");
+  const [showFilters, setShowFilters] = useState(false);
   const { data: session, status } = useSession();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -522,181 +530,372 @@ const RollAndWriteEntries: React.FC = () => {
               </p>
             </div>
 
-            {/* Filter and Create New Entry Button - Only show when there are entries */}
-            {!loadingEntries && entries.length > 0 && (
-              <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
-                <div className="w-full flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-                  {/* Left side: Sort dropdown and filters */}
-                  <div className="flex flex-col gap-4 w-full md:w-auto">
-                    {/* First row: Sort dropdown and Public filter (50% each on mobile) */}
-                    <div className="flex gap-2">
-                      <FormControl
-                        size="small"
-                        className="flex-1 md:flex-none"
-                        sx={{ minWidth: { xs: 0, md: 140 } }}
-                      >
-                        <InputLabel
-                          sx={{ fontFamily: "monospace", fontSize: "0.875rem" }}
-                        >
-                          Sort By
-                        </InputLabel>
-                        <Select
-                          value={sortBy}
-                          label="Sort By"
-                          onChange={(e) => setSortBy(e.target.value)}
-                          sx={{
-                            fontFamily: "monospace",
-                            fontSize: "0.875rem",
-                            "& .MuiSelect-select": { fontFamily: "monospace" },
-                          }}
-                        >
-                          <MenuItem
-                            value="newest"
-                            sx={{
-                              fontFamily: "monospace",
-                              fontSize: "0.875rem",
-                            }}
-                          >
-                            Newest
-                          </MenuItem>
-                          <MenuItem
-                            value="oldest"
-                            sx={{
-                              fontFamily: "monospace",
-                              fontSize: "0.875rem",
-                            }}
-                          >
-                            Oldest
-                          </MenuItem>
-                          <MenuItem
-                            value="favorited"
-                            sx={{
-                              fontFamily: "monospace",
-                              fontSize: "0.875rem",
-                            }}
-                          >
-                            Most Favorited
-                          </MenuItem>
-                        </Select>
-                      </FormControl>
-
-                      {/* Public filter for logged-in users (50% width on mobile) */}
-                      {session?.user?.email && (
-                        <button
-                          onClick={() => setShowPublicNotes(!showPublicNotes)}
-                          className={`flex-1 md:flex-none px-3 py-2 rounded text-sm font-medium transition-colors flex items-center justify-center gap-1 ${
-                            showPublicNotes
-                              ? "bg-green-100 text-green-700 border border-green-300"
-                              : "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200"
-                          }`}
-                          style={{ fontFamily: "monospace" }}
-                        >
-                          <PublicIcon sx={{ fontSize: 16 }} />
-                          Public
-                        </button>
-                      )}
-                    </div>
-
-                    {/* Second row: Family filters */}
-                    {session?.user?.email && hasFamilyMembers && (
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => {
-                            const newFamily = !showFamilyOnly;
-                            setShowFamilyOnly(newFamily);
-                            if (!newFamily) {
-                              // Reset family member selection when turning off family filter
-                              setSelectedFamilyMember("All");
-                            }
-                          }}
-                          className={`px-3 py-2 rounded text-sm font-medium transition-colors flex items-center gap-1 ${
-                            showFamilyOnly
-                              ? "bg-blue-100 text-blue-700 border border-blue-300"
-                              : "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200"
-                          }`}
-                          style={{ fontFamily: "monospace" }}
-                        >
-                          <PeopleIcon sx={{ fontSize: 16 }} />
-                          Family Only
-                        </button>
-
-                        {/* Family member select dropdown - fills remaining space on mobile */}
-                        {showFamilyOnly && familyMembers.length > 0 && (
-                          <FormControl
-                            size="small"
-                            className="flex-1 md:flex-none"
-                            sx={{ minWidth: { xs: 0, md: 160 } }}
-                          >
-                            <InputLabel
-                              sx={{
-                                fontFamily: "monospace",
-                                fontSize: "0.875rem",
-                              }}
-                            >
-                              Family Member
-                            </InputLabel>
-                            <Select
-                              value={selectedFamilyMember}
-                              label="Family Member"
-                              onChange={(e) => {
-                                const newFamilyMember = e.target.value;
-                                setSelectedFamilyMember(newFamilyMember);
-                              }}
-                              sx={{
-                                fontFamily: "monospace",
-                                fontSize: "0.875rem",
-                                "& .MuiSelect-select": {
-                                  fontFamily: "monospace",
-                                },
-                              }}
-                            >
-                              <MenuItem value="All">
-                                <div className="flex items-center">
-                                  <PeopleIcon sx={{ fontSize: 16, mr: 1 }} />
-                                  <span style={{ fontFamily: "monospace" }}>
-                                    All Family
-                                  </span>
-                                </div>
-                              </MenuItem>
-                              {familyMembers.map((member) => (
-                                <MenuItem
-                                  key={member.email}
-                                  value={member.name}
-                                >
-                                  <div className="flex items-center">
-                                    <span style={{ fontFamily: "monospace" }}>
-                                      {member.name}
-                                    </span>
-                                    {member.relationship && (
-                                      <span
-                                        className="ml-2 text-xs text-gray-500"
-                                        style={{ fontFamily: "monospace" }}
-                                      >
-                                        ({member.relationship})
-                                      </span>
-                                    )}
-                                  </div>
-                                </MenuItem>
-                              ))}
-                            </Select>
-                          </FormControl>
-                        )}
-                      </div>
-                    )}
+            {/* Outer container for filter icon, filter bar, and entry container */}
+            <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              {/* Filter Icon Row - filter icon always visible, roll dice button only if there are entries */}
+              {!loadingEntries && (
+                <div className="w-full flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <IconButton
+                      onClick={() => setShowFilters(!showFilters)}
+                      size="small"
+                      sx={{
+                        color: "gray",
+                        "&:hover": { backgroundColor: "rgba(0, 0, 0, 0.04)" },
+                      }}
+                    >
+                      <FilterAltOutlinedIcon />
+                    </IconButton>
                   </div>
-
-                  {/* Right side: Roll Them Dice button */}
-                  <div className="w-full sm:w-auto flex justify-center sm:justify-end">
+                  {entries.length > 0 && (
                     <Link
                       href="/rollandwrite/roll?autoroll=true"
-                      className="w-full px-2 py-2 rounded bg-blue-600 text-white text-center font-mono text-sm hover:bg-blue-700 transition"
+                      className="px-4 py-2 rounded bg-blue-600 text-white text-center font-mono text-sm hover:bg-blue-700 transition"
                     >
                       Roll Them Dice
                     </Link>
+                  )}
+                </div>
+              )}
+
+              {/* Filter Bar - now inside container and under filter icon */}
+              {showFilters && (
+                <div className="w-full bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4 text-left">
+                  <div className="flex flex-col gap-3">
+                    {/* Sort, Public and Family Filters */}
+                    <div className="flex flex-col gap-3">
+                      {/* Mobile layout with responsive rows */}
+                      <div className="flex flex-col gap-3">
+                        {/* First row: Sort by and Public filter (desktop), all separate on mobile */}
+                        <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-2 md:gap-4">
+                          {/* Left side: Sort By filter */}
+                          <div className="flex flex-col md:flex-row gap-2 md:gap-4">
+                            <FormControl
+                              size="small"
+                              className="flex-1 md:flex-none"
+                              sx={{ minWidth: { xs: 0, md: 140 } }}
+                            >
+                              <InputLabel
+                                sx={{
+                                  fontFamily: "monospace",
+                                  fontSize: "0.875rem",
+                                }}
+                              >
+                                Sort By
+                              </InputLabel>
+                              <Select
+                                value={sortBy}
+                                label="Sort By"
+                                onChange={(e) => setSortBy(e.target.value)}
+                                sx={{
+                                  fontFamily: "monospace",
+                                  fontSize: "0.875rem",
+                                  "& .MuiSelect-select": {
+                                    fontFamily: "monospace",
+                                  },
+                                }}
+                              >
+                                <MenuItem
+                                  value="newest"
+                                  sx={{
+                                    fontFamily: "monospace",
+                                    fontSize: "0.875rem",
+                                  }}
+                                >
+                                  Newest
+                                </MenuItem>
+                                <MenuItem
+                                  value="oldest"
+                                  sx={{
+                                    fontFamily: "monospace",
+                                    fontSize: "0.875rem",
+                                  }}
+                                >
+                                  Oldest
+                                </MenuItem>
+                                <MenuItem
+                                  value="favorited"
+                                  sx={{
+                                    fontFamily: "monospace",
+                                    fontSize: "0.875rem",
+                                  }}
+                                >
+                                  Most Favorited
+                                </MenuItem>
+                              </Select>
+                            </FormControl>
+                          </div>
+
+                          {/* Right side: Public filter (desktop only) */}
+                          <div className="hidden md:flex md:items-center gap-2">
+                            {/* Public filter */}
+                            {session?.user?.email && (
+                              <button
+                                onClick={() =>
+                                  setShowPublicNotes(!showPublicNotes)
+                                }
+                                className={`px-3 py-2 rounded text-sm font-medium transition-colors flex items-center justify-center gap-1 ${
+                                  showPublicNotes
+                                    ? "bg-green-100 text-green-700 border border-green-300"
+                                    : "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200"
+                                }`}
+                                style={{ fontFamily: "monospace" }}
+                              >
+                                <PublicIcon sx={{ fontSize: 16 }} />
+                                Public
+                              </button>
+                            )}
+
+                            {/* Family filters */}
+                            {session?.user?.email && hasFamilyMembers && (
+                              <button
+                                onClick={() => {
+                                  const newFamily = !showFamilyOnly;
+                                  setShowFamilyOnly(newFamily);
+                                  if (!newFamily) {
+                                    // Reset family member selection when turning off family filter
+                                    setSelectedFamilyMember("All");
+                                  }
+                                }}
+                                className={`px-3 py-2 rounded text-sm font-medium transition-colors flex items-center gap-1 ${
+                                  showFamilyOnly
+                                    ? "bg-blue-100 text-blue-700 border border-blue-300"
+                                    : "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200"
+                                }`}
+                                style={{ fontFamily: "monospace" }}
+                              >
+                                <PeopleIcon sx={{ fontSize: 16 }} />
+                                Family Only
+                              </button>
+                            )}
+
+                            {/* Family member select dropdown */}
+                            {session?.user?.email &&
+                              hasFamilyMembers &&
+                              showFamilyOnly &&
+                              familyMembers.length > 0 && (
+                                <FormControl
+                                  size="small"
+                                  sx={{ minWidth: 160 }}
+                                >
+                                  <InputLabel
+                                    sx={{
+                                      fontFamily: "monospace",
+                                      fontSize: "0.875rem",
+                                    }}
+                                  >
+                                    Family Member
+                                  </InputLabel>
+                                  <Select
+                                    value={selectedFamilyMember}
+                                    label="Family Member"
+                                    onChange={(e) => {
+                                      const newFamilyMember = e.target.value;
+                                      setSelectedFamilyMember(newFamilyMember);
+                                    }}
+                                    sx={{
+                                      fontFamily: "monospace",
+                                      fontSize: "0.875rem",
+                                      "& .MuiSelect-select": {
+                                        fontFamily: "monospace",
+                                      },
+                                    }}
+                                  >
+                                    <MenuItem value="All">
+                                      <div className="flex items-center">
+                                        <PeopleIcon
+                                          sx={{ fontSize: 16, mr: 1 }}
+                                        />
+                                        <span
+                                          style={{ fontFamily: "monospace" }}
+                                        >
+                                          All Family
+                                        </span>
+                                      </div>
+                                    </MenuItem>
+                                    {familyMembers.map((member) => (
+                                      <MenuItem
+                                        key={member.email}
+                                        value={member.name}
+                                      >
+                                        <div className="flex items-center">
+                                          <span
+                                            style={{ fontFamily: "monospace" }}
+                                          >
+                                            {member.name}
+                                          </span>
+                                          {member.relationship && (
+                                            <span
+                                              className="ml-2 text-xs text-gray-500"
+                                              style={{
+                                                fontFamily: "monospace",
+                                              }}
+                                            >
+                                              ({member.relationship})
+                                            </span>
+                                          )}
+                                        </div>
+                                      </MenuItem>
+                                    ))}
+                                  </Select>
+                                </FormControl>
+                              )}
+                          </div>
+                        </div>
+
+                        {/* Second row: Public and Family filters (mobile only) */}
+                        <div className="flex flex-col md:hidden gap-2">
+                          {/* Public filter */}
+                          {session?.user?.email && (
+                            <button
+                              onClick={() =>
+                                setShowPublicNotes(!showPublicNotes)
+                              }
+                              className={`px-3 py-2 rounded text-sm font-medium transition-colors flex items-center justify-center gap-1 ${
+                                showPublicNotes
+                                  ? "bg-green-100 text-green-700 border border-green-300"
+                                  : "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200"
+                              }`}
+                              style={{ fontFamily: "monospace" }}
+                            >
+                              <PublicIcon sx={{ fontSize: 16 }} />
+                              Public
+                            </button>
+                          )}
+
+                          {/* Family filters */}
+                          {session?.user?.email && hasFamilyMembers && (
+                            <>
+                              {/* Family Only button - full width when no family members or not active */}
+                              {(!showFamilyOnly ||
+                                familyMembers.length === 0) && (
+                                <button
+                                  onClick={() => {
+                                    const newFamily = !showFamilyOnly;
+                                    setShowFamilyOnly(newFamily);
+                                    if (!newFamily) {
+                                      // Reset family member selection when turning off family filter
+                                      setSelectedFamilyMember("All");
+                                    }
+                                  }}
+                                  className={`px-3 py-2 rounded text-sm font-medium transition-colors flex items-center justify-center gap-1 ${
+                                    showFamilyOnly
+                                      ? "bg-blue-100 text-blue-700 border border-blue-300"
+                                      : "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200"
+                                  }`}
+                                  style={{ fontFamily: "monospace" }}
+                                >
+                                  <PeopleIcon sx={{ fontSize: 16 }} />
+                                  Family Only
+                                </button>
+                              )}
+
+                              {/* Family Only button and select on same row when active and has members */}
+                              {showFamilyOnly && familyMembers.length > 0 && (
+                                <div className="flex gap-2">
+                                  <button
+                                    onClick={() => {
+                                      const newFamily = !showFamilyOnly;
+                                      setShowFamilyOnly(newFamily);
+                                      if (!newFamily) {
+                                        // Reset family member selection when turning off family filter
+                                        setSelectedFamilyMember("All");
+                                      }
+                                    }}
+                                    className={`flex-1 px-3 py-2 rounded text-sm font-medium transition-colors flex items-center justify-center gap-1 ${
+                                      showFamilyOnly
+                                        ? "bg-blue-100 text-blue-700 border border-blue-300"
+                                        : "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200"
+                                    }`}
+                                    style={{ fontFamily: "monospace" }}
+                                  >
+                                    <PeopleIcon sx={{ fontSize: 16 }} />
+                                    Family Only
+                                  </button>
+
+                                  <FormControl
+                                    size="small"
+                                    className="flex-1"
+                                    sx={{ minWidth: 0 }}
+                                  >
+                                    <InputLabel
+                                      sx={{
+                                        fontFamily: "monospace",
+                                        fontSize: "0.875rem",
+                                      }}
+                                    >
+                                      Family Member
+                                    </InputLabel>
+                                    <Select
+                                      value={selectedFamilyMember}
+                                      label="Family Member"
+                                      onChange={(e) => {
+                                        const newFamilyMember = e.target.value;
+                                        setSelectedFamilyMember(
+                                          newFamilyMember
+                                        );
+                                      }}
+                                      sx={{
+                                        fontFamily: "monospace",
+                                        fontSize: "0.875rem",
+                                        "& .MuiSelect-select": {
+                                          fontFamily: "monospace",
+                                        },
+                                      }}
+                                    >
+                                      <MenuItem value="All">
+                                        <div className="flex items-center">
+                                          <PeopleIcon
+                                            sx={{ fontSize: 16, mr: 1 }}
+                                          />
+                                          <span
+                                            style={{
+                                              fontFamily: "monospace",
+                                            }}
+                                          >
+                                            All Family
+                                          </span>
+                                        </div>
+                                      </MenuItem>
+                                      {familyMembers.map((member) => (
+                                        <MenuItem
+                                          key={member.email}
+                                          value={member.name}
+                                        >
+                                          <div className="flex items-center">
+                                            <span
+                                              style={{
+                                                fontFamily: "monospace",
+                                              }}
+                                            >
+                                              {member.name}
+                                            </span>
+                                            {member.relationship && (
+                                              <span
+                                                className="ml-2 text-xs text-gray-500"
+                                                style={{
+                                                  fontFamily: "monospace",
+                                                }}
+                                              >
+                                                ({member.relationship})
+                                              </span>
+                                            )}
+                                          </div>
+                                        </MenuItem>
+                                      ))}
+                                    </Select>
+                                  </FormControl>
+                                </div>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
-              </div>
-            )}
+              )}
+            </div>
 
             {/* Entries List */}
             <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

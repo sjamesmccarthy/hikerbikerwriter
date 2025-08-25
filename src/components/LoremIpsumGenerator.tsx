@@ -309,6 +309,12 @@ const LoremIpsumGenerator: React.FC = () => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // Regenerate text when parameters change
+  React.useEffect(() => {
+    generateText();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [generationType, paragraphs, sentences, words]);
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <div className="max-xl bg-white flex-1">

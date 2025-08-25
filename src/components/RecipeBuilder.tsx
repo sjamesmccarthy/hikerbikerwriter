@@ -54,6 +54,7 @@ type Recipe = {
   }>;
   myNotes?: string;
   author: string;
+  author_email?: string;
   favorite: boolean;
   public: boolean;
   date: string;
@@ -455,6 +456,8 @@ const RecipeBuilder: React.FC = () => {
         public: isPublic || false,
         userEmail: session?.user?.email,
         userName: session?.user?.name,
+        author: session?.user?.name || "",
+        author_email: session?.user?.email || "",
       };
 
       const method = editId ? "PUT" : "POST";
