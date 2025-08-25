@@ -1,16 +1,22 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { LocationOn as LocationIcon } from "@mui/icons-material";
 import {
-  WbSunny as SunnyIcon,
-  Cloud as CloudyIcon,
-  CloudQueue as PartlyCloudyIcon,
-  Grain as RainIcon,
-  AcUnit as SnowIcon,
-  Foggy as FogIcon,
-  Thunderstorm as ThunderstormIcon,
-  LocationOn as LocationIcon,
-} from "@mui/icons-material";
+  WiDaySunny,
+  WiNightClear,
+  WiDayCloudy,
+  WiNightAltCloudy,
+  WiCloudy,
+  WiDayRain,
+  WiNightAltRain,
+  WiRain,
+  WiThunderstorm,
+  WiSnow,
+  WiFog,
+  WiDayHaze,
+  WiNightFog,
+} from "weather-icons-react";
 
 interface WeatherData {
   temperature: number;
@@ -31,33 +37,83 @@ const WeatherWidget: React.FC<WeatherWidgetProps> = ({
   const [error, setError] = useState(false);
 
   const getWeatherIcon = (condition: string, iconCode: string) => {
-    const iconProps = { sx: { fontSize: 20 }, className: "text-white" };
+    const iconProps = { size: 20, color: "white" };
+
+    // Determine if it's day or night from icon code
+    const isDay = iconCode.includes("d");
 
     // Map OpenWeatherMap conditions to appropriate icons
-    if (iconCode.includes("01")) return <SunnyIcon {...iconProps} />; // clear sky
-    if (iconCode.includes("02") || iconCode.includes("03"))
-      return <PartlyCloudyIcon {...iconProps} />; // few clouds, scattered clouds
-    if (iconCode.includes("04")) return <CloudyIcon {...iconProps} />; // broken clouds
-    if (iconCode.includes("09") || iconCode.includes("10"))
-      return <RainIcon {...iconProps} />; // shower rain, rain
-    if (iconCode.includes("11")) return <ThunderstormIcon {...iconProps} />; // thunderstorm
-    if (iconCode.includes("13")) return <SnowIcon {...iconProps} />; // snow
-    if (iconCode.includes("50")) return <FogIcon {...iconProps} />; // mist/fog
+    if (iconCode.includes("01")) {
+      // clear sky
+      return isDay ? (
+        <WiDaySunny {...iconProps} />
+      ) : (
+        <WiNightClear {...iconProps} />
+      );
+    }
+    if (iconCode.includes("02") || iconCode.includes("03")) {
+      // few clouds, scattered clouds
+      return isDay ? (
+        <WiDayCloudy {...iconProps} />
+      ) : (
+        <WiNightAltCloudy {...iconProps} />
+      );
+    }
+    if (iconCode.includes("04")) {
+      // broken clouds
+      return <WiCloudy {...iconProps} />;
+    }
+    if (iconCode.includes("09") || iconCode.includes("10")) {
+      // shower rain, rain
+      return isDay ? (
+        <WiDayRain {...iconProps} />
+      ) : (
+        <WiNightAltRain {...iconProps} />
+      );
+    }
+    if (iconCode.includes("11")) {
+      // thunderstorm
+      return <WiThunderstorm {...iconProps} />;
+    }
+    if (iconCode.includes("13")) {
+      // snow
+      return <WiSnow {...iconProps} />;
+    }
+    if (iconCode.includes("50")) {
+      // mist/fog
+      return isDay ? (
+        <WiDayHaze {...iconProps} />
+      ) : (
+        <WiNightFog {...iconProps} />
+      );
+    }
 
     // Fallback based on condition text
     const lowerCondition = condition.toLowerCase();
-    if (lowerCondition.includes("sun") || lowerCondition.includes("clear"))
-      return <SunnyIcon {...iconProps} />;
-    if (lowerCondition.includes("cloud")) return <CloudyIcon {...iconProps} />;
-    if (lowerCondition.includes("rain") || lowerCondition.includes("drizzle"))
-      return <RainIcon {...iconProps} />;
-    if (lowerCondition.includes("snow")) return <SnowIcon {...iconProps} />;
-    if (lowerCondition.includes("thunder"))
-      return <ThunderstormIcon {...iconProps} />;
-    if (lowerCondition.includes("fog") || lowerCondition.includes("mist"))
-      return <FogIcon {...iconProps} />;
+    if (lowerCondition.includes("sun") || lowerCondition.includes("clear")) {
+      return isDay ? (
+        <WiDaySunny {...iconProps} />
+      ) : (
+        <WiNightClear {...iconProps} />
+      );
+    }
+    if (lowerCondition.includes("cloud")) {
+      return <WiCloudy {...iconProps} />;
+    }
+    if (lowerCondition.includes("rain") || lowerCondition.includes("drizzle")) {
+      return <WiRain {...iconProps} />;
+    }
+    if (lowerCondition.includes("snow")) {
+      return <WiSnow {...iconProps} />;
+    }
+    if (lowerCondition.includes("thunder")) {
+      return <WiThunderstorm {...iconProps} />;
+    }
+    if (lowerCondition.includes("fog") || lowerCondition.includes("mist")) {
+      return <WiFog {...iconProps} />;
+    }
 
-    return <CloudyIcon {...iconProps} />; // default
+    return <WiCloudy {...iconProps} />; // default
   };
 
   useEffect(() => {

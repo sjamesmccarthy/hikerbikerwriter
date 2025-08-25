@@ -31,7 +31,8 @@
     "react-transition-group": "^4.4.5",
     "remark-gfm": "^4.0.1",
     "uuid": "^11.1.0",
-    "vis-network": "^10.0.1"
+    "vis-network": "^10.0.1",
+    "weather-icons-react": "^1.2.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
