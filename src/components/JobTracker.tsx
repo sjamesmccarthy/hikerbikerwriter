@@ -113,6 +113,8 @@ interface LogEntry {
     | "interview"
     | "application"
     | "follow_up"
+    | "recruiter"
+    | "resource"
     | "other";
   description: string;
   notes?: string;
@@ -1159,6 +1161,142 @@ export default function JobTracker() {
     saveJobData(updatedSearch);
   };
 
+  const handleSaveRecruiter = () => {
+    if (!currentSearch || !recruiterForm.name || !recruiterForm.company) return;
+
+    if (editingRecruiter) {
+      // Update existing recruiter
+      const updatedRecruiter: Recruiter = {
+        ...editingRecruiter,
+        name: recruiterForm.name,
+        company: recruiterForm.company,
+        email: recruiterForm.email,
+        phone: recruiterForm.phone,
+        specialty: recruiterForm.specialty,
+        notes: recruiterForm.notes,
+      };
+
+      const updatedRecruiters = currentSearch.recruiters.map((r) =>
+        r.id === editingRecruiter.id ? updatedRecruiter : r
+      );
+
+      let updatedSearch = {
+        ...currentSearch,
+        recruiters: updatedRecruiters,
+      };
+
+      // Add automated log entry for recruiter update
+      updatedSearch = addRecruiterLogEntry(
+        updatedSearch,
+        recruiterForm.name,
+        recruiterForm.company,
+        true
+      );
+
+      setCurrentSearch(updatedSearch);
+      saveJobData(updatedSearch);
+    } else {
+      // Add new recruiter
+      const newRecruiter: Recruiter = {
+        id: Date.now().toString(),
+        name: recruiterForm.name,
+        company: recruiterForm.company,
+        email: recruiterForm.email,
+        phone: recruiterForm.phone,
+        specialty: recruiterForm.specialty,
+        notes: recruiterForm.notes,
+      };
+
+      let updatedSearch = {
+        ...currentSearch,
+        recruiters: [...currentSearch.recruiters, newRecruiter],
+      };
+
+      // Add automated log entry for new recruiter
+      updatedSearch = addRecruiterLogEntry(
+        updatedSearch,
+        recruiterForm.name,
+        recruiterForm.company,
+        false
+      );
+
+      setCurrentSearch(updatedSearch);
+      saveJobData(updatedSearch);
+    }
+
+    setShowRecruiterDialog(false);
+    setEditingRecruiter(null);
+    setRecruiterForm({});
+  };
+
+  const handleSaveResource = () => {
+    if (
+      !currentSearch ||
+      !resourceForm.name ||
+      !resourceForm.url ||
+      !resourceForm.category
+    )
+      return;
+
+    if (editingResource) {
+      // Update existing resource
+      const updatedResource: OnlineResource = {
+        ...editingResource,
+        name: resourceForm.name,
+        url: resourceForm.url,
+        category: resourceForm.category,
+        description: resourceForm.description,
+      };
+
+      let updatedSearch = {
+        ...currentSearch,
+        resources: currentSearch.resources.map((resource) =>
+          resource.id === editingResource.id ? updatedResource : resource
+        ),
+      };
+
+      // Add automated log entry for resource update
+      updatedSearch = addResourceLogEntry(
+        updatedSearch,
+        resourceForm.name,
+        resourceForm.category,
+        true
+      );
+
+      setCurrentSearch(updatedSearch);
+      saveJobData(updatedSearch);
+    } else {
+      // Add new resource
+      const newResource: OnlineResource = {
+        id: Date.now().toString(),
+        name: resourceForm.name,
+        url: resourceForm.url,
+        category: resourceForm.category,
+        description: resourceForm.description,
+      };
+
+      let updatedSearch = {
+        ...currentSearch,
+        resources: [...currentSearch.resources, newResource],
+      };
+
+      // Add automated log entry for new resource
+      updatedSearch = addResourceLogEntry(
+        updatedSearch,
+        resourceForm.name,
+        resourceForm.category,
+        false
+      );
+
+      setCurrentSearch(updatedSearch);
+      saveJobData(updatedSearch);
+    }
+
+    setShowResourceDialog(false);
+    setEditingResource(null);
+    setResourceForm({});
+  };
+
   const handleEditRecruiter = (recruiter: Recruiter) => {
     setRecruiterForm({
       name: recruiter.name,
@@ -1234,6 +1372,52 @@ export default function JobTracker() {
           }"`,
       notes: `Automated entry for ${position} at ${companyName}`,
       opportunityId: opportunityId,
+    };
+
+    return {
+      ...searchData,
+      log: [...(searchData.log || []), newLogEntry],
+    };
+  };
+
+  const addRecruiterLogEntry = (
+    searchData: JobSearch,
+    recruiterName: string,
+    recruiterCompany: string,
+    isEdit: boolean = false
+  ) => {
+    const newLogEntry: LogEntry = {
+      id: Date.now().toString(),
+      type: "recruiter",
+      date: new Date().toISOString(),
+      description: isEdit
+        ? `Recruiter information updated: ${recruiterName}`
+        : `New recruiter added: ${recruiterName}`,
+      notes: `${
+        isEdit ? "Updated" : "Added"
+      } recruiter from ${recruiterCompany}`,
+    };
+
+    return {
+      ...searchData,
+      log: [...(searchData.log || []), newLogEntry],
+    };
+  };
+
+  const addResourceLogEntry = (
+    searchData: JobSearch,
+    resourceName: string,
+    resourceCategory: string,
+    isEdit: boolean = false
+  ) => {
+    const newLogEntry: LogEntry = {
+      id: Date.now().toString(),
+      type: "resource",
+      date: new Date().toISOString(),
+      description: isEdit
+        ? `Resource information updated: ${resourceName}`
+        : `New resource added: ${resourceName}`,
+      notes: `${isEdit ? "Updated" : "Added"} ${resourceCategory} resource`,
     };
 
     return {
@@ -3282,7 +3466,7 @@ export default function JobTracker() {
             {/* Tracking Log Section */}
             <div className="mb-8">
               <div className="bg-gray-50 rounded-lg p-4">
-                <div className="mb-4">
+                <div className="">
                   {/* Mobile layout: Stack vertically */}
                   <div className="block md:hidden">
                     <div
@@ -3295,17 +3479,15 @@ export default function JobTracker() {
                       </Typography>
                     </div>
 
-                    {isLogExpanded && (
-                      <Button
-                        variant="contained"
-                        startIcon={<AddIcon />}
-                        onClick={() => handleAddLogEntry()}
-                        className="bg-blue-600 hover:bg-blue-700 w-full"
-                        size="large"
-                      >
-                        Add Log Entry
-                      </Button>
-                    )}
+                    <Button
+                      variant="contained"
+                      startIcon={<AddIcon />}
+                      onClick={() => handleAddLogEntry()}
+                      className="bg-blue-600 hover:bg-blue-700 w-full"
+                      size="small"
+                    >
+                      Add Log Entry
+                    </Button>
                   </div>
 
                   {/* Desktop layout: Same line with button right-justified */}
@@ -3320,17 +3502,15 @@ export default function JobTracker() {
                       </Typography>
                     </div>
 
-                    {isLogExpanded && (
-                      <Button
-                        variant="contained"
-                        startIcon={<AddIcon />}
-                        onClick={() => handleAddLogEntry()}
-                        className="bg-blue-600 hover:bg-blue-700"
-                        size="large"
-                      >
-                        Add
-                      </Button>
-                    )}
+                    <Button
+                      variant="contained"
+                      startIcon={<AddIcon />}
+                      onClick={() => handleAddLogEntry()}
+                      className="bg-blue-600 hover:bg-blue-700"
+                      size="small"
+                    >
+                      Add
+                    </Button>
                   </div>
                 </div>
 
@@ -3344,6 +3524,7 @@ export default function JobTracker() {
                         flexDirection: { xs: "column", sm: "row" },
                         gap: 2,
                         alignItems: { sm: "center" },
+                        marginTop: "8px",
                       }}
                     >
                       <TextField
@@ -3909,17 +4090,15 @@ export default function JobTracker() {
                         </Typography>
                       </div>
                     </div>
-                    {isRecruitersExpanded && (
-                      <Button
-                        variant="contained"
-                        startIcon={<AddIcon />}
-                        onClick={() => setShowRecruiterDialog(true)}
-                        className="bg-purple-600 hover:bg-purple-700"
-                        size="large"
-                      >
-                        Add
-                      </Button>
-                    )}
+                    <Button
+                      variant="contained"
+                      startIcon={<AddIcon />}
+                      onClick={() => setShowRecruiterDialog(true)}
+                      className="bg-purple-600 hover:bg-purple-700"
+                      size="small"
+                    >
+                      Add
+                    </Button>
                   </div>
 
                   {isRecruitersExpanded && (
@@ -4054,17 +4233,15 @@ export default function JobTracker() {
                         </Typography>
                       </div>
                     </div>
-                    {isResourcesExpanded && (
-                      <Button
-                        variant="contained"
-                        startIcon={<AddIcon />}
-                        onClick={() => setShowResourceDialog(true)}
-                        className="bg-teal-600 hover:bg-teal-700"
-                        size="large"
-                      >
-                        Add
-                      </Button>
-                    )}
+                    <Button
+                      variant="contained"
+                      startIcon={<AddIcon />}
+                      onClick={() => setShowResourceDialog(true)}
+                      className="bg-teal-600 hover:bg-teal-700"
+                      size="small"
+                    >
+                      Add
+                    </Button>
                   </div>
 
                   {isResourcesExpanded && (
@@ -4752,60 +4929,7 @@ export default function JobTracker() {
             Cancel
           </Button>
           <Button
-            onClick={() => {
-              if (recruiterForm.name && recruiterForm.company) {
-                if (editingRecruiter) {
-                  // Update existing recruiter
-                  const updatedRecruiter: Recruiter = {
-                    ...editingRecruiter,
-                    name: recruiterForm.name,
-                    company: recruiterForm.company,
-                    email: recruiterForm.email,
-                    phone: recruiterForm.phone,
-                    specialty: recruiterForm.specialty,
-                    notes: recruiterForm.notes,
-                  };
-
-                  if (currentSearch) {
-                    const updatedRecruiters = currentSearch.recruiters.map(
-                      (r) =>
-                        r.id === editingRecruiter.id ? updatedRecruiter : r
-                    );
-
-                    const updatedSearch = {
-                      ...currentSearch,
-                      recruiters: updatedRecruiters,
-                    };
-                    setCurrentSearch(updatedSearch);
-                    saveJobData(updatedSearch);
-                  }
-                } else {
-                  // Add new recruiter
-                  const newRecruiter: Recruiter = {
-                    id: Date.now().toString(),
-                    name: recruiterForm.name,
-                    company: recruiterForm.company,
-                    email: recruiterForm.email,
-                    phone: recruiterForm.phone,
-                    specialty: recruiterForm.specialty,
-                    notes: recruiterForm.notes,
-                  };
-
-                  if (currentSearch) {
-                    const updatedSearch = {
-                      ...currentSearch,
-                      recruiters: [...currentSearch.recruiters, newRecruiter],
-                    };
-                    setCurrentSearch(updatedSearch);
-                    saveJobData(updatedSearch);
-                  }
-                }
-
-                setShowRecruiterDialog(false);
-                setEditingRecruiter(null);
-                setRecruiterForm({});
-              }
-            }}
+            onClick={handleSaveRecruiter}
             variant="contained"
             size="large"
             style={{ minWidth: "120px" }}
@@ -4910,59 +5034,7 @@ export default function JobTracker() {
             Cancel
           </Button>
           <Button
-            onClick={() => {
-              if (
-                resourceForm.name &&
-                resourceForm.url &&
-                resourceForm.category
-              ) {
-                if (editingResource) {
-                  // Update existing resource
-                  const updatedResource: OnlineResource = {
-                    ...editingResource,
-                    name: resourceForm.name,
-                    url: resourceForm.url,
-                    category: resourceForm.category,
-                    description: resourceForm.description,
-                  };
-
-                  if (currentSearch) {
-                    const updatedSearch = {
-                      ...currentSearch,
-                      resources: currentSearch.resources.map((resource) =>
-                        resource.id === editingResource.id
-                          ? updatedResource
-                          : resource
-                      ),
-                    };
-                    setCurrentSearch(updatedSearch);
-                    saveJobData(updatedSearch);
-                  }
-                } else {
-                  // Add new resource
-                  const newResource: OnlineResource = {
-                    id: Date.now().toString(),
-                    name: resourceForm.name,
-                    url: resourceForm.url,
-                    category: resourceForm.category,
-                    description: resourceForm.description,
-                  };
-
-                  if (currentSearch) {
-                    const updatedSearch = {
-                      ...currentSearch,
-                      resources: [...currentSearch.resources, newResource],
-                    };
-                    setCurrentSearch(updatedSearch);
-                    saveJobData(updatedSearch);
-                  }
-                }
-
-                setShowResourceDialog(false);
-                setEditingResource(null);
-                setResourceForm({});
-              }
-            }}
+            onClick={handleSaveResource}
             variant="contained"
             size="large"
             style={{ minWidth: "120px" }}
