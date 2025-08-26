@@ -792,7 +792,8 @@ const RecipeBuilder: React.FC = () => {
                       onChange={(e) => setDescription(e.target.value)}
                       margin="normal"
                       multiline
-                      rows={3}
+                      minRows={3}
+                      maxRows={8}
                       required
                     />
 
@@ -915,7 +916,8 @@ const RecipeBuilder: React.FC = () => {
                             value={familyNotes}
                             onChange={(e) => setFamilyNotes(e.target.value)}
                             multiline
-                            rows={4}
+                            minRows={4}
+                            maxRows={12}
                             placeholder="Share the story behind this recipe, special memories, or family traditions associated with it..."
                           />
                         </div>
@@ -1102,7 +1104,8 @@ const RecipeBuilder: React.FC = () => {
                               handleStepChange(index, "step", e.target.value)
                             }
                             multiline
-                            rows={2}
+                            minRows={2}
+                            maxRows={6}
                             size="small"
                             fullWidth
                           />
@@ -1189,7 +1192,8 @@ const RecipeBuilder: React.FC = () => {
                       value={myNotes}
                       onChange={(e) => setMyNotes(e.target.value)}
                       multiline
-                      rows={4}
+                      minRows={4}
+                      maxRows={12}
                     />
                   </CardContent>
                 </Card>
