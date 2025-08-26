@@ -4106,13 +4106,13 @@ export default function JobTracker() {
                       {currentSearch.recruiters.map((recruiter) => (
                         <div
                           key={recruiter.id}
-                          className="bg-gray-100 rounded-lg p-3"
+                          className="bg-gray-100 rounded-lg p-3 mt-2"
                         >
                           <div>
                             {/* Mobile: Icons above content, Desktop: Icons on the right */}
                             <div className="flex flex-col md:flex-row md:items-start md:justify-between">
                               {/* Icons - Mobile: top, Desktop: right */}
-                              <div className="flex space-x-1 justify-end md:order-2 md:self-start mb-2 md:mb-0">
+                              <div className="flex space-x-1 justify-start md:justify-end md:order-2 md:self-start mb-2 md:mb-0">
                                 {recruiter.notes?.trim() && (
                                   <IconButton
                                     size="small"
@@ -4249,7 +4249,7 @@ export default function JobTracker() {
                       {currentSearch.resources.map((resource) => (
                         <div
                           key={resource.id}
-                          className="bg-gray-100 rounded-lg p-3"
+                          className="bg-gray-100 rounded-lg p-3 mt-2"
                         >
                           <div>
                             <div className="flex items-start justify-between">
