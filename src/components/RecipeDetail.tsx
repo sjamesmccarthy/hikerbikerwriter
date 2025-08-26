@@ -163,7 +163,7 @@ const RecipeDetail = React.memo(function RecipeDetail({
 
   // Function to convert decimal to fraction with Unicode characters
   const formatAmountAsFraction = (amount: number): string => {
-    if (amount === 0) return "0";
+    if (!amount || amount === 0) return "";
 
     const tolerance = 1.0e-6;
     const wholePart = Math.floor(amount);
