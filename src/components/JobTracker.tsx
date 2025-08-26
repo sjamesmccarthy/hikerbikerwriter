@@ -2243,12 +2243,14 @@ export default function JobTracker() {
                       </Select>
                     </FormControl>
 
-                    <div className="flex gap-2">
+                    {/* Download buttons: 50/50 on mobile */}
+                    <div className="flex w-full gap-2 sm:w-auto">
                       <Button
                         onClick={handleExportAsPDF}
                         size="small"
                         title="Download PDF Summary"
                         startIcon={<FileDownloadIcon />}
+                        className="w-1/2 sm:w-auto"
                         sx={{
                           border: "1px solid #e0e0e0",
                           borderRadius: "4px",
@@ -2263,13 +2265,14 @@ export default function JobTracker() {
                           },
                         }}
                       >
-                        <span className="hidden sm:inline">PDF</span>
+                        PDF
                       </Button>
                       <Button
                         onClick={handleExportOpportunitiesAsTxt}
                         size="small"
                         title="Download ASCII Text Table"
                         startIcon={<FileDownloadIcon />}
+                        className="w-1/2 sm:w-auto"
                         sx={{
                           border: "1px solid #e0e0e0",
                           borderRadius: "4px",
@@ -2284,7 +2287,7 @@ export default function JobTracker() {
                           },
                         }}
                       >
-                        <span className="hidden sm:inline">TXT</span>
+                        TXT
                       </Button>
                     </div>
                   </div>
