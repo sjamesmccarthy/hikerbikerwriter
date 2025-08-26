@@ -1003,31 +1003,28 @@ const RecipeDetail = React.memo(function RecipeDetail({
                       </h4>
                       <div className="space-y-2">
                         <p className="text-gray-800">{step.step}</p>
-                        {recipe.type === "smoker" &&
-                          (step.temperature ||
-                            step.time ||
-                            step.superSmoke) && (
-                            <div className="flex gap-4 text-sm text-gray-600">
-                              {step.temperature && (
-                                <span className="flex items-center gap-1">
-                                  <OutdoorGrillIcon sx={{ fontSize: 16 }} />
-                                  {step.temperature}°F
-                                </span>
-                              )}
-                              {step.time && (
-                                <span className="flex items-center gap-1">
-                                  <TimerIcon sx={{ fontSize: 16 }} />
-                                  {step.time}m
-                                </span>
-                              )}
-                              {step.superSmoke && (
-                                <span className="flex items-center gap-1">
-                                  <WhatshotIcon sx={{ fontSize: 16 }} />
-                                  Super Smoke
-                                </span>
-                              )}
-                            </div>
-                          )}
+                        {(step.temperature || step.time || step.superSmoke) && (
+                          <div className="flex gap-4 text-sm text-gray-600">
+                            {step.temperature && (
+                              <span className="flex items-center gap-1">
+                                <OutdoorGrillIcon sx={{ fontSize: 16 }} />
+                                {step.temperature}°F
+                              </span>
+                            )}
+                            {step.time && (
+                              <span className="flex items-center gap-1">
+                                <TimerIcon sx={{ fontSize: 16 }} />
+                                {step.time}m
+                              </span>
+                            )}
+                            {step.superSmoke && (
+                              <span className="flex items-center gap-1">
+                                <WhatshotIcon sx={{ fontSize: 16 }} />
+                                Super Smoke
+                              </span>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -1087,28 +1084,31 @@ const RecipeDetail = React.memo(function RecipeDetail({
                 {recipe?.steps[currentStep]?.step}
               </p>
 
-              {recipe?.type === "smoker" && recipe?.steps[currentStep] && (
-                <div className="flex justify-center gap-6 mb-6">
-                  {recipe?.steps[currentStep]?.temperature && (
-                    <div className="flex items-center gap-2">
-                      <ThermostatIcon sx={{ color: "black" }} />
-                      <span>{recipe?.steps[currentStep]?.temperature}°F</span>
-                    </div>
-                  )}
-                  {recipe?.steps[currentStep]?.time && (
-                    <div className="flex items-center gap-2">
-                      <TimerIcon sx={{ color: "black" }} />
-                      <span>{recipe?.steps[currentStep]?.time}m</span>
-                    </div>
-                  )}
-                  {recipe?.steps[currentStep]?.superSmoke && (
-                    <div className="flex items-center gap-2">
-                      <WhatshotIcon sx={{ color: "black" }} />
-                      <span>Super Smoke</span>
-                    </div>
-                  )}
-                </div>
-              )}
+              {recipe?.steps[currentStep] &&
+                (recipe?.steps[currentStep]?.temperature ||
+                  recipe?.steps[currentStep]?.time ||
+                  recipe?.steps[currentStep]?.superSmoke) && (
+                  <div className="flex justify-center gap-6 mb-6">
+                    {recipe?.steps[currentStep]?.temperature && (
+                      <div className="flex items-center gap-2">
+                        <ThermostatIcon sx={{ color: "black" }} />
+                        <span>{recipe?.steps[currentStep]?.temperature}°F</span>
+                      </div>
+                    )}
+                    {recipe?.steps[currentStep]?.time && (
+                      <div className="flex items-center gap-2">
+                        <TimerIcon sx={{ color: "black" }} />
+                        <span>{recipe?.steps[currentStep]?.time}m</span>
+                      </div>
+                    )}
+                    {recipe?.steps[currentStep]?.superSmoke && (
+                      <div className="flex items-center gap-2">
+                        <WhatshotIcon sx={{ color: "black" }} />
+                        <span>Super Smoke</span>
+                      </div>
+                    )}
+                  </div>
+                )}
             </div>
           ) : (
             <div className="p-8 text-center">
@@ -1141,11 +1141,13 @@ const RecipeDetail = React.memo(function RecipeDetail({
 
           <div className="text-center">
             <div className="text-lg font-semibold text-gray-700">
-              STEP {currentStep + 1} of {recipe?.steps?.length || 0}
+              {currentStep >= recipe?.steps?.length
+                ? "All Done!"
+                : `STEP ${currentStep + 1} of ${recipe?.steps?.length || 0}`}
             </div>
             <div className="text-sm text-gray-500 mt-1">
               {recipe?.steps && currentStep < (recipe?.steps?.length || 0)
-                ? "Tap to navigate"
+                ? ""
                 : "Recipe complete!"}
             </div>
           </div>
