@@ -220,9 +220,15 @@ const RecipeDetail = React.memo(function RecipeDetail({
   };
 
   useEffect(() => {
-    async function fetchRecipe() {
+    let isMounted = true;
+    const maxRetries = 3;
+
+    async function fetchRecipe(attempt = 0) {
+      if (!isMounted) return;
+
       setLoading(true);
       setImageError(false); // Reset image error when fetching new recipe
+
       try {
         let foundRecipe = null;
 
@@ -230,7 +236,10 @@ const RecipeDetail = React.memo(function RecipeDetail({
         if (session?.user?.email) {
           try {
             const userRes = await fetch(
-              `/api/recipes?userEmail=${encodeURIComponent(session.user.email)}`
+              `/api/recipes?userEmail=${encodeURIComponent(
+                session.user.email
+              )}`,
+              { cache: "no-store" } // Prevent caching
             );
             if (userRes.ok) {
               const userRecipes = await userRes.json();
@@ -243,20 +252,28 @@ const RecipeDetail = React.memo(function RecipeDetail({
 
         // If no user recipe found, fall back to static recipe (for authenticated users)
         if (!foundRecipe && session?.user?.email) {
-          const res = await fetch(
-            `/api/recipes/${slug}?userEmail=${encodeURIComponent(
-              session.user.email
-            )}`
-          );
-          if (res.ok) {
-            foundRecipe = await res.json();
+          try {
+            const res = await fetch(
+              `/api/recipes/${slug}?userEmail=${encodeURIComponent(
+                session.user.email
+              )}`,
+              { cache: "no-store" } // Prevent caching
+            );
+            if (res.ok) {
+              foundRecipe = await res.json();
+            }
+          } catch (error) {
+            console.warn("Could not fetch individual recipe:", error);
           }
         }
 
         // If not authenticated or no recipe found, try public recipes
         if (!foundRecipe) {
           try {
-            const publicRes = await fetch("/api/recipes");
+            const publicRes = await fetch(
+              "/api/recipes",
+              { cache: "no-store" } // Prevent caching
+            );
             if (publicRes.ok) {
               const publicRecipes = await publicRes.json();
               foundRecipe = publicRecipes.find((r: Recipe) => r.slug === slug);
@@ -266,21 +283,41 @@ const RecipeDetail = React.memo(function RecipeDetail({
           }
         }
 
-        if (foundRecipe) {
+        if (foundRecipe && isMounted) {
           setRecipe(foundRecipe);
           setServings(foundRecipe.servings);
-        } else {
-          console.error("Recipe not found");
-          setRecipe(null);
+        } else if (isMounted) {
+          // If recipe not found and we haven't exceeded max retries, try again
+          if (attempt < maxRetries) {
+            console.log(
+              `Recipe not found, retrying... (${attempt + 1}/${maxRetries})`
+            );
+            setTimeout(() => fetchRecipe(attempt + 1), 1000 * (attempt + 1)); // Exponential backoff
+          } else {
+            console.error("Recipe not found after all retries");
+            setRecipe(null);
+          }
         }
       } catch (error) {
         console.error("Error fetching recipe:", error);
-        setRecipe(null);
+        if (isMounted && attempt < maxRetries) {
+          setTimeout(() => fetchRecipe(attempt + 1), 1000 * (attempt + 1));
+        } else if (isMounted) {
+          setRecipe(null);
+        }
+      } finally {
+        if (isMounted) {
+          setLoading(false);
+        }
       }
-      setLoading(false);
     }
 
     fetchRecipe();
+
+    // Cleanup function to prevent setting state on unmounted component
+    return () => {
+      isMounted = false;
+    };
   }, [slug, session]);
 
   const toggleFavorite = async () => {
