@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Button, TextField, MenuItem } from "@mui/material";
+import { Button, TextField, MenuItem, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { Session } from "next-auth";
 import Image from "next/image";
@@ -66,6 +66,7 @@ import NetworkCheckIcon from "@mui/icons-material/NetworkCheck";
 import CasinoIcon from "@mui/icons-material/Casino";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import CloseIcon from "@mui/icons-material/Close";
+import DeleteIcon from "@mui/icons-material/Delete";
 
 console.log("Profile page component mounting...");
 
@@ -582,6 +583,11 @@ function AppSummaries({
   const [editingPersonId, setEditingPersonId] = useState<string | null>(null);
   const [editRelationship, setEditRelationship] = useState("");
   const [editNetwork, setEditNetwork] = useState("");
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [personToDelete, setPersonToDelete] = useState<{
+    person_id: string;
+    name: string;
+  } | null>(null);
   interface SearchUser {
     person_id: string;
     name: string;
@@ -1456,6 +1462,74 @@ function AppSummaries({
       }
     } catch (error) {
       console.error("Error updating family member:", error);
+    }
+  };
+
+  const handleDeletePerson = (person: { person_id: string; name: string }) => {
+    setPersonToDelete(person);
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!personToDelete || !userEmail) {
+      console.error("Missing person to delete or user email");
+      return;
+    }
+
+    try {
+      console.log("=== DELETE FAMILY MEMBER ===");
+      console.log("Deleting person:", personToDelete);
+      console.log("Logged in user email:", userEmail);
+
+      const response = await fetch("/api/remove-family-member", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          personIdToRemove: personToDelete.person_id,
+          userEmail: userEmail,
+        }),
+      });
+
+      const data = await response.json();
+      console.log("Delete API Response:", data);
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to remove family member");
+      }
+
+      // Close dialog and reset state
+      setDeleteConfirmOpen(false);
+      setPersonToDelete(null);
+
+      // Refresh family data
+      try {
+        const res = await fetch(
+          `/api/familyline?email=${encodeURIComponent(userEmail)}`
+        );
+        if (res.ok) {
+          const data = await res.json();
+          // Ensure data.json is always an object, not a string
+          if (data && typeof data.json === "string") {
+            try {
+              data.json = JSON.parse(data.json);
+            } catch {
+              data.json = {};
+            }
+          }
+          setFamilyInfo(data);
+        } else {
+          setFamilyInfo(null);
+        }
+      } catch {
+        setFamilyInfo(null);
+      }
+    } catch (error) {
+      console.error("Error removing family member:", error);
+      // Close dialog even on error
+      setDeleteConfirmOpen(false);
+      setPersonToDelete(null);
     }
   };
 
@@ -2611,6 +2685,25 @@ function AppSummaries({
                               >
                                 Cancel
                               </Button>
+                              
+                              {/* Delete icon - only visible when editing */}
+                              <div className="flex items-center ml-2" title={`Remove ${person.name} from family`}>
+                                <DeleteIcon
+                                  fontSize="medium"
+                                  style={{ 
+                                    color: "#9ca3af", 
+                                    cursor: "pointer"
+                                  }}
+                                  className="hover:text-gray-600"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeletePerson({
+                                      person_id: person.person_id,
+                                      name: person.name
+                                    });
+                                  }}
+                                />
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -2672,6 +2765,46 @@ function AppSummaries({
           return familyContent;
         })()}
       </div>
+      
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={deleteConfirmOpen}
+        onClose={() => {
+          setDeleteConfirmOpen(false);
+          setPersonToDelete(null);
+        }}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Remove Family Member</DialogTitle>
+        <DialogContent>
+          {personToDelete && (
+            <p>
+              Are you sure you want to remove <strong>{personToDelete.name}</strong> from your family? 
+              This will remove the relationship in both directions and cannot be undone.
+            </p>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => {
+              setDeleteConfirmOpen(false);
+              setPersonToDelete(null);
+            }}
+            color="inherit"
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleConfirmDelete}
+            color="error"
+            variant="contained"
+            autoFocus
+          >
+            Remove
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 }
