@@ -2803,24 +2803,44 @@ export default function JobTracker() {
                         outline: "none",
                       }}
                     >
-                      <CardContent className="p-4">
+                      <CardContent
+                        sx={{
+                          paddingBottom: "0 !important",
+                        }}
+                      >
                         {/* Card Header */}
-                        <div className="flex justify-between items-start mb-3">
-                          <div className="flex-1">
-                            <Typography
-                              variant="h6"
-                              className="font-semibold text-lg"
-                            >
-                              {opportunity.company}
-                            </Typography>
-                            <Typography
-                              variant="subtitle1"
-                              className="text-gray-700"
-                            >
-                              {opportunity.position}
-                            </Typography>
+                        <div className="space-y-1 mb-3">
+                          <Typography
+                            variant="h6"
+                            className="font-semibold"
+                            sx={{
+                              fontSize: "16px",
+                              fontStyle: "bold",
+                              width: "100%",
+                            }}
+                          >
+                            {opportunity.company}
+                          </Typography>
+                          <Typography
+                            variant="subtitle1"
+                            className="text-gray-700"
+                            sx={{ fontSize: "14px", width: "100%" }}
+                          >
+                            {opportunity.position}
+                          </Typography>
+
+                          {/* Date Info */}
+                          <div className="mt-2 text-sm text-gray-600">
+                            <span>
+                              {parseLocalDate(
+                                opportunity.dateApplied
+                              ).toLocaleDateString()}{" "}
+                              ({getDaysSinceApplied(opportunity.dateApplied)}{" "}
+                              days ago)
+                            </span>
                           </div>
-                          <div className="flex items-center space-x-2">
+
+                          <div className="mt-2 flex items-center justify-between">
                             <Chip
                               label={statusLabels[opportunity.status]}
                               style={{
@@ -2857,7 +2877,7 @@ export default function JobTracker() {
                         </div>
 
                         {/* Card Info */}
-                        <div className="grid grid-cols-2 gap-3 text-sm mb-3">
+                        <div className="hidden sm:grid grid-cols-2 gap-3 text-sm mb-3">
                           <div>
                             <span className="text-gray-500">Date Changed</span>
                             <div className="font-medium">
