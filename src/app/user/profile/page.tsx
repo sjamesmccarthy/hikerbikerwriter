@@ -1,7 +1,15 @@
 "use client";
 
 import React, { useState } from "react";
-import { Button, TextField, MenuItem, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
+import {
+  Button,
+  TextField,
+  MenuItem,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+} from "@mui/material";
 import { useSession, signIn, signOut } from "next-auth/react";
 import { Session } from "next-auth";
 import Image from "next/image";
@@ -373,7 +381,7 @@ export default function UserProfilePage() {
                         onClick={() => router.push("/user/profile")}
                       />
                     )}
-                    Signed in as {session.user?.name ?? null}
+                    {nameFromFB ? `Signed in as ${nameFromFB}` : ""}
                   </span>
                   <span className="h-4 w-px bg-gray-300 mx-2" />
                   <button
@@ -1630,9 +1638,13 @@ function AppSummaries({
         sharedWithFamily: fieldEntries.filter((e) => e.shared_family).length,
       });
       setRecipeCounts({
-        total: recipeEntries.length,
-        public: recipeEntries.filter((e) => e.isPublic).length,
-        sharedWithFamily: recipeEntries.filter((e) => e.shared_family).length,
+        total: recipeEntries.filter((e) => e.userEmail === userEmail).length,
+        public: recipeEntries.filter(
+          (e) => e.userEmail === userEmail && e.isPublic
+        ).length,
+        sharedWithFamily: recipeEntries.filter(
+          (e) => e.userEmail === userEmail && e.shared_family
+        ).length,
       });
       // Brew Day Log total from localStorage
       let brewLogCount = 0;
@@ -2685,21 +2697,24 @@ function AppSummaries({
                               >
                                 Cancel
                               </Button>
-                              
+
                               {/* Delete icon - only visible when editing */}
-                              <div className="flex items-center ml-2" title={`Remove ${person.name} from family`}>
+                              <div
+                                className="flex items-center ml-2"
+                                title={`Remove ${person.name} from family`}
+                              >
                                 <DeleteIcon
                                   fontSize="medium"
-                                  style={{ 
-                                    color: "#9ca3af", 
-                                    cursor: "pointer"
+                                  style={{
+                                    color: "#9ca3af",
+                                    cursor: "pointer",
                                   }}
                                   className="hover:text-gray-600"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     handleDeletePerson({
                                       person_id: person.person_id,
-                                      name: person.name
+                                      name: person.name,
                                     });
                                   }}
                                 />
@@ -2765,7 +2780,7 @@ function AppSummaries({
           return familyContent;
         })()}
       </div>
-      
+
       {/* Delete Confirmation Dialog */}
       <Dialog
         open={deleteConfirmOpen}
@@ -2780,8 +2795,9 @@ function AppSummaries({
         <DialogContent>
           {personToDelete && (
             <p>
-              Are you sure you want to remove <strong>{personToDelete.name}</strong> from your family? 
-              This will remove the relationship in both directions and cannot be undone.
+              Are you sure you want to remove{" "}
+              <strong>{personToDelete.name}</strong> from your family? This will
+              remove the relationship in both directions and cannot be undone.
             </p>
           )}
         </DialogContent>

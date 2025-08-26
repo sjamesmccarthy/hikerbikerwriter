@@ -79,7 +79,7 @@ async function removeFamilyMember(
   personIdToRemove: string
 ): Promise<FamilyData> {
   const familyData = parseFamilyData(familyline.json);
-  
+
   console.log("=== REMOVE FAMILY MEMBER DEBUG ===");
   console.log("Target familyline person_id:", familyline.person_id);
   console.log("Person to remove:", personIdToRemove);
@@ -93,12 +93,12 @@ async function removeFamilyMember(
   // Find and remove the person
   const originalCount = familyData.people.length;
   familyData.people = familyData.people.filter(
-    person => person.person_id !== personIdToRemove
+    (person) => person.person_id !== personIdToRemove
   );
-  
+
   const removedCount = originalCount - familyData.people.length;
   console.log(`Removed ${removedCount} family member(s)`);
-  
+
   if (removedCount === 0) {
     throw new Error("Person not found in family");
   }
@@ -127,7 +127,11 @@ export async function DELETE(request: Request) {
         { status: 404 }
       );
     }
-    console.log("Person to remove found:", personToRemove.name, personToRemove.email);
+    console.log(
+      "Person to remove found:",
+      personToRemove.name,
+      personToRemove.email
+    );
 
     // Get logged-in user's familyline
     const loggedInUserFamilyline = await getFamilyLine(requestBody.userEmail);
@@ -147,7 +151,10 @@ export async function DELETE(request: Request) {
         { status: 404 }
       );
     }
-    console.log("Person to remove familyline found:", personToRemoveFamilyline.id);
+    console.log(
+      "Person to remove familyline found:",
+      personToRemoveFamilyline.id
+    );
 
     // Get logged-in user details for reverse removal
     const loggedInUser = await getUser(loggedInUserFamilyline.person_id);
@@ -188,12 +195,15 @@ export async function DELETE(request: Request) {
         removedPerson: {
           person_id: personToRemove.person_id,
           name: personToRemove.name,
-          email: personToRemove.email
-        }
+          email: personToRemove.email,
+        },
       });
     } catch (error) {
       console.error("Error in removal process:", error);
-      if (error instanceof Error && error.message === "Person not found in family") {
+      if (
+        error instanceof Error &&
+        error.message === "Person not found in family"
+      ) {
         return NextResponse.json({ error: error.message }, { status: 404 });
       }
       throw error;

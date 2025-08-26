@@ -98,6 +98,7 @@ const RollAndWrite: React.FC = () => {
 
   // Add authentication
   const { data: session, status } = useSession();
+  const [nameFromDB, setNameFromDB] = useState<string | null>(null);
   const searchParams = useSearchParams();
 
   // Auto-roll on page load if autoroll parameter is present
@@ -111,6 +112,33 @@ const RollAndWrite: React.FC = () => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, currentDice1, currentDice2]);
+
+  // Fetch user's name from database
+  useEffect(() => {
+    async function fetchUserName() {
+      if (!session?.user?.email) {
+        setNameFromDB(null);
+        return;
+      }
+
+      try {
+        const res = await fetch(
+          `/api/userinfo?email=${encodeURIComponent(session.user.email)}`
+        );
+        if (res.ok) {
+          const data = await res.json();
+          setNameFromDB(data.name ?? session.user?.name ?? null);
+        } else {
+          setNameFromDB(session.user?.name ?? null);
+        }
+      } catch (error) {
+        console.error("Error fetching user info:", error);
+        setNameFromDB(session.user?.name ?? null);
+      }
+    }
+
+    fetchUserName();
+  }, [session?.user?.email, session?.user?.name]);
 
   const rollDice = () => {
     if (isRolling) return;
@@ -404,7 +432,7 @@ const RollAndWrite: React.FC = () => {
                         />
                       </Link>
                     )}
-                    Signed in as {session.user?.name}
+                    {nameFromDB ? `Signed in as ${nameFromDB}` : ""}
                   </span>
                   <span className="h-4 w-px bg-gray-300 mx-2" />
                   <button

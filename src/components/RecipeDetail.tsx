@@ -117,6 +117,7 @@ const RecipeDetail = React.memo(function RecipeDetail({
   const [isAppsMenuOpen, setIsAppsMenuOpen] = useState(false);
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
   const [showFamilyDetails, setShowFamilyDetails] = useState(false);
+  const [nameFromDB, setNameFromDB] = useState<string | null>(null);
   const { data: session } = useSession();
 
   // Apps menu configuration
@@ -319,6 +320,33 @@ const RecipeDetail = React.memo(function RecipeDetail({
       isMounted = false;
     };
   }, [slug, session]);
+
+  // Fetch user's name from database
+  useEffect(() => {
+    async function fetchUserName() {
+      if (!session?.user?.email) {
+        setNameFromDB(null);
+        return;
+      }
+
+      try {
+        const res = await fetch(
+          `/api/userinfo?email=${encodeURIComponent(session.user.email)}`
+        );
+        if (res.ok) {
+          const data = await res.json();
+          setNameFromDB(data.name ?? session.user?.name ?? null);
+        } else {
+          setNameFromDB(session.user?.name ?? null);
+        }
+      } catch (error) {
+        console.error("Error fetching user info:", error);
+        setNameFromDB(session.user?.name ?? null);
+      }
+    }
+
+    fetchUserName();
+  }, [session?.user?.email, session?.user?.name]);
 
   const toggleFavorite = async () => {
     if (!recipe || !session?.user?.email) return;
@@ -685,7 +713,7 @@ const RecipeDetail = React.memo(function RecipeDetail({
                     />
                   </Link>
                 )}
-                Signed in as {session.user?.name}
+                {nameFromDB ? `Signed in as ${nameFromDB}` : ""}
               </span>
             ) : null}
           </div>
@@ -706,7 +734,7 @@ const RecipeDetail = React.memo(function RecipeDetail({
                   />
                 </Link>
               )}
-              Signed in as {session.user?.name}
+              {nameFromDB ? `Signed in as ${nameFromDB}` : ""}
             </span>
           </div>
         )}

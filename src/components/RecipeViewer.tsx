@@ -172,6 +172,7 @@ const RecipeViewer: React.FC<RecipeViewerProps> = () => {
   const [imageErrors, setImageErrors] = useState<Set<number>>(new Set());
   const [openSelect, setOpenSelect] = useState<string | null>(null);
   const { data: session, status } = useSession();
+  const [nameFromDB, setNameFromDB] = useState<string | null>(null);
 
   const categories = ["All", "Dinner", "Side", "Dessert", "Breakfast"];
   const cookingTypes = ["All", "smoker", "flat-top", "grill"];
@@ -267,6 +268,33 @@ const RecipeViewer: React.FC<RecipeViewerProps> = () => {
       fetchRecipes();
     }
   }, [session, status]);
+
+  // Fetch user's name from database
+  useEffect(() => {
+    async function fetchUserName() {
+      if (!session?.user?.email) {
+        setNameFromDB(null);
+        return;
+      }
+
+      try {
+        const res = await fetch(
+          `/api/userinfo?email=${encodeURIComponent(session.user.email)}`
+        );
+        if (res.ok) {
+          const data = await res.json();
+          setNameFromDB(data.name ?? session.user?.name ?? null);
+        } else {
+          setNameFromDB(session.user?.name ?? null);
+        }
+      } catch (error) {
+        console.error("Error fetching user info:", error);
+        setNameFromDB(session.user?.name ?? null);
+      }
+    }
+
+    fetchUserName();
+  }, [session?.user?.email, session?.user?.name]);
 
   // Auto-enable public filter if user has no recipes
   useEffect(() => {
@@ -684,7 +712,7 @@ const RecipeViewer: React.FC<RecipeViewerProps> = () => {
                       />
                     </Link>
                   )}
-                  Signed in as {session.user?.name}
+                  {nameFromDB ? `Signed in as ${nameFromDB}` : ""}
                 </span>
                 <span className="h-4 w-px bg-gray-300 mx-2" />
                 <button
@@ -741,7 +769,7 @@ const RecipeViewer: React.FC<RecipeViewerProps> = () => {
                       />
                     </Link>
                   )}
-                  Signed in as {session.user?.name}
+                  {nameFromDB ? `Signed in as ${nameFromDB}` : ""}
                 </span>
                 <span className="h-4 w-px bg-gray-300 mx-2" />
                 <button

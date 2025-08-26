@@ -541,6 +541,15 @@ export default function AboutPage() {
               </a>
             </h2>
 
+            <h3 className="font-semibold mt-4 mb-1">v1.9.1</h3>
+            <ul className="list-disc ml-6 mb-2">
+              <li>Cleaned up &quot;Signed In as ...&quot; display</li>
+              <li>
+                Repaired the Add To Family bug that would not add the memeber to
+                the family.
+              </li>
+            </ul>
+
             <h3 className="font-semibold mt-4 mb-1">v1.9.0</h3>
             <ul className="list-disc ml-6 mb-2">
               <li>Cleaned up mobile UI for job tracker</li>

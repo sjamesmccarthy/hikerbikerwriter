@@ -151,6 +151,7 @@ const FieldNotes: React.FC = () => {
   const [editMakePublic, setEditMakePublic] = useState(false);
   const [editShareWithFamily, setEditShareWithFamily] = useState(false);
   const { data: session, status } = useSession();
+  const [nameFromDB, setNameFromDB] = useState<string | null>(null);
   const [notes, setNotes] = useState<Note[]>([]);
   const [loadingNotes, setLoadingNotes] = useState(true);
   const [databaseError, setDatabaseError] = useState<string | null>(null);
@@ -186,6 +187,33 @@ const FieldNotes: React.FC = () => {
     // Cleanup
     return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
+
+  // Fetch user's name from database
+  useEffect(() => {
+    async function fetchUserName() {
+      if (!session?.user?.email) {
+        setNameFromDB(null);
+        return;
+      }
+
+      try {
+        const res = await fetch(
+          `/api/userinfo?email=${encodeURIComponent(session.user.email)}`
+        );
+        if (res.ok) {
+          const data = await res.json();
+          setNameFromDB(data.name ?? session.user?.name ?? null);
+        } else {
+          setNameFromDB(session.user?.name ?? null);
+        }
+      } catch (error) {
+        console.error("Error fetching user info:", error);
+        setNameFromDB(session.user?.name ?? null);
+      }
+    }
+
+    fetchUserName();
+  }, [session?.user?.email, session?.user?.name]);
 
   useEffect(() => {
     async function fetchNotes() {
@@ -559,7 +587,7 @@ const FieldNotes: React.FC = () => {
                       />
                     </Link>
                   )}
-                  Signed in as {session.user?.name}
+                  {nameFromDB ? `Signed in as ${nameFromDB}` : ""}
                 </span>
                 <span className="h-4 w-px bg-gray-300 mx-2" />
                 <button
@@ -1553,81 +1581,87 @@ const FieldNotes: React.FC = () => {
                             </div>
 
                             {/* Right side: edit/delete icons */}
-                            {session && (
-                              <div className="flex gap-2">
-                                <IconButton
-                                  size="small"
-                                  color="primary"
-                                  aria-label="Edit Entry"
-                                  onClick={() => {
-                                    setEditId(note.id);
-                                    setEditTitle(note.title);
-                                    setEditContent(note.content);
-                                    setEditTags(note.tags || "");
-                                    setEditMood(note.mood || "");
-                                    setEditImages(note.images || []);
-                                    setEditMakePublic(note.is_public || false);
-                                    setEditShareWithFamily(
-                                      note.share_with_family ||
-                                        note.shared_family ||
-                                        false
-                                    );
-                                  }}
-                                >
-                                  <EditNoteOutlinedIcon />
-                                </IconButton>
-                                <IconButton
-                                  size="small"
-                                  aria-label="Delete Entry"
-                                  sx={{ color: "gray" }}
-                                  onClick={async () => {
-                                    try {
-                                      const res = await fetch(
-                                        "/api/fieldnotes",
-                                        {
-                                          method: "DELETE",
-                                          headers: {
-                                            "Content-Type": "application/json",
-                                          },
-                                          body: JSON.stringify({
-                                            id: note.id,
-                                            slug: note.slug,
-                                            userEmail: session?.user?.email,
-                                          }),
-                                        }
+                            {session &&
+                              note.userEmail === session.user?.email && (
+                                <div className="flex gap-2">
+                                  <IconButton
+                                    size="small"
+                                    color="primary"
+                                    aria-label="Edit Entry"
+                                    onClick={() => {
+                                      setEditId(note.id);
+                                      setEditTitle(note.title);
+                                      setEditContent(note.content);
+                                      setEditTags(note.tags || "");
+                                      setEditMood(note.mood || "");
+                                      setEditImages(note.images || []);
+                                      setEditMakePublic(
+                                        note.is_public || false
                                       );
-                                      if (res.ok) {
-                                        setNotes(
-                                          notes.filter((n) => n.id !== note.id)
+                                      setEditShareWithFamily(
+                                        note.share_with_family ||
+                                          note.shared_family ||
+                                          false
+                                      );
+                                    }}
+                                  >
+                                    <EditNoteOutlinedIcon />
+                                  </IconButton>
+                                  <IconButton
+                                    size="small"
+                                    aria-label="Delete Entry"
+                                    sx={{ color: "gray" }}
+                                    onClick={async () => {
+                                      try {
+                                        const res = await fetch(
+                                          "/api/fieldnotes",
+                                          {
+                                            method: "DELETE",
+                                            headers: {
+                                              "Content-Type":
+                                                "application/json",
+                                            },
+                                            body: JSON.stringify({
+                                              id: note.id,
+                                              slug: note.slug,
+                                              userEmail: session?.user?.email,
+                                            }),
+                                          }
                                         );
-                                      } else if (res.status === 500) {
+                                        if (res.ok) {
+                                          setNotes(
+                                            notes.filter(
+                                              (n) => n.id !== note.id
+                                            )
+                                          );
+                                        } else if (res.status === 500) {
+                                          setDatabaseError(
+                                            "Database connection error during delete - Please check if the database is running"
+                                          );
+                                        } else {
+                                          const errorData = await res
+                                            .json()
+                                            .catch(() => ({
+                                              error: "Delete failed",
+                                            }));
+                                          alert(
+                                            `Error deleting fieldnote: ${
+                                              errorData.error || "Unknown error"
+                                            }`
+                                          );
+                                        }
+                                      } catch (error) {
+                                        console.error("Delete error:", error);
                                         setDatabaseError(
-                                          "Database connection error during delete - Please check if the database is running"
-                                        );
-                                      } else {
-                                        const errorData = await res
-                                          .json()
-                                          .catch(() => ({
-                                            error: "Delete failed",
-                                          }));
-                                        alert(
-                                          `Error deleting fieldnote: ${
-                                            errorData.error || "Unknown error"
-                                          }`
+                                          "Failed to connect to server during delete"
                                         );
                                       }
-                                    } catch (error) {
-                                      console.error("Delete error:", error);
-                                      setDatabaseError(
-                                        "Failed to connect to server during delete"
-                                      );
-                                    }
-                                  }}
-                                >
-                                  <DeleteIcon sx={{ fontSize: 16 }} />
-                                </IconButton>
-                              </div>
-                            )}
+                                    }}
+                                  >
+                                    <DeleteIcon sx={{ fontSize: 16 }} />
+                                  </IconButton>
+                                </div>
+                              )}
                           </div>
                         </>
                       )}
@@ -1738,7 +1772,7 @@ const FieldNotes: React.FC = () => {
                           )}
                         </div>
 
-                        {session && (
+                        {session && note.userEmail === session.user?.email && (
                           <div className="hidden sm:flex gap-2">
                             <IconButton
                               size="small"
