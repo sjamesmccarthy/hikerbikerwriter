@@ -678,16 +678,19 @@ export default function JobTracker() {
     // Apply date filtering
     if (logStartDate || logEndDate) {
       logEntries = logEntries.filter((entry) => {
-        const entryDate = new Date(entry.date);
-        const startDate = logStartDate ? new Date(logStartDate) : null;
-        const endDate = logEndDate ? new Date(logEndDate) : null;
+        // Use parseLocalDate to avoid timezone issues
+        const entryDate = parseLocalDate(entry.date.split("T")[0]);
+        const startDate = logStartDate ? parseLocalDate(logStartDate) : null;
+        const endDate = logEndDate ? parseLocalDate(logEndDate) : null;
 
-        // Set end date to end of day for inclusive comparison
+        // Set startDate to start of day and endDate to end of day for inclusive comparison
+        if (startDate) {
+          startDate.setHours(0, 0, 0, 0);
+        }
         if (endDate) {
           endDate.setHours(23, 59, 59, 999);
         }
 
-        // Check date range
         if (startDate && entryDate < startDate) return false;
         if (endDate && entryDate > endDate) return false;
         return true;
