@@ -3891,7 +3891,7 @@ export default function JobTracker() {
               {/* Recruiters Section */}
               <div className="w-full">
                 <div className="bg-gray-50 rounded-lg p-4">
-                  <div className="flex justify-between items-center mb-4">
+                  <div className="flex justify-between items-center">
                     <div
                       className="flex items-center gap-4 cursor-pointer flex-1"
                       onClick={() =>
@@ -4036,7 +4036,7 @@ export default function JobTracker() {
               {/* Online Resources Section */}
               <div className="w-full">
                 <div className="bg-gray-50 rounded-lg p-4">
-                  <div className="flex justify-between items-center mb-4">
+                  <div className="flex justify-between items-center">
                     <div
                       className="flex items-center gap-4 cursor-pointer flex-1"
                       onClick={() =>
