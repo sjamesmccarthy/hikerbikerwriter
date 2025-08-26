@@ -1036,66 +1036,67 @@ const RecipeBuilder: React.FC = () => {
 
                     <div className="space-y-3 flex flex-col items-start">
                       {ingredients.map((ingredient, index) => (
-                        <div
-                          key={ingredient.id}
-                          className="flex gap-2 items-start"
-                        >
-                          <TextField
-                            placeholder="Ingredient name"
-                            value={ingredient.name || ""}
-                            onChange={(e) =>
-                              handleIngredientChange(
-                                index,
-                                "name",
-                                e.target.value
-                              )
-                            }
-                            size="small"
-                            sx={{ flex: 2 }}
-                            multiline
-                            minRows={1}
-                            maxRows={4}
-                          />
-                          <TextField
-                            placeholder="Amount (e.g., 1, ½, 2¾, 1/3)"
-                            value={ingredient.amount || ""}
-                            onChange={(e) =>
-                              handleIngredientChange(
-                                index,
-                                "amount",
-                                e.target.value
-                              )
-                            }
-                            size="small"
-                            sx={{ flex: 1 }}
-                          />
-                          <TextField
-                            placeholder="Unit"
-                            value={ingredient.unit || ""}
-                            onChange={(e) =>
-                              handleIngredientChange(
-                                index,
-                                "unit",
-                                e.target.value
-                              )
-                            }
-                            size="small"
-                            sx={{ flex: 1 }}
-                          />
-                          <IconButton
-                            onClick={() => removeIngredient(index)}
-                            disabled={ingredients.length === 1}
-                            size="small"
-                            sx={{
-                              color: "#9ca3af",
-                              "&:hover": {
-                                color: "#ef4444",
-                                backgroundColor: "rgba(239, 68, 68, 0.04)",
-                              },
-                            }}
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
+                        <div key={ingredient.id} className="w-full mb-8">
+                          <div className="w-full">
+                            <TextField
+                              placeholder="Ingredient name"
+                              value={ingredient.name || ""}
+                              onChange={(e) =>
+                                handleIngredientChange(
+                                  index,
+                                  "name",
+                                  e.target.value
+                                )
+                              }
+                              size="small"
+                              fullWidth
+                              multiline
+                              minRows={1}
+                              maxRows={4}
+                            />
+                          </div>
+                          <div className="flex flex-row sm:flex-row gap-2 mt-2">
+                            <TextField
+                              placeholder="Amount (e.g., 1, ½, 2¾, 1/3)"
+                              value={ingredient.amount || ""}
+                              onChange={(e) =>
+                                handleIngredientChange(
+                                  index,
+                                  "amount",
+                                  e.target.value
+                                )
+                              }
+                              size="small"
+                              sx={{ minWidth: 80, flex: 1 }}
+                            />
+                            <TextField
+                              placeholder="Unit"
+                              value={ingredient.unit || ""}
+                              onChange={(e) =>
+                                handleIngredientChange(
+                                  index,
+                                  "unit",
+                                  e.target.value
+                                )
+                              }
+                              size="small"
+                              sx={{ minWidth: 80, flex: 1 }}
+                            />
+                            <IconButton
+                              onClick={() => removeIngredient(index)}
+                              disabled={ingredients.length === 1}
+                              size="small"
+                              sx={{
+                                color: "#9ca3af",
+                                "&:hover": {
+                                  color: "#ef4444",
+                                  backgroundColor: "rgba(239, 68, 68, 0.04)",
+                                },
+                              }}
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </div>
                         </div>
                       ))}
 
