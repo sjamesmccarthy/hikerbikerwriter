@@ -3466,52 +3466,27 @@ export default function JobTracker() {
             {/* Tracking Log Section */}
             <div className="mb-8">
               <div className="bg-gray-50 rounded-lg p-4">
-                <div className="">
-                  {/* Mobile layout: Stack vertically */}
-                  <div className="block md:hidden">
-                    <div
-                      className="flex items-center gap-2 cursor-pointer mb-4"
-                      onClick={() => setIsLogExpanded(!isLogExpanded)}
-                    >
+                <div className="flex justify-between items-center">
+                  <div
+                    className="flex items-center gap-4 cursor-pointer flex-1"
+                    onClick={() => setIsLogExpanded(!isLogExpanded)}
+                  >
+                    <div className="flex items-center gap-2">
                       {isLogExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
                       <Typography variant="h6" className="text-gray-700">
                         ({(currentSearch.log || []).length}) Tracking Log
                       </Typography>
                     </div>
-
-                    <Button
-                      variant="contained"
-                      startIcon={<AddIcon />}
-                      onClick={() => handleAddLogEntry()}
-                      className="bg-blue-600 hover:bg-blue-700 w-full"
-                      size="small"
-                    >
-                      Add Log Entry
-                    </Button>
                   </div>
-
-                  {/* Desktop layout: Same line with button right-justified */}
-                  <div className="hidden md:flex justify-between items-center">
-                    <div
-                      className="flex items-center gap-2 cursor-pointer"
-                      onClick={() => setIsLogExpanded(!isLogExpanded)}
-                    >
-                      {isLogExpanded ? <ExpandLessIcon /> : <ExpandMoreIcon />}
-                      <Typography variant="h6" className="text-gray-700">
-                        ({(currentSearch.log || []).length}) Tracking Log
-                      </Typography>
-                    </div>
-
-                    <Button
-                      variant="contained"
-                      startIcon={<AddIcon />}
-                      onClick={() => handleAddLogEntry()}
-                      className="bg-blue-600 hover:bg-blue-700"
-                      size="small"
-                    >
-                      Add
-                    </Button>
-                  </div>
+                  <Button
+                    variant="contained"
+                    startIcon={<AddIcon />}
+                    onClick={() => handleAddLogEntry()}
+                    className="bg-blue-600 hover:bg-blue-700"
+                    size="small"
+                  >
+                    Add
+                  </Button>
                 </div>
 
                 {isLogExpanded && (
