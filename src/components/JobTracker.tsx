@@ -211,6 +211,97 @@ const parseLocalDate = (dateString: string): Date => {
 };
 
 export default function JobTracker() {
+  // Export opportunities as ASCII TXT
+  const handleExportOpportunitiesAsTxt = () => {
+    if (!currentSearch) return;
+    const filteredOpportunities = getFilteredOpportunities();
+    if (filteredOpportunities.length === 0) {
+      alert("No opportunities to export.");
+      return;
+    }
+    // Table headers
+    const headers = [
+      "Company",
+      "Position",
+      "Last Changed",
+      "Days Open",
+      "Status",
+      "Location",
+      "Salary",
+    ];
+    // Calculate column widths
+    const colWidths = headers.map((header, i) => {
+      let max = header.length;
+      filteredOpportunities.forEach((opp) => {
+        let val = "";
+        switch (i) {
+          case 0:
+            val = opp.company || "";
+            break;
+          case 1:
+            val = opp.position || "";
+            break;
+          case 2:
+            val = parseLocalDate(opp.dateApplied).toLocaleDateString();
+            break;
+          case 3:
+            val = getDaysSinceApplied(opp.dateApplied) + " days";
+            break;
+          case 4:
+            val = statusLabels[opp.status] || opp.status;
+            break;
+          case 5:
+            val = opp.location || "";
+            break;
+          case 6:
+            val = opp.salary || "";
+            break;
+        }
+        if (val.length > max) max = val.length;
+      });
+      return max;
+    });
+    // Helper to pad
+    const pad = (str: string, len: number) =>
+      str + " ".repeat(len - str.length);
+    // Build header row
+    let txt =
+      "|" +
+      headers.map((h, i) => " " + pad(h, colWidths[i]) + " ").join("|") +
+      "|\n";
+    // Divider
+    txt += "|" + colWidths.map((w) => "-".repeat(w + 2)).join("|") + "|\n";
+    // Rows
+    filteredOpportunities.forEach((opp) => {
+      const row = [
+        opp.company || "",
+        opp.position || "",
+        parseLocalDate(opp.dateApplied).toLocaleDateString(),
+        getDaysSinceApplied(opp.dateApplied) + " days",
+        statusLabels[opp.status] || opp.status,
+        opp.location || "",
+        opp.salary || "",
+      ];
+      txt +=
+        "|" +
+        row.map((cell, i) => " " + pad(cell, colWidths[i]) + " ").join("|") +
+        "|\n";
+    });
+    // Download
+    const blob = new Blob([txt], { type: "text/plain;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${currentSearch.name
+      .replace(/[^a-z0-9]/gi, "_")
+      .toLowerCase()}_opportunities_table_${
+      new Date().toISOString().split("T")[0]
+    }.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
   const { data: session, status } = useSession();
   const [searches, setSearches] = useState<JobSearch[]>([]);
   const [currentSearch, setCurrentSearch] = useState<JobSearch | null>(null);
@@ -2152,27 +2243,50 @@ export default function JobTracker() {
                       </Select>
                     </FormControl>
 
-                    <Button
-                      onClick={handleExportAsPDF}
-                      size="small"
-                      title="Download PDF Summary"
-                      startIcon={<FileDownloadIcon />}
-                      sx={{
-                        border: "1px solid #e0e0e0",
-                        borderRadius: "4px",
-                        padding: "8px",
-                        color: "#1976d2",
-                        minWidth: "auto",
-                        "& .MuiButton-startIcon": {
-                          marginRight: { xs: "8px", sm: "0px" },
-                        },
-                        "&:hover": {
-                          backgroundColor: "#f5f5f5",
-                        },
-                      }}
-                    >
-                      <span className="sm:hidden">Download PDF Summary</span>
-                    </Button>
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={handleExportAsPDF}
+                        size="small"
+                        title="Download PDF Summary"
+                        startIcon={<FileDownloadIcon />}
+                        sx={{
+                          border: "1px solid #e0e0e0",
+                          borderRadius: "4px",
+                          padding: "8px",
+                          color: "#1976d2",
+                          minWidth: "auto",
+                          "& .MuiButton-startIcon": {
+                            marginRight: { xs: "8px", sm: "0px" },
+                          },
+                          "&:hover": {
+                            backgroundColor: "#f5f5f5",
+                          },
+                        }}
+                      >
+                        <span className="hidden sm:inline">PDF</span>
+                      </Button>
+                      <Button
+                        onClick={handleExportOpportunitiesAsTxt}
+                        size="small"
+                        title="Download ASCII Text Table"
+                        startIcon={<FileDownloadIcon />}
+                        sx={{
+                          border: "1px solid #e0e0e0",
+                          borderRadius: "4px",
+                          padding: "8px",
+                          color: "#1976d2",
+                          minWidth: "auto",
+                          "& .MuiButton-startIcon": {
+                            marginRight: { xs: "8px", sm: "0px" },
+                          },
+                          "&:hover": {
+                            backgroundColor: "#f5f5f5",
+                          },
+                        }}
+                      >
+                        <span className="hidden sm:inline">TXT</span>
+                      </Button>
+                    </div>
                   </div>
                 </div>
 
