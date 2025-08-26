@@ -992,11 +992,11 @@ const RecipeBuilder: React.FC = () => {
                       <Typography variant="h6">Ingredients</Typography>
                     </div>
 
-                    <div className="space-y-3">
+                    <div className="space-y-3 flex flex-col items-start">
                       {ingredients.map((ingredient, index) => (
                         <div
                           key={ingredient.id}
-                          className="flex gap-2 items-center"
+                          className="flex gap-2 items-start"
                         >
                           <TextField
                             placeholder="Ingredient name"
@@ -1010,6 +1010,9 @@ const RecipeBuilder: React.FC = () => {
                             }
                             size="small"
                             sx={{ flex: 2 }}
+                            multiline
+                            minRows={1}
+                            maxRows={4}
                           />
                           <TextField
                             placeholder="Amount (e.g., 1, ½, 2¾, 1/3)"
@@ -1105,7 +1108,7 @@ const RecipeBuilder: React.FC = () => {
                             }
                             multiline
                             minRows={2}
-                            maxRows={6}
+                            maxRows={12}
                             size="small"
                             fullWidth
                           />
