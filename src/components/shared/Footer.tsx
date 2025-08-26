@@ -28,7 +28,7 @@ const Footer: React.FC<FooterProps> = ({
             rel="noopener noreferrer"
             className="hover:underline"
           >
-            v1.8.7
+            v1.9.0
           </Link>
         </div>
         <Link

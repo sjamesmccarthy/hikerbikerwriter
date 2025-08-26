@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { useSession, signIn, signOut } from "next-auth/react";
 import {
@@ -416,10 +417,12 @@ export default function JobTracker() {
     { name: "jM Galleries", path: "/jmgalleries", icon: PhotoCameraIcon },
   ];
 
+  const router = useRouter();
+
   const handleAppSelect = (path: string) => {
     setIsAppsMenuOpen(false);
     setOpenSubmenu(null);
-    window.location.href = path;
+    router.push(path);
   };
 
   const loadJobData = useCallback(async () => {

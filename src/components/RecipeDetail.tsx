@@ -693,7 +693,7 @@ const RecipeDetail = React.memo(function RecipeDetail({
               )}
 
               {/* Public icon overlay - show for public recipes */}
-              {recipe.public && (
+              {recipe.public === true && (
                 <div className="absolute top-4 left-4 w-8 h-8 rounded-full bg-white/80 flex items-center justify-center">
                   <PublicIcon sx={{ fontSize: 20, color: "gray" }} />
                 </div>
@@ -701,7 +701,7 @@ const RecipeDetail = React.memo(function RecipeDetail({
 
               {/* Overlay buttons */}
               <div className="absolute top-4 right-4 flex gap-2">
-                {recipe.public && (
+                {recipe.public === true && (
                   <IconButton
                     sx={{
                       backgroundColor: "rgba(255,255,255,0.9)",
@@ -730,7 +730,7 @@ const RecipeDetail = React.memo(function RecipeDetail({
                     )}
                   </IconButton>
                 )}
-                {recipe.public && (
+                {recipe.public === true && (
                   <IconButton
                     onClick={handleShare}
                     sx={{
@@ -841,7 +841,7 @@ const RecipeDetail = React.memo(function RecipeDetail({
                   {recipe.sourceTitle && !recipe.source && (
                     <span className="text-gray-500">{recipe.sourceTitle}</span>
                   )}
-                  {recipe?.shared_family == true && (
+                  {recipe.shared_family === true && (
                     <button
                       onClick={() => setShowFamilyDetails((prev) => !prev)}
                       className="text-blue-600 hover:text-blue-800 hover:underline ml-1 font-medium"

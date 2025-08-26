@@ -539,6 +539,16 @@ export default function AboutPage() {
               </a>
             </h2>
 
+            <h3 className="font-semibold mt-4 mb-1">v1.9.0</h3>
+            <ul className="list-disc ml-6 mb-2">
+              <li>Cleaned up mobile UI for job tracker</li>
+              <li>
+                Fixed use of user.name vs .author in JSON object for more
+                consistent displaying of name.
+              </li>
+              <li>Fixed small issue with Lorem Ipsum generation.</li>
+            </ul>
+
             <h3 className="font-semibold mt-4 mb-1">v1.8.7</h3>
             <ul className="list-disc ml-6 mb-2">
               <li>Added job tracker card to profile.</li>
