@@ -113,10 +113,41 @@ async function processFamilyUpdate(
 ): Promise<FamilyData> {
   const familyData = parseFamilyData(targetFamilyline.json);
 
-  if (
-    familyData.people.some((p: FamilyMember) => p.email === userToAdd.email)
-  ) {
-    throw new Error("User is already in the family");
+  // Debug logging to understand the issue
+  console.log("=== PROCESS FAMILY UPDATE DEBUG ===");
+  console.log("Target familyline person_id:", targetFamilyline.person_id);
+  console.log("User to add:", {
+    person_id: userToAdd.person_id,
+    name: userToAdd.name,
+    email: userToAdd.email,
+  });
+  console.log("Relationship being added:", requestBody.relationship);
+  console.log("Current family members:");
+  familyData.people.forEach((person, index) => {
+    console.log(
+      `  ${index}: ${person.name} (${person.email}) [${person.person_id}] - ${person.relation}`
+    );
+  });
+
+  // Normalize emails for comparison (trim whitespace and convert to lowercase)
+  const userEmailNormalized = userToAdd.email.trim().toLowerCase();
+  const existingMember = familyData.people.find(
+    (p: FamilyMember) => p.email.trim().toLowerCase() === userEmailNormalized
+  );
+
+  if (existingMember) {
+    console.log("Found existing member:", existingMember);
+    console.log(
+      `Updating existing relationship from '${existingMember.relation}' to '${requestBody.relationship}'`
+    );
+
+    // Update the existing member's relationship instead of throwing an error
+    existingMember.relation = requestBody.relationship;
+    existingMember.network_level =
+      networksData.network.find((n) => n.type === requestBody.network)?.level ||
+      1;
+
+    return familyData;
   }
 
   // Always use the source familyline's uuid - this is the familyline that the person being added belongs to
@@ -147,41 +178,76 @@ export async function POST(request: Request) {
       );
     }
 
+    console.log("Getting user to add...");
     // Get user to add and their familyline
     const userToAdd = await getUser(requestBody.userId);
     if (!userToAdd?.person_id) {
+      console.error("User to add not found:", requestBody.userId);
       return NextResponse.json(
         { error: "User to add not found or missing person_id" },
         { status: 404 }
       );
     }
+    console.log("User to add found:", userToAdd.name, userToAdd.email);
 
+    console.log("Getting added person's familyline...");
     const addedPersonFamilyline = await getFamilyLine(userToAdd.email);
     if (!addedPersonFamilyline) {
+      console.error("No familyline found for user to add:", userToAdd.email);
       return NextResponse.json(
         { error: "No familyline found for user to add" },
         { status: 404 }
       );
     }
+    console.log("Added person familyline found:", addedPersonFamilyline.id);
 
+    console.log("Getting logged-in user familyline...");
     // Get logged-in user and their familyline
     const familyline = await getFamilyLine(requestBody.userEmail);
     if (!familyline) {
+      console.error(
+        "No familyline found for logged in user:",
+        requestBody.userEmail
+      );
       return NextResponse.json(
         { error: "No familyline found for logged in user" },
         { status: 404 }
       );
     }
+    console.log("Logged-in user familyline found:", familyline.id);
 
     const loggedInUser = await getUser(familyline.person_id);
     if (!loggedInUser) {
+      console.error(
+        "Could not find logged in user details for person_id:",
+        familyline.person_id
+      );
       return NextResponse.json(
         { error: "Could not find logged in user details" },
         { status: 404 }
       );
     }
+    console.log("Logged-in user found:", loggedInUser.name, loggedInUser.email);
+
+    // Check if user is trying to add themselves
+    if (userToAdd.email === requestBody.userEmail) {
+      console.error("User trying to add themselves");
+      return NextResponse.json(
+        { error: "Cannot add yourself to your own family" },
+        { status: 400 }
+      );
+    }
+
+    // Additional debug logging
+    console.log("Logged in user:", loggedInUser.email);
+    console.log("User to add:", userToAdd.email);
+    console.log("Logged in user familyline ID:", familyline.id);
+    console.log("User to add familyline ID:", addedPersonFamilyline.id);
 
     try {
+      console.log(
+        "Starting processFamilyUpdate for logged-in user's family..."
+      );
       // Add person to logged-in user's family - using the person's familyline uuid
       const familyData = await processFamilyUpdate(
         userToAdd,
@@ -189,7 +255,9 @@ export async function POST(request: Request) {
         familyline,
         addedPersonFamilyline
       );
+      console.log("Completed processFamilyUpdate for logged-in user's family");
 
+      console.log("Starting processFamilyUpdate for added person's family...");
       // Add logged-in user to person's family - using logged-in user's familyline uuid and "unknown" relationship
       const modifiedRequestBody = {
         ...requestBody,
@@ -201,12 +269,15 @@ export async function POST(request: Request) {
         addedPersonFamilyline,
         familyline
       );
+      console.log("Completed processFamilyUpdate for added person's family");
 
+      console.log("Updating both familylines...");
       // Update both familylines
       await Promise.all([
         updateFamilyLine(familyline, familyData),
         updateFamilyLine(addedPersonFamilyline, addedPersonFamilyData),
       ]);
+      console.log("Successfully updated both familylines");
 
       return NextResponse.json({
         success: true,
@@ -214,16 +285,21 @@ export async function POST(request: Request) {
         familyData,
       });
     } catch (error) {
+      console.error("Error in processFamilyUpdate section:", error);
       if (
         error instanceof Error &&
-        error.message === "User is already in the family"
+        error.message.startsWith("User is already in the family")
       ) {
         return NextResponse.json({ error: error.message }, { status: 400 });
       }
       throw error;
     }
   } catch (error) {
-    console.error("Error adding family member:", error);
+    console.error("Error adding family member (main catch):", error);
+    if (error instanceof Error) {
+      console.error("Error message:", error.message);
+      console.error("Error stack:", error.stack);
+    }
     return NextResponse.json(
       { error: "Failed to add family member" },
       { status: 500 }

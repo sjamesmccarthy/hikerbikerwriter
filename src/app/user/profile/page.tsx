@@ -579,8 +579,6 @@ function AppSummaries({
   const [showAddPerson, setShowAddPerson] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searching, setSearching] = useState(false);
-  const [relationship, setRelationship] = useState("");
-  const [network, setNetwork] = useState("");
   const [editingPersonId, setEditingPersonId] = useState<string | null>(null);
   const [editRelationship, setEditRelationship] = useState("");
   const [editNetwork, setEditNetwork] = useState("");
@@ -1281,39 +1279,70 @@ function AppSummaries({
   };
 
   const handleAddPerson = async (user: SearchUser) => {
-    console.log("handleAddPerson called with:", {
-      user,
-      relationship,
-      network,
+    console.log("=== HANDLE ADD PERSON DEBUG ===");
+    console.log("handleAddPerson called with user:", {
+      person_id: user.person_id,
+      name: user.name,
+      email: user.email,
+      relationship: user.relationship,
+      network: user.network,
     });
+    console.log("Logged in user email:", userEmail);
+
+    // Debug: Log current family info to understand what's already there
+    if (familyInfo?.json?.people) {
+      console.log("Current family members:");
+      familyInfo.json.people.forEach((person, index: number) => {
+        console.log(
+          `  ${index}: ${person.name} (${person.email}) - ${person.relation}`
+        );
+      });
+
+      // Check if this person is already in the family
+      const existingMember = familyInfo.json.people.find(
+        (person) =>
+          person.email?.trim().toLowerCase() ===
+          user.email?.trim().toLowerCase()
+      );
+      if (existingMember) {
+        console.log(
+          "Frontend check: User already exists in family:",
+          existingMember
+        );
+      }
+    }
 
     if (!userEmail) {
       console.error("Missing user email");
       return;
     }
 
-    if (!relationship) {
+    if (!user.relationship) {
       console.error("Please select a relationship");
       return;
     }
 
-    if (!network) {
+    if (!user.network) {
       console.error("Please select a network");
       return;
     }
 
     try {
+      const requestPayload = {
+        userId: user.person_id,
+        userEmail: userEmail,
+        relationship: user.relationship,
+        network: user.network,
+      };
+
+      console.log("Sending API request with payload:", requestPayload);
+
       const response = await fetch("/api/add-family-member", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
-          userId: user.person_id,
-          userEmail: userEmail,
-          relationship: relationship,
-          network: network,
-        }),
+        body: JSON.stringify(requestPayload),
       });
 
       const data = await response.json();
@@ -1983,9 +2012,8 @@ function AppSummaries({
                         <TextField
                           select
                           size="small"
-                          value={relationship}
+                          value={user.relationship || ""}
                           onChange={(e) => {
-                            setRelationship(e.target.value);
                             const newResults = searchResults.map((u) =>
                               u.person_id === user.person_id
                                 ? { ...u, relationship: e.target.value }
@@ -2012,9 +2040,8 @@ function AppSummaries({
                         <TextField
                           select
                           size="small"
-                          value={network}
+                          value={user.network || ""}
                           onChange={(e) => {
-                            setNetwork(e.target.value);
                             const newResults = searchResults.map((u) =>
                               u.person_id === user.person_id
                                 ? { ...u, network: e.target.value }
@@ -2044,7 +2071,7 @@ function AppSummaries({
                             height: 36, // Explicit height
                             minWidth: 120, // Minimum width for button
                           }}
-                          disabled={!relationship || !network}
+                          disabled={!user.relationship || !user.network}
                         >
                           Add to Family
                         </Button>
