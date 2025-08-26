@@ -3292,8 +3292,33 @@ export default function JobTracker() {
                         }}
                         sx={{ flex: 1 }}
                       />
-                      {/* Mobile: Only TXT, PDF, Clear. Desktop: show date pickers too */}
-                      <div className="flex gap-2 w-full sm:w-auto">
+                      <div className="flex gap-2 w-full">
+                        <TextField
+                          type="date"
+                          label="Start Date"
+                          value={logStartDate}
+                          onChange={(e) => {
+                            setLogStartDate(e.target.value);
+                            setLogCurrentPage(1);
+                          }}
+                          size="small"
+                          InputLabelProps={{ shrink: true }}
+                          className="w-1/2"
+                        />
+                        <TextField
+                          type="date"
+                          label="End Date"
+                          value={logEndDate}
+                          onChange={(e) => {
+                            setLogEndDate(e.target.value);
+                            setLogCurrentPage(1);
+                          }}
+                          size="small"
+                          InputLabelProps={{ shrink: true }}
+                          className="w-1/2"
+                        />
+                      </div>
+                      <div className="flex gap-2 w-full mt-2">
                         <Button
                           variant="outlined"
                           onClick={handleExportLogData}
