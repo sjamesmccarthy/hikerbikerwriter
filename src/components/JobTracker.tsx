@@ -3265,7 +3265,7 @@ export default function JobTracker() {
                         className="bg-blue-600 hover:bg-blue-700"
                         size="large"
                       >
-                        Add Log Entry
+                        Add
                       </Button>
                     )}
                   </div>
@@ -3273,8 +3273,16 @@ export default function JobTracker() {
 
                 {isLogExpanded && (
                   <>
-                    {/* Filter Controls - Responsive for mobile */}
-                    <div className="mb-4 flex flex-col sm:flex-row gap-3">
+                    {/* Filter Controls - Responsive for mobile and desktop */}
+                    <Box
+                      className="mb-4"
+                      sx={{
+                        display: "flex",
+                        flexDirection: { xs: "column", sm: "row" },
+                        gap: 2,
+                        alignItems: { sm: "center" },
+                      }}
+                    >
                       <TextField
                         placeholder="Search log entries..."
                         value={logSearchQuery}
@@ -3290,9 +3298,20 @@ export default function JobTracker() {
                             </InputAdornment>
                           ),
                         }}
-                        sx={{ flex: 1 }}
+                        sx={{
+                          flex: 1,
+                          minWidth: 0,
+                        }}
                       />
-                      <div className="flex gap-2 w-full">
+                      {/* Date fields row for mobile (xs) */}
+                      <Box
+                        sx={{
+                          display: { xs: "flex", sm: "none" },
+                          flexDirection: "row",
+                          gap: 2,
+                          width: "100%",
+                        }}
+                      >
                         <TextField
                           type="date"
                           label="Start Date"
@@ -3303,7 +3322,7 @@ export default function JobTracker() {
                           }}
                           size="small"
                           InputLabelProps={{ shrink: true }}
-                          className="w-1/2"
+                          sx={{ width: "50%" }}
                         />
                         <TextField
                           type="date"
@@ -3315,36 +3334,50 @@ export default function JobTracker() {
                           }}
                           size="small"
                           InputLabelProps={{ shrink: true }}
-                          className="w-1/2"
+                          sx={{ width: "50%" }}
                         />
-                      </div>
-                      <div className="flex gap-2 w-full mt-2">
-                        <Button
-                          variant="outlined"
-                          onClick={handleExportLogData}
-                          size="small"
-                          sx={{
-                            whiteSpace: "nowrap",
-                            minWidth: "auto",
-                            flex: 1,
-                          }}
-                          title="Export filtered log data as text file"
-                        >
-                          TXT
-                        </Button>
-                        <Button
-                          variant="outlined"
-                          onClick={handleExportAsPDF}
-                          size="small"
-                          sx={{
-                            whiteSpace: "nowrap",
-                            minWidth: "auto",
-                            flex: 1,
-                          }}
-                          title="Export filtered log data as PDF"
-                        >
-                          PDF
-                        </Button>
+                      </Box>
+                      {/* Desktop controls group (sm and up) */}
+                      <Box
+                        sx={{
+                          display: { xs: "none", sm: "flex" },
+                          gap: 1,
+                          alignItems: "center",
+                          flexShrink: 0,
+                        }}
+                      >
+                        <Box sx={{ display: "flex", gap: 1 }}>
+                          <TextField
+                            type="date"
+                            label="Start Date"
+                            value={logStartDate}
+                            onChange={(e) => {
+                              setLogStartDate(e.target.value);
+                              setLogCurrentPage(1);
+                            }}
+                            size="small"
+                            InputLabelProps={{ shrink: true }}
+                            sx={{
+                              width: 130,
+                              minWidth: 130,
+                            }}
+                          />
+                          <TextField
+                            type="date"
+                            label="End Date"
+                            value={logEndDate}
+                            onChange={(e) => {
+                              setLogEndDate(e.target.value);
+                              setLogCurrentPage(1);
+                            }}
+                            size="small"
+                            InputLabelProps={{ shrink: true }}
+                            sx={{
+                              width: 130,
+                              minWidth: 130,
+                            }}
+                          />
+                        </Box>
                         <Button
                           variant="outlined"
                           onClick={() => {
@@ -3354,12 +3387,27 @@ export default function JobTracker() {
                             setLogCurrentPage(1);
                           }}
                           size="small"
-                          sx={{ whiteSpace: "nowrap", flex: 1 }}
+                          sx={{
+                            height: 40,
+                            px: 2,
+                          }}
                         >
                           Clear
                         </Button>
-                      </div>
-                    </div>
+                        <Button
+                          variant="outlined"
+                          onClick={handleExportLogData}
+                          size="small"
+                          startIcon={<FileDownloadIcon />}
+                          sx={{
+                            height: 40,
+                          }}
+                          title="Export filtered log data as text file"
+                        >
+                          TXT
+                        </Button>
+                      </Box>
+                    </Box>
 
                     <div className="space-y-3">
                       {getPaginatedLogEntries().map((logEntry) => {
@@ -3806,7 +3854,7 @@ export default function JobTracker() {
                         className="bg-purple-600 hover:bg-purple-700"
                         size="large"
                       >
-                        Add Recruiter
+                        Add
                       </Button>
                     )}
                   </div>
@@ -3951,7 +3999,7 @@ export default function JobTracker() {
                         className="bg-teal-600 hover:bg-teal-700"
                         size="large"
                       >
-                        Add Resource
+                        Add
                       </Button>
                     )}
                   </div>
