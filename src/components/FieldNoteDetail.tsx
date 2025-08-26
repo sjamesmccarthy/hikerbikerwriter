@@ -22,7 +22,7 @@ import {
   Button,
 } from "@mui/material";
 import { renderFooter } from "./shared/footerHelpers";
-import { useSession } from "next-auth/react";
+import { useSession, signIn, signOut } from "next-auth/react";
 import FieldNoteForm from "./FieldNoteForm";
 
 type FieldNote = {
@@ -55,6 +55,33 @@ const FieldNoteDetail: React.FC<FieldNoteDetailProps> = ({ slug }) => {
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [isImageModalOpen, setIsImageModalOpen] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [nameFromDB, setNameFromDB] = useState<string | null>(null);
+
+  // Fetch user's database name
+  useEffect(() => {
+    async function fetchUserName() {
+      if (!session?.user?.email) {
+        setNameFromDB(null);
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `/api/userinfo?email=${encodeURIComponent(session.user.email)}`
+        );
+        if (response.ok) {
+          const data = await response.json();
+          setNameFromDB(data.name ?? session.user?.name ?? null);
+        } else {
+          setNameFromDB(session.user?.name ?? null);
+        }
+      } catch (error) {
+        setNameFromDB(session.user?.name ?? null);
+      }
+    }
+
+    fetchUserName();
+  }, [session]);
 
   useEffect(() => {
     async function fetchFieldNote() {
@@ -311,10 +338,71 @@ const FieldNoteDetail: React.FC<FieldNoteDetailProps> = ({ slug }) => {
             </div> */}
           </div>
 
-          <div className="flex items-center space-x-2">
-            {/* Icons moved to tags section */}
+          {/* Desktop Auth UI */}
+          <div className="hidden sm:flex items-center gap-2 pr-4">
+            {session ? (
+              <div className="flex items-center gap-2">
+                <span className="flex items-center gap-2 font-mono text-blue-600 text-sm">
+                  {session.user?.image && (
+                    <Link href="/user/profile">
+                      <Image
+                        src={session.user.image}
+                        alt={session.user?.name || "User profile"}
+                        width={28}
+                        height={28}
+                        className="rounded-full border border-gray-300 cursor-pointer hover:scale-105 transition"
+                      />
+                    </Link>
+                  )}
+                  {nameFromDB ? `Signed in as ${nameFromDB}` : ""}
+                </span>
+                <span className="h-4 w-px bg-gray-300 mx-2" />
+                <button
+                  onClick={() => signOut()}
+                  className="px-3 py-1 rounded bg-gray-200 text-gray-800 font-mono text-sm hover:bg-gray-300 transition cursor-pointer"
+                >
+                  Sign out
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2">
+                <Link
+                  href="/auth/signup"
+                  className="px-4 py-2 rounded bg-gray-600 text-white font-mono text-sm hover:bg-gray-700 transition"
+                >
+                  Sign Up
+                </Link>
+                <span className="text-gray-400">|</span>
+                <button
+                  onClick={() => signIn("google")}
+                  className="px-4 py-2 rounded bg-blue-600 text-white font-mono text-sm hover:bg-blue-700 transition"
+                >
+                  Sign in with Google
+                </button>
+              </div>
+            )}
           </div>
         </div>
+
+        {/* Mobile Auth UI - Only visible on mobile */}
+        {session && (
+          <div className="sm:hidden px-3 py-2 border-b border-gray-200 flex justify-center">
+            <span className="flex items-center gap-2 font-mono text-blue-600 text-sm">
+              {session.user?.image && (
+                <Link href="/user/profile">
+                  <Image
+                    src={session.user.image}
+                    alt={session.user?.name || "User profile"}
+                    width={28}
+                    height={28}
+                    className="rounded-full border border-gray-300 cursor-pointer hover:scale-105 transition"
+                  />
+                </Link>
+              )}
+              {nameFromDB ? `Signed in as ${nameFromDB}` : ""}
+            </span>
+          </div>
+        )}
 
         {/* Content */}
         {isEditing ? (

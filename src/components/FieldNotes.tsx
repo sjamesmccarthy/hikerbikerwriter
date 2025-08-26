@@ -441,168 +441,187 @@ const FieldNotes: React.FC = () => {
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <div className="max-xl bg-white flex-1">
         {/* Header */}
-        <div className="flex items-center space-x-2 h-[61px] border-b border-gray-200 px-3">
-          <Link href="/">
-            <button className="px-3 py-1 rounded text-sm font-medium transition-colors flex items-center gap-1 text-gray-600 hover:text-gray-800 hover:bg-gray-100 cursor-pointer">
-              <ArrowBackIcon sx={{ fontSize: 16 }} />
-              <span className="hidden sm:inline">Back to Home</span>
-            </button>
-          </Link>
+        <div className="flex items-center justify-between h-[61px] border-b border-gray-200 px-3">
+          <div className="flex items-center space-x-2">
+            <Link href="/">
+              <button className="px-3 py-1 rounded text-sm font-medium transition-colors flex items-center gap-1 text-gray-600 hover:text-gray-800 hover:bg-gray-100 cursor-pointer">
+                <ArrowBackIcon sx={{ fontSize: 16 }} />
+                <span className="hidden sm:inline">Back to Home</span>
+              </button>
+            </Link>
 
-          <div className="h-4 w-px bg-gray-300" />
+            <div className="h-4 w-px bg-gray-300" />
 
-          {/* Apps Menu */}
-          <div className="relative">
-            <button
-              onClick={() => setIsAppsMenuOpen(!isAppsMenuOpen)}
-              className="px-3 py-1 rounded text-sm font-medium transition-colors flex items-center gap-1 text-gray-600 hover:text-gray-800 hover:bg-gray-100 cursor-pointer"
-              aria-label="Apps Menu"
-              aria-expanded={isAppsMenuOpen}
-            >
-              <AppsIcon sx={{ fontSize: 16 }} />
-              Apps
-            </button>
+            {/* Apps Menu */}
+            <div className="relative">
+              <button
+                onClick={() => setIsAppsMenuOpen(!isAppsMenuOpen)}
+                className="px-3 py-1 rounded text-sm font-medium transition-colors flex items-center gap-1 text-gray-600 hover:text-gray-800 hover:bg-gray-100 cursor-pointer"
+                aria-label="Apps Menu"
+                aria-expanded={isAppsMenuOpen}
+              >
+                <AppsIcon sx={{ fontSize: 16 }} />
+                Apps
+              </button>
 
-            {/* Apps Dropdown */}
-            {isAppsMenuOpen && (
-              <>
-                <button
-                  className="fixed inset-0 -z-10 cursor-default"
-                  onClick={() => {
-                    setIsAppsMenuOpen(false);
-                    setOpenSubmenu(null);
-                  }}
-                  aria-label="Close menu"
-                  tabIndex={-1}
-                />
-                <div className="absolute top-full left-0 mt-2 bg-white/95 backdrop-blur-sm rounded-md shadow-xl border border-white/30 min-w-[200px] overflow-hidden z-50">
-                  {apps.map((app) => {
-                    const IconComponent = app.icon;
-                    const hasSubmenu = app.hasSubmenu && app.submenu;
-                    const isSubmenuOpen = openSubmenu === app.name;
+              {/* Apps Dropdown */}
+              {isAppsMenuOpen && (
+                <>
+                  <button
+                    className="fixed inset-0 -z-10 cursor-default"
+                    onClick={() => {
+                      setIsAppsMenuOpen(false);
+                      setOpenSubmenu(null);
+                    }}
+                    aria-label="Close menu"
+                    tabIndex={-1}
+                  />
+                  <div className="absolute top-full left-0 mt-2 bg-white/95 backdrop-blur-sm rounded-md shadow-xl border border-white/30 min-w-[200px] overflow-hidden z-50">
+                    {apps.map((app) => {
+                      const IconComponent = app.icon;
+                      const hasSubmenu = app.hasSubmenu && app.submenu;
+                      const isSubmenuOpen = openSubmenu === app.name;
 
-                    return (
-                      <div key={app.path}>
-                        <button
-                          onClick={() => {
-                            if (hasSubmenu) {
-                              setOpenSubmenu(isSubmenuOpen ? null : app.name);
-                            } else {
-                              handleAppSelect(app.path);
-                            }
-                          }}
-                          className="w-full px-4 py-3 text-left flex items-center gap-3 transition-all duration-200 text-gray-700 hover:bg-gray-100 hover:text-gray-800 cursor-pointer"
-                        >
-                          {IconComponent && (
-                            <IconComponent sx={{ fontSize: 20 }} />
+                      return (
+                        <div key={app.path}>
+                          <button
+                            onClick={() => {
+                              if (hasSubmenu) {
+                                setOpenSubmenu(isSubmenuOpen ? null : app.name);
+                              } else {
+                                handleAppSelect(app.path);
+                              }
+                            }}
+                            className="w-full px-4 py-3 text-left flex items-center gap-3 transition-all duration-200 text-gray-700 hover:bg-gray-100 hover:text-gray-800 cursor-pointer"
+                          >
+                            {IconComponent && (
+                              <IconComponent sx={{ fontSize: 20 }} />
+                            )}
+                            <span className="text-sm font-medium flex-1">
+                              {app.name}
+                            </span>
+                            {hasSubmenu && (
+                              <ExpandMoreIcon
+                                sx={{
+                                  fontSize: 16,
+                                  transform: isSubmenuOpen
+                                    ? "rotate(180deg)"
+                                    : "rotate(0deg)",
+                                  transition: "transform 0.2s ease",
+                                }}
+                              />
+                            )}
+                          </button>
+
+                          {hasSubmenu && isSubmenuOpen && (
+                            <div className="bg-gray-50 border-t border-gray-200">
+                              {app.submenu?.map((subItem, index) => {
+                                const SubIconComponent = subItem.icon;
+                                return (
+                                  <button
+                                    key={`${app.name}-${index}`}
+                                    onClick={() =>
+                                      handleAppSelect(subItem.path)
+                                    }
+                                    className="w-full px-8 py-2 text-left text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-800 transition-all duration-200 cursor-pointer flex items-center gap-2"
+                                  >
+                                    {SubIconComponent && (
+                                      <SubIconComponent sx={{ fontSize: 16 }} />
+                                    )}
+                                    {subItem.name}
+                                  </button>
+                                );
+                              })}
+                            </div>
                           )}
-                          <span className="text-sm font-medium flex-1">
-                            {app.name}
-                          </span>
-                          {hasSubmenu && (
-                            <ExpandMoreIcon
-                              sx={{
-                                fontSize: 16,
-                                transform: isSubmenuOpen
-                                  ? "rotate(180deg)"
-                                  : "rotate(0deg)",
-                                transition: "transform 0.2s ease",
-                              }}
-                            />
-                          )}
-                        </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+            </div>
 
-                        {hasSubmenu && isSubmenuOpen && (
-                          <div className="bg-gray-50 border-t border-gray-200">
-                            {app.submenu?.map((subItem, index) => {
-                              const SubIconComponent = subItem.icon;
-                              return (
-                                <button
-                                  key={`${app.name}-${index}`}
-                                  onClick={() => handleAppSelect(subItem.path)}
-                                  className="w-full px-8 py-2 text-left text-sm text-gray-600 hover:bg-gray-100 hover:text-gray-800 transition-all duration-200 cursor-pointer flex items-center gap-2"
-                                >
-                                  {SubIconComponent && (
-                                    <SubIconComponent sx={{ fontSize: 16 }} />
-                                  )}
-                                  {subItem.name}
-                                </button>
-                              );
-                            })}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </>
-            )}
+            <div className="h-4 w-px bg-gray-300" />
+
+            <h3 className="text-lg font-semibold text-gray-800">Field Notes</h3>
           </div>
 
-          <div className="h-4 w-px bg-gray-300" />
-
-          <h3 className="text-lg font-semibold text-gray-800">Field Notes</h3>
-        </div>
-
-        {/* Auth UI - moved outside of centered content */}
-        <div className="flex justify-center sm:justify-end px-3 py-2">
-          {(() => {
-            if (status === "loading") {
-              return (
-                <span className="font-mono text-gray-500 text-sm">
-                  Loading...
-                </span>
-              );
-            }
-            if (!session) {
+          {/* Desktop Auth UI */}
+          <div className="hidden sm:flex items-center gap-2 pr-4">
+            {(() => {
+              if (status === "loading") {
+                return (
+                  <span className="font-mono text-gray-500 text-sm">
+                    Loading...
+                  </span>
+                );
+              }
+              if (!session) {
+                return (
+                  <div className="flex items-center gap-2">
+                    <Link
+                      href="/auth/signup"
+                      className="px-4 py-2 rounded bg-gray-600 text-white font-mono text-sm hover:bg-gray-700 transition"
+                    >
+                      Sign Up
+                    </Link>
+                    <span className="text-gray-400">|</span>
+                    <button
+                      onClick={() => signIn("google")}
+                      className="px-4 py-2 rounded bg-blue-600 text-white font-mono text-sm hover:bg-blue-700 transition"
+                    >
+                      Sign in with Google
+                    </button>
+                  </div>
+                );
+              }
               return (
                 <div className="flex items-center gap-2">
-                  <Link
-                    href="/auth/signup"
-                    className="px-4 py-2 rounded bg-gray-600 text-white font-mono text-sm hover:bg-gray-700 transition"
-                  >
-                    Sign Up
-                  </Link>
-                  <span className="text-gray-400">|</span>
+                  <span className="flex items-center gap-2 font-mono text-blue-600 text-sm">
+                    {session.user?.image && (
+                      <Link href="/user/profile">
+                        <Image
+                          src={session.user.image}
+                          alt={session.user?.name || "User profile"}
+                          width={28}
+                          height={28}
+                          className="rounded-full border border-gray-300 transition"
+                        />
+                      </Link>
+                    )}
+                    {nameFromDB ? `Signed in as ${nameFromDB}` : ""}
+                  </span>
+                  <span className="h-4 w-px bg-gray-300 mx-2" />
                   <button
-                    onClick={() => signIn("google")}
-                    className="px-4 py-2 rounded bg-blue-600 text-white font-mono text-sm hover:bg-blue-700 transition"
+                    onClick={() => signOut()}
+                    className="px-3 py-1 rounded bg-gray-200 text-gray-800 font-mono text-sm hover:bg-gray-300 transition cursor-pointer"
                   >
-                    Sign in with Google
+                    Sign out
                   </button>
                 </div>
               );
-            }
-            return (
-              <div className="flex items-center gap-2">
-                <span className="flex items-center gap-2 font-mono text-blue-600 text-sm">
-                  {session.user?.image && (
-                    <Link href="/user/profile">
-                      <Image
-                        src={session.user.image}
-                        alt={session.user?.name || "User profile"}
-                        width={28}
-                        height={28}
-                        className="rounded-full border border-gray-300 transition"
-                      />
-                    </Link>
-                  )}
-                  {nameFromDB ? `Signed in as ${nameFromDB}` : ""}
-                </span>
-                <span className="h-4 w-px bg-gray-300 mx-2" />
-                <button
-                  onClick={() => signOut()}
-                  className="px-3 py-1 rounded bg-gray-200 text-gray-800 font-mono text-sm hover:bg-gray-300 transition cursor-pointer"
-                >
-                  Sign out
-                </button>
-              </div>
-            );
-          })()}
+            })()}
+          </div>
         </div>
 
-        {/* Horizontal gray line */}
-        {/* <div className="border-b border-gray-200 mb-6"></div> */}
+        {/* Mobile Auth UI */}
+        {session && (
+          <div className="sm:hidden px-3 py-2 border-b border-gray-200 flex justify-center">
+            <div className="flex items-center space-x-2">
+              {session.user?.image && (
+                <img
+                  src={session.user.image}
+                  alt="Profile"
+                  className="w-6 h-6 rounded-full"
+                />
+              )}
+              <span className="text-gray-700 font-mono text-sm">
+                {nameFromDB ? `Signed in as ${nameFromDB}` : ""}
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* Main Content */}
         <div className="flex-1 flex flex-col px-0 py-6">

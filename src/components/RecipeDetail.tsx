@@ -50,7 +50,7 @@ import {
   DialogActions,
 } from "@mui/material";
 import { renderFooter } from "./shared/footerHelpers";
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
 
 type Recipe = {
   id: number;
@@ -699,22 +699,31 @@ const RecipeDetail = React.memo(function RecipeDetail({
           </div>
 
           {/* Action buttons */}
-          <div className="hidden sm:flex items-center gap-2">
+          <div className="hidden sm:flex items-center gap-2 pr-4">
             {session ? (
-              <span className="flex items-center gap-2 font-mono text-blue-600 text-sm">
-                {session.user?.image && (
-                  <Link href="/user/profile">
-                    <Image
-                      src={session.user.image}
-                      alt={session.user?.name || "User profile"}
-                      width={28}
-                      height={28}
-                      className="rounded-full border border-gray-300 cursor-pointer hover:scale-105 transition"
-                    />
-                  </Link>
-                )}
-                {nameFromDB ? `Signed in as ${nameFromDB}` : ""}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="flex items-center gap-2 font-mono text-blue-600 text-sm">
+                  {session.user?.image && (
+                    <Link href="/user/profile">
+                      <Image
+                        src={session.user.image}
+                        alt={session.user?.name || "User profile"}
+                        width={28}
+                        height={28}
+                        className="rounded-full border border-gray-300 cursor-pointer hover:scale-105 transition"
+                      />
+                    </Link>
+                  )}
+                  {nameFromDB ? `Signed in as ${nameFromDB}` : ""}
+                </span>
+                <span className="h-4 w-px bg-gray-300 mx-2" />
+                <button
+                  onClick={() => signOut()}
+                  className="px-3 py-1 rounded bg-gray-200 text-gray-800 font-mono text-sm hover:bg-gray-300 transition cursor-pointer"
+                >
+                  Sign out
+                </button>
+              </div>
             ) : null}
           </div>
         </div>

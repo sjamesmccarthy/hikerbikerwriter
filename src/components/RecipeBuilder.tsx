@@ -644,7 +644,7 @@ const RecipeBuilder: React.FC = () => {
           </div>
 
           {/* Auth Info - Desktop only */}
-          <div className="hidden sm:flex items-center gap-2">
+          <div className="hidden sm:flex items-center gap-2 pr-4">
             <span className="flex items-center gap-2 font-mono text-blue-600 text-sm">
               {session.user?.image && (
                 <Link href="/user/profile">
@@ -686,13 +686,6 @@ const RecipeBuilder: React.FC = () => {
               )}
               {nameFromDB ? `Signed in as ${nameFromDB}` : ""}
             </span>
-            <span className="h-4 w-px bg-gray-300 mx-2" />
-            <button
-              onClick={() => signOut()}
-              className="px-3 py-1 rounded bg-gray-200 text-gray-800 font-mono text-sm hover:bg-gray-300 transition cursor-pointer"
-            >
-              Sign out
-            </button>
           </div>
         </div>
 

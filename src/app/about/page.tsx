@@ -543,7 +543,10 @@ export default function AboutPage() {
 
             <h3 className="font-semibold mt-4 mb-1">v1.9.1</h3>
             <ul className="list-disc ml-6 mb-2">
-              <li>Cleaned up &quot;Signed In as ...&quot; display</li>
+              <li>
+                Cleaned up &quot;Signed In as ...&quot; display for mobile and
+                desktop.
+              </li>
               <li>
                 Repaired the Add To Family bug that would not add the memeber to
                 the family.
