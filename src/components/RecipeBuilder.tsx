@@ -94,9 +94,10 @@ const RecipeBuilder: React.FC = () => {
       step: string;
       temperature?: number;
       time?: number;
+      timeInput?: string;
       superSmoke?: boolean;
     }>
-  >([{ id: crypto.randomUUID(), step: "" }]);
+  >([{ id: crypto.randomUUID(), step: "", timeInput: "" }]);
   const [myNotes, setMyNotes] = useState("");
   const [favorite, setFavorite] = useState(false);
   const [importUrl, setImportUrl] = useState("");
@@ -375,18 +376,59 @@ const RecipeBuilder: React.FC = () => {
     }
   };
 
+  // Helper to parse time like '1h 30m' or '90m' or '2h' to total minutes
+  const parseTimeToMinutes = (input: string): number => {
+    if (!input) return 0;
+    let total = 0;
+    // Match hours and minutes
+    const hourMatch = input.match(/(\d+)\s*h/);
+    const minMatch = input.match(/(\d+)\s*m/);
+    if (hourMatch) total += parseInt(hourMatch[1], 10) * 60;
+    if (minMatch) total += parseInt(minMatch[1], 10);
+    // If only a number is entered, treat as minutes
+    if (!hourMatch && !minMatch && /^\d+$/.test(input.trim())) {
+      total = parseInt(input.trim(), 10);
+    }
+    return total;
+  };
+
   const handleStepChange = (
     index: number,
     field: keyof (typeof steps)[0],
-    value: string | number | boolean
+    value: string | number | boolean,
+    opts?: { commitTime?: boolean }
   ) => {
-    setSteps((prev) =>
-      prev.map((step, i) => (i === index ? { ...step, [field]: value } : step))
-    );
+    if (field === "time" && typeof value === "string") {
+      if (opts?.commitTime) {
+        // Commit: parse and store as minutes, clear timeInput
+        const minutes = parseTimeToMinutes(value);
+        setSteps((prev) =>
+          prev.map((step, i) =>
+            i === index ? { ...step, time: minutes, timeInput: "" } : step
+          )
+        );
+      } else {
+        // Just update the input string
+        setSteps((prev) =>
+          prev.map((step, i) =>
+            i === index ? { ...step, timeInput: value } : step
+          )
+        );
+      }
+    } else {
+      setSteps((prev) =>
+        prev.map((step, i) =>
+          i === index ? { ...step, [field]: value } : step
+        )
+      );
+    }
   };
 
   const addStep = () => {
-    setSteps((prev) => [...prev, { id: crypto.randomUUID(), step: "" }]);
+    setSteps((prev) => [
+      ...prev,
+      { id: crypto.randomUUID(), step: "", timeInput: "" },
+    ]);
   };
 
   const removeStep = (index: number) => {
@@ -627,7 +669,7 @@ const RecipeBuilder: React.FC = () => {
         </div>
 
         {/* Main Content */}
-        <div className="max-w-4xl mx-auto p-6">
+        <div className="max-w-6xl mx-auto p-6">
           <div className="bg-gray-100 p-4 rounded-lg">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
               {/* Left Column */}
@@ -1111,59 +1153,163 @@ const RecipeBuilder: React.FC = () => {
                             maxRows={12}
                             size="small"
                             fullWidth
+                            sx={{ mb: "8px" }}
                           />
 
-                          {type === "Smoker" && (
-                            <div className="flex gap-4 items-center mt-3 p-3 bg-gray-50 rounded">
-                              <TextField
-                                placeholder="Temp (°F)"
-                                type="number"
-                                value={step.temperature || ""}
-                                onChange={(e) =>
-                                  handleStepChange(
-                                    index,
-                                    "temperature",
-                                    e.target.value
-                                      ? parseInt(e.target.value)
-                                      : ""
-                                  )
-                                }
-                                size="small"
-                                sx={{ width: 120 }}
-                              />
-                              <TextField
-                                placeholder="Time (min)"
-                                type="number"
-                                value={step.time || ""}
-                                onChange={(e) =>
-                                  handleStepChange(
-                                    index,
-                                    "time",
-                                    e.target.value
-                                      ? parseInt(e.target.value)
-                                      : ""
-                                  )
-                                }
-                                size="small"
-                                sx={{ width: 120 }}
-                              />
-                              <FormControlLabel
-                                control={
-                                  <Switch
-                                    checked={step.superSmoke || false}
-                                    onChange={(e) =>
-                                      handleStepChange(
-                                        index,
-                                        "superSmoke",
-                                        e.target.checked
-                                      )
+                          {(type === "Smoker" || type === "Grill") && (
+                            <div className="flex gap-4 items-center mt-2 rounded">
+                              <div className="flex w-full gap-4">
+                                {type === "Smoker" ? (
+                                  <>
+                                    <div className="w-3/5 sm:w-3/5">
+                                      <TextField
+                                        placeholder="Temp"
+                                        type="text"
+                                        value={step.temperature || ""}
+                                        onChange={(e) =>
+                                          handleStepChange(
+                                            index,
+                                            "temperature",
+                                            e.target.value
+                                          )
+                                        }
+                                        size="small"
+                                        fullWidth
+                                      />
+                                    </div>
+                                    <div className="w-3/5 sm:w-3/5">
+                                      <TextField
+                                        placeholder="Time"
+                                        type="text"
+                                        value={
+                                          typeof step.timeInput === "string" &&
+                                          step.timeInput.length > 0
+                                            ? step.timeInput
+                                            : step.time || ""
+                                        }
+                                        onChange={(e) =>
+                                          handleStepChange(
+                                            index,
+                                            "time",
+                                            e.target.value
+                                          )
+                                        }
+                                        onBlur={(e) =>
+                                          handleStepChange(
+                                            index,
+                                            "time",
+                                            e.target.value,
+                                            { commitTime: true }
+                                          )
+                                        }
+                                        onKeyDown={(e) => {
+                                          if (e.key === "Enter") {
+                                            handleStepChange(
+                                              index,
+                                              "time",
+                                              (e.target as HTMLInputElement)
+                                                .value,
+                                              { commitTime: true }
+                                            );
+                                          }
+                                        }}
+                                        size="small"
+                                        fullWidth
+                                      />
+                                    </div>
+                                  </>
+                                ) : (
+                                  <>
+                                    <div className="w-1/2">
+                                      <FormControl size="small" fullWidth>
+                                        <InputLabel>Heat Level</InputLabel>
+                                        <Select
+                                          value={step.temperature || ""}
+                                          label="Heat Level"
+                                          onChange={(e) =>
+                                            handleStepChange(
+                                              index,
+                                              "temperature",
+                                              e.target.value
+                                            )
+                                          }
+                                        >
+                                          <MenuItem value={250}>
+                                            Low Heat (250°F)
+                                          </MenuItem>
+                                          <MenuItem value={350}>
+                                            Medium Heat (350°F)
+                                          </MenuItem>
+                                          <MenuItem value={450}>
+                                            High Heat (450°F)
+                                          </MenuItem>
+                                        </Select>
+                                      </FormControl>
+                                    </div>
+                                    <div className="w-1/2">
+                                      <TextField
+                                        placeholder="Time"
+                                        type="text"
+                                        value={
+                                          typeof step.timeInput === "string" &&
+                                          step.timeInput.length > 0
+                                            ? step.timeInput
+                                            : step.time || ""
+                                        }
+                                        onChange={(e) =>
+                                          handleStepChange(
+                                            index,
+                                            "time",
+                                            e.target.value
+                                          )
+                                        }
+                                        onBlur={(e) =>
+                                          handleStepChange(
+                                            index,
+                                            "time",
+                                            e.target.value,
+                                            { commitTime: true }
+                                          )
+                                        }
+                                        onKeyDown={(e) => {
+                                          if (e.key === "Enter") {
+                                            handleStepChange(
+                                              index,
+                                              "time",
+                                              (e.target as HTMLInputElement)
+                                                .value,
+                                              { commitTime: true }
+                                            );
+                                          }
+                                        }}
+                                        size="small"
+                                        fullWidth
+                                      />
+                                    </div>
+                                  </>
+                                )}
+                              </div>
+                              {type === "Smoker" && (
+                                <div className="w-full mt-2">
+                                  <FormControlLabel
+                                    control={
+                                      <Switch
+                                        checked={step.superSmoke || false}
+                                        onChange={(e) =>
+                                          handleStepChange(
+                                            index,
+                                            "superSmoke",
+                                            e.target.checked
+                                          )
+                                        }
+                                        size="small"
+                                      />
                                     }
-                                    size="small"
+                                    label="Super Smoke"
+                                    sx={{ ml: 1 }}
                                   />
-                                }
-                                label="Super Smoke"
-                                sx={{ ml: 2 }}
-                              />
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>

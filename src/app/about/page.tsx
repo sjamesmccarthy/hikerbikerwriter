@@ -500,7 +500,9 @@ export default function AboutPage() {
               <li>
                 Claude sometimes forgot to remove unused code and files leaving
                 the developer with a lot of cleanup after a conversational build
-                of new features or editing existing.
+                of new features or editing existing. Additionlly, Claude Sonnet
+                3.5 would forget context to what it did sometimes as quickly as
+                right after doing it.
               </li>
             </ul>
 
