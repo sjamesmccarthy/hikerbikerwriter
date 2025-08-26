@@ -1196,7 +1196,7 @@ export default function JobTracker() {
           }" to "${
             statusLabels[newStatus as keyof typeof statusLabels] || newStatus
           }"`
-        : `Application submitted - Status set to "${
+        : `Job Added - Status set to "${
             statusLabels[newStatus as keyof typeof statusLabels] || newStatus
           }"`,
       notes: `Automated entry for ${position} at ${companyName}`,
@@ -3273,7 +3273,7 @@ export default function JobTracker() {
 
                 {isLogExpanded && (
                   <>
-                    {/* Filter Controls */}
+                    {/* Filter Controls - Responsive for mobile */}
                     <div className="mb-4 flex flex-col sm:flex-row gap-3">
                       <TextField
                         placeholder="Search log entries..."
@@ -3292,39 +3292,33 @@ export default function JobTracker() {
                         }}
                         sx={{ flex: 1 }}
                       />
-                      <div className="flex gap-2" style={{ width: "50%" }}>
-                        <TextField
-                          type="date"
-                          label="Start Date"
-                          value={logStartDate}
-                          onChange={(e) => {
-                            setLogStartDate(e.target.value);
-                            setLogCurrentPage(1);
-                          }}
-                          size="small"
-                          InputLabelProps={{ shrink: true }}
-                          sx={{ flex: 1 }}
-                        />
-                        <TextField
-                          type="date"
-                          label="End Date"
-                          value={logEndDate}
-                          onChange={(e) => {
-                            setLogEndDate(e.target.value);
-                            setLogCurrentPage(1);
-                          }}
-                          size="small"
-                          InputLabelProps={{ shrink: true }}
-                          sx={{ flex: 1 }}
-                        />
+                      {/* Mobile: Only TXT, PDF, Clear. Desktop: show date pickers too */}
+                      <div className="flex gap-2 w-full sm:w-auto">
                         <Button
                           variant="outlined"
                           onClick={handleExportLogData}
                           size="small"
-                          sx={{ whiteSpace: "nowrap", minWidth: "auto" }}
+                          sx={{
+                            whiteSpace: "nowrap",
+                            minWidth: "auto",
+                            flex: 1,
+                          }}
                           title="Export filtered log data as text file"
                         >
-                          <FileDownloadIcon />
+                          TXT
+                        </Button>
+                        <Button
+                          variant="outlined"
+                          onClick={handleExportAsPDF}
+                          size="small"
+                          sx={{
+                            whiteSpace: "nowrap",
+                            minWidth: "auto",
+                            flex: 1,
+                          }}
+                          title="Export filtered log data as PDF"
+                        >
+                          PDF
                         </Button>
                         <Button
                           variant="outlined"
@@ -3335,7 +3329,7 @@ export default function JobTracker() {
                             setLogCurrentPage(1);
                           }}
                           size="small"
-                          sx={{ whiteSpace: "nowrap" }}
+                          sx={{ whiteSpace: "nowrap", flex: 1 }}
                         >
                           Clear
                         </Button>
