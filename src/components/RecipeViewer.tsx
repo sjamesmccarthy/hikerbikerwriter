@@ -972,7 +972,7 @@ const RecipeViewer: React.FC<RecipeViewerProps> = () => {
                                   selectedFamilyMember
                                 );
                               }}
-                              className={`flex-1 md:flex-none px-2 py-2 rounded text-sm font-medium transition-colors flex items-center justify-center gap-1 ${
+                              className={`flex-1 md:w-24 px-2 py-2 rounded text-sm font-medium transition-colors flex items-center justify-center gap-1 ${
                                 showFavoritesOnly
                                   ? "bg-red-100 text-red-700 border border-red-300"
                                   : "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200"
@@ -995,7 +995,7 @@ const RecipeViewer: React.FC<RecipeViewerProps> = () => {
                               onClick={() => {
                                 setShowPublicRecipes(!showPublicRecipes);
                               }}
-                              className={`flex-1 md:flex-none px-2 py-2 rounded text-sm font-medium transition-colors flex items-center justify-center gap-1 ${
+                              className={`flex-1 md:w-24 px-2 py-2 rounded text-sm font-medium transition-colors flex items-center justify-center gap-1 ${
                                 showPublicRecipes
                                   ? "bg-green-100 text-green-700 border border-green-300"
                                   : "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200"
