@@ -465,9 +465,12 @@ const RecipeViewer: React.FC<RecipeViewerProps> = () => {
   const filteredRecipes = (Array.isArray(recipes) ? recipes : []).filter(
     (recipe) => {
       const categoryMatch =
-        activeCategory === "All" || recipe.categories.includes(activeCategory);
+        activeCategory === "All" ||
+        (recipe.categories && recipe.categories.includes(activeCategory));
       const cookingTypeMatch =
-        activeCookingType === "All" || recipe.type === activeCookingType;
+        activeCookingType === "All" ||
+        recipe.type?.toLowerCase() === activeCookingType.toLowerCase();
+
       const totalTime = recipe.prepTime + recipe.cookTime;
       const cookTimeMatch =
         activeCookTime === "All" ||
