@@ -1056,73 +1056,55 @@ const RecipeDetail = React.memo(function RecipeDetail({
             </div>
 
             {/* Steps */}
-            <Accordion defaultExpanded elevation={0}>
-              <AccordionSummary
-                expandIcon={<ExpandMoreIcon />}
-                sx={{ backgroundColor: "rgb(249 250 251)" }}
-              >
-                <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                  Instructions
-                </Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                <div className="space-y-6">
-                  {recipe.steps.map((step, index) => (
-                    <div
-                      key={`step-${index}-${step.step.substring(0, 20)}`}
-                      className="border-b border-gray-200 pb-4 last:border-b-0"
-                    >
-                      <h4 className="font-bold text-black uppercase mb-2">
-                        STEP {index + 1}
-                      </h4>
-                      <div className="space-y-2">
-                        <p className="text-gray-800">{step.step}</p>
-                        {(step.temperature || step.time || step.superSmoke) && (
-                          <div className="flex gap-4 text-sm text-gray-600">
-                            {step.temperature && (
-                              <span className="flex items-center gap-1">
-                                <OutdoorGrillIcon sx={{ fontSize: 16 }} />
-                                {step.temperature}°F
-                              </span>
-                            )}
-                            {step.time && (
-                              <span className="flex items-center gap-1">
-                                <TimerIcon sx={{ fontSize: 16 }} />
-                                {step.time}m
-                              </span>
-                            )}
-                            {step.superSmoke && (
-                              <span className="flex items-center gap-1">
-                                <WhatshotIcon sx={{ fontSize: 16 }} />
-                                Super Smoke
-                              </span>
-                            )}
-                          </div>
-                        )}
-                      </div>
+            <div>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">Steps</h2>
+              <div className="space-y-6">
+                {recipe.steps.map((step, index) => (
+                  <div
+                    key={`step-${index}-${step.step.substring(0, 20)}`}
+                    className="border-b border-gray-200 pb-4 last:border-b-0"
+                  >
+                    <h4 className="font-bold text-black uppercase mb-2">
+                      STEP {index + 1}
+                    </h4>
+                    <div className="space-y-2">
+                      <p className="text-gray-800">{step.step}</p>
+                      {(step.temperature || step.time || step.superSmoke) && (
+                        <div className="flex gap-4 text-sm text-gray-600">
+                          {step.temperature && (
+                            <span className="flex items-center gap-1">
+                              <OutdoorGrillIcon sx={{ fontSize: 16 }} />
+                              {step.temperature}°F
+                            </span>
+                          )}
+                          {step.time && (
+                            <span className="flex items-center gap-1">
+                              <TimerIcon sx={{ fontSize: 16 }} />
+                              {step.time}m
+                            </span>
+                          )}
+                          {step.superSmoke && (
+                            <span className="flex items-center gap-1">
+                              <WhatshotIcon sx={{ fontSize: 16 }} />
+                              Super Smoke
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </div>
-                  ))}
-                </div>
-              </AccordionDetails>
-            </Accordion>
+                  </div>
+                ))}
+              </div>
+            </div>
 
             {/* My Notes */}
             {recipe.myNotes && (
-              <Accordion elevation={0}>
-                <AccordionSummary
-                  expandIcon={<ExpandMoreIcon />}
-                  sx={{ backgroundColor: "rgb(249 250 251)" }}
-                >
-                  <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                    My Notes
-                  </Typography>
-                </AccordionSummary>
-                <AccordionDetails>
-                  <Typography sx={{ whiteSpace: "pre-wrap" }}>
-                    {recipe.myNotes}
-                  </Typography>
-                </AccordionDetails>
-              </Accordion>
+              <div>
+                <h2 className="text-xl font-bold text-gray-900 mb-4">Notes</h2>
+                <p className="text-gray-700 whitespace-pre-wrap">
+                  {recipe.myNotes}
+                </p>
+              </div>
             )}
           </div>
         </div>
