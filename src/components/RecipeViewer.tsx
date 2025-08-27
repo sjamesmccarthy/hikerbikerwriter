@@ -64,6 +64,7 @@ type Recipe = {
   type: "smoker" | "flat-top" | "grill" | "oven" | "beverage";
   recommendedPellets?: string;
   categories: string[];
+  category?: string; // Support legacy single category field
   photo?: string;
   prepTime: number;
   cookTime: number;
@@ -475,7 +476,8 @@ const RecipeViewer: React.FC<RecipeViewerProps> = () => {
     (recipe) => {
       const categoryMatch =
         activeCategory === "All" ||
-        (recipe.categories && recipe.categories.includes(activeCategory));
+        (recipe.categories && recipe.categories.includes(activeCategory)) ||
+        (recipe.category && recipe.category === activeCategory);
       const cookingTypeMatch =
         activeCookingType === "All" ||
         recipe.type?.toLowerCase() === activeCookingType.toLowerCase();
