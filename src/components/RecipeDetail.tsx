@@ -1037,12 +1037,12 @@ const RecipeDetail = React.memo(function RecipeDetail({
                         </IconButton>
                         {recipe?.familyPhoto || recipe?.familyNotes ? (
                           <div>
-                            <h2 className="py-4 text-lg font-semibold mb-2 text-center">
+                            <h2 className="py-4 text-lg font-semibold text-center">
                               Shhh ...
                               <br />
                               Here Are The Family Secrets
                             </h2>
-                            <div className="sm:p-4 flex flex-col gap-6">
+                            <div className="sm:p-2 flex flex-col gap-6">
                               {recipe?.familyNotes && (
                                 <div className="w-full">
                                   <p className="text-gray-700 whitespace-pre-wrap text-[18px]">
