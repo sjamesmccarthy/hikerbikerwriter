@@ -82,9 +82,10 @@ type Recipe = {
   favorite: boolean;
   public?: boolean;
   date: string;
-  shared_family?: boolean;
+  shared_family?: boolean | number;
   familyPhoto?: string;
   familyNotes?: string;
+  userEmail?: string;
 };
 
 interface RecipeDetailProps {
@@ -118,6 +119,10 @@ const RecipeDetail = React.memo(function RecipeDetail({
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
   const [showFamilyDetails, setShowFamilyDetails] = useState(false);
   const [nameFromDB, setNameFromDB] = useState<string | null>(null);
+  const [familyMembers, setFamilyMembers] = useState<
+    Array<{ name: string; email: string; relationship?: string }>
+  >([]);
+  const [hasFamilyMembers, setHasFamilyMembers] = useState(false);
   const { data: session } = useSession();
 
   // Apps menu configuration
@@ -347,6 +352,56 @@ const RecipeDetail = React.memo(function RecipeDetail({
 
     fetchUserName();
   }, [session?.user?.email, session?.user?.name]);
+
+  // Check if user has family members
+  useEffect(() => {
+    async function checkFamilyMembers() {
+      if (session?.user?.email) {
+        try {
+          // Fetch family data to check if user has family members
+          const res = await fetch(
+            `/api/familyline?email=${encodeURIComponent(session.user.email)}`
+          );
+          if (res.ok) {
+            const familyData = await res.json();
+            // Parse the JSON data - it might be double-encoded
+            let parsedJson = familyData?.json;
+            if (typeof parsedJson === "string") {
+              parsedJson = JSON.parse(parsedJson);
+            }
+            // Check if family data has people array with members
+            const hasPeople =
+              parsedJson?.people &&
+              Array.isArray(parsedJson.people) &&
+              parsedJson.people.length > 0;
+            setHasFamilyMembers(hasPeople);
+
+            // If user has family members, fetch the family members list
+            if (hasPeople) {
+              const membersRes = await fetch(
+                `/api/family-members?email=${encodeURIComponent(
+                  session.user.email
+                )}`
+              );
+              if (membersRes.ok) {
+                const members = await membersRes.json();
+                setFamilyMembers(members);
+              }
+            }
+          }
+        } catch (error) {
+          console.error("Error checking family members:", error);
+          setHasFamilyMembers(false);
+          setFamilyMembers([]);
+        }
+      } else {
+        setHasFamilyMembers(false);
+        setFamilyMembers([]);
+      }
+    }
+
+    checkFamilyMembers();
+  }, [session]);
 
   const toggleFavorite = async () => {
     if (!recipe || !session?.user?.email) return;
@@ -915,14 +970,30 @@ const RecipeDetail = React.memo(function RecipeDetail({
                   {recipe.sourceTitle && !recipe.source && (
                     <span className="text-gray-500">{recipe.sourceTitle}</span>
                   )}
-                  {recipe.shared_family === true && (
-                    <button
-                      onClick={() => setShowFamilyDetails((prev) => !prev)}
-                      className="text-blue-600 hover:text-blue-800 hover:underline ml-1 font-medium"
-                    >
-                      and shared with family
-                    </button>
-                  )}
+                  {(recipe.shared_family === true ||
+                    recipe.shared_family === 1) &&
+                    session?.user?.email &&
+                    (() => {
+                      const isOwner = recipe.userEmail === session.user.email;
+                      const recipeOwnerIsFamilyMember = familyMembers.some(
+                        (member) => member.email === recipe.userEmail
+                      );
+
+                      // Show if user is owner of a family-shared recipe, or if user is family member viewing family-shared recipe
+                      if (isOwner || recipeOwnerIsFamilyMember) {
+                        return (
+                          <button
+                            onClick={() =>
+                              setShowFamilyDetails((prev) => !prev)
+                            }
+                            className="text-blue-600 hover:text-blue-800 hover:underline ml-1 font-medium"
+                          >
+                            and shared with family
+                          </button>
+                        );
+                      }
+                      return null;
+                    })()}
                 </div>
               )}
             </div>
@@ -934,63 +1005,76 @@ const RecipeDetail = React.memo(function RecipeDetail({
           </div>
 
           {/* Family Details */}
-          {recipe.shared_family === true && (
-            <div className="mt-4 relative">
-              {showFamilyDetails && (
-                <div className="space-y-4 p-4 mb-8 bg-gray-50 rounded-lg relative">
-                  {/* X icon to close */}
-                  <IconButton
-                    onClick={() => setShowFamilyDetails(false)}
-                    sx={{
-                      position: "absolute",
-                      top: 8,
-                      right: 8,
-                      zIndex: 10,
-                      backgroundColor: "rgba(255,255,255,0.9)",
-                      "&:hover": { backgroundColor: "white" },
-                    }}
-                    size="small"
-                    title="Close Family Details"
-                  >
-                    <CloseIcon />
-                  </IconButton>
-                  {recipe?.familyPhoto || recipe?.familyNotes ? (
-                    <div>
-                      <h2 className="py-8 text-lg font-semibold mb-2 text-center">
-                        Shhh ...
-                        <br />
-                        Here Are The Family Secrets
-                      </h2>
-                      <div className="sm:p-8 flex flex-col md:flex-row gap-6 items-start">
-                        {recipe?.familyPhoto && (
-                          <div className="md:w-1/3 w-full">
-                            <Image
-                              src={recipe.familyPhoto}
-                              alt="Family recipe photo"
-                              width={400}
-                              height={300}
-                              className="rounded-lg object-cover w-full"
-                            />
+          {(recipe.shared_family === true || recipe.shared_family === 1) &&
+            session?.user?.email &&
+            (() => {
+              const isOwner = recipe.userEmail === session.user.email;
+              const recipeOwnerIsFamilyMember = familyMembers.some(
+                (member) => member.email === recipe.userEmail
+              );
+
+              // Show if user is owner of a family-shared recipe, or if user is family member viewing family-shared recipe
+              if (isOwner || recipeOwnerIsFamilyMember) {
+                return (
+                  <div className="mt-4 relative">
+                    {showFamilyDetails && (
+                      <div className="space-y-4 p-4 mb-8 bg-gray-50 rounded-lg relative">
+                        {/* X icon to close */}
+                        <IconButton
+                          onClick={() => setShowFamilyDetails(false)}
+                          sx={{
+                            position: "absolute",
+                            top: 8,
+                            right: 8,
+                            zIndex: 10,
+                            backgroundColor: "rgba(255,255,255,0.9)",
+                            "&:hover": { backgroundColor: "white" },
+                          }}
+                          size="small"
+                          title="Close Family Details"
+                        >
+                          <CloseIcon />
+                        </IconButton>
+                        {recipe?.familyPhoto || recipe?.familyNotes ? (
+                          <div>
+                            <h2 className="py-4 text-lg font-semibold mb-2 text-center">
+                              Shhh ...
+                              <br />
+                              Here Are The Family Secrets
+                            </h2>
+                            <div className="sm:p-4 flex flex-col gap-6">
+                              {recipe?.familyNotes && (
+                                <div className="w-full">
+                                  <p className="text-gray-700 whitespace-pre-wrap text-[18px]">
+                                    {recipe.familyNotes}
+                                  </p>
+                                </div>
+                              )}
+                              {recipe?.familyPhoto && (
+                                <div className="w-full">
+                                  <Image
+                                    src={recipe.familyPhoto}
+                                    alt="Family recipe photo"
+                                    width={400}
+                                    height={300}
+                                    className="rounded-lg object-cover w-full"
+                                  />
+                                </div>
+                              )}
+                            </div>
                           </div>
-                        )}
-                        {recipe?.familyNotes && (
-                          <div className="md:w-2/3 w-full">
-                            <p className="text-gray-700 whitespace-pre-wrap text-[18px]">
-                              {recipe.familyNotes}
-                            </p>
+                        ) : (
+                          <div className="text-gray-500 text-center py-4">
+                            No Family Secrets To Show For Now
                           </div>
                         )}
                       </div>
-                    </div>
-                  ) : (
-                    <div className="text-gray-500 text-center py-4">
-                      No Family Secrets To Show For Now
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
+                    )}
+                  </div>
+                );
+              }
+              return null;
+            })()}
 
           {/* Recipe Content */}
           <div className="space-y-4">

@@ -10,46 +10,99 @@ export default async function handler(req, res) {
         return res.status(400).json({ error: "Missing slug parameter" });
       }
 
-      let query;
-      let params;
+      let canAccess = false;
+      let familyEmails = [];
 
+      // If user is logged in, get their family member emails
       if (
         userEmail &&
         userEmail !== "undefined" &&
         userEmail !== "" &&
         userEmail !== "null"
       ) {
-        // Logged in user: can access their own recipes or public recipes
-        query =
-          "SELECT r.*, u.name as user_name FROM recipes r LEFT JOIN users u ON r.user_email = u.email WHERE (r.user_email = ? OR r.is_public = TRUE) AND JSON_EXTRACT(r.json, '$.slug') = ?";
-        params = [userEmail, slug];
-        console.log(
-          "Using authenticated query for user:",
-          userEmail,
-          "slug:",
-          slug
+        // Get the user's person_id
+        const [userRows] = await pool.query(
+          "SELECT person_id FROM users WHERE email = ?",
+          [userEmail]
         );
-      } else {
-        // Not logged in: can only access public recipes
-        query =
-          "SELECT r.*, u.name as user_name FROM recipes r LEFT JOIN users u ON r.user_email = u.email WHERE r.is_public = TRUE AND JSON_EXTRACT(r.json, '$.slug') = ?";
-        params = [slug];
-        console.log("Using public-only query for slug:", slug);
+
+        if (userRows.length > 0) {
+          const personId = userRows[0].person_id;
+
+          // Get the familyline data for this person_id
+          const [familyRows] = await pool.query(
+            "SELECT json FROM familyline WHERE person_id = ?",
+            [personId]
+          );
+
+          if (familyRows.length > 0) {
+            let familyData = familyRows[0].json;
+            if (typeof familyData === "string") {
+              familyData = JSON.parse(familyData);
+            }
+
+            // Collect family member emails
+            const familyMembers = familyData?.people || [];
+            for (const person of familyMembers) {
+              if (person.email && person.email !== userEmail) {
+                familyEmails.push(person.email);
+              }
+            }
+          }
+        }
       }
 
-      // Get the recipe from database by slug
-      const [rows] = await pool.query(query, params);
+      // First try to find the recipe
+      const findQuery =
+        "SELECT r.*, u.name as user_name FROM recipes r LEFT JOIN users u ON r.user_email = u.email WHERE JSON_EXTRACT(r.json, '$.slug') = ?";
+      const [rows] = await pool.query(findQuery, [slug]);
 
       if (rows.length === 0) {
         return res.status(404).json({ error: "Recipe not found" });
       }
 
-      const recipe =
-        typeof rows[0].json === "string"
-          ? JSON.parse(rows[0].json)
-          : rows[0].json;
-
       const row = rows[0];
+      const recipe =
+        typeof row.json === "string" ? JSON.parse(row.json) : row.json;
+
+      // Check access permissions
+      if (
+        userEmail &&
+        userEmail !== "undefined" &&
+        userEmail !== "" &&
+        userEmail !== "null"
+      ) {
+        // User is logged in - check multiple access conditions
+        const isOwner = userEmail === row.user_email;
+        const isPublic = row.is_public === true || row.is_public === 1;
+        const isFamilyShared =
+          (row.shared_family === true || row.shared_family === 1) &&
+          familyEmails.includes(row.user_email);
+
+        canAccess = isOwner || isPublic || isFamilyShared;
+
+        console.log("Access check for user:", userEmail, "slug:", slug);
+        console.log("- isOwner:", isOwner);
+        console.log("- isPublic:", isPublic);
+        console.log("- isFamilyShared:", isFamilyShared);
+        console.log("- familyEmails:", familyEmails);
+        console.log("- recipe.user_email:", row.user_email);
+        console.log("- canAccess:", canAccess);
+      } else {
+        // Not logged in: can only access public recipes
+        canAccess = row.is_public === true || row.is_public === 1;
+        console.log(
+          "Public-only access for slug:",
+          slug,
+          "canAccess:",
+          canAccess
+        );
+      }
+
+      if (!canAccess) {
+        return res.status(404).json({ error: "Recipe not found" });
+      }
+
       const isOwner = userEmail && userEmail === row.user_email;
 
       // Ensure compatibility with frontend expectations
@@ -61,6 +114,7 @@ export default async function handler(req, res) {
         personalNotes: isOwner ? recipe.personalNotes || "" : "", // Only show personal notes to owner
         isFavorite: isOwner ? recipe.isFavorite || false : false, // Only show favorite status to owner
         isPublic: row.is_public, // Include public status
+        shared_family: row.shared_family === 1 || row.shared_family === true, // Ensure boolean conversion
       };
 
       return res.status(200).json(responseData);
