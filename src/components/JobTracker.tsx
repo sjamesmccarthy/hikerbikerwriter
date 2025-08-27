@@ -2433,6 +2433,9 @@ export default function JobTracker() {
                       onClick={() => setIsMobileFilterOpen(!isMobileFilterOpen)}
                       className="bg-blue-50 hover:bg-blue-100 border border-blue-200 md:hidden"
                       size="large"
+                      sx={{
+                        display: { xs: "flex", md: "none" },
+                      }}
                     >
                       <FilterListIcon className="text-blue-600" />
                     </IconButton>
