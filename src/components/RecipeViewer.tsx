@@ -20,10 +20,12 @@ import {
   EmojiFoodBeverage as SideIcon,
   Cake as DessertIcon,
   FreeBreakfast as BreakfastIcon,
+  LocalBar as CocktailsIcon,
   ViewList as AllIcon,
   OutdoorGrill as OutdoorGrillIcon,
   GridOn as FlatTopIcon,
   Whatshot as GrillIcon,
+  Microwave as MicrowaveIcon,
   Schedule as QuickIcon,
   Timer as MediumIcon,
   HourglassEmpty as LongIcon,
@@ -59,7 +61,7 @@ type Recipe = {
   title: string;
   description: string;
   source?: string;
-  type: "smoker" | "flat-top" | "grill";
+  type: "smoker" | "flat-top" | "grill" | "oven";
   recommendedPellets?: string;
   categories: string[];
   photo?: string;
@@ -174,8 +176,15 @@ const RecipeViewer: React.FC<RecipeViewerProps> = () => {
   const { data: session, status } = useSession();
   const [nameFromDB, setNameFromDB] = useState<string | null>(null);
 
-  const categories = ["All", "Dinner", "Side", "Dessert", "Breakfast"];
-  const cookingTypes = ["All", "smoker", "flat-top", "grill"];
+  const categories = [
+    "All",
+    "Dinner",
+    "Side",
+    "Dessert",
+    "Breakfast",
+    "Cocktails",
+  ];
+  const cookingTypes = ["All", "smoker", "flat-top", "grill", "oven"];
   const cookTimes = [
     "All",
     "Quick (< 30 min)",
@@ -205,6 +214,8 @@ const RecipeViewer: React.FC<RecipeViewerProps> = () => {
         return <DessertIcon sx={{ fontSize: 16, mr: 1 }} />;
       case "Breakfast":
         return <BreakfastIcon sx={{ fontSize: 16, mr: 1 }} />;
+      case "Cocktails":
+        return <CocktailsIcon sx={{ fontSize: 16, mr: 1 }} />;
       default:
         return <RestaurantIcon sx={{ fontSize: 16, mr: 1 }} />;
     }
@@ -220,6 +231,8 @@ const RecipeViewer: React.FC<RecipeViewerProps> = () => {
         return <FlatTopIcon sx={{ fontSize: 16, mr: 1 }} />;
       case "grill":
         return <GrillIcon sx={{ fontSize: 16, mr: 1 }} />;
+      case "oven":
+        return <MicrowaveIcon sx={{ fontSize: 16, mr: 1 }} />;
       default:
         return <RestaurantIcon sx={{ fontSize: 16, mr: 1 }} />;
     }

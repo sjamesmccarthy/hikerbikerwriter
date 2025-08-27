@@ -19,6 +19,7 @@ import {
   Print as PrintIcon,
   PictureAsPdf as PictureAsPdfIcon,
   OutdoorGrill as OutdoorGrillIcon,
+  Microwave as MicrowaveIcon,
   Flatware as FlatwareIcon,
   Edit as EditIcon,
   Public as PublicIcon,
@@ -59,7 +60,7 @@ type Recipe = {
   description: string;
   source?: string;
   sourceTitle?: string;
-  type: "smoker" | "flat-top" | "grill";
+  type: "smoker" | "flat-top" | "grill" | "oven";
   recommendedPellets?: string;
   categories: string[];
   photo?: string;
@@ -930,6 +931,18 @@ const RecipeDetail = React.memo(function RecipeDetail({
                 <AccessTimeIcon sx={{ fontSize: 18 }} />
                 Cook: {formatTime(recipe.cookTime)}
               </span>
+              <span>|</span>
+              <span className="flex items-center gap-1">
+                {recipe.type?.toLowerCase().trim() === "oven" ? (
+                  <MicrowaveIcon sx={{ fontSize: 18 }} />
+                ) : recipe.type?.toLowerCase().trim() === "smoker" ? (
+                  <WhatshotIcon sx={{ fontSize: 18 }} />
+                ) : (
+                  <OutdoorGrillIcon sx={{ fontSize: 18 }} />
+                )}
+                {recipe.type?.charAt(0).toUpperCase() +
+                  recipe.type?.slice(1).toLowerCase()}
+              </span>
             </div>
 
             {/* Author */}
@@ -1150,7 +1163,11 @@ const RecipeDetail = React.memo(function RecipeDetail({
                         <div className="flex gap-4 text-sm text-gray-600">
                           {step.temperature && (
                             <span className="flex items-center gap-1">
-                              <OutdoorGrillIcon sx={{ fontSize: 16 }} />
+                              {recipe.type?.toLowerCase().trim() === "oven" ? (
+                                <MicrowaveIcon sx={{ fontSize: 16 }} />
+                              ) : (
+                                <OutdoorGrillIcon sx={{ fontSize: 16 }} />
+                              )}
                               {step.temperature}°F
                             </span>
                           )}
@@ -1224,7 +1241,11 @@ const RecipeDetail = React.memo(function RecipeDetail({
                   <div className="flex justify-center gap-6 mb-6">
                     {recipe?.steps[currentStep]?.temperature && (
                       <div className="flex items-center gap-2">
-                        <ThermostatIcon sx={{ color: "black" }} />
+                        {recipe.type?.toLowerCase().trim() === "oven" ? (
+                          <MicrowaveIcon sx={{ color: "black" }} />
+                        ) : (
+                          <ThermostatIcon sx={{ color: "black" }} />
+                        )}
                         <span>{recipe?.steps[currentStep]?.temperature}°F</span>
                       </div>
                     )}
