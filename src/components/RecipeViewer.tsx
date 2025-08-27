@@ -61,7 +61,7 @@ type Recipe = {
   title: string;
   description: string;
   source?: string;
-  type: "smoker" | "flat-top" | "grill" | "oven";
+  type: "smoker" | "flat-top" | "grill" | "oven" | "beverage";
   recommendedPellets?: string;
   categories: string[];
   photo?: string;
@@ -184,7 +184,14 @@ const RecipeViewer: React.FC<RecipeViewerProps> = () => {
     "Breakfast",
     "Cocktails",
   ];
-  const cookingTypes = ["All", "smoker", "flat-top", "grill", "oven"];
+  const cookingTypes = [
+    "All",
+    "smoker",
+    "flat-top",
+    "grill",
+    "oven",
+    "beverage",
+  ];
   const cookTimes = [
     "All",
     "Quick (< 30 min)",
@@ -233,6 +240,8 @@ const RecipeViewer: React.FC<RecipeViewerProps> = () => {
         return <GrillIcon sx={{ fontSize: 16, mr: 1 }} />;
       case "oven":
         return <MicrowaveIcon sx={{ fontSize: 16, mr: 1 }} />;
+      case "beverage":
+        return <CocktailsIcon sx={{ fontSize: 16, mr: 1 }} />;
       default:
         return <RestaurantIcon sx={{ fontSize: 16, mr: 1 }} />;
     }

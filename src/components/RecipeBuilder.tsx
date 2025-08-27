@@ -35,7 +35,7 @@ type Recipe = {
   title: string;
   description: string;
   source?: string;
-  type: "moker" | "flat-top" | "grill" | "oven";
+  type: "smoker" | "flat-top" | "grill" | "oven" | "beverage";
   recommendedPellets?: string;
   categories: string[];
   photo?: string;
@@ -76,9 +76,9 @@ const RecipeBuilder: React.FC = () => {
   const [description, setDescription] = useState("");
   const [source, setSource] = useState("");
   const [sourceTitle, setSourceTitle] = useState("");
-  const [type, setType] = useState<"Smoker" | "Flat-top" | "Grill" | "Oven">(
-    "Grill"
-  );
+  const [type, setType] = useState<
+    "Smoker" | "Flat-top" | "Grill" | "Oven" | "Beverage"
+  >("Grill");
   const [recommendedPellets, setRecommendedPellets] = useState("");
   const [category, setCategory] = useState<string>("Dinner");
   const [photo, setPhoto] = useState("");
@@ -181,7 +181,7 @@ const RecipeBuilder: React.FC = () => {
     []
   );
   const typeOptions = useMemo<string[]>(
-    () => ["Smoker", "Flat-top", "Grill", "Oven"],
+    () => ["Smoker", "Flat-top", "Grill", "Oven", "Beverage"],
     []
   );
 
@@ -319,7 +319,14 @@ const RecipeBuilder: React.FC = () => {
           const loadedType = recipe.type || "Grill";
           const normalizedType =
             loadedType.charAt(0).toUpperCase() + loadedType.slice(1);
-          setType(normalizedType as "Smoker" | "Flat-top" | "Grill" | "Oven");
+          setType(
+            normalizedType as
+              | "Smoker"
+              | "Flat-top"
+              | "Grill"
+              | "Oven"
+              | "Beverage"
+          );
           setRecommendedPellets(recipe.recommendedPellets || "");
           // Match the category case-sensitively with our options
           const matchedCategory =

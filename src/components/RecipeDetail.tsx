@@ -20,6 +20,7 @@ import {
   PictureAsPdf as PictureAsPdfIcon,
   OutdoorGrill as OutdoorGrillIcon,
   Microwave as MicrowaveIcon,
+  LocalBar as LocalBarIcon,
   Flatware as FlatwareIcon,
   Edit as EditIcon,
   Public as PublicIcon,
@@ -60,7 +61,7 @@ type Recipe = {
   description: string;
   source?: string;
   sourceTitle?: string;
-  type: "smoker" | "flat-top" | "grill" | "oven";
+  type: "smoker" | "flat-top" | "grill" | "oven" | "beverage";
   recommendedPellets?: string;
   categories: string[];
   photo?: string;
@@ -937,6 +938,8 @@ const RecipeDetail = React.memo(function RecipeDetail({
                   <MicrowaveIcon sx={{ fontSize: 18 }} />
                 ) : recipe.type?.toLowerCase().trim() === "smoker" ? (
                   <WhatshotIcon sx={{ fontSize: 18 }} />
+                ) : recipe.type?.toLowerCase().trim() === "beverage" ? (
+                  <LocalBarIcon sx={{ fontSize: 18 }} />
                 ) : (
                   <OutdoorGrillIcon sx={{ fontSize: 18 }} />
                 )}
@@ -1165,6 +1168,9 @@ const RecipeDetail = React.memo(function RecipeDetail({
                             <span className="flex items-center gap-1">
                               {recipe.type?.toLowerCase().trim() === "oven" ? (
                                 <MicrowaveIcon sx={{ fontSize: 16 }} />
+                              ) : recipe.type?.toLowerCase().trim() ===
+                                "beverage" ? (
+                                <LocalBarIcon sx={{ fontSize: 16 }} />
                               ) : (
                                 <OutdoorGrillIcon sx={{ fontSize: 16 }} />
                               )}
@@ -1243,6 +1249,8 @@ const RecipeDetail = React.memo(function RecipeDetail({
                       <div className="flex items-center gap-2">
                         {recipe.type?.toLowerCase().trim() === "oven" ? (
                           <MicrowaveIcon sx={{ color: "black" }} />
+                        ) : recipe.type?.toLowerCase().trim() === "beverage" ? (
+                          <LocalBarIcon sx={{ color: "black" }} />
                         ) : (
                           <ThermostatIcon sx={{ color: "black" }} />
                         )}
