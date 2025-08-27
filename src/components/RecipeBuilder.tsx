@@ -1003,7 +1003,7 @@ const RecipeBuilder: React.FC = () => {
                       <TextField
                         label="Servings"
                         type="number"
-                        value={servings}
+                        value={servings || ""}
                         onChange={(e) =>
                           setServings(parseInt(e.target.value) || 1)
                         }
@@ -1013,19 +1013,21 @@ const RecipeBuilder: React.FC = () => {
                       <TextField
                         label="Prep Time (min)"
                         type="number"
-                        value={prepTime}
-                        onChange={(e) =>
-                          setPrepTime(parseInt(e.target.value) || 0)
-                        }
+                        value={prepTime || ""}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setPrepTime(value === "" ? 0 : parseInt(value) || 0);
+                        }}
                         sx={{ "& input": { min: 0 } }}
                         size="small"
                       />
                       <TextField
                         label="Cook Hours"
                         type="number"
-                        value={cookHours}
+                        value={cookHours || ""}
                         onChange={(e) => {
-                          const hours = parseInt(e.target.value) || 0;
+                          const value = e.target.value;
+                          const hours = value === "" ? 0 : parseInt(value) || 0;
                           setCookHours(hours);
                           setCookTime(hours * 60 + cookMinutes);
                         }}
@@ -1035,9 +1037,11 @@ const RecipeBuilder: React.FC = () => {
                       <TextField
                         label="Cook Minutes"
                         type="number"
-                        value={cookMinutes}
+                        value={cookMinutes || ""}
                         onChange={(e) => {
-                          const minutes = parseInt(e.target.value) || 0;
+                          const value = e.target.value;
+                          const minutes =
+                            value === "" ? 0 : parseInt(value) || 0;
                           setCookMinutes(minutes);
                           setCookTime(cookHours * 60 + minutes);
                         }}
