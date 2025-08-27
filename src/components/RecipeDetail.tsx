@@ -227,9 +227,8 @@ const RecipeDetail = React.memo(function RecipeDetail({
 
   useEffect(() => {
     let isMounted = true;
-    const maxRetries = 3;
 
-    async function fetchRecipe(attempt = 0) {
+    async function fetchRecipe() {
       if (!isMounted) return;
 
       setLoading(true);
@@ -293,22 +292,12 @@ const RecipeDetail = React.memo(function RecipeDetail({
           setRecipe(foundRecipe);
           setServings(foundRecipe.servings);
         } else if (isMounted) {
-          // If recipe not found and we haven't exceeded max retries, try again
-          if (attempt < maxRetries) {
-            console.log(
-              `Recipe not found, retrying... (${attempt + 1}/${maxRetries})`
-            );
-            setTimeout(() => fetchRecipe(attempt + 1), 1000 * (attempt + 1)); // Exponential backoff
-          } else {
-            console.error("Recipe not found after all retries");
-            setRecipe(null);
-          }
+          console.error("Recipe not found");
+          setRecipe(null);
         }
       } catch (error) {
         console.error("Error fetching recipe:", error);
-        if (isMounted && attempt < maxRetries) {
-          setTimeout(() => fetchRecipe(attempt + 1), 1000 * (attempt + 1));
-        } else if (isMounted) {
+        if (isMounted) {
           setRecipe(null);
         }
       } finally {
@@ -633,15 +622,19 @@ const RecipeDetail = React.memo(function RecipeDetail({
   if (!recipe) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <h2 className="text-2xl font-bold text-gray-800 mb-4">
-            Recipe not found
-          </h2>
-          <Link href="/recipes">
-            <button className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition">
-              Back to Recipes
-            </button>
-          </Link>
+        <div className="w-3/4 max-w-4xl">
+          <div className="text-center">
+            <h2 className="text-2xl font-bold text-gray-800 mb-4">
+              Oops, we can&apos;t seem to find the Recipe you are looking for.
+              Maybe you can find something else to cook up while we check into
+              this.
+            </h2>
+            <Link href="/recipes">
+              <button className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition cursor-pointer">
+                Show All Recipes
+              </button>
+            </Link>
+          </div>
         </div>
       </div>
     );
