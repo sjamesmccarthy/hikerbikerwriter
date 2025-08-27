@@ -10,6 +10,7 @@ import {
   PhotoCamera as PhotoCameraIcon,
   LocalDining as LocalDiningIcon,
   Delete as DeleteIcon,
+  DragIndicator as DragIndicatorIcon,
 } from "@mui/icons-material";
 import {
   FormControl,
@@ -463,6 +464,67 @@ const RecipeBuilder: React.FC = () => {
     if (steps.length > 1) {
       setSteps((prev) => prev.filter((_, i) => i !== index));
     }
+  };
+
+  // Reorder functions
+  const reorderIngredients = (startIndex: number, endIndex: number) => {
+    setIngredients((prev) => {
+      const result = Array.from(prev);
+      const [removed] = result.splice(startIndex, 1);
+      result.splice(endIndex, 0, removed);
+      return result;
+    });
+  };
+
+  const reorderSteps = (startIndex: number, endIndex: number) => {
+    setSteps((prev) => {
+      const result = Array.from(prev);
+      const [removed] = result.splice(startIndex, 1);
+      result.splice(endIndex, 0, removed);
+      return result;
+    });
+  };
+
+  // Drag and drop handlers
+  const [draggedItem, setDraggedItem] = useState<{ type: string; index: number } | null>(null);
+
+  const handleDragStart = (
+    e: React.DragEvent<HTMLDivElement>,
+    index: number,
+    type: "ingredient" | "step"
+  ) => {
+    setDraggedItem({ type, index });
+    e.dataTransfer.setData("text/plain", `${type}-${index}`);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleDragEnd = () => {
+    setDraggedItem(null);
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+  };
+
+  const handleDrop = (
+    e: React.DragEvent<HTMLDivElement>,
+    dropIndex: number,
+    type: "ingredient" | "step"
+  ) => {
+    e.preventDefault();
+    const dragData = e.dataTransfer.getData("text/plain");
+    const [dragType, dragIndexStr] = dragData.split("-");
+    const dragIndex = parseInt(dragIndexStr);
+
+    if (dragType === type && dragIndex !== dropIndex) {
+      if (type === "ingredient") {
+        reorderIngredients(dragIndex, dropIndex);
+      } else {
+        reorderSteps(dragIndex, dropIndex);
+      }
+    }
+    setDraggedItem(null);
   };
 
   const handlePhotoUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -1061,66 +1123,92 @@ const RecipeBuilder: React.FC = () => {
 
                     <div className="space-y-3 flex flex-col items-start">
                       {ingredients.map((ingredient, index) => (
-                        <div key={ingredient.id} className="w-full mb-8">
-                          <div className="w-full">
-                            <TextField
-                              placeholder="Ingredient name"
-                              value={ingredient.name || ""}
-                              onChange={(e) =>
-                                handleIngredientChange(
-                                  index,
-                                  "name",
-                                  e.target.value
-                                )
-                              }
-                              size="small"
-                              fullWidth
-                              multiline
-                              minRows={1}
-                              maxRows={4}
-                            />
-                          </div>
-                          <div className="flex flex-row sm:flex-row gap-2 mt-2">
-                            <TextField
-                              placeholder="Amount (e.g., 1, ½, 2¾, 1/3)"
-                              value={ingredient.amount || ""}
-                              onChange={(e) =>
-                                handleIngredientChange(
-                                  index,
-                                  "amount",
-                                  e.target.value
-                                )
-                              }
-                              size="small"
-                              sx={{ minWidth: 80, flex: 1 }}
-                            />
-                            <TextField
-                              placeholder="Unit"
-                              value={ingredient.unit || ""}
-                              onChange={(e) =>
-                                handleIngredientChange(
-                                  index,
-                                  "unit",
-                                  e.target.value
-                                )
-                              }
-                              size="small"
-                              sx={{ minWidth: 80, flex: 1 }}
-                            />
-                            <IconButton
-                              onClick={() => removeIngredient(index)}
-                              disabled={ingredients.length === 1}
-                              size="small"
-                              sx={{
-                                color: "#9ca3af",
-                                "&:hover": {
-                                  color: "#ef4444",
-                                  backgroundColor: "rgba(239, 68, 68, 0.04)",
-                                },
-                              }}
-                            >
-                              <DeleteIcon fontSize="small" />
-                            </IconButton>
+                        <div 
+                          key={ingredient.id} 
+                          className={`w-full mb-8 p-3 border border-gray-200 rounded-lg bg-white hover:shadow-sm transition-all ${
+                            draggedItem?.type === "ingredient" && draggedItem?.index === index 
+                              ? "opacity-50 shadow-lg scale-105" 
+                              : "hover:border-gray-300"
+                          }`}
+                          draggable
+                          onDragStart={(e) => handleDragStart(e, index, "ingredient")}
+                          onDragEnd={handleDragEnd}
+                          onDragOver={handleDragOver}
+                          onDrop={(e) => handleDrop(e, index, "ingredient")}
+                        >
+                          <div className="flex items-start gap-2 w-full">
+                            <div className="flex-shrink-0 pt-1">
+                              <DragIndicatorIcon 
+                                sx={{ 
+                                  fontSize: 20, 
+                                  color: "#9ca3af",
+                                  cursor: "grab",
+                                  "&:active": { cursor: "grabbing" }
+                                }} 
+                              />
+                            </div>
+                            <div className="flex-1">
+                              <div className="w-full">
+                                <TextField
+                                  placeholder="Ingredient name"
+                                  value={ingredient.name || ""}
+                                  onChange={(e) =>
+                                    handleIngredientChange(
+                                      index,
+                                      "name",
+                                      e.target.value
+                                    )
+                                  }
+                                  size="small"
+                                  fullWidth
+                                  multiline
+                                  minRows={1}
+                                  maxRows={4}
+                                />
+                              </div>
+                              <div className="flex flex-row sm:flex-row gap-2 mt-2">
+                                <TextField
+                                  placeholder="Amount (e.g., 1, ½, 2¾, 1/3)"
+                                  value={ingredient.amount || ""}
+                                  onChange={(e) =>
+                                    handleIngredientChange(
+                                      index,
+                                      "amount",
+                                      e.target.value
+                                    )
+                                  }
+                                  size="small"
+                                  sx={{ minWidth: 80, flex: 1 }}
+                                />
+                                <TextField
+                                  placeholder="Unit"
+                                  value={ingredient.unit || ""}
+                                  onChange={(e) =>
+                                    handleIngredientChange(
+                                      index,
+                                      "unit",
+                                      e.target.value
+                                    )
+                                  }
+                                  size="small"
+                                  sx={{ minWidth: 80, flex: 1 }}
+                                />
+                                <IconButton
+                                  onClick={() => removeIngredient(index)}
+                                  disabled={ingredients.length === 1}
+                                  size="small"
+                                  sx={{
+                                    color: "#9ca3af",
+                                    "&:hover": {
+                                      color: "#ef4444",
+                                      backgroundColor: "rgba(239, 68, 68, 0.04)",
+                                    },
+                                  }}
+                                >
+                                  <DeleteIcon fontSize="small" />
+                                </IconButton>
+                              </div>
+                            </div>
                           </div>
                         </div>
                       ))}
@@ -1148,39 +1236,63 @@ const RecipeBuilder: React.FC = () => {
 
                     <div className="space-y-4">
                       {steps.map((step, index) => (
-                        <div key={step.id} className="space-y-2">
-                          <div className="flex items-center justify-between">
-                            <span className="font-bold text-black">
-                              Step {index + 1}
-                            </span>
-                            <IconButton
-                              onClick={() => removeStep(index)}
-                              disabled={steps.length === 1}
-                              size="small"
-                              sx={{
-                                color: "#9ca3af",
-                                "&:hover": {
-                                  color: "#ef4444",
-                                  backgroundColor: "rgba(239, 68, 68, 0.04)",
-                                },
-                              }}
-                            >
-                              <DeleteIcon fontSize="small" />
-                            </IconButton>
-                          </div>
-                          <TextField
-                            placeholder="Describe this step..."
-                            value={step.step || ""}
-                            onChange={(e) =>
-                              handleStepChange(index, "step", e.target.value)
-                            }
-                            multiline
-                            minRows={2}
-                            maxRows={12}
-                            size="small"
-                            fullWidth
-                            sx={{ mb: "8px" }}
-                          />
+                        <div 
+                          key={step.id} 
+                          className={`p-3 border border-gray-200 rounded-lg bg-white hover:shadow-sm transition-all ${
+                            draggedItem?.type === "step" && draggedItem?.index === index 
+                              ? "opacity-50 shadow-lg scale-105" 
+                              : "hover:border-gray-300"
+                          }`}
+                          draggable
+                          onDragStart={(e) => handleDragStart(e, index, "step")}
+                          onDragEnd={handleDragEnd}
+                          onDragOver={handleDragOver}
+                          onDrop={(e) => handleDrop(e, index, "step")}
+                        >
+                          <div className="flex gap-2">
+                            <div className="flex-shrink-0 pt-1">
+                              <DragIndicatorIcon 
+                                sx={{ 
+                                  fontSize: 20, 
+                                  color: "#9ca3af",
+                                  cursor: "grab",
+                                  "&:active": { cursor: "grabbing" }
+                                }} 
+                              />
+                            </div>
+                            <div className="flex-1 space-y-2">
+                              <div className="flex items-center justify-between">
+                                <span className="font-bold text-black">
+                                  Step {index + 1}
+                                </span>
+                                <IconButton
+                                  onClick={() => removeStep(index)}
+                                  disabled={steps.length === 1}
+                                  size="small"
+                                  sx={{
+                                    color: "#9ca3af",
+                                    "&:hover": {
+                                      color: "#ef4444",
+                                      backgroundColor: "rgba(239, 68, 68, 0.04)",
+                                    },
+                                  }}
+                                >
+                                  <DeleteIcon fontSize="small" />
+                                </IconButton>
+                              </div>
+                              <TextField
+                                placeholder="Describe this step..."
+                                value={step.step || ""}
+                                onChange={(e) =>
+                                  handleStepChange(index, "step", e.target.value)
+                                }
+                                multiline
+                                minRows={2}
+                                maxRows={12}
+                                size="small"
+                                fullWidth
+                                sx={{ mb: "8px" }}
+                              />
 
                           {(type === "Smoker" || type === "Grill") && (
                             <div className="flex gap-4 items-center mt-2 rounded">
@@ -1338,6 +1450,8 @@ const RecipeBuilder: React.FC = () => {
                               )}
                             </div>
                           )}
+                            </div>
+                          </div>
                         </div>
                       ))}
 
