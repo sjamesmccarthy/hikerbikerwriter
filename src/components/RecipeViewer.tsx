@@ -784,19 +784,9 @@ const RecipeViewer: React.FC<RecipeViewerProps> = () => {
             <p className="text-gray-600 leading-relaxed font-mono text-center">
               <span className="text-2xl font-bold">
                 a collection of{" "}
-                {!session?.user?.email ? (
-                  <span className="text-blue-600 font-bold text-3xl">
-                    {filteredRecipes.length} Public{" "}
-                  </span>
-                ) : showPublicRecipes ? (
-                  <span className="text-blue-600 font-bold text-3xl">
-                    {filteredRecipes.length} Public{" "}
-                  </span>
-                ) : (
-                  <span className="text-black font-bold text-3xl">
-                    {filteredRecipes.length} Your{" "}
-                  </span>
-                )}
+                <span className="text-black font-bold text-3xl">
+                  {filteredRecipes.length}{" "}
+                </span>
                 recipes
               </span>{" "}
               <br />
