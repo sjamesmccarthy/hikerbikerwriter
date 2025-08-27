@@ -1597,12 +1597,96 @@ const FieldNotes: React.FC = () => {
                                   Feeling {getMoodEmoji(note.mood)} {note.mood}
                                 </p>
                               )}
+
+                              {/* Mobile edit/delete icons - under mood section */}
+                              {session &&
+                                note.userEmail === session.user?.email && (
+                                  <div className="hidden flex gap-2 mt-2 sm:hidden">
+                                    <IconButton
+                                      size="small"
+                                      color="primary"
+                                      aria-label="Edit Entry"
+                                      onClick={() => {
+                                        setEditId(note.id);
+                                        setEditTitle(note.title);
+                                        setEditContent(note.content);
+                                        setEditTags(note.tags || "");
+                                        setEditMood(note.mood || "");
+                                        setEditImages(note.images || []);
+                                        setEditMakePublic(
+                                          note.is_public || false
+                                        );
+                                        setEditShareWithFamily(
+                                          note.share_with_family ||
+                                            note.shared_family ||
+                                            false
+                                        );
+                                      }}
+                                    >
+                                      <EditNoteOutlinedIcon />
+                                    </IconButton>
+                                    <IconButton
+                                      size="small"
+                                      aria-label="Delete Entry"
+                                      sx={{ color: "gray" }}
+                                      onClick={async () => {
+                                        try {
+                                          const res = await fetch(
+                                            "/api/fieldnotes",
+                                            {
+                                              method: "DELETE",
+                                              headers: {
+                                                "Content-Type":
+                                                  "application/json",
+                                              },
+                                              body: JSON.stringify({
+                                                id: note.id,
+                                                slug: note.slug,
+                                                userEmail: session?.user?.email,
+                                              }),
+                                            }
+                                          );
+                                          if (res.ok) {
+                                            setNotes(
+                                              notes.filter(
+                                                (n) => n.id !== note.id
+                                              )
+                                            );
+                                          } else if (res.status === 500) {
+                                            setDatabaseError(
+                                              "Database connection error during delete - Please check if the database is running"
+                                            );
+                                          } else {
+                                            const errorData = await res
+                                              .json()
+                                              .catch(() => ({
+                                                error: "Delete failed",
+                                              }));
+                                            alert(
+                                              `Error deleting fieldnote: ${
+                                                errorData.error ||
+                                                "Unknown error"
+                                              }`
+                                            );
+                                          }
+                                        } catch (error) {
+                                          console.error("Delete error:", error);
+                                          setDatabaseError(
+                                            "Failed to connect to server during delete"
+                                          );
+                                        }
+                                      }}
+                                    >
+                                      <DeleteIcon sx={{ fontSize: 16 }} />
+                                    </IconButton>
+                                  </div>
+                                )}
                             </div>
 
-                            {/* Right side: edit/delete icons */}
+                            {/* Desktop edit/delete icons - right side */}
                             {session &&
                               note.userEmail === session.user?.email && (
-                                <div className="flex gap-2">
+                                <div className="hidden sm:flex gap-2">
                                   <IconButton
                                     size="small"
                                     color="primary"

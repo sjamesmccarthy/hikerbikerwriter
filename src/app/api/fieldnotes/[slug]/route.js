@@ -91,7 +91,14 @@ export async function GET(request, { params }) {
       dateAdded: fieldNote.dateAdded || rows[0].created,
       is_public: Boolean(rows[0].is_public),
       shared_family: Boolean(rows[0].shared_family), // Use consistent field name
+      userEmail: rows[0].user_email, // Add userEmail so frontend can check ownership
     };
+
+    console.log("Returning field note with ownership info:", {
+      noteOwner: rows[0].user_email,
+      requestingUser: userEmail,
+      canEdit: rows[0].user_email === userEmail,
+    });
 
     return NextResponse.json(mergedFieldNote);
   } catch (error) {

@@ -33,6 +33,7 @@ import {
   TableChart as TableChartIcon,
   Close as CloseIcon,
   Search as SearchIcon,
+  FilterList as FilterListIcon,
 } from "@mui/icons-material";
 import {
   FormControl,
@@ -366,7 +367,7 @@ export default function JobTracker() {
   // Collapse states
   const [isRecruitersExpanded, setIsRecruitersExpanded] = useState(false);
   const [isResourcesExpanded, setIsResourcesExpanded] = useState(false);
-  const [isLogExpanded, setIsLogExpanded] = useState(true);
+  const [isLogExpanded, setIsLogExpanded] = useState(false);
 
   // Status change state
   const [statusChangeAnchor, setStatusChangeAnchor] =
@@ -384,6 +385,9 @@ export default function JobTracker() {
   // Apps menu state
   const [isAppsMenuOpen, setIsAppsMenuOpen] = useState(false);
   const [openSubmenu, setOpenSubmenu] = useState<string | null>(null);
+
+  // Mobile filter menu state
+  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
   // Apps data
   const apps = [
@@ -2409,115 +2413,226 @@ export default function JobTracker() {
             {/* Opportunities Section */}
             <div className="mb-8 bg-gradient-to-b from-white to-gray-50 rounded-lg p-4">
               <div>
-                {/* Add Opportunity Button and Filters - Mobile: stacked, Desktop: side by side */}
-                <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-4 mb-4">
-                  <Button
-                    variant="contained"
-                    startIcon={<AddIcon />}
-                    onClick={() => setShowOpportunityDialog(true)}
-                    className="bg-green-600 hover:bg-green-700 w-full md:w-auto"
-                    size="large"
-                  >
-                    Add Opportunity
-                  </Button>
-
-                  <div className="flex flex-col sm:flex-row gap-2 w-full md:flex-1">
-                    <TextField
-                      size="small"
-                      label="Search"
-                      placeholder="Search company, position..."
-                      value={searchQuery}
-                      onChange={(e) => handleSearchChange(e.target.value)}
-                      className="w-full md:flex-1"
-                      style={{ minWidth: 300 }}
-                      variant="outlined"
-                    />
-
-                    <FormControl
-                      size="small"
-                      className="w-full sm:w-auto"
-                      style={{ minWidth: 120 }}
+                {/* Add Opportunity Button and Filters - Mobile: button + filter icon, Desktop: side by side */}
+                <div className="mb-4">
+                  {/* Top row: Add Opportunity Button + Filter Toggle */}
+                  <div className="flex justify-between items-center gap-4 mb-4">
+                    {/* Add Opportunity Button */}
+                    <Button
+                      variant="contained"
+                      startIcon={<AddIcon />}
+                      onClick={() => setShowOpportunityDialog(true)}
+                      className="bg-green-600 hover:bg-green-700"
+                      size="large"
                     >
-                      <InputLabel>Sort By</InputLabel>
-                      <Select
-                        value={sortBy}
-                        label="Sort By"
-                        onChange={handleSortChange}
-                      >
-                        <MenuItem value="newest">Newest</MenuItem>
-                        <MenuItem value="oldest">Oldest</MenuItem>
-                      </Select>
-                    </FormControl>
+                      Add Opportunity
+                    </Button>
 
-                    <FormControl
-                      size="small"
-                      className="w-full sm:w-auto"
-                      style={{ minWidth: 120 }}
+                    {/* Mobile: Filter Toggle Button */}
+                    <IconButton
+                      onClick={() => setIsMobileFilterOpen(!isMobileFilterOpen)}
+                      className="bg-blue-50 hover:bg-blue-100 border border-blue-200 md:hidden"
+                      size="large"
                     >
-                      <InputLabel>Status</InputLabel>
-                      <Select
-                        value={filterStatus}
-                        label="Status"
-                        onChange={handleFilterChange}
-                      >
-                        <MenuItem value="all">All</MenuItem>
-                        <MenuItem value="saved">Saved</MenuItem>
-                        <MenuItem value="applied">Applied</MenuItem>
-                        <MenuItem value="interview">Interview</MenuItem>
-                        <MenuItem value="offer">Offer</MenuItem>
-                        <MenuItem value="rejected">Rejected</MenuItem>
-                        <MenuItem value="closed">Closed</MenuItem>
-                      </Select>
-                    </FormControl>
+                      <FilterListIcon className="text-blue-600" />
+                    </IconButton>
 
-                    {/* Download buttons: 50/50 on mobile */}
-                    <div className="flex w-full gap-2 sm:w-auto">
-                      <Button
-                        onClick={handleExportAsPDF}
+                    {/* Desktop: Filters */}
+                    <div className="hidden md:flex flex-col sm:flex-row gap-2 flex-1">
+                      <TextField
                         size="small"
-                        title="Download PDF Summary"
-                        startIcon={<FileDownloadIcon />}
-                        className="w-1/2 sm:w-auto"
-                        sx={{
-                          border: "1px solid #e0e0e0",
-                          borderRadius: "4px",
-                          padding: "8px",
-                          color: "#1976d2",
-                          minWidth: "auto",
-                          "& .MuiButton-startIcon": {
-                            marginRight: { xs: "8px", sm: "0px" },
-                          },
-                          "&:hover": {
-                            backgroundColor: "#f5f5f5",
-                          },
-                        }}
-                      >
-                        PDF
-                      </Button>
-                      <Button
-                        onClick={handleExportOpportunitiesAsTxt}
+                        label="Search"
+                        placeholder="Search company, position..."
+                        value={searchQuery}
+                        onChange={(e) => handleSearchChange(e.target.value)}
+                        className="w-full md:flex-1"
+                        style={{ minWidth: 300 }}
+                        variant="outlined"
+                      />
+
+                      <FormControl
                         size="small"
-                        title="Download ASCII Text Table"
-                        startIcon={<FileDownloadIcon />}
-                        className="w-1/2 sm:w-auto"
-                        sx={{
-                          border: "1px solid #e0e0e0",
-                          borderRadius: "4px",
-                          padding: "8px",
-                          color: "#1976d2",
-                          minWidth: "auto",
-                          "& .MuiButton-startIcon": {
-                            marginRight: { xs: "8px", sm: "0px" },
-                          },
-                          "&:hover": {
-                            backgroundColor: "#f5f5f5",
-                          },
-                        }}
+                        className="w-full sm:w-auto"
+                        style={{ minWidth: 120 }}
                       >
-                        TXT
-                      </Button>
+                        <InputLabel>Sort By</InputLabel>
+                        <Select
+                          value={sortBy}
+                          label="Sort By"
+                          onChange={handleSortChange}
+                        >
+                          <MenuItem value="newest">Newest</MenuItem>
+                          <MenuItem value="oldest">Oldest</MenuItem>
+                        </Select>
+                      </FormControl>
+
+                      <FormControl
+                        size="small"
+                        className="w-full sm:w-auto"
+                        style={{ minWidth: 120 }}
+                      >
+                        <InputLabel>Status</InputLabel>
+                        <Select
+                          value={filterStatus}
+                          label="Status"
+                          onChange={handleFilterChange}
+                        >
+                          <MenuItem value="all">All</MenuItem>
+                          <MenuItem value="saved">Saved</MenuItem>
+                          <MenuItem value="applied">Applied</MenuItem>
+                          <MenuItem value="interview">Interview</MenuItem>
+                          <MenuItem value="offer">Offer</MenuItem>
+                          <MenuItem value="rejected">Rejected</MenuItem>
+                          <MenuItem value="closed">Closed</MenuItem>
+                        </Select>
+                      </FormControl>
+
+                      {/* Download buttons: 50/50 on mobile */}
+                      <div className="flex w-full gap-2 sm:w-auto">
+                        <Button
+                          onClick={handleExportAsPDF}
+                          size="small"
+                          title="Download PDF Summary"
+                          startIcon={<FileDownloadIcon />}
+                          className="w-1/2 sm:w-auto"
+                          sx={{
+                            border: "1px solid #e0e0e0",
+                            borderRadius: "4px",
+                            padding: "8px",
+                            color: "#1976d2",
+                            minWidth: "auto",
+                            "& .MuiButton-startIcon": {
+                              marginRight: { xs: "8px", sm: "0px" },
+                            },
+                            "&:hover": {
+                              backgroundColor: "#f5f5f5",
+                            },
+                          }}
+                        >
+                          PDF
+                        </Button>
+                        <Button
+                          onClick={handleExportOpportunitiesAsTxt}
+                          size="small"
+                          title="Download ASCII Text Table"
+                          startIcon={<FileDownloadIcon />}
+                          className="w-1/2 sm:w-auto"
+                          sx={{
+                            border: "1px solid #e0e0e0",
+                            borderRadius: "4px",
+                            padding: "8px",
+                            color: "#1976d2",
+                            minWidth: "auto",
+                            "& .MuiButton-startIcon": {
+                              marginRight: { xs: "8px", sm: "0px" },
+                            },
+                            "&:hover": {
+                              backgroundColor: "#f5f5f5",
+                            },
+                          }}
+                        >
+                          TXT
+                        </Button>
+                      </div>
                     </div>
                   </div>
+
+                  {/* Mobile: Collapsible Filter Box */}
+                  <Collapse in={isMobileFilterOpen} className="md:hidden">
+                    <Box className="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                      <div className="space-y-3">
+                        {/* Search */}
+                        <TextField
+                          size="small"
+                          label="Search"
+                          placeholder="Search company, position..."
+                          value={searchQuery}
+                          onChange={(e) => handleSearchChange(e.target.value)}
+                          fullWidth
+                          variant="outlined"
+                          InputProps={{
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <SearchIcon />
+                              </InputAdornment>
+                            ),
+                          }}
+                        />
+
+                        {/* Sort By and Status in a row */}
+                        <div className="flex gap-2 mt-4">
+                          <FormControl size="small" className="flex-1">
+                            <InputLabel>Sort By</InputLabel>
+                            <Select
+                              value={sortBy}
+                              label="Sort By"
+                              onChange={handleSortChange}
+                            >
+                              <MenuItem value="newest">Newest</MenuItem>
+                              <MenuItem value="oldest">Oldest</MenuItem>
+                            </Select>
+                          </FormControl>
+
+                          <FormControl size="small" className="flex-1">
+                            <InputLabel>Status</InputLabel>
+                            <Select
+                              value={filterStatus}
+                              label="Status"
+                              onChange={handleFilterChange}
+                            >
+                              <MenuItem value="all">All</MenuItem>
+                              <MenuItem value="saved">Saved</MenuItem>
+                              <MenuItem value="applied">Applied</MenuItem>
+                              <MenuItem value="interview">Interview</MenuItem>
+                              <MenuItem value="offer">Offer</MenuItem>
+                              <MenuItem value="rejected">Rejected</MenuItem>
+                              <MenuItem value="closed">Closed</MenuItem>
+                            </Select>
+                          </FormControl>
+                        </div>
+
+                        {/* Export buttons */}
+                        <div className="flex gap-2 mt-2">
+                          <Button
+                            onClick={handleExportAsPDF}
+                            size="small"
+                            title="Download PDF Summary"
+                            startIcon={<FileDownloadIcon />}
+                            className="flex-1"
+                            sx={{
+                              border: "1px solid #e0e0e0",
+                              borderRadius: "8px",
+                              padding: "8px",
+                              color: "#1976d2",
+                              "&:hover": {
+                                backgroundColor: "#f5f5f5",
+                              },
+                            }}
+                          >
+                            PDF
+                          </Button>
+                          <Button
+                            onClick={handleExportOpportunitiesAsTxt}
+                            size="small"
+                            title="Download ASCII Text Table"
+                            startIcon={<FileDownloadIcon />}
+                            className="flex-1"
+                            sx={{
+                              border: "1px solid #e0e0e0",
+                              borderRadius: "8px",
+                              padding: "8px",
+                              color: "#1976d2",
+                              "&:hover": {
+                                backgroundColor: "#f5f5f5",
+                              },
+                            }}
+                          >
+                            TXT
+                          </Button>
+                        </div>
+                      </div>
+                    </Box>
+                  </Collapse>
                 </div>
 
                 {/* Opportunities Table - Desktop / Cards - Mobile */}
@@ -3464,7 +3579,7 @@ export default function JobTracker() {
             </div>
 
             {/* Tracking Log Section */}
-            <div className="mb-8">
+            <div className="mb-6">
               <div className="bg-gray-50 rounded-lg p-4">
                 <div className="flex justify-between items-center">
                   <div
