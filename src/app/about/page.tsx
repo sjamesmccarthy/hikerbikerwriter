@@ -545,6 +545,7 @@ export default function AboutPage() {
             <ul className="list-disc ml-6 mb-2">
               <li>Added new loading states with large icons, spinnning.</li>
               <li>Bug fixes throughout receipe builder and viewer.</li>
+              <li>Added Network relationshups to family in profile view</li>
             </ul>
 
             <h3 className="font-semibold mt-4 mb-1">v1.9.1</h3>

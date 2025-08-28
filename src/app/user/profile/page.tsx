@@ -2459,7 +2459,7 @@ function AppSummaries({
                       {/* Network level icons */}
                       {networkLevel === 1 && (
                         <>
-                          <FamilyRestroomIcon
+                          <EscalatorWarningIcon
                             fontSize="small"
                             className="text-gray-700"
                           />
@@ -2470,7 +2470,7 @@ function AppSummaries({
                       )}
                       {networkLevel === 2 && (
                         <>
-                          <EscalatorWarningIcon
+                          <FamilyRestroomIcon
                             fontSize="small"
                             className="text-gray-600"
                           />
