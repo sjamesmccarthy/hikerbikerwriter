@@ -619,9 +619,13 @@ const RecipeDetail = React.memo(function RecipeDetail({
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center text-gray-400 font-mono">
-          Loading recipe...
-        </div>
+        <OutdoorGrillIcon
+          className="animate-spin"
+          sx={{
+            fontSize: 80,
+            color: "#9CA3AF",
+          }}
+        />
       </div>
     );
   }
