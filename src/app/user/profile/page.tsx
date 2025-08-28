@@ -1569,7 +1569,7 @@ function AppSummaries({
     [key: string]: unknown;
   }
   interface RecipeEntry {
-    isPublic: boolean;
+    public: boolean;
     sharedWithFamily?: boolean;
     [key: string]: unknown;
   }
@@ -1658,7 +1658,7 @@ function AppSummaries({
       setRecipeCounts({
         total: recipeEntries.filter((e) => e.userEmail === userEmail).length,
         public: recipeEntries.filter(
-          (e) => e.userEmail === userEmail && e.isPublic
+          (e) => e.userEmail === userEmail && e.public
         ).length,
         sharedWithFamily: recipeEntries.filter(
           (e) => e.userEmail === userEmail && e.shared_family
