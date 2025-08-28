@@ -101,6 +101,7 @@ const RecipeBuilder: React.FC = () => {
       time?: number;
       timeInput?: string;
       superSmoke?: boolean;
+      isCustomTemp?: boolean;
     }>
   >([{ id: crypto.randomUUID(), step: "", timeInput: "" }]);
   const [myNotes, setMyNotes] = useState("");
@@ -158,13 +159,24 @@ const RecipeBuilder: React.FC = () => {
             temperature?: number;
             time?: number;
             superSmoke?: boolean;
-          }) => ({
-            id: crypto.randomUUID(),
-            step: step.step || "",
-            temperature: step.temperature,
-            time: step.time,
-            superSmoke: step.superSmoke,
-          })
+          }) => {
+            const temperature = step.temperature;
+            // For imported recipes, check if temperature is custom for oven type
+            const predefinedTemps = [250, 350, 450];
+            const isCustomTemp =
+              type === "Oven" &&
+              temperature !== undefined &&
+              !predefinedTemps.includes(temperature);
+
+            return {
+              id: crypto.randomUUID(),
+              step: step.step || "",
+              temperature: temperature,
+              time: step.time,
+              superSmoke: step.superSmoke,
+              isCustomTemp: isCustomTemp,
+            };
+          }
         ) || [{ id: crypto.randomUUID(), step: "" }]
       );
       setPrepTime(recipe.prepTime || 0);
@@ -400,13 +412,24 @@ const RecipeBuilder: React.FC = () => {
                     temperature?: number;
                     time?: number;
                     superSmoke?: boolean;
-                  }) => ({
-                    id: crypto.randomUUID(),
-                    step: step.step || "",
-                    temperature: step.temperature || undefined,
-                    time: step.time || undefined,
-                    superSmoke: step.superSmoke || false,
-                  })
+                  }) => {
+                    const temperature = step.temperature || undefined;
+                    // For oven type, determine if temperature is custom
+                    const predefinedTemps = [250, 350, 450];
+                    const isCustomTemp =
+                      normalizedType === "Oven" &&
+                      temperature !== undefined &&
+                      !predefinedTemps.includes(temperature);
+
+                    return {
+                      id: crypto.randomUUID(),
+                      step: step.step || "",
+                      temperature: temperature,
+                      time: step.time || undefined,
+                      superSmoke: step.superSmoke || false,
+                      isCustomTemp: isCustomTemp,
+                    };
+                  }
                 )
               : [{ id: crypto.randomUUID(), step: "" }]
           );
@@ -1473,30 +1496,97 @@ const RecipeBuilder: React.FC = () => {
                                     ) : (
                                       <>
                                         <div className="w-1/2">
-                                          <FormControl size="small" fullWidth>
-                                            <InputLabel>Heat Level</InputLabel>
-                                            <Select
-                                              value={step.temperature || ""}
-                                              label="Heat Level"
-                                              onChange={(e) =>
-                                                handleStepChange(
-                                                  index,
-                                                  "temperature",
-                                                  e.target.value
-                                                )
-                                              }
+                                          {step.isCustomTemp ? (
+                                            <div
+                                              style={{
+                                                display: "flex",
+                                                alignItems: "center",
+                                                gap: "8px",
+                                              }}
                                             >
-                                              <MenuItem value={250}>
-                                                Low Heat (250°F)
-                                              </MenuItem>
-                                              <MenuItem value={350}>
-                                                Medium Heat (350°F)
-                                              </MenuItem>
-                                              <MenuItem value={450}>
-                                                High Heat (450°F)
-                                              </MenuItem>
-                                            </Select>
-                                          </FormControl>
+                                              <IconButton
+                                                onClick={() => {
+                                                  handleStepChange(
+                                                    index,
+                                                    "isCustomTemp",
+                                                    false
+                                                  );
+                                                  handleStepChange(
+                                                    index,
+                                                    "temperature",
+                                                    ""
+                                                  );
+                                                }}
+                                                size="small"
+                                              >
+                                                <ArrowBackIcon fontSize="small" />
+                                              </IconButton>
+                                              <TextField
+                                                placeholder="Custom Temp (°F)"
+                                                type="text"
+                                                value={step.temperature || ""}
+                                                onChange={(e) => {
+                                                  handleStepChange(
+                                                    index,
+                                                    "temperature",
+                                                    e.target.value
+                                                  );
+                                                }}
+                                                size="small"
+                                                fullWidth
+                                              />
+                                            </div>
+                                          ) : (
+                                            <FormControl size="small" fullWidth>
+                                              <InputLabel>
+                                                Heat Level
+                                              </InputLabel>
+                                              <Select
+                                                value={step.temperature || ""}
+                                                label="Heat Level"
+                                                onChange={(e) => {
+                                                  const value = e.target.value;
+                                                  if (
+                                                    String(value) === "other"
+                                                  ) {
+                                                    handleStepChange(
+                                                      index,
+                                                      "isCustomTemp",
+                                                      true
+                                                    );
+                                                    handleStepChange(
+                                                      index,
+                                                      "temperature",
+                                                      ""
+                                                    );
+                                                  } else {
+                                                    const numValue =
+                                                      typeof value === "string"
+                                                        ? parseInt(value)
+                                                        : value;
+                                                    handleStepChange(
+                                                      index,
+                                                      "temperature",
+                                                      numValue
+                                                    );
+                                                  }
+                                                }}
+                                              >
+                                                <MenuItem value={250}>
+                                                  Low Heat (250°F)
+                                                </MenuItem>
+                                                <MenuItem value={350}>
+                                                  Medium Heat (350°F)
+                                                </MenuItem>
+                                                <MenuItem value={450}>
+                                                  High Heat (450°F)
+                                                </MenuItem>
+                                                <MenuItem value="other">
+                                                  Other Temp
+                                                </MenuItem>
+                                              </Select>
+                                            </FormControl>
+                                          )}
                                         </div>
                                         <div className="w-1/2">
                                           <TextField
