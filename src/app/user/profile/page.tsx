@@ -1773,7 +1773,56 @@ function AppSummaries({
   }, [familyInfo, userEmail]);
 
   if (loading) {
-    return null; // Hide loading state since main page has spinner
+    // Loading skeleton for app cards
+    return (
+      <>
+        <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Skeleton cards */}
+          {[...Array(5)].map((_, index) => (
+            <div
+              key={index}
+              className="relative flex flex-col items-center justify-center bg-blue-50 p-6 min-h-[140px] animate-pulse"
+            >
+              {/* Skeleton download icon */}
+              <div className="absolute top-2 right-2 w-5 h-5 bg-gray-300 rounded"></div>
+
+              {/* Skeleton main icon */}
+              <div className="w-10 h-10 bg-gray-300 rounded-full mb-2"></div>
+
+              {/* Skeleton title */}
+              <div className="h-5 bg-gray-300 rounded w-24 mb-2"></div>
+
+              {/* Skeleton stats */}
+              <div className="flex items-center gap-3 mt-1">
+                <div className="flex items-center gap-1">
+                  <div className="h-4 bg-gray-300 rounded w-6"></div>
+                  <div className="h-3 bg-gray-300 rounded w-12"></div>
+                </div>
+                <div className="flex items-center gap-1">
+                  <div className="w-4 h-4 bg-gray-300 rounded"></div>
+                  <div className="h-4 bg-gray-300 rounded w-4"></div>
+                  <div className="h-3 bg-gray-300 rounded w-12"></div>
+                </div>
+              </div>
+
+              {/* Skeleton family sharing text */}
+              <div className="h-3 bg-gray-300 rounded w-32 mt-2"></div>
+            </div>
+          ))}
+        </div>
+
+        {/* Skeleton for separator */}
+        <div className="border-t border-gray-200 my-8 w-full"></div>
+
+        {/* Skeleton for family section */}
+        <div className="flex flex-col items-start w-full mb-8">
+          <div className="w-full flex items-center justify-between mb-6">
+            <div className="h-4 bg-gray-300 rounded w-32 animate-pulse"></div>
+            <div className="h-10 bg-gray-300 rounded w-32 animate-pulse"></div>
+          </div>
+        </div>
+      </>
+    );
   }
 
   // Grid layout for app summaries

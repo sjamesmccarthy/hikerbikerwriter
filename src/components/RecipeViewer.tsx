@@ -779,14 +779,89 @@ const RecipeViewer: React.FC<RecipeViewerProps> = () => {
 
         {/* Main Content */}
         {loadingRecipes ? (
-          <div className="fixed inset-0 flex items-center justify-center bg-gray-50 z-10">
-            <div className="animate-spin">
-              <OutdoorGrillIcon
-                sx={{
-                  fontSize: 80,
-                  color: "#9CA3AF",
-                }}
-              />
+          <div className="flex-1 flex flex-col px-0 py-6">
+            {/* Loading skeleton for intro section */}
+            <div className="w-full px-6 mb-12 mt-0">
+              <div className="text-center space-y-4">
+                <div className="h-8 bg-gray-200 rounded w-96 mx-auto animate-pulse"></div>
+                <div className="h-4 bg-gray-200 rounded w-80 mx-auto animate-pulse"></div>
+                <div className="h-4 bg-gray-200 rounded w-60 mx-auto animate-pulse"></div>
+              </div>
+            </div>
+
+            {/* Loading skeleton for filter section */}
+            <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div className="w-full flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-10 h-10 bg-gray-200 rounded animate-pulse"></div>
+                  <div className="w-10 h-10 bg-gray-200 rounded animate-pulse"></div>
+                </div>
+                <div className="w-32 h-10 bg-gray-200 rounded animate-pulse"></div>
+              </div>
+
+              {/* Loading skeleton for filter bar */}
+              <div className="w-full bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
+                <div className="flex flex-col gap-3">
+                  <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4">
+                    <div className="flex-1 h-10 bg-gray-200 rounded animate-pulse"></div>
+                    <div className="flex gap-2">
+                      <div className="w-24 h-10 bg-gray-200 rounded animate-pulse"></div>
+                      <div className="w-24 h-10 bg-gray-200 rounded animate-pulse"></div>
+                      <div className="w-28 h-10 bg-gray-200 rounded animate-pulse"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Loading skeleton for recipe cards */}
+              <div className="w-full mb-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                  {Array.from({ length: 8 }, (_, index) => (
+                    <div
+                      key={`recipe-skeleton-loading-${index}`}
+                      className="bg-white border border-gray-200 rounded-xl overflow-hidden"
+                    >
+                      {/* Skeleton edit button */}
+                      <div className="relative">
+                        <div className="absolute top-2 left-2 w-8 h-8 rounded-full bg-gray-200 animate-pulse"></div>
+
+                        {/* Skeleton recipe image */}
+                        <div className="relative w-full h-48 bg-gray-200 animate-pulse">
+                          {/* Skeleton icons overlay */}
+                          <div className="absolute top-2 right-2 flex items-center gap-1">
+                            <div className="w-8 h-8 rounded-full bg-gray-300 animate-pulse"></div>
+                            <div className="w-8 h-8 rounded-full bg-gray-300 animate-pulse"></div>
+                            <div className="w-8 h-8 rounded-full bg-gray-300 animate-pulse"></div>
+                          </div>
+                        </div>
+
+                        {/* Skeleton recipe info */}
+                        <div className="p-4 flex flex-col">
+                          {/* Skeleton title */}
+                          <div className="space-y-2 mb-2">
+                            <div className="h-5 bg-gray-200 rounded w-full animate-pulse"></div>
+                            <div className="h-5 bg-gray-200 rounded w-3/4 animate-pulse"></div>
+                          </div>
+
+                          {/* Skeleton family member info (sometimes visible) */}
+                          {index % 3 === 0 && (
+                            <div className="h-4 bg-gray-200 rounded w-32 mb-2 animate-pulse"></div>
+                          )}
+
+                          {/* Skeleton separator */}
+                          <div className="w-full h-px bg-gray-200 mb-2"></div>
+
+                          {/* Skeleton time info */}
+                          <div className="flex items-center">
+                            <div className="w-4 h-4 bg-gray-200 rounded mr-2 animate-pulse"></div>
+                            <div className="h-4 bg-gray-200 rounded w-20 animate-pulse"></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
         ) : (
@@ -797,8 +872,8 @@ const RecipeViewer: React.FC<RecipeViewerProps> = () => {
                 <span className="text-2xl font-bold">
                   a collection of{" "}
                   <span className="text-black font-bold text-3xl">
-                    {filteredRecipes.length}{" "}
-                  </span>
+                    {filteredRecipes.length}
+                  </span>{" "}
                   recipes
                 </span>{" "}
                 <br />
@@ -1137,9 +1212,9 @@ const RecipeViewer: React.FC<RecipeViewerProps> = () => {
               )}
 
               {/* Recipes Grid */}
-              {!minimized ? (
+              {!minimized && (
                 <div className="w-full mb-8">
-                  {!session && filteredRecipes.length === 0 ? (
+                  {!session && filteredRecipes.length === 0 && (
                     <div className="text-center py-12">
                       <div className="flex justify-center mb-4">
                         <RestaurantIcon
@@ -1154,32 +1229,30 @@ const RecipeViewer: React.FC<RecipeViewerProps> = () => {
                         create and share your own recipes.
                       </p>
                     </div>
-                  ) : filteredRecipes.length === 0 ? (
+                  )}
+
+                  {session && filteredRecipes.length === 0 && (
                     <div className="text-center">
                       <div className="bg-white border border-gray-200 rounded-xl p-8">
                         <RestaurantIcon
                           sx={{ fontSize: 48, color: "gray", mb: 2 }}
                         />
                         <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                          {!session
-                            ? "No public recipes yet"
-                            : "No recipes yet"}
+                          No recipes yet
                         </h3>
                         <p className="text-gray-600 mb-4">
-                          {!session
-                            ? "No public recipes available at the moment. Sign in to create and share your own recipes."
-                            : "Start building your recipe collection!"}
+                          Start building your recipe collection!
                         </p>
-                        {session && (
-                          <Link href="/recipes/builder">
-                            <button className="px-6 py-3 rounded bg-blue-600 text-white font-mono text-sm hover:bg-blue-700 transition cursor-pointer">
-                              Add Your First Recipe
-                            </button>
-                          </Link>
-                        )}
+                        <Link href="/recipes/builder">
+                          <button className="px-6 py-3 rounded bg-blue-600 text-white font-mono text-sm hover:bg-blue-700 transition cursor-pointer">
+                            Add Your First Recipe
+                          </button>
+                        </Link>
                       </div>
                     </div>
-                  ) : (
+                  )}
+
+                  {filteredRecipes.length > 0 && (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                       {filteredRecipes.map((recipe) => (
                         <div
@@ -1329,7 +1402,10 @@ const RecipeViewer: React.FC<RecipeViewerProps> = () => {
                     </div>
                   )}
                 </div>
-              ) : (
+              )}
+
+              {/* Minimized View - List Style */}
+              {minimized && (
                 <div className="w-full mb-8">
                   {filteredRecipes.map((recipe) => (
                     <div

@@ -949,14 +949,76 @@ const RollAndWriteEntries: React.FC = () => {
             {/* Entries List */}
             <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               {loadingEntries ? (
-                <div className="fixed inset-0 bg-white bg-opacity-75 flex items-center justify-center z-50">
-                  <CasinoIcon
-                    className="animate-spin"
-                    sx={{
-                      fontSize: 80,
-                      color: "#9CA3AF",
-                    }}
-                  />
+                <div className="flex-1 flex flex-col px-0 py-0">
+                  {/* Loading skeleton for filter section */}
+                  <div className="w-full flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-2">
+                      <div className="w-10 h-10 bg-gray-200 rounded animate-pulse"></div>
+                    </div>
+                    <div className="w-32 h-10 bg-gray-200 rounded animate-pulse"></div>
+                  </div>
+
+                  {/* Loading skeleton for filter bar */}
+                  <div className="w-full bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4">
+                    <div className="flex flex-col gap-3">
+                      <div className="flex flex-col md:flex-row md:items-center gap-3 md:gap-4">
+                        <div className="flex gap-2">
+                          <div className="w-24 h-10 bg-gray-200 rounded animate-pulse"></div>
+                          <div className="w-24 h-10 bg-gray-200 rounded animate-pulse"></div>
+                          <div className="w-28 h-10 bg-gray-200 rounded animate-pulse"></div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Loading skeleton for roll & write entries */}
+                  <div className="w-full mb-8">
+                    {Array.from({ length: 8 }, (_, index) => (
+                      <div
+                        key={`rollwrite-skeleton-${index + 1}`}
+                        className="bg-white border border-gray-200 rounded-xl p-3 text-left mb-4 relative"
+                      >
+                        {/* Skeleton favorite icon in upper-right */}
+                        <div className="absolute top-2 right-2 flex items-center gap-1">
+                          <div className="w-8 h-8 bg-gray-200 rounded animate-pulse"></div>
+                        </div>
+
+                        {/* Skeleton dice header */}
+                        <div className="flex items-center gap-1 mb-3 pr-20">
+                          <div className="w-4 h-4 bg-gray-200 rounded animate-pulse"></div>
+                          <div className="h-4 bg-gray-200 rounded w-32 animate-pulse"></div>
+                        </div>
+
+                        {/* Skeleton content */}
+                        <div className="space-y-2 mb-3">
+                          <div className="h-4 bg-gray-200 rounded w-full animate-pulse"></div>
+                          <div className="h-4 bg-gray-200 rounded w-full animate-pulse"></div>
+                          <div className="h-4 bg-gray-200 rounded w-3/4 animate-pulse"></div>
+                          {/* Some entries have more content */}
+                          {index % 3 === 0 && (
+                            <>
+                              <div className="h-4 bg-gray-200 rounded w-full animate-pulse"></div>
+                              <div className="h-4 bg-gray-200 rounded w-2/3 animate-pulse"></div>
+                            </>
+                          )}
+                        </div>
+
+                        {/* Skeleton footer with author info */}
+                        <div className="mt-3 pt-3 border-t border-gray-100 flex items-center justify-between">
+                          <div className="flex items-center gap-1">
+                            <div className="w-4 h-4 bg-gray-200 rounded animate-pulse"></div>
+                            <div className="w-4 h-4 bg-gray-200 rounded animate-pulse"></div>
+                            <div className="h-4 bg-gray-200 rounded w-20 animate-pulse"></div>
+                            <div className="h-4 bg-gray-200 rounded w-24 animate-pulse"></div>
+                          </div>
+                          {/* Delete button skeleton (sometimes visible) */}
+                          {index % 4 === 0 && (
+                            <div className="w-8 h-8 bg-gray-200 rounded animate-pulse"></div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               ) : !loadingEntries && entries.length === 0 ? (
                 (() => {
