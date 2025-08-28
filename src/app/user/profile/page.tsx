@@ -76,6 +76,10 @@ import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteIcon from "@mui/icons-material/Delete";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
+import FamilyRestroomIcon from "@mui/icons-material/FamilyRestroom";
+import HailIcon from "@mui/icons-material/Hail";
+import BadgeIcon from "@mui/icons-material/Badge";
+import EscalatorWarningIcon from "@mui/icons-material/EscalatorWarning";
 
 console.log("Profile page component mounting...");
 
@@ -2394,366 +2398,501 @@ function AppSummaries({
               </div>
             )}
 
-            {/* Other people */}
-            {familyInfo.json.people.map(
-              (person: {
-                person_id: string;
-                name: string;
-                gender: string;
-                relation: string;
-                network_level: number;
-                shared_data?: {
-                  roll_and_write?: number;
-                  field_notes?: number;
-                  recipes?: number;
-                };
-              }) => {
-                // ...existing code for person card...
-                let iconColor = "bg-gray-400";
-                if (person.gender === "male") iconColor = "bg-blue-500";
-                else if (person.gender === "female") iconColor = "bg-pink-400";
-                const extendedRelations = ["friend", "co-worker", "neighbor"];
-                let familyType = "Immediate Family";
-                if (extendedRelations.includes(person.relation.toLowerCase())) {
-                  familyType = "Extended Family";
-                } else if (person.network_level !== 1) {
-                  familyType = "Extended Family";
+            {/* Other people - organized in tree structure */}
+            {(() => {
+              // Safety check for familyInfo and people array
+              if (
+                !familyInfo?.json?.people ||
+                !Array.isArray(familyInfo.json.people)
+              ) {
+                return null;
+              }
+
+              // Organize people by network level
+              const peopleByNetwork: {
+                [key: number]: Array<{
+                  person_id: string;
+                  name: string;
+                  email?: string;
+                  gender: string;
+                  relation: string;
+                  network_level: number;
+                  shared_data?: {
+                    roll_and_write?: number;
+                    field_notes?: number;
+                    recipes?: number;
+                  };
+                }>;
+              } = {};
+
+              familyInfo.json.people.forEach(
+                (person: {
+                  person_id: string;
+                  name: string;
+                  email?: string;
+                  gender: string;
+                  relation: string;
+                  network_level: number;
+                  shared_data?: {
+                    roll_and_write?: number;
+                    field_notes?: number;
+                    recipes?: number;
+                  };
+                }) => {
+                  if (!peopleByNetwork[person.network_level]) {
+                    peopleByNetwork[person.network_level] = [];
+                  }
+                  peopleByNetwork[person.network_level].push(person);
                 }
-                // Get real counts from API data instead of hardcoded shared_data
-                const realCounts = personCounts[person.person_id] || {
-                  rollAndWrite: 0,
-                  fieldNotes: 0,
-                  recipes: 0,
-                };
-                return (
-                  <div
-                    key={person.person_id}
-                    className="bg-gray-50 rounded-lg p-4 w-full cursor-pointer transition-transform duration-200 hover:scale-105"
-                  >
-                    {/* Profile info and icons row */}
-                    <div className="flex flex-col sm:flex-row sm:items-center">
-                      <div className="flex items-center">
-                        <div
-                          className={`flex items-center justify-center w-12 h-12 rounded-full mr-4`}
-                          style={{
-                            boxShadow: "0 0 0 0 transparent",
-                            border: "none",
-                            background: "none",
-                          }}
-                        >
-                          <svg
-                            width="32"
-                            height="32"
-                            viewBox="0 0 32 32"
-                            fill="none"
-                          >
-                            <circle
-                              cx="16"
-                              cy="16"
-                              r="16"
-                              fill={(() => {
-                                if (iconColor === "bg-blue-500")
-                                  return "#3F51B5";
-                                if (iconColor === "bg-pink-400")
-                                  return "#f472b6";
-                                return "#9ca3af";
-                              })()}
-                            />
-                            <text
-                              x="16"
-                              y="21"
-                              textAnchor="middle"
-                              fontSize="16"
-                              fill="#fff"
-                              fontFamily="Arial"
-                            >
-                              {person.name ? person.name[0] : "?"}
-                            </text>
-                          </svg>
-                        </div>
-                        <div className="flex-1">
-                          <div className="font-bold text-lg text-gray-800">
-                            {/* <Link
-                              href={`/person/${person.person_id}`}
-                              className="hover:text-blue-600 transition-colors cursor-pointer"
-                            > */}
-                            {person.name}
-                            {/* </Link> */}
-                          </div>
-                          <div className="text-xs text-gray-400 flex items-center gap-1">
-                            {familyType} ({person.relation})
-                            <EditNoteIcon
-                              sx={{
-                                fontSize: 12,
-                                color: "#9ca3af",
-                                cursor: "pointer",
-                              }}
-                              className="hover:text-gray-600"
-                              onClick={() => {
-                                if (editingPersonId === person.person_id) {
-                                  // Cancel editing
-                                  setEditingPersonId(null);
-                                  setEditRelationship("");
-                                  setEditNetwork("");
-                                } else {
-                                  // Start editing
-                                  setEditingPersonId(person.person_id);
-                                  setEditRelationship(person.relation);
-                                  // Convert network_level to network type
-                                  const networkType =
-                                    networksData.network.find(
-                                      (n: Network) =>
-                                        n.level === person.network_level
-                                    )?.type || "";
-                                  setEditNetwork(networkType);
-                                }
-                              }}
-                            />
-                          </div>
-                        </div>
-                      </div>
+              );
 
-                      {/* Icons section - responsive layout like Me card */}
-                      <div className="flex flex-row items-center gap-4 mt-4 sm:mt-0 justify-end sm:ml-auto">
-                        <div className="relative flex items-center">
-                          {realCounts.rollAndWrite > 0 ? (
-                            <Link
-                              href={`/rollandwrite?family=true&familyMember=${encodeURIComponent(
-                                person.name
-                              )}`}
-                            >
-                              <CasinoIcon
-                                fontSize="medium"
-                                style={{ color: "#757575", cursor: "pointer" }}
+              // Sort network levels
+              const sortedLevels = Object.keys(peopleByNetwork)
+                .map(Number)
+                .sort((a, b) => a - b);
+
+              return sortedLevels.map((networkLevel) => (
+                <div key={networkLevel} className="w-full">
+                  {/* Network Level Header */}
+                  <div className="flex items-center mb-2 mt-2">
+                    <div className="flex items-center space-x-2">
+                      {/* Network level icons */}
+                      {networkLevel === 1 && (
+                        <>
+                          <FamilyRestroomIcon
+                            fontSize="small"
+                            className="text-gray-700"
+                          />
+                          <span className="text-sm font-semibold text-gray-700">
+                            Immediate Family
+                          </span>
+                        </>
+                      )}
+                      {networkLevel === 2 && (
+                        <>
+                          <EscalatorWarningIcon
+                            fontSize="small"
+                            className="text-gray-600"
+                          />
+                          <span className="text-sm font-semibold text-gray-600">
+                            Extended Family
+                          </span>
+                        </>
+                      )}
+                      {networkLevel >= 3 && (
+                        <>
+                          {(() => {
+                            const networkType = networksData.network.find(
+                              (n: Network) => n.level === networkLevel
+                            );
+                            let IconComponent = HailIcon; // default for friendships
+                            if (networkType?.type === "professional") {
+                              IconComponent = BadgeIcon;
+                            }
+                            return (
+                              <IconComponent
+                                fontSize="small"
+                                className="text-gray-500"
                               />
-                            </Link>
-                          ) : (
-                            <CasinoIcon
-                              fontSize="medium"
-                              style={{ color: "#757575" }}
-                            />
-                          )}
-                          {realCounts.rollAndWrite > 0 && (
-                            <span
-                              className="absolute -top-2 -right-2"
-                              style={{
-                                background: "#1B5E20",
-                                color: "#fff",
-                                borderRadius: "50%",
-                                padding: "0",
-                                fontWeight: "bold",
-                                minWidth: "20px",
-                                fontSize: "0.7rem",
-                                height: "20px",
-                                width: "20px",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                textAlign: "center",
-                                boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
-                              }}
-                            >
-                              {realCounts.rollAndWrite}
-                            </span>
-                          )}
-                        </div>
-                        <div className="relative flex items-center">
-                          {realCounts.fieldNotes > 0 ? (
-                            <Link
-                              href={`/fieldnotes?family=true&familyMember=${encodeURIComponent(
-                                person.name
-                              )}`}
-                            >
-                              <StickyNote2Icon
-                                fontSize="medium"
-                                style={{ color: "#757575", cursor: "pointer" }}
-                              />
-                            </Link>
-                          ) : (
-                            <StickyNote2Icon
-                              fontSize="medium"
-                              style={{ color: "#757575" }}
-                            />
-                          )}
-                          {realCounts.fieldNotes > 0 && (
-                            <span
-                              className="absolute -top-2 -right-2"
-                              style={{
-                                background: "#1B5E20",
-                                color: "#fff",
-                                borderRadius: "50%",
-                                padding: "0",
-                                fontWeight: "bold",
-                                minWidth: "20px",
-                                fontSize: "0.7rem",
-                                height: "20px",
-                                width: "20px",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                textAlign: "center",
-                                boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
-                              }}
-                            >
-                              {realCounts.fieldNotes}
-                            </span>
-                          )}
-                        </div>
-                        <div className="relative flex items-center">
-                          {realCounts.recipes > 0 ? (
-                            <Link
-                              href={`/recipes?family=true&familyMember=${encodeURIComponent(
-                                person.name
-                              )}`}
-                            >
-                              <RestaurantIcon
-                                fontSize="medium"
-                                style={{ color: "#757575", cursor: "pointer" }}
-                              />
-                            </Link>
-                          ) : (
-                            <RestaurantIcon
-                              fontSize="medium"
-                              style={{ color: "#757575" }}
-                            />
-                          )}
-                          {realCounts.recipes > 0 && (
-                            <span
-                              className="absolute -top-2 -right-2"
-                              style={{
-                                background: "#1B5E20",
-                                color: "#fff",
-                                borderRadius: "50%",
-                                padding: "0",
-                                fontWeight: "bold",
-                                minWidth: "20px",
-                                fontSize: "0.7rem",
-                                height: "20px",
-                                width: "20px",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                                textAlign: "center",
-                                boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
-                              }}
-                            >
-                              {realCounts.recipes}
-                            </span>
-                          )}
-                        </div>
-                      </div>
+                            );
+                          })()}
+                          <span className="text-sm font-semibold text-gray-500">
+                            {(() => {
+                              const networkType = networksData.network.find(
+                                (n: Network) => n.level === networkLevel
+                              );
+                              return networkType
+                                ? networkType.type.charAt(0).toUpperCase() +
+                                    networkType.type.slice(1)
+                                : `Network Level ${networkLevel}`;
+                            })()}
+                          </span>
+                        </>
+                      )}
                     </div>
+                  </div>
 
-                    {/* Edit form - shows when this person is being edited */}
-                    {editingPersonId === person.person_id && (
-                      <div className="mt-4">
-                        <div className="flex flex-col gap-2">
-                          <div className="flex flex-col sm:flex-row gap-2">
-                            <TextField
-                              select
-                              size="small"
-                              value={editRelationship}
-                              onChange={(e) =>
-                                setEditRelationship(e.target.value)
-                              }
-                              sx={{
-                                width: { xs: "100%", sm: 160 },
-                                "& .MuiInputBase-root": {
-                                  height: 36,
-                                },
-                              }}
-                              label="Relationship"
-                            >
-                              {relationshipsData.relationships.map(
-                                (rel: Relationship) => (
-                                  <MenuItem key={rel.type} value={rel.type}>
-                                    {rel.type}
-                                  </MenuItem>
-                                )
-                              )}
-                            </TextField>
-                            <TextField
-                              select
-                              size="small"
-                              value={editNetwork}
-                              onChange={(e) => setEditNetwork(e.target.value)}
-                              sx={{
-                                width: { xs: "100%", sm: 160 },
-                                "& .MuiInputBase-root": {
-                                  height: 36,
-                                },
-                              }}
-                              label="Network"
-                            >
-                              {networksData.network.map((net: Network) => (
-                                <MenuItem key={net.type} value={net.type}>
-                                  {net.type}
-                                </MenuItem>
-                              ))}
-                            </TextField>
-                            <div className="flex gap-2 w-full sm:w-auto">
-                              <Button
-                                variant="contained"
-                                onClick={() =>
-                                  handleEditPerson(person.person_id)
-                                }
-                                style={{
-                                  textTransform: "none",
-                                  height: 36,
-                                  minWidth: 80,
-                                }}
-                                className="flex-1 sm:flex-none"
-                                disabled={!editRelationship || !editNetwork}
-                              >
-                                Update
-                              </Button>
-                              <Button
-                                variant="outlined"
-                                onClick={() => {
-                                  setEditingPersonId(null);
-                                  setEditRelationship("");
-                                  setEditNetwork("");
-                                }}
-                                style={{
-                                  textTransform: "none",
-                                  height: 36,
-                                  minWidth: 80,
-                                }}
-                                className="flex-1 sm:flex-none"
-                              >
-                                Cancel
-                              </Button>
+                  {/* People in this network level */}
+                  <div className="space-y-2">
+                    {peopleByNetwork[networkLevel].map((person) => {
+                      // Person card logic
+                      let iconColor = "bg-gray-400";
+                      if (person.gender === "male") iconColor = "bg-blue-500";
+                      else if (person.gender === "female")
+                        iconColor = "bg-pink-400";
 
-                              {/* Delete icon - only visible when editing */}
+                      const extendedRelations = [
+                        "friend",
+                        "co-worker",
+                        "neighbor",
+                      ];
+                      let familyType = "Immediate Family";
+                      if (
+                        extendedRelations.includes(
+                          person.relation.toLowerCase()
+                        ) ||
+                        person.network_level !== 1
+                      ) {
+                        familyType = "Extended Family";
+                      }
+
+                      // Get real counts from API data instead of hardcoded shared_data
+                      const realCounts = personCounts[person.person_id] || {
+                        rollAndWrite: 0,
+                        fieldNotes: 0,
+                        recipes: 0,
+                      };
+
+                      return (
+                        <div
+                          key={person.person_id}
+                          className={`bg-gray-50 rounded-lg p-4 w-full cursor-pointer transition-transform duration-200 hover:scale-105 max-w-full overflow-hidden`}
+                        >
+                          {/* Profile info and icons row */}
+                          <div className="flex flex-col sm:flex-row sm:items-center w-full">
+                            <div className="flex items-center min-w-0 flex-1">
                               <div
-                                className="flex items-center ml-2"
-                                title={`Remove ${person.name} from family`}
+                                className={`flex items-center justify-center w-12 h-12 rounded-full mr-4 flex-shrink-0`}
+                                style={{
+                                  boxShadow: "0 0 0 0 transparent",
+                                  border: "none",
+                                  background: "none",
+                                }}
                               >
-                                <DeleteIcon
-                                  fontSize="medium"
-                                  style={{
-                                    color: "#9ca3af",
-                                    cursor: "pointer",
-                                  }}
-                                  className="hover:text-gray-600"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleDeletePerson({
-                                      person_id: person.person_id,
-                                      name: person.name,
-                                    });
-                                  }}
-                                />
+                                <svg
+                                  width="32"
+                                  height="32"
+                                  viewBox="0 0 32 32"
+                                  fill="none"
+                                >
+                                  <circle
+                                    cx="16"
+                                    cy="16"
+                                    r="16"
+                                    fill={(() => {
+                                      if (iconColor === "bg-blue-500")
+                                        return "#3F51B5";
+                                      if (iconColor === "bg-pink-400")
+                                        return "#f472b6";
+                                      return "#9ca3af";
+                                    })()}
+                                  />
+                                  <text
+                                    x="16"
+                                    y="21"
+                                    textAnchor="middle"
+                                    fontSize="16"
+                                    fill="#fff"
+                                    fontFamily="Arial"
+                                  >
+                                    {person.name ? person.name[0] : "?"}
+                                  </text>
+                                </svg>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="font-bold text-lg text-gray-800 truncate">
+                                  {person.name}
+                                </div>
+                                <div className="text-xs text-gray-400 flex items-center gap-1">
+                                  {familyType} ({person.relation})
+                                  <EditNoteIcon
+                                    sx={{
+                                      fontSize: 12,
+                                      color: "#9ca3af",
+                                      cursor: "pointer",
+                                    }}
+                                    className="hover:text-gray-600 flex-shrink-0"
+                                    onClick={() => {
+                                      if (
+                                        editingPersonId === person.person_id
+                                      ) {
+                                        // Cancel editing
+                                        setEditingPersonId(null);
+                                        setEditRelationship("");
+                                        setEditNetwork("");
+                                      } else {
+                                        // Start editing
+                                        setEditingPersonId(person.person_id);
+                                        setEditRelationship(person.relation);
+                                        // Convert network_level to network type
+                                        const networkType =
+                                          networksData.network.find(
+                                            (n: Network) =>
+                                              n.level === person.network_level
+                                          )?.type || "";
+                                        setEditNetwork(networkType);
+                                      }
+                                    }}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Icons section - responsive layout like Me card */}
+                            <div className="flex flex-row items-center gap-4 mt-4 sm:mt-0 justify-end sm:ml-auto flex-shrink-0">
+                              <div className="relative flex items-center">
+                                {realCounts.rollAndWrite > 0 ? (
+                                  <Link
+                                    href={`/rollandwrite?family=true&familyMember=${encodeURIComponent(
+                                      person.name
+                                    )}`}
+                                  >
+                                    <CasinoIcon
+                                      fontSize="medium"
+                                      style={{
+                                        color: "#757575",
+                                        cursor: "pointer",
+                                      }}
+                                    />
+                                  </Link>
+                                ) : (
+                                  <CasinoIcon
+                                    fontSize="medium"
+                                    style={{ color: "#757575" }}
+                                  />
+                                )}
+                                {realCounts.rollAndWrite > 0 && (
+                                  <span
+                                    className="absolute -top-2 -right-2"
+                                    style={{
+                                      background: "#1B5E20",
+                                      color: "#fff",
+                                      borderRadius: "50%",
+                                      padding: "0",
+                                      fontWeight: "bold",
+                                      minWidth: "20px",
+                                      fontSize: "0.7rem",
+                                      height: "20px",
+                                      width: "20px",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      textAlign: "center",
+                                      boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
+                                    }}
+                                  >
+                                    {realCounts.rollAndWrite}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="relative flex items-center">
+                                {realCounts.fieldNotes > 0 ? (
+                                  <Link
+                                    href={`/fieldnotes?family=true&familyMember=${encodeURIComponent(
+                                      person.name
+                                    )}`}
+                                  >
+                                    <StickyNote2Icon
+                                      fontSize="medium"
+                                      style={{
+                                        color: "#757575",
+                                        cursor: "pointer",
+                                      }}
+                                    />
+                                  </Link>
+                                ) : (
+                                  <StickyNote2Icon
+                                    fontSize="medium"
+                                    style={{ color: "#757575" }}
+                                  />
+                                )}
+                                {realCounts.fieldNotes > 0 && (
+                                  <span
+                                    className="absolute -top-2 -right-2"
+                                    style={{
+                                      background: "#1B5E20",
+                                      color: "#fff",
+                                      borderRadius: "50%",
+                                      padding: "0",
+                                      fontWeight: "bold",
+                                      minWidth: "20px",
+                                      fontSize: "0.7rem",
+                                      height: "20px",
+                                      width: "20px",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      textAlign: "center",
+                                      boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
+                                    }}
+                                  >
+                                    {realCounts.fieldNotes}
+                                  </span>
+                                )}
+                              </div>
+                              <div className="relative flex items-center">
+                                {realCounts.recipes > 0 ? (
+                                  <Link
+                                    href={`/recipes?family=true&familyMember=${encodeURIComponent(
+                                      person.name
+                                    )}`}
+                                  >
+                                    <RestaurantIcon
+                                      fontSize="medium"
+                                      style={{
+                                        color: "#757575",
+                                        cursor: "pointer",
+                                      }}
+                                    />
+                                  </Link>
+                                ) : (
+                                  <RestaurantIcon
+                                    fontSize="medium"
+                                    style={{ color: "#757575" }}
+                                  />
+                                )}
+                                {realCounts.recipes > 0 && (
+                                  <span
+                                    className="absolute -top-2 -right-2"
+                                    style={{
+                                      background: "#1B5E20",
+                                      color: "#fff",
+                                      borderRadius: "50%",
+                                      padding: "0",
+                                      fontWeight: "bold",
+                                      minWidth: "20px",
+                                      fontSize: "0.7rem",
+                                      height: "20px",
+                                      width: "20px",
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "center",
+                                      textAlign: "center",
+                                      boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
+                                    }}
+                                  >
+                                    {realCounts.recipes}
+                                  </span>
+                                )}
                               </div>
                             </div>
                           </div>
+
+                          {/* Edit form - shows when this person is being edited */}
+                          {editingPersonId === person.person_id && (
+                            <div className="mt-4">
+                              <div className="flex flex-col gap-2">
+                                <div className="flex flex-col sm:flex-row gap-2">
+                                  <TextField
+                                    select
+                                    size="small"
+                                    value={editRelationship}
+                                    onChange={(e) =>
+                                      setEditRelationship(e.target.value)
+                                    }
+                                    sx={{
+                                      width: { xs: "100%", sm: 160 },
+                                      "& .MuiInputBase-root": {
+                                        height: 36,
+                                      },
+                                    }}
+                                    label="Relationship"
+                                  >
+                                    {relationshipsData.relationships.map(
+                                      (rel: Relationship) => (
+                                        <MenuItem
+                                          key={rel.type}
+                                          value={rel.type}
+                                        >
+                                          {rel.type}
+                                        </MenuItem>
+                                      )
+                                    )}
+                                  </TextField>
+                                  <TextField
+                                    select
+                                    size="small"
+                                    value={editNetwork}
+                                    onChange={(e) =>
+                                      setEditNetwork(e.target.value)
+                                    }
+                                    sx={{
+                                      width: { xs: "100%", sm: 160 },
+                                      "& .MuiInputBase-root": {
+                                        height: 36,
+                                      },
+                                    }}
+                                    label="Network"
+                                  >
+                                    {networksData.network.map(
+                                      (net: Network) => (
+                                        <MenuItem
+                                          key={net.type}
+                                          value={net.type}
+                                        >
+                                          {net.type}
+                                        </MenuItem>
+                                      )
+                                    )}
+                                  </TextField>
+                                  <div className="flex gap-2 w-full sm:w-auto">
+                                    <Button
+                                      variant="contained"
+                                      onClick={() =>
+                                        handleEditPerson(person.person_id)
+                                      }
+                                      style={{
+                                        textTransform: "none",
+                                        height: 36,
+                                        minWidth: 80,
+                                      }}
+                                      className="flex-1 sm:flex-none"
+                                      disabled={
+                                        !editRelationship || !editNetwork
+                                      }
+                                    >
+                                      Update
+                                    </Button>
+                                    <Button
+                                      variant="outlined"
+                                      onClick={() => {
+                                        setEditingPersonId(null);
+                                        setEditRelationship("");
+                                        setEditNetwork("");
+                                      }}
+                                      style={{
+                                        textTransform: "none",
+                                        height: 36,
+                                        minWidth: 80,
+                                      }}
+                                      className="flex-1 sm:flex-none"
+                                    >
+                                      Cancel
+                                    </Button>
+
+                                    {/* Delete icon - only visible when editing */}
+                                    <div
+                                      className="flex items-center ml-2"
+                                      title={`Remove ${person.name} from family`}
+                                    >
+                                      <DeleteIcon
+                                        fontSize="medium"
+                                        style={{
+                                          color: "#9ca3af",
+                                          cursor: "pointer",
+                                        }}
+                                        className="hover:text-gray-600"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleDeletePerson({
+                                            person_id: person.person_id,
+                                            name: person.name,
+                                          });
+                                        }}
+                                      />
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
+                          )}
                         </div>
-                      </div>
-                    )}
+                      );
+                    })}
                   </div>
-                );
-              }
-            )}
+                </div>
+              ));
+            })()}
           </div>
         ) : (
           <div className="w-full bg-gray-100 rounded px-4 py-3 mb-8 text-center">

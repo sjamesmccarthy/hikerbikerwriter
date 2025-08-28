@@ -2,9 +2,7 @@
   "network": [
     { "type": "immediate family", "level": 1 },
     { "type": "extended family", "level": 2 },
-    { "type": "friend", "level": 3 },
-    { "type": "colleague", "level": 3 },
-    { "type": "neighbor", "level": 3 },
-    { "type": "acquaintance", "level": 4 }
+    { "type": "friendships", "level": 3 },
+    { "type": "professional", "level": 4 }
   ]
 }

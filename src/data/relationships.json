@@ -38,6 +38,10 @@
     { "type": "great-grandson" },
     { "type": "great-aunt" },
     { "type": "great-uncle" },
+    { "type": "friend" },
+    { "type": "neighbor" },
+    { "type": "colleague" },
+    { "type": "acquaintance" },
     { "type": "other" }
   ]
 }
