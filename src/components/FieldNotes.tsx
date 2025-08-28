@@ -640,277 +640,79 @@ const FieldNotes: React.FC = () => {
 
           {/* Outer container for filter icon, filter bar, and entry container */}
           <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            {/* Filter Icon Row - 75% width, filter icon always visible, add button only if logged in */}
-            <div className="w-full flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <IconButton
-                  onClick={() => setShowFilters(!showFilters)}
-                  size="small"
+            {/* Show loading state globally - not dependent on minimized state */}
+            {loadingNotes ? (
+              <div className="fixed inset-0 bg-white bg-opacity-75 flex items-center justify-center z-50">
+                <HikingIcon
+                  className="animate-spin"
                   sx={{
-                    color: "gray",
-                    "&:hover": { backgroundColor: "rgba(0, 0, 0, 0.04)" },
+                    fontSize: 80,
+                    color: "#9CA3AF",
                   }}
-                >
-                  <FilterAltOutlinedIcon />
-                </IconButton>
-                <IconButton
-                  onClick={() => setMinimized(!minimized)}
-                  size="small"
-                  sx={{ color: "gray" }}
-                  aria-label="Minimize List"
-                >
-                  <DragHandleOutlinedIcon />
-                </IconButton>
+                />
               </div>
-              {session && (
-                <Link href="/fieldnotes/builder">
-                  <button className="px-4 py-2 rounded bg-blue-600 text-white font-mono text-sm hover:bg-blue-700 transition flex items-center gap-2 cursor-pointer">
-                    <EditNoteOutlinedIcon sx={{ fontSize: 16 }} />
-                    New Field Note
-                  </button>
-                </Link>
-              )}
-            </div>
+            ) : (
+              <>
+                {/* Filter Icon Row - filter icon always visible, add button only if logged in */}
+                <div className="w-full flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <IconButton
+                      onClick={() => setShowFilters(!showFilters)}
+                      size="small"
+                      sx={{
+                        color: "gray",
+                        "&:hover": { backgroundColor: "rgba(0, 0, 0, 0.04)" },
+                      }}
+                    >
+                      <FilterAltOutlinedIcon />
+                    </IconButton>
+                    <IconButton
+                      onClick={() => setMinimized(!minimized)}
+                      size="small"
+                      sx={{ color: "gray" }}
+                      aria-label="Minimize List"
+                    >
+                      <DragHandleOutlinedIcon />
+                    </IconButton>
+                  </div>
+                  {session && (
+                    <Link href="/fieldnotes/builder">
+                      <button className="px-4 py-2 rounded bg-blue-600 text-white font-mono text-sm hover:bg-blue-700 transition flex items-center gap-2 cursor-pointer">
+                        <EditNoteOutlinedIcon sx={{ fontSize: 16 }} />
+                        New Field Note
+                      </button>
+                    </Link>
+                  )}
+                </div>
 
-            {/* Filter Bar - now inside 75% container and under filter icon */}
-            {showFilters && (
-              <div className="w-full bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4 text-left">
-                <div className="flex flex-col gap-3">
-                  {/* Date, Mood, and Sort Filters */}
-                  <div className="flex flex-col gap-3">
-                    {/* Mobile layout with responsive rows */}
+                {/* Filter Bar - now inside 75% container and under filter icon */}
+                {showFilters && (
+                  <div className="w-full bg-gray-50 border border-gray-200 rounded-lg p-4 mb-4 text-left">
                     <div className="flex flex-col gap-3">
-                      {/* First row: Date, Mood, Sort By on left, Public/Family filters on right (desktop only) */}
-                      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-2 md:gap-4">
-                        {/* Left side: Date, Mood, Sort By filters */}
-                        <div className="flex flex-col md:flex-row gap-2 md:gap-4">
-                          <FormControl
-                            size="small"
-                            className="flex-1 md:flex-none"
-                            sx={{ minWidth: { xs: 0, md: 120 } }}
-                          >
-                            <InputLabel
-                              sx={{
-                                fontFamily: "monospace",
-                                fontSize: "0.875rem",
-                              }}
-                            >
-                              Date
-                            </InputLabel>
-                            <Select
-                              defaultValue="all"
-                              label="Date"
-                              sx={{
-                                fontFamily: "monospace",
-                                fontSize: "0.875rem",
-                                "& .MuiSelect-select": {
-                                  fontFamily: "monospace",
-                                },
-                              }}
-                            >
-                              <MenuItem
-                                value="all"
-                                sx={{
-                                  fontFamily: "monospace",
-                                  fontSize: "0.875rem",
-                                }}
+                      {/* Date, Mood, and Sort Filters */}
+                      <div className="flex flex-col gap-3">
+                        {/* Mobile layout with responsive rows */}
+                        <div className="flex flex-col gap-3">
+                          {/* First row: Date, Mood, Sort By on left, Public/Family filters on right (desktop only) */}
+                          <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-2 md:gap-4">
+                            {/* Left side: Date, Mood, Sort By filters */}
+                            <div className="flex flex-col md:flex-row gap-2 md:gap-4">
+                              <FormControl
+                                size="small"
+                                className="flex-1 md:flex-none"
+                                sx={{ minWidth: { xs: 0, md: 120 } }}
                               >
-                                All Time
-                              </MenuItem>
-                              <MenuItem
-                                value="week"
-                                sx={{
-                                  fontFamily: "monospace",
-                                  fontSize: "0.875rem",
-                                }}
-                              >
-                                This Week
-                              </MenuItem>
-                              <MenuItem
-                                value="month"
-                                sx={{
-                                  fontFamily: "monospace",
-                                  fontSize: "0.875rem",
-                                }}
-                              >
-                                This Month
-                              </MenuItem>
-                              <MenuItem
-                                value="year"
-                                sx={{
-                                  fontFamily: "monospace",
-                                  fontSize: "0.875rem",
-                                }}
-                              >
-                                This Year
-                              </MenuItem>
-                            </Select>
-                          </FormControl>
-
-                          <FormControl
-                            size="small"
-                            className="flex-1 md:flex-none"
-                            sx={{ minWidth: { xs: 0, md: 120 } }}
-                          >
-                            <InputLabel
-                              sx={{
-                                fontFamily: "monospace",
-                                fontSize: "0.875rem",
-                              }}
-                            >
-                              Mood
-                            </InputLabel>
-                            <Select
-                              value={filterMood}
-                              label="Mood"
-                              onChange={(e) => setFilterMood(e.target.value)}
-                              sx={{
-                                fontFamily: "monospace",
-                                fontSize: "0.875rem",
-                                "& .MuiSelect-select": {
-                                  fontFamily: "monospace",
-                                },
-                              }}
-                            >
-                              <MenuItem
-                                value="any"
-                                sx={{
-                                  fontFamily: "monospace",
-                                  fontSize: "0.875rem",
-                                }}
-                              >
-                                Any
-                              </MenuItem>
-                              {renderMoodMenuItemsWithSx(
-                                {
-                                  fontFamily: "monospace",
-                                  fontSize: "0.875rem",
-                                },
-                                false
-                              )}
-                            </Select>
-                          </FormControl>
-
-                          <FormControl
-                            size="small"
-                            className="flex-1 md:flex-none"
-                            sx={{ minWidth: { xs: 0, md: 120 } }}
-                          >
-                            <InputLabel
-                              sx={{
-                                fontFamily: "monospace",
-                                fontSize: "0.875rem",
-                              }}
-                            >
-                              Sort By
-                            </InputLabel>
-                            <Select
-                              value={sortBy}
-                              label="Sort By"
-                              onChange={(e) => setSortBy(e.target.value)}
-                              sx={{
-                                fontFamily: "monospace",
-                                fontSize: "0.875rem",
-                                "& .MuiSelect-select": {
-                                  fontFamily: "monospace",
-                                },
-                              }}
-                            >
-                              <MenuItem
-                                value="DESC"
-                                sx={{
-                                  fontFamily: "monospace",
-                                  fontSize: "0.875rem",
-                                }}
-                              >
-                                Newest First
-                              </MenuItem>
-                              <MenuItem
-                                value="ASC"
-                                sx={{
-                                  fontFamily: "monospace",
-                                  fontSize: "0.875rem",
-                                }}
-                              >
-                                Oldest First
-                              </MenuItem>
-                              <MenuItem
-                                value="FAVORITE"
-                                sx={{
-                                  fontFamily: "monospace",
-                                  fontSize: "0.875rem",
-                                }}
-                              >
-                                Favorites First
-                              </MenuItem>
-                            </Select>
-                          </FormControl>
-                        </div>
-
-                        {/* Right side: Public and Family filters (desktop only) */}
-                        <div className="hidden md:flex md:items-center gap-2">
-                          {/* Public filter */}
-                          {session?.user?.email && (
-                            <button
-                              onClick={() =>
-                                setShowPublicNotes(!showPublicNotes)
-                              }
-                              className={`px-3 py-2 rounded text-sm font-medium transition-colors flex items-center justify-center gap-1 ${
-                                showPublicNotes
-                                  ? "bg-green-100 text-green-700 border border-green-300"
-                                  : "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200"
-                              }`}
-                              style={{ fontFamily: "monospace" }}
-                            >
-                              <PublicIcon sx={{ fontSize: 16 }} />
-                              Public
-                            </button>
-                          )}
-
-                          {/* Family filters */}
-                          {session?.user?.email && hasFamilyMembers && (
-                            <button
-                              onClick={() => {
-                                const newFamily = !showFamilyOnly;
-                                setShowFamilyOnly(newFamily);
-                                if (!newFamily) {
-                                  // Reset family member selection when turning off family filter
-                                  setSelectedFamilyMember("All");
-                                }
-                              }}
-                              className={`px-3 py-2 rounded text-sm font-medium transition-colors flex items-center gap-1 ${
-                                showFamilyOnly
-                                  ? "bg-blue-100 text-blue-700 border border-blue-300"
-                                  : "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200"
-                              }`}
-                              style={{ fontFamily: "monospace" }}
-                            >
-                              <PeopleIcon sx={{ fontSize: 16 }} />
-                              Family Only
-                            </button>
-                          )}
-
-                          {/* Family member select dropdown */}
-                          {session?.user?.email &&
-                            hasFamilyMembers &&
-                            showFamilyOnly &&
-                            familyMembers.length > 0 && (
-                              <FormControl size="small" sx={{ minWidth: 160 }}>
                                 <InputLabel
                                   sx={{
                                     fontFamily: "monospace",
                                     fontSize: "0.875rem",
                                   }}
                                 >
-                                  Family Member
+                                  Date
                                 </InputLabel>
                                 <Select
-                                  value={selectedFamilyMember}
-                                  label="Family Member"
-                                  onChange={(e) => {
-                                    const newFamilyMember = e.target.value;
-                                    setSelectedFamilyMember(newFamilyMember);
-                                  }}
+                                  defaultValue="all"
+                                  label="Date"
                                   sx={{
                                     fontFamily: "monospace",
                                     fontSize: "0.875rem",
@@ -919,92 +721,169 @@ const FieldNotes: React.FC = () => {
                                     },
                                   }}
                                 >
-                                  <MenuItem value="All">
-                                    <div className="flex items-center">
-                                      <PeopleIcon
-                                        sx={{ fontSize: 16, mr: 1 }}
-                                      />
-                                      <span style={{ fontFamily: "monospace" }}>
-                                        All Family
-                                      </span>
-                                    </div>
+                                  <MenuItem
+                                    value="all"
+                                    sx={{
+                                      fontFamily: "monospace",
+                                      fontSize: "0.875rem",
+                                    }}
+                                  >
+                                    All Time
                                   </MenuItem>
-                                  {familyMembers.map((member) => (
-                                    <MenuItem
-                                      key={member.email}
-                                      value={member.name}
-                                    >
-                                      <div className="flex items-center">
-                                        <span
-                                          style={{ fontFamily: "monospace" }}
-                                        >
-                                          {member.name}
-                                        </span>
-                                        {member.relationship && (
-                                          <span
-                                            className="ml-2 text-xs text-gray-500"
-                                            style={{ fontFamily: "monospace" }}
-                                          >
-                                            ({member.relationship})
-                                          </span>
-                                        )}
-                                      </div>
-                                    </MenuItem>
-                                  ))}
+                                  <MenuItem
+                                    value="week"
+                                    sx={{
+                                      fontFamily: "monospace",
+                                      fontSize: "0.875rem",
+                                    }}
+                                  >
+                                    This Week
+                                  </MenuItem>
+                                  <MenuItem
+                                    value="month"
+                                    sx={{
+                                      fontFamily: "monospace",
+                                      fontSize: "0.875rem",
+                                    }}
+                                  >
+                                    This Month
+                                  </MenuItem>
+                                  <MenuItem
+                                    value="year"
+                                    sx={{
+                                      fontFamily: "monospace",
+                                      fontSize: "0.875rem",
+                                    }}
+                                  >
+                                    This Year
+                                  </MenuItem>
                                 </Select>
                               </FormControl>
-                            )}
-                        </div>
-                      </div>
 
-                      {/* Second row: Public and Family filters (mobile only) */}
-                      <div className="flex flex-col md:hidden gap-2">
-                        {/* Public filter */}
-                        {session?.user?.email && (
-                          <button
-                            onClick={() => setShowPublicNotes(!showPublicNotes)}
-                            className={`px-3 py-2 rounded text-sm font-medium transition-colors flex items-center justify-center gap-1 ${
-                              showPublicNotes
-                                ? "bg-green-100 text-green-700 border border-green-300"
-                                : "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200"
-                            }`}
-                            style={{ fontFamily: "monospace" }}
-                          >
-                            <PublicIcon sx={{ fontSize: 16 }} />
-                            Public
-                          </button>
-                        )}
-
-                        {/* Family filters */}
-                        {session?.user?.email && hasFamilyMembers && (
-                          <>
-                            {/* Family Only button - full width when no family members or not active */}
-                            {(!showFamilyOnly ||
-                              familyMembers.length === 0) && (
-                              <button
-                                onClick={() => {
-                                  const newFamily = !showFamilyOnly;
-                                  setShowFamilyOnly(newFamily);
-                                  if (!newFamily) {
-                                    // Reset family member selection when turning off family filter
-                                    setSelectedFamilyMember("All");
-                                  }
-                                }}
-                                className={`px-3 py-2 rounded text-sm font-medium transition-colors flex items-center justify-center gap-1 ${
-                                  showFamilyOnly
-                                    ? "bg-blue-100 text-blue-700 border border-blue-300"
-                                    : "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200"
-                                }`}
-                                style={{ fontFamily: "monospace" }}
+                              <FormControl
+                                size="small"
+                                className="flex-1 md:flex-none"
+                                sx={{ minWidth: { xs: 0, md: 120 } }}
                               >
-                                <PeopleIcon sx={{ fontSize: 16 }} />
-                                Family Only
-                              </button>
-                            )}
+                                <InputLabel
+                                  sx={{
+                                    fontFamily: "monospace",
+                                    fontSize: "0.875rem",
+                                  }}
+                                >
+                                  Mood
+                                </InputLabel>
+                                <Select
+                                  value={filterMood}
+                                  label="Mood"
+                                  onChange={(e) =>
+                                    setFilterMood(e.target.value)
+                                  }
+                                  sx={{
+                                    fontFamily: "monospace",
+                                    fontSize: "0.875rem",
+                                    "& .MuiSelect-select": {
+                                      fontFamily: "monospace",
+                                    },
+                                  }}
+                                >
+                                  <MenuItem
+                                    value="any"
+                                    sx={{
+                                      fontFamily: "monospace",
+                                      fontSize: "0.875rem",
+                                    }}
+                                  >
+                                    Any
+                                  </MenuItem>
+                                  {renderMoodMenuItemsWithSx(
+                                    {
+                                      fontFamily: "monospace",
+                                      fontSize: "0.875rem",
+                                    },
+                                    false
+                                  )}
+                                </Select>
+                              </FormControl>
 
-                            {/* Family Only button and select on same row when active and has members */}
-                            {showFamilyOnly && familyMembers.length > 0 && (
-                              <div className="flex gap-2">
+                              <FormControl
+                                size="small"
+                                className="flex-1 md:flex-none"
+                                sx={{ minWidth: { xs: 0, md: 120 } }}
+                              >
+                                <InputLabel
+                                  sx={{
+                                    fontFamily: "monospace",
+                                    fontSize: "0.875rem",
+                                  }}
+                                >
+                                  Sort By
+                                </InputLabel>
+                                <Select
+                                  value={sortBy}
+                                  label="Sort By"
+                                  onChange={(e) => setSortBy(e.target.value)}
+                                  sx={{
+                                    fontFamily: "monospace",
+                                    fontSize: "0.875rem",
+                                    "& .MuiSelect-select": {
+                                      fontFamily: "monospace",
+                                    },
+                                  }}
+                                >
+                                  <MenuItem
+                                    value="DESC"
+                                    sx={{
+                                      fontFamily: "monospace",
+                                      fontSize: "0.875rem",
+                                    }}
+                                  >
+                                    Newest First
+                                  </MenuItem>
+                                  <MenuItem
+                                    value="ASC"
+                                    sx={{
+                                      fontFamily: "monospace",
+                                      fontSize: "0.875rem",
+                                    }}
+                                  >
+                                    Oldest First
+                                  </MenuItem>
+                                  <MenuItem
+                                    value="FAVORITE"
+                                    sx={{
+                                      fontFamily: "monospace",
+                                      fontSize: "0.875rem",
+                                    }}
+                                  >
+                                    Favorites First
+                                  </MenuItem>
+                                </Select>
+                              </FormControl>
+                            </div>
+
+                            {/* Right side: Public and Family filters (desktop only) */}
+                            <div className="hidden md:flex md:items-center gap-2">
+                              {/* Public filter */}
+                              {session?.user?.email && (
+                                <button
+                                  onClick={() =>
+                                    setShowPublicNotes(!showPublicNotes)
+                                  }
+                                  className={`px-3 py-2 rounded text-sm font-medium transition-colors flex items-center justify-center gap-1 ${
+                                    showPublicNotes
+                                      ? "bg-green-100 text-green-700 border border-green-300"
+                                      : "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200"
+                                  }`}
+                                  style={{ fontFamily: "monospace" }}
+                                >
+                                  <PublicIcon sx={{ fontSize: 16 }} />
+                                  Public
+                                </button>
+                              )}
+
+                              {/* Family filters */}
+                              {session?.user?.email && hasFamilyMembers && (
                                 <button
                                   onClick={() => {
                                     const newFamily = !showFamilyOnly;
@@ -1014,7 +893,7 @@ const FieldNotes: React.FC = () => {
                                       setSelectedFamilyMember("All");
                                     }
                                   }}
-                                  className={`flex-1 px-3 py-2 rounded text-sm font-medium transition-colors flex items-center justify-center gap-1 ${
+                                  className={`px-3 py-2 rounded text-sm font-medium transition-colors flex items-center gap-1 ${
                                     showFamilyOnly
                                       ? "bg-blue-100 text-blue-700 border border-blue-300"
                                       : "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200"
@@ -1024,407 +903,619 @@ const FieldNotes: React.FC = () => {
                                   <PeopleIcon sx={{ fontSize: 16 }} />
                                   Family Only
                                 </button>
+                              )}
 
-                                <FormControl
-                                  size="small"
-                                  className="flex-1"
-                                  sx={{ minWidth: 0 }}
-                                >
-                                  <InputLabel
-                                    sx={{
-                                      fontFamily: "monospace",
-                                      fontSize: "0.875rem",
-                                    }}
+                              {/* Family member select dropdown */}
+                              {session?.user?.email &&
+                                hasFamilyMembers &&
+                                showFamilyOnly &&
+                                familyMembers.length > 0 && (
+                                  <FormControl
+                                    size="small"
+                                    sx={{ minWidth: 160 }}
                                   >
-                                    Family Member
-                                  </InputLabel>
-                                  <Select
-                                    value={selectedFamilyMember}
-                                    label="Family Member"
-                                    onChange={(e) => {
-                                      const newFamilyMember = e.target.value;
-                                      setSelectedFamilyMember(newFamilyMember);
-                                    }}
-                                    sx={{
-                                      fontFamily: "monospace",
-                                      fontSize: "0.875rem",
-                                      "& .MuiSelect-select": {
+                                    <InputLabel
+                                      sx={{
                                         fontFamily: "monospace",
-                                      },
-                                    }}
-                                  >
-                                    <MenuItem value="All">
-                                      <div className="flex items-center">
-                                        <PeopleIcon
-                                          sx={{ fontSize: 16, mr: 1 }}
-                                        />
-                                        <span
-                                          style={{ fontFamily: "monospace" }}
-                                        >
-                                          All Family
-                                        </span>
-                                      </div>
-                                    </MenuItem>
-                                    {familyMembers.map((member) => (
-                                      <MenuItem
-                                        key={member.email}
-                                        value={member.name}
-                                      >
+                                        fontSize: "0.875rem",
+                                      }}
+                                    >
+                                      Family Member
+                                    </InputLabel>
+                                    <Select
+                                      value={selectedFamilyMember}
+                                      label="Family Member"
+                                      onChange={(e) => {
+                                        const newFamilyMember = e.target.value;
+                                        setSelectedFamilyMember(
+                                          newFamilyMember
+                                        );
+                                      }}
+                                      sx={{
+                                        fontFamily: "monospace",
+                                        fontSize: "0.875rem",
+                                        "& .MuiSelect-select": {
+                                          fontFamily: "monospace",
+                                        },
+                                      }}
+                                    >
+                                      <MenuItem value="All">
                                         <div className="flex items-center">
+                                          <PeopleIcon
+                                            sx={{ fontSize: 16, mr: 1 }}
+                                          />
                                           <span
                                             style={{ fontFamily: "monospace" }}
                                           >
-                                            {member.name}
+                                            All Family
                                           </span>
-                                          {member.relationship && (
+                                        </div>
+                                      </MenuItem>
+                                      {familyMembers.map((member) => (
+                                        <MenuItem
+                                          key={member.email}
+                                          value={member.name}
+                                        >
+                                          <div className="flex items-center">
                                             <span
-                                              className="ml-2 text-xs text-gray-500"
                                               style={{
                                                 fontFamily: "monospace",
                                               }}
                                             >
-                                              ({member.relationship})
+                                              {member.name}
                                             </span>
-                                          )}
-                                        </div>
-                                      </MenuItem>
-                                    ))}
-                                  </Select>
-                                </FormControl>
-                              </div>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Category Filters - Hidden on mobile */}
-                  <div className="hidden sm:flex flex-wrap gap-2">
-                    {[
-                      "All",
-                      "Hiking",
-                      "Biking",
-                      "Writing",
-                      "Photography",
-                      "Brewing",
-                      "Filmstrips",
-                      "Videos",
-                      "Articles",
-                      "Random",
-                    ].map((tag) => (
-                      <Chip
-                        key={tag}
-                        label={tag}
-                        color={activeTag === tag ? "primary" : "default"}
-                        variant={activeTag === tag ? "filled" : "outlined"}
-                        size="small"
-                        clickable
-                        sx={{ fontFamily: "monospace", fontSize: "0.875rem" }}
-                        onClick={() => setActiveTag(tag)}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Notes List - now conditionally rendered based on minimized state */}
-            {!minimized ? (
-              <div className="w-full mb-8">
-                {/* Intro text showing current view context */}
-                {session?.user?.email && showFamilyOnly && (
-                  <div className="mx-4 mb-4 text-center">
-                    <p
-                      className="text-sm text-gray-600"
-                      style={{ fontFamily: "monospace" }}
-                    >
-                      {selectedFamilyMember === "All"
-                        ? "Showing all family field notes"
-                        : `Showing field notes from ${selectedFamilyMember}`}
-                    </p>
-                  </div>
-                )}
-
-                {loadingNotes ? (
-                  <div className="fixed inset-0 bg-white bg-opacity-75 flex items-center justify-center z-50">
-                    <HikingIcon
-                      className="animate-spin"
-                      sx={{
-                        fontSize: 80,
-                        color: "#9CA3AF",
-                      }}
-                    />
-                  </div>
-                ) : databaseError ? (
-                  <div className="mx-4 mb-6 p-4 bg-red-50 border border-red-200 rounded-md">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0">
-                        <svg
-                          className="h-5 w-5 text-red-400"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      </div>
-                      <div className="ml-3">
-                        <h3 className="text-sm font-medium text-red-800">
-                          Database Connection Error
-                        </h3>
-                        <div className="mt-1 text-sm text-red-700">
-                          {databaseError}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ) : !loadingNotes && !session && filteredNotes.length === 0 ? (
-                  <div className="text-center py-12">
-                    <div className="flex justify-center mb-4">
-                      <FieldNotesIcon sx={{ fontSize: 48, color: "#9CA3AF" }} />
-                    </div>
-                    <div className="text-gray-400 font-mono text-lg mb-4">
-                      Field Notes
-                    </div>
-                    <p className="text-gray-500 mb-6 max-w-md mx-auto">
-                      Sign in to view and create your personal field notes
-                      collection.
-                    </p>
-                  </div>
-                ) : !loadingNotes && filteredNotes.length === 0 ? (
-                  <div className="text-center text-gray-400 font-mono py-8">
-                    {session
-                      ? "No field notes yet."
-                      : "No public field notes available."}
-                  </div>
-                ) : (
-                  filteredNotes.map((note) => (
-                    <div
-                      key={note.id}
-                      className="bg-white border border-gray-200 rounded-xl p-6 text-left mb-6"
-                    >
-                      {editId === note.id ? (
-                        <div className="flex flex-col h-full w-full">
-                          {/* Title */}
-                          <div className="mb-3">
-                            <input
-                              type="text"
-                              value={editTitle}
-                              onChange={(e) => setEditTitle(e.target.value)}
-                              className="w-full font-bold text-gray-900 font-mono px-2 py-1 border border-gray-300 rounded"
-                            />
-                          </div>
-
-                          {/* Visibility Controls */}
-                          <div className="flex flex-wrap gap-1 sm:gap-4 mb-3">
-                            <FormControlLabel
-                              control={
-                                <Switch
-                                  checked={editMakePublic}
-                                  onChange={(e) =>
-                                    setEditMakePublic(e.target.checked)
-                                  }
-                                  color="primary"
-                                  size="small"
-                                />
-                              }
-                              label="Make Public"
-                              sx={{ minWidth: "140px", fontSize: "0.875rem" }}
-                            />
-                            <FormControlLabel
-                              control={
-                                <Switch
-                                  checked={editShareWithFamily}
-                                  onChange={(e) =>
-                                    setEditShareWithFamily(e.target.checked)
-                                  }
-                                  color="primary"
-                                  size="small"
-                                />
-                              }
-                              label="Share with Family"
-                              sx={{ minWidth: "160px", fontSize: "0.875rem" }}
-                            />
-                          </div>
-                          <textarea
-                            value={editContent}
-                            onChange={(e) => setEditContent(e.target.value)}
-                            className="w-full text-gray-700 font-mono mb-4 px-2 py-1 border border-gray-300 rounded flex-1"
-                            rows={4}
-                          />
-                          <div className="flex gap-4 mb-4">
-                            <FormControl size="small" sx={{ minWidth: 120 }}>
-                              <InputLabel>Mood</InputLabel>
-                              <Select
-                                value={editMood}
-                                label="Mood"
-                                onChange={(e) => setEditMood(e.target.value)}
-                                sx={{
-                                  fontFamily: "monospace",
-                                  fontSize: "0.875rem",
-                                }}
-                              >
-                                {renderMoodMenuItems()}
-                              </Select>
-                            </FormControl>
-                            <input
-                              type="text"
-                              value={editTags}
-                              onChange={(e) => setEditTags(e.target.value)}
-                              placeholder="Tags (comma separated)"
-                              className="flex-1 text-gray-700 font-mono px-2 py-1 border border-gray-300 rounded"
-                            />
-                          </div>
-
-                          {/* Image Management */}
-                          <div className="mb-4">
-                            <div className="block text-sm font-medium text-gray-700 font-mono mb-2">
-                              Images
+                                            {member.relationship && (
+                                              <span
+                                                className="ml-2 text-xs text-gray-500"
+                                                style={{
+                                                  fontFamily: "monospace",
+                                                }}
+                                              >
+                                                ({member.relationship})
+                                              </span>
+                                            )}
+                                          </div>
+                                        </MenuItem>
+                                      ))}
+                                    </Select>
+                                  </FormControl>
+                                )}
                             </div>
+                          </div>
 
-                            {/* Existing Images */}
-                            {editImages.length > 0 && (
-                              <div className="mb-3">
-                                <div className="flex flex-wrap gap-2">
-                                  {editImages.map((image, index) => (
-                                    <div
-                                      key={`edit-${note.id}-${index}`}
-                                      className="relative w-20 h-20 bg-gray-100 rounded border overflow-hidden"
+                          {/* Second row: Public and Family filters (mobile only) */}
+                          <div className="flex flex-col md:hidden gap-2">
+                            {/* Public filter */}
+                            {session?.user?.email && (
+                              <button
+                                onClick={() =>
+                                  setShowPublicNotes(!showPublicNotes)
+                                }
+                                className={`px-3 py-2 rounded text-sm font-medium transition-colors flex items-center justify-center gap-1 ${
+                                  showPublicNotes
+                                    ? "bg-green-100 text-green-700 border border-green-300"
+                                    : "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200"
+                                }`}
+                                style={{ fontFamily: "monospace" }}
+                              >
+                                <PublicIcon sx={{ fontSize: 16 }} />
+                                Public
+                              </button>
+                            )}
+
+                            {/* Family filters */}
+                            {session?.user?.email && hasFamilyMembers && (
+                              <>
+                                {/* Family Only button - full width when no family members or not active */}
+                                {(!showFamilyOnly ||
+                                  familyMembers.length === 0) && (
+                                  <button
+                                    onClick={() => {
+                                      const newFamily = !showFamilyOnly;
+                                      setShowFamilyOnly(newFamily);
+                                      if (!newFamily) {
+                                        // Reset family member selection when turning off family filter
+                                        setSelectedFamilyMember("All");
+                                      }
+                                    }}
+                                    className={`px-3 py-2 rounded text-sm font-medium transition-colors flex items-center justify-center gap-1 ${
+                                      showFamilyOnly
+                                        ? "bg-blue-100 text-blue-700 border border-blue-300"
+                                        : "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200"
+                                    }`}
+                                    style={{ fontFamily: "monospace" }}
+                                  >
+                                    <PeopleIcon sx={{ fontSize: 16 }} />
+                                    Family Only
+                                  </button>
+                                )}
+
+                                {/* Family Only button and select on same row when active and has members */}
+                                {showFamilyOnly && familyMembers.length > 0 && (
+                                  <div className="flex gap-2">
+                                    <button
+                                      onClick={() => {
+                                        const newFamily = !showFamilyOnly;
+                                        setShowFamilyOnly(newFamily);
+                                        if (!newFamily) {
+                                          // Reset family member selection when turning off family filter
+                                          setSelectedFamilyMember("All");
+                                        }
+                                      }}
+                                      className={`flex-1 px-3 py-2 rounded text-sm font-medium transition-colors flex items-center justify-center gap-1 ${
+                                        showFamilyOnly
+                                          ? "bg-blue-100 text-blue-700 border border-blue-300"
+                                          : "bg-gray-100 text-gray-700 border border-gray-300 hover:bg-gray-200"
+                                      }`}
+                                      style={{ fontFamily: "monospace" }}
                                     >
-                                      <Image
-                                        src={image}
-                                        alt={`Edit thumbnail ${index + 1}`}
-                                        className="w-full h-full object-cover"
-                                        width={80}
-                                        height={80}
-                                      />
-                                      <IconButton
-                                        size="small"
-                                        onClick={() => {
-                                          const newImages = [...editImages];
-                                          newImages.splice(index, 1);
-                                          setEditImages(newImages);
+                                      <PeopleIcon sx={{ fontSize: 16 }} />
+                                      Family Only
+                                    </button>
+
+                                    <FormControl
+                                      size="small"
+                                      className="flex-1"
+                                      sx={{ minWidth: 0 }}
+                                    >
+                                      <InputLabel
+                                        sx={{
+                                          fontFamily: "monospace",
+                                          fontSize: "0.875rem",
+                                        }}
+                                      >
+                                        Family Member
+                                      </InputLabel>
+                                      <Select
+                                        value={selectedFamilyMember}
+                                        label="Family Member"
+                                        onChange={(e) => {
+                                          const newFamilyMember =
+                                            e.target.value;
+                                          setSelectedFamilyMember(
+                                            newFamilyMember
+                                          );
                                         }}
                                         sx={{
-                                          position: "absolute",
-                                          top: 4,
-                                          right: 4,
-                                          backgroundColor:
-                                            "rgba(255, 255, 255, 0.8)",
-                                          "&:hover": {
-                                            backgroundColor:
-                                              "rgba(255, 255, 255, 0.9)",
+                                          fontFamily: "monospace",
+                                          fontSize: "0.875rem",
+                                          "& .MuiSelect-select": {
+                                            fontFamily: "monospace",
                                           },
                                         }}
                                       >
-                                        <DeleteIcon fontSize="small" />
-                                      </IconButton>
-                                    </div>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Add New Image */}
-                            {editImages.length < 4 && (
-                              <div className="flex gap-2">
-                                <Button
-                                  variant="outlined"
-                                  component="label"
-                                  startIcon={<CloudUploadIcon />}
-                                  size="small"
-                                  sx={{
-                                    fontSize: "12px",
-                                    fontFamily: "monospace",
-                                  }}
-                                >
-                                  Upload Images
-                                  <input
-                                    type="file"
-                                    hidden
-                                    accept="image/*"
-                                    onChange={(e) => {
-                                      const file = e.target.files?.[0];
-                                      if (file) {
-                                        const reader = new FileReader();
-                                        reader.onload = (event) => {
-                                          const base64 = event.target
-                                            ?.result as string;
-                                          setEditImages([
-                                            ...editImages,
-                                            base64,
-                                          ]);
-                                        };
-                                        reader.readAsDataURL(file);
-                                      }
-                                      e.target.value = "";
-                                    }}
-                                  />
-                                </Button>
-                              </div>
+                                        <MenuItem value="All">
+                                          <div className="flex items-center">
+                                            <PeopleIcon
+                                              sx={{ fontSize: 16, mr: 1 }}
+                                            />
+                                            <span
+                                              style={{
+                                                fontFamily: "monospace",
+                                              }}
+                                            >
+                                              All Family
+                                            </span>
+                                          </div>
+                                        </MenuItem>
+                                        {familyMembers.map((member) => (
+                                          <MenuItem
+                                            key={member.email}
+                                            value={member.name}
+                                          >
+                                            <div className="flex items-center">
+                                              <span
+                                                style={{
+                                                  fontFamily: "monospace",
+                                                }}
+                                              >
+                                                {member.name}
+                                              </span>
+                                              {member.relationship && (
+                                                <span
+                                                  className="ml-2 text-xs text-gray-500"
+                                                  style={{
+                                                    fontFamily: "monospace",
+                                                  }}
+                                                >
+                                                  ({member.relationship})
+                                                </span>
+                                              )}
+                                            </div>
+                                          </MenuItem>
+                                        ))}
+                                      </Select>
+                                    </FormControl>
+                                  </div>
+                                )}
+                              </>
                             )}
                           </div>
+                        </div>
+                      </div>
 
-                          <div className="flex gap-2 justify-center sm:justify-end mb-2">
-                            <button
-                              className="w-1/2 sm:w-auto px-3 py-2 rounded bg-blue-600 text-white font-mono text-sm hover:bg-blue-700 transition"
-                              onClick={async () => {
-                                try {
-                                  console.log(
-                                    "Starting inline edit update for note:",
-                                    note.id
-                                  );
-                                  console.log("Edit data:", {
-                                    id: note.id,
-                                    title: editTitle,
-                                    content: editContent,
-                                    tags: editTags,
-                                    mood: editMood,
-                                    images: editImages,
-                                    is_public: editMakePublic,
-                                    userEmail: session?.user?.email,
-                                  });
+                      {/* Category Filters - Hidden on mobile */}
+                      <div className="hidden sm:flex flex-wrap gap-2">
+                        {[
+                          "All",
+                          "Hiking",
+                          "Biking",
+                          "Writing",
+                          "Photography",
+                          "Brewing",
+                          "Filmstrips",
+                          "Videos",
+                          "Articles",
+                          "Random",
+                        ].map((tag) => (
+                          <Chip
+                            key={tag}
+                            label={tag}
+                            color={activeTag === tag ? "primary" : "default"}
+                            variant={activeTag === tag ? "filled" : "outlined"}
+                            size="small"
+                            clickable
+                            sx={{
+                              fontFamily: "monospace",
+                              fontSize: "0.875rem",
+                            }}
+                            onClick={() => setActiveTag(tag)}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
 
-                                  const res = await fetch("/api/fieldnotes", {
-                                    method: "PUT",
-                                    headers: {
-                                      "Content-Type": "application/json",
-                                    },
-                                    body: JSON.stringify({
-                                      id: note.id,
-                                      title: editTitle,
-                                      content: editContent,
-                                      tags: editTags,
-                                      mood: editMood,
-                                      images: editImages,
-                                      is_public: editMakePublic,
-                                      shared_family: editShareWithFamily,
-                                      userEmail: session?.user?.email,
-                                      userName: session?.user?.name,
-                                    }),
-                                  });
+                {/* Notes List - now conditionally rendered based on minimized state */}
+                {!minimized ? (
+                  <div className="w-full mb-8">
+                    {/* Intro text showing current view context */}
+                    {session?.user?.email && showFamilyOnly && (
+                      <div className="mx-4 mb-4 text-center">
+                        <p
+                          className="text-sm text-gray-600"
+                          style={{ fontFamily: "monospace" }}
+                        >
+                          {selectedFamilyMember === "All"
+                            ? "Showing all family field notes"
+                            : `Showing field notes from ${selectedFamilyMember}`}
+                        </p>
+                      </div>
+                    )}
 
-                                  console.log(
-                                    "Response status:",
-                                    res.status,
-                                    res.ok
-                                  );
+                    {databaseError ? (
+                      <div className="mx-4 mb-6 p-4 bg-red-50 border border-red-200 rounded-md">
+                        <div className="flex items-center">
+                          <div className="flex-shrink-0">
+                            <svg
+                              className="h-5 w-5 text-red-400"
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                          </div>
+                          <div className="ml-3">
+                            <h3 className="text-sm font-medium text-red-800">
+                              Database Connection Error
+                            </h3>
+                            <div className="mt-1 text-sm text-red-700">
+                              {databaseError}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ) : !loadingNotes &&
+                      !session &&
+                      filteredNotes.length === 0 ? (
+                      <div className="text-center py-12">
+                        <div className="flex justify-center mb-4">
+                          <FieldNotesIcon
+                            sx={{ fontSize: 48, color: "#9CA3AF" }}
+                          />
+                        </div>
+                        <div className="text-gray-400 font-mono text-lg mb-4">
+                          Field Notes
+                        </div>
+                        <p className="text-gray-500 mb-6 max-w-md mx-auto">
+                          Sign in to view and create your personal field notes
+                          collection.
+                        </p>
+                      </div>
+                    ) : !loadingNotes && filteredNotes.length === 0 ? (
+                      <div className="text-center text-gray-400 font-mono py-8">
+                        {session
+                          ? "No field notes yet."
+                          : "No public field notes available."}
+                      </div>
+                    ) : (
+                      filteredNotes.map((note) => (
+                        <div
+                          key={note.id}
+                          className="bg-white border border-gray-200 rounded-xl p-6 text-left mb-6"
+                        >
+                          {editId === note.id ? (
+                            <div className="flex flex-col h-full w-full">
+                              {/* Title */}
+                              <div className="mb-3">
+                                <input
+                                  type="text"
+                                  value={editTitle}
+                                  onChange={(e) => setEditTitle(e.target.value)}
+                                  className="w-full font-bold text-gray-900 font-mono px-2 py-1 border border-gray-300 rounded"
+                                />
+                              </div>
 
-                                  if (res.ok) {
-                                    const updatedNote = await res.json();
-                                    console.log(
-                                      "Update successful, updated note:",
-                                      updatedNote
-                                    );
-                                    setNotes(
-                                      notes.map((n) =>
-                                        n.id === note.id ? updatedNote : n
-                                      )
-                                    );
+                              {/* Visibility Controls */}
+                              <div className="flex flex-wrap gap-1 sm:gap-4 mb-3">
+                                <FormControlLabel
+                                  control={
+                                    <Switch
+                                      checked={editMakePublic}
+                                      onChange={(e) =>
+                                        setEditMakePublic(e.target.checked)
+                                      }
+                                      color="primary"
+                                      size="small"
+                                    />
+                                  }
+                                  label="Make Public"
+                                  sx={{
+                                    minWidth: "140px",
+                                    fontSize: "0.875rem",
+                                  }}
+                                />
+                                <FormControlLabel
+                                  control={
+                                    <Switch
+                                      checked={editShareWithFamily}
+                                      onChange={(e) =>
+                                        setEditShareWithFamily(e.target.checked)
+                                      }
+                                      color="primary"
+                                      size="small"
+                                    />
+                                  }
+                                  label="Share with Family"
+                                  sx={{
+                                    minWidth: "160px",
+                                    fontSize: "0.875rem",
+                                  }}
+                                />
+                              </div>
+                              <textarea
+                                value={editContent}
+                                onChange={(e) => setEditContent(e.target.value)}
+                                className="w-full text-gray-700 font-mono mb-4 px-2 py-1 border border-gray-300 rounded flex-1"
+                                rows={4}
+                              />
+                              <div className="flex gap-4 mb-4">
+                                <FormControl
+                                  size="small"
+                                  sx={{ minWidth: 120 }}
+                                >
+                                  <InputLabel>Mood</InputLabel>
+                                  <Select
+                                    value={editMood}
+                                    label="Mood"
+                                    onChange={(e) =>
+                                      setEditMood(e.target.value)
+                                    }
+                                    sx={{
+                                      fontFamily: "monospace",
+                                      fontSize: "0.875rem",
+                                    }}
+                                  >
+                                    {renderMoodMenuItems()}
+                                  </Select>
+                                </FormControl>
+                                <input
+                                  type="text"
+                                  value={editTags}
+                                  onChange={(e) => setEditTags(e.target.value)}
+                                  placeholder="Tags (comma separated)"
+                                  className="flex-1 text-gray-700 font-mono px-2 py-1 border border-gray-300 rounded"
+                                />
+                              </div>
+
+                              {/* Image Management */}
+                              <div className="mb-4">
+                                <div className="block text-sm font-medium text-gray-700 font-mono mb-2">
+                                  Images
+                                </div>
+
+                                {/* Existing Images */}
+                                {editImages.length > 0 && (
+                                  <div className="mb-3">
+                                    <div className="flex flex-wrap gap-2">
+                                      {editImages.map((image, index) => (
+                                        <div
+                                          key={`edit-${note.id}-${index}`}
+                                          className="relative w-20 h-20 bg-gray-100 rounded border overflow-hidden"
+                                        >
+                                          <Image
+                                            src={image}
+                                            alt={`Edit thumbnail ${index + 1}`}
+                                            className="w-full h-full object-cover"
+                                            width={80}
+                                            height={80}
+                                          />
+                                          <IconButton
+                                            size="small"
+                                            onClick={() => {
+                                              const newImages = [...editImages];
+                                              newImages.splice(index, 1);
+                                              setEditImages(newImages);
+                                            }}
+                                            sx={{
+                                              position: "absolute",
+                                              top: 4,
+                                              right: 4,
+                                              backgroundColor:
+                                                "rgba(255, 255, 255, 0.8)",
+                                              "&:hover": {
+                                                backgroundColor:
+                                                  "rgba(255, 255, 255, 0.9)",
+                                              },
+                                            }}
+                                          >
+                                            <DeleteIcon fontSize="small" />
+                                          </IconButton>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* Add New Image */}
+                                {editImages.length < 4 && (
+                                  <div className="flex gap-2">
+                                    <Button
+                                      variant="outlined"
+                                      component="label"
+                                      startIcon={<CloudUploadIcon />}
+                                      size="small"
+                                      sx={{
+                                        fontSize: "12px",
+                                        fontFamily: "monospace",
+                                      }}
+                                    >
+                                      Upload Images
+                                      <input
+                                        type="file"
+                                        hidden
+                                        accept="image/*"
+                                        onChange={(e) => {
+                                          const file = e.target.files?.[0];
+                                          if (file) {
+                                            const reader = new FileReader();
+                                            reader.onload = (event) => {
+                                              const base64 = event.target
+                                                ?.result as string;
+                                              setEditImages([
+                                                ...editImages,
+                                                base64,
+                                              ]);
+                                            };
+                                            reader.readAsDataURL(file);
+                                          }
+                                          e.target.value = "";
+                                        }}
+                                      />
+                                    </Button>
+                                  </div>
+                                )}
+                              </div>
+
+                              <div className="flex gap-2 justify-center sm:justify-end mb-2">
+                                <button
+                                  className="w-1/2 sm:w-auto px-3 py-2 rounded bg-blue-600 text-white font-mono text-sm hover:bg-blue-700 transition"
+                                  onClick={async () => {
+                                    try {
+                                      console.log(
+                                        "Starting inline edit update for note:",
+                                        note.id
+                                      );
+                                      console.log("Edit data:", {
+                                        id: note.id,
+                                        title: editTitle,
+                                        content: editContent,
+                                        tags: editTags,
+                                        mood: editMood,
+                                        images: editImages,
+                                        is_public: editMakePublic,
+                                        userEmail: session?.user?.email,
+                                      });
+
+                                      const res = await fetch(
+                                        "/api/fieldnotes",
+                                        {
+                                          method: "PUT",
+                                          headers: {
+                                            "Content-Type": "application/json",
+                                          },
+                                          body: JSON.stringify({
+                                            id: note.id,
+                                            title: editTitle,
+                                            content: editContent,
+                                            tags: editTags,
+                                            mood: editMood,
+                                            images: editImages,
+                                            is_public: editMakePublic,
+                                            shared_family: editShareWithFamily,
+                                            userEmail: session?.user?.email,
+                                            userName: session?.user?.name,
+                                          }),
+                                        }
+                                      );
+
+                                      console.log(
+                                        "Response status:",
+                                        res.status,
+                                        res.ok
+                                      );
+
+                                      if (res.ok) {
+                                        const updatedNote = await res.json();
+                                        console.log(
+                                          "Update successful, updated note:",
+                                          updatedNote
+                                        );
+                                        setNotes(
+                                          notes.map((n) =>
+                                            n.id === note.id ? updatedNote : n
+                                          )
+                                        );
+                                        setEditId(null);
+                                        setEditTitle("");
+                                        setEditContent("");
+                                        setEditTags("");
+                                        setEditMood("");
+                                        setEditImages([]);
+                                        setEditMakePublic(false);
+                                        console.log(
+                                          "State cleared, exiting edit mode"
+                                        );
+                                      } else {
+                                        const errorData = await res
+                                          .json()
+                                          .catch(() => ({
+                                            error: "Connection error",
+                                          }));
+                                        console.error(
+                                          "Update error:",
+                                          errorData
+                                        );
+                                        if (res.status === 500) {
+                                          setDatabaseError(
+                                            "Database connection error during update - Please check if the database is running"
+                                          );
+                                        } else {
+                                          alert(
+                                            `Error updating fieldnote: ${
+                                              errorData.error || "Unknown error"
+                                            }`
+                                          );
+                                        }
+                                      }
+                                    } catch (error) {
+                                      console.error("Update error:", error);
+                                      setDatabaseError(
+                                        "Failed to connect to server during update"
+                                      );
+                                    }
+                                  }}
+                                >
+                                  Update
+                                </button>
+                                <button
+                                  className="w-1/2 sm:w-auto px-3 py-2 rounded bg-gray-200 text-gray-800 font-mono text-sm hover:bg-gray-300 transition"
+                                  onClick={() => {
                                     setEditId(null);
                                     setEditTitle("");
                                     setEditContent("");
@@ -1432,95 +1523,346 @@ const FieldNotes: React.FC = () => {
                                     setEditMood("");
                                     setEditImages([]);
                                     setEditMakePublic(false);
-                                    console.log(
-                                      "State cleared, exiting edit mode"
-                                    );
-                                  } else {
-                                    const errorData = await res
-                                      .json()
-                                      .catch(() => ({
-                                        error: "Connection error",
-                                      }));
-                                    console.error("Update error:", errorData);
-                                    if (res.status === 500) {
-                                      setDatabaseError(
-                                        "Database connection error during update - Please check if the database is running"
-                                      );
-                                    } else {
-                                      alert(
-                                        `Error updating fieldnote: ${
-                                          errorData.error || "Unknown error"
-                                        }`
-                                      );
-                                    }
-                                  }
-                                } catch (error) {
-                                  console.error("Update error:", error);
-                                  setDatabaseError(
-                                    "Failed to connect to server during update"
-                                  );
-                                }
-                              }}
-                            >
-                              Update
-                            </button>
-                            <button
-                              className="w-1/2 sm:w-auto px-3 py-2 rounded bg-gray-200 text-gray-800 font-mono text-sm hover:bg-gray-300 transition"
-                              onClick={() => {
-                                setEditId(null);
-                                setEditTitle("");
-                                setEditContent("");
-                                setEditTags("");
-                                setEditMood("");
-                                setEditImages([]);
-                                setEditMakePublic(false);
-                              }}
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <>
-                          <Link
-                            href={`/fieldnotes/${note.slug}`}
-                            className="block rounded-lg transition-colors"
-                          >
-                            <h3 className="font-bold text-gray-900 font-mono mb-1 hover:text-blue-600 transition-colors">
-                              {note.title}
-                            </h3>
-                          </Link>
-                          <p className="text-gray-700 font-mono mb-4 line-clamp-3">
-                            {note.content}
-                          </p>
-
-                          {/* Image thumbnails */}
-                          {note.images && note.images.length > 0 && (
-                            <div className="mb-4">
-                              <div className="flex flex-wrap gap-2">
-                                {note.images.map((image, index) => (
-                                  <div
-                                    key={`${note.id}-image-${index}`}
-                                    className="w-16 h-16 bg-gray-100 rounded border overflow-hidden flex-shrink-0"
-                                  >
-                                    <Image
-                                      src={image}
-                                      alt={`Thumbnail ${index + 1}`}
-                                      className="w-full h-full object-cover"
-                                      width={64}
-                                      height={64}
-                                    />
-                                  </div>
-                                ))}
+                                  }}
+                                >
+                                  Cancel
+                                </button>
                               </div>
                             </div>
-                          )}
+                          ) : (
+                            <>
+                              <Link
+                                href={`/fieldnotes/${note.slug}`}
+                                className="block rounded-lg transition-colors"
+                              >
+                                <h3 className="font-bold text-gray-900 font-mono mb-1 hover:text-blue-600 transition-colors">
+                                  {note.title}
+                                </h3>
+                              </Link>
+                              <p className="text-gray-700 font-mono mb-4 line-clamp-3">
+                                {note.content}
+                              </p>
 
-                          <hr className="border-gray-300 mb-4" />
-                          <div className="flex items-center justify-between">
-                            {/* Left side: author + date, then mood */}
+                              {/* Image thumbnails */}
+                              {note.images && note.images.length > 0 && (
+                                <div className="mb-4">
+                                  <div className="flex flex-wrap gap-2">
+                                    {note.images.map((image, index) => (
+                                      <div
+                                        key={`${note.id}-image-${index}`}
+                                        className="w-16 h-16 bg-gray-100 rounded border overflow-hidden flex-shrink-0"
+                                      >
+                                        <Image
+                                          src={image}
+                                          alt={`Thumbnail ${index + 1}`}
+                                          className="w-full h-full object-cover"
+                                          width={64}
+                                          height={64}
+                                        />
+                                      </div>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
+                              <hr className="border-gray-300 mb-4" />
+                              <div className="flex items-center justify-between">
+                                {/* Left side: author + date, then mood */}
+                                <div className="flex flex-col">
+                                  <p className="text-sm text-gray-500 font-mono mt-0 mb-0 flex items-center gap-1">
+                                    {note.is_public && (
+                                      <PublicIcon
+                                        sx={{ fontSize: 16, color: "gray" }}
+                                      />
+                                    )}
+                                    {note.shared_family && (
+                                      <PeopleIcon
+                                        sx={{
+                                          fontSize: 16,
+                                          color:
+                                            showFamilyOnly &&
+                                            note.shared_family &&
+                                            note.userEmail !==
+                                              session?.user?.email
+                                              ? "#3b82f6"
+                                              : "gray",
+                                        }}
+                                      />
+                                    )}
+                                    <span
+                                      className={
+                                        showFamilyOnly &&
+                                        note.shared_family &&
+                                        note.userEmail !== session?.user?.email
+                                          ? "text-blue-600 hidden sm:inline"
+                                          : "text-gray-500 hidden sm:inline"
+                                      }
+                                    >
+                                      {/* Use "Shared by" for family shared notes, otherwise "By" */}
+                                      {showFamilyOnly &&
+                                      note.shared_family &&
+                                      note.userEmail !== session?.user?.email
+                                        ? "Shared by"
+                                        : "By"}
+                                    </span>{" "}
+                                    <span
+                                      className={
+                                        showFamilyOnly &&
+                                        note.shared_family &&
+                                        note.userEmail !== session?.user?.email
+                                          ? "text-blue-600"
+                                          : "text-gray-500"
+                                      }
+                                    >
+                                      {
+                                        // For shared_family notes from other family members, use the family member's name
+                                        showFamilyOnly &&
+                                        note.shared_family &&
+                                        note.userEmail !== session?.user?.email
+                                          ? familyMembers.find(
+                                              (member) =>
+                                                member.email === note.userEmail
+                                            )?.name || "Family Member"
+                                          : note.author
+                                      }
+                                    </span>{" "}
+                                    on
+                                    <span className="hidden sm:inline">
+                                      {new Date(note.date).toLocaleDateString(
+                                        "en-US",
+                                        {
+                                          weekday: "long",
+                                          year: "numeric",
+                                          month: "long",
+                                          day: "numeric",
+                                        }
+                                      )}
+                                    </span>
+                                    <span className="sm:hidden">
+                                      {new Date(note.date).toLocaleDateString(
+                                        "en-US",
+                                        {
+                                          year: "numeric",
+                                          month: "2-digit",
+                                          day: "2-digit",
+                                        }
+                                      )}
+                                    </span>
+                                  </p>
+                                  {note.mood && (
+                                    <p className="text-sm text-gray-500 font-mono mt-1 mb-0">
+                                      Feeling {getMoodEmoji(note.mood)}{" "}
+                                      {note.mood}
+                                    </p>
+                                  )}
+
+                                  {/* Mobile edit/delete icons - under mood section */}
+                                  {session &&
+                                    note.userEmail === session.user?.email && (
+                                      <div className="hidden flex gap-2 mt-2 sm:hidden">
+                                        <IconButton
+                                          size="small"
+                                          color="primary"
+                                          aria-label="Edit Entry"
+                                          onClick={() => {
+                                            setEditId(note.id);
+                                            setEditTitle(note.title);
+                                            setEditContent(note.content);
+                                            setEditTags(note.tags || "");
+                                            setEditMood(note.mood || "");
+                                            setEditImages(note.images || []);
+                                            setEditMakePublic(
+                                              note.is_public || false
+                                            );
+                                            setEditShareWithFamily(
+                                              note.share_with_family ||
+                                                note.shared_family ||
+                                                false
+                                            );
+                                          }}
+                                        >
+                                          <EditNoteOutlinedIcon />
+                                        </IconButton>
+                                        <IconButton
+                                          size="small"
+                                          aria-label="Delete Entry"
+                                          sx={{ color: "gray" }}
+                                          onClick={async () => {
+                                            try {
+                                              const res = await fetch(
+                                                "/api/fieldnotes",
+                                                {
+                                                  method: "DELETE",
+                                                  headers: {
+                                                    "Content-Type":
+                                                      "application/json",
+                                                  },
+                                                  body: JSON.stringify({
+                                                    id: note.id,
+                                                    slug: note.slug,
+                                                    userEmail:
+                                                      session?.user?.email,
+                                                  }),
+                                                }
+                                              );
+                                              if (res.ok) {
+                                                setNotes(
+                                                  notes.filter(
+                                                    (n) => n.id !== note.id
+                                                  )
+                                                );
+                                              } else if (res.status === 500) {
+                                                setDatabaseError(
+                                                  "Database connection error during delete - Please check if the database is running"
+                                                );
+                                              } else {
+                                                const errorData = await res
+                                                  .json()
+                                                  .catch(() => ({
+                                                    error: "Delete failed",
+                                                  }));
+                                                alert(
+                                                  `Error deleting fieldnote: ${
+                                                    errorData.error ||
+                                                    "Unknown error"
+                                                  }`
+                                                );
+                                              }
+                                            } catch (error) {
+                                              console.error(
+                                                "Delete error:",
+                                                error
+                                              );
+                                              setDatabaseError(
+                                                "Failed to connect to server during delete"
+                                              );
+                                            }
+                                          }}
+                                        >
+                                          <DeleteIcon sx={{ fontSize: 16 }} />
+                                        </IconButton>
+                                      </div>
+                                    )}
+                                </div>
+
+                                {/* Desktop edit/delete icons - right side */}
+                                {session &&
+                                  note.userEmail === session.user?.email && (
+                                    <div className="hidden sm:flex gap-2">
+                                      <IconButton
+                                        size="small"
+                                        color="primary"
+                                        aria-label="Edit Entry"
+                                        onClick={() => {
+                                          setEditId(note.id);
+                                          setEditTitle(note.title);
+                                          setEditContent(note.content);
+                                          setEditTags(note.tags || "");
+                                          setEditMood(note.mood || "");
+                                          setEditImages(note.images || []);
+                                          setEditMakePublic(
+                                            note.is_public || false
+                                          );
+                                          setEditShareWithFamily(
+                                            note.share_with_family ||
+                                              note.shared_family ||
+                                              false
+                                          );
+                                        }}
+                                      >
+                                        <EditNoteOutlinedIcon />
+                                      </IconButton>
+                                      <IconButton
+                                        size="small"
+                                        aria-label="Delete Entry"
+                                        sx={{ color: "gray" }}
+                                        onClick={async () => {
+                                          try {
+                                            const res = await fetch(
+                                              "/api/fieldnotes",
+                                              {
+                                                method: "DELETE",
+                                                headers: {
+                                                  "Content-Type":
+                                                    "application/json",
+                                                },
+                                                body: JSON.stringify({
+                                                  id: note.id,
+                                                  slug: note.slug,
+                                                  userEmail:
+                                                    session?.user?.email,
+                                                }),
+                                              }
+                                            );
+                                            if (res.ok) {
+                                              setNotes(
+                                                notes.filter(
+                                                  (n) => n.id !== note.id
+                                                )
+                                              );
+                                            } else if (res.status === 500) {
+                                              setDatabaseError(
+                                                "Database connection error during delete - Please check if the database is running"
+                                              );
+                                            } else {
+                                              const errorData = await res
+                                                .json()
+                                                .catch(() => ({
+                                                  error: "Delete failed",
+                                                }));
+                                              alert(
+                                                `Error deleting fieldnote: ${
+                                                  errorData.error ||
+                                                  "Unknown error"
+                                                }`
+                                              );
+                                            }
+                                          } catch (error) {
+                                            console.error(
+                                              "Delete error:",
+                                              error
+                                            );
+                                            setDatabaseError(
+                                              "Failed to connect to server during delete"
+                                            );
+                                          }
+                                        }}
+                                      >
+                                        <DeleteIcon sx={{ fontSize: 16 }} />
+                                      </IconButton>
+                                    </div>
+                                  )}
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      ))
+                    )}
+                  </div>
+                ) : (
+                  <div className="w-full mb-8">
+                    {!loadingNotes && filteredNotes.length === 0 ? (
+                      <div className="text-center text-gray-400 font-mono py-8">
+                        No field notes yet.
+                      </div>
+                    ) : (
+                      filteredNotes.map((note) => (
+                        <div
+                          key={note.id}
+                          className="bg-white border border-gray-200 rounded-xl p-4 text-left mb-4 transition-colors"
+                        >
+                          <Link
+                            href={`/fieldnotes/${note.slug}`}
+                            className="block transition-colors"
+                          >
+                            <span className="font-bold text-gray-900 font-mono text-base hover:text-blue-600 transition-colors">
+                              {note.title}
+                            </span>
+                          </Link>
+
+                          <div className="flex items-center justify-between mt-2">
                             <div className="flex flex-col">
-                              <p className="text-sm text-gray-500 font-mono mt-0 mb-0 flex items-center gap-1">
+                              <span className="text-sm text-gray-500 font-mono flex items-center gap-1">
                                 {note.is_public && (
                                   <PublicIcon
                                     sx={{ fontSize: 16, color: "gray" }}
@@ -1598,99 +1940,14 @@ const FieldNotes: React.FC = () => {
                                     }
                                   )}
                                 </span>
-                              </p>
+                              </span>
                               {note.mood && (
-                                <p className="text-sm text-gray-500 font-mono mt-1 mb-0">
+                                <span className="text-sm text-gray-500 font-mono mt-1">
                                   Feeling {getMoodEmoji(note.mood)} {note.mood}
-                                </p>
+                                </span>
                               )}
-
-                              {/* Mobile edit/delete icons - under mood section */}
-                              {session &&
-                                note.userEmail === session.user?.email && (
-                                  <div className="hidden flex gap-2 mt-2 sm:hidden">
-                                    <IconButton
-                                      size="small"
-                                      color="primary"
-                                      aria-label="Edit Entry"
-                                      onClick={() => {
-                                        setEditId(note.id);
-                                        setEditTitle(note.title);
-                                        setEditContent(note.content);
-                                        setEditTags(note.tags || "");
-                                        setEditMood(note.mood || "");
-                                        setEditImages(note.images || []);
-                                        setEditMakePublic(
-                                          note.is_public || false
-                                        );
-                                        setEditShareWithFamily(
-                                          note.share_with_family ||
-                                            note.shared_family ||
-                                            false
-                                        );
-                                      }}
-                                    >
-                                      <EditNoteOutlinedIcon />
-                                    </IconButton>
-                                    <IconButton
-                                      size="small"
-                                      aria-label="Delete Entry"
-                                      sx={{ color: "gray" }}
-                                      onClick={async () => {
-                                        try {
-                                          const res = await fetch(
-                                            "/api/fieldnotes",
-                                            {
-                                              method: "DELETE",
-                                              headers: {
-                                                "Content-Type":
-                                                  "application/json",
-                                              },
-                                              body: JSON.stringify({
-                                                id: note.id,
-                                                slug: note.slug,
-                                                userEmail: session?.user?.email,
-                                              }),
-                                            }
-                                          );
-                                          if (res.ok) {
-                                            setNotes(
-                                              notes.filter(
-                                                (n) => n.id !== note.id
-                                              )
-                                            );
-                                          } else if (res.status === 500) {
-                                            setDatabaseError(
-                                              "Database connection error during delete - Please check if the database is running"
-                                            );
-                                          } else {
-                                            const errorData = await res
-                                              .json()
-                                              .catch(() => ({
-                                                error: "Delete failed",
-                                              }));
-                                            alert(
-                                              `Error deleting fieldnote: ${
-                                                errorData.error ||
-                                                "Unknown error"
-                                              }`
-                                            );
-                                          }
-                                        } catch (error) {
-                                          console.error("Delete error:", error);
-                                          setDatabaseError(
-                                            "Failed to connect to server during delete"
-                                          );
-                                        }
-                                      }}
-                                    >
-                                      <DeleteIcon sx={{ fontSize: 16 }} />
-                                    </IconButton>
-                                  </div>
-                                )}
                             </div>
 
-                            {/* Desktop edit/delete icons - right side */}
                             {session &&
                               note.userEmail === session.user?.email && (
                                 <div className="hidden sm:flex gap-2">
@@ -1698,7 +1955,9 @@ const FieldNotes: React.FC = () => {
                                     size="small"
                                     color="primary"
                                     aria-label="Edit Entry"
-                                    onClick={() => {
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
                                       setEditId(note.id);
                                       setEditTitle(note.title);
                                       setEditContent(note.content);
@@ -1713,6 +1972,8 @@ const FieldNotes: React.FC = () => {
                                           note.shared_family ||
                                           false
                                       );
+                                      // Switch to expanded view to show the edit form
+                                      setMinimized(false);
                                     }}
                                   >
                                     <EditNoteOutlinedIcon />
@@ -1721,7 +1982,9 @@ const FieldNotes: React.FC = () => {
                                     size="small"
                                     aria-label="Delete Entry"
                                     sx={{ color: "gray" }}
-                                    onClick={async () => {
+                                    onClick={async (e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
                                       try {
                                         const res = await fetch(
                                           "/api/fieldnotes",
@@ -1772,201 +2035,15 @@ const FieldNotes: React.FC = () => {
                                   </IconButton>
                                 </div>
                               )}
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  ))
-                )}
-              </div>
-            ) : (
-              <div className="w-full mb-8">
-                {!loadingNotes && filteredNotes.length === 0 ? (
-                  <div className="text-center text-gray-400 font-mono py-8">
-                    No field notes yet.
-                  </div>
-                ) : (
-                  filteredNotes.map((note) => (
-                    <div
-                      key={note.id}
-                      className="bg-white border border-gray-200 rounded-xl p-4 text-left mb-4 transition-colors"
-                    >
-                      <Link
-                        href={`/fieldnotes/${note.slug}`}
-                        className="block transition-colors"
-                      >
-                        <span className="font-bold text-gray-900 font-mono text-base hover:text-blue-600 transition-colors">
-                          {note.title}
-                        </span>
-                      </Link>
 
-                      <div className="flex items-center justify-between mt-2">
-                        <div className="flex flex-col">
-                          <span className="text-sm text-gray-500 font-mono flex items-center gap-1">
-                            {note.is_public && (
-                              <PublicIcon
-                                sx={{ fontSize: 16, color: "gray" }}
-                              />
-                            )}
-                            {note.shared_family && (
-                              <PeopleIcon
-                                sx={{
-                                  fontSize: 16,
-                                  color:
-                                    showFamilyOnly &&
-                                    note.shared_family &&
-                                    note.userEmail !== session?.user?.email
-                                      ? "#3b82f6"
-                                      : "gray",
-                                }}
-                              />
-                            )}
-                            <span
-                              className={
-                                showFamilyOnly &&
-                                note.shared_family &&
-                                note.userEmail !== session?.user?.email
-                                  ? "text-blue-600 hidden sm:inline"
-                                  : "text-gray-500 hidden sm:inline"
-                              }
-                            >
-                              {/* Use "Shared by" for family shared notes, otherwise "By" */}
-                              {showFamilyOnly &&
-                              note.shared_family &&
-                              note.userEmail !== session?.user?.email
-                                ? "Shared by"
-                                : "By"}
-                            </span>{" "}
-                            <span
-                              className={
-                                showFamilyOnly &&
-                                note.shared_family &&
-                                note.userEmail !== session?.user?.email
-                                  ? "text-blue-600"
-                                  : "text-gray-500"
-                              }
-                            >
-                              {
-                                // For shared_family notes from other family members, use the family member's name
-                                showFamilyOnly &&
-                                note.shared_family &&
-                                note.userEmail !== session?.user?.email
-                                  ? familyMembers.find(
-                                      (member) =>
-                                        member.email === note.userEmail
-                                    )?.name || "Family Member"
-                                  : note.author
-                              }
-                            </span>{" "}
-                            on
-                            <span className="hidden sm:inline">
-                              {new Date(note.date).toLocaleDateString("en-US", {
-                                weekday: "long",
-                                year: "numeric",
-                                month: "long",
-                                day: "numeric",
-                              })}
-                            </span>
-                            <span className="sm:hidden">
-                              {new Date(note.date).toLocaleDateString("en-US", {
-                                year: "numeric",
-                                month: "2-digit",
-                                day: "2-digit",
-                              })}
-                            </span>
-                          </span>
-                          {note.mood && (
-                            <span className="text-sm text-gray-500 font-mono mt-1">
-                              Feeling {getMoodEmoji(note.mood)} {note.mood}
-                            </span>
-                          )}
+                            {/* Remove mobile edit button in minimized view - users can click title to navigate */}
+                          </div>
                         </div>
-
-                        {session && note.userEmail === session.user?.email && (
-                          <div className="hidden sm:flex gap-2">
-                            <IconButton
-                              size="small"
-                              color="primary"
-                              aria-label="Edit Entry"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                setEditId(note.id);
-                                setEditTitle(note.title);
-                                setEditContent(note.content);
-                                setEditTags(note.tags || "");
-                                setEditMood(note.mood || "");
-                                setEditImages(note.images || []);
-                                setEditMakePublic(note.is_public || false);
-                                setEditShareWithFamily(
-                                  note.share_with_family ||
-                                    note.shared_family ||
-                                    false
-                                );
-                                // Switch to expanded view to show the edit form
-                                setMinimized(false);
-                              }}
-                            >
-                              <EditNoteOutlinedIcon />
-                            </IconButton>
-                            <IconButton
-                              size="small"
-                              aria-label="Delete Entry"
-                              sx={{ color: "gray" }}
-                              onClick={async (e) => {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                try {
-                                  const res = await fetch("/api/fieldnotes", {
-                                    method: "DELETE",
-                                    headers: {
-                                      "Content-Type": "application/json",
-                                    },
-                                    body: JSON.stringify({
-                                      id: note.id,
-                                      slug: note.slug,
-                                      userEmail: session?.user?.email,
-                                    }),
-                                  });
-                                  if (res.ok) {
-                                    setNotes(
-                                      notes.filter((n) => n.id !== note.id)
-                                    );
-                                  } else if (res.status === 500) {
-                                    setDatabaseError(
-                                      "Database connection error during delete - Please check if the database is running"
-                                    );
-                                  } else {
-                                    const errorData = await res
-                                      .json()
-                                      .catch(() => ({
-                                        error: "Delete failed",
-                                      }));
-                                    alert(
-                                      `Error deleting fieldnote: ${
-                                        errorData.error || "Unknown error"
-                                      }`
-                                    );
-                                  }
-                                } catch (error) {
-                                  console.error("Delete error:", error);
-                                  setDatabaseError(
-                                    "Failed to connect to server during delete"
-                                  );
-                                }
-                              }}
-                            >
-                              <DeleteIcon sx={{ fontSize: 16 }} />
-                            </IconButton>
-                          </div>
-                        )}
-
-                        {/* Remove mobile edit button in minimized view - users can click title to navigate */}
-                      </div>
-                    </div>
-                  ))
+                      ))
+                    )}
+                  </div>
                 )}
-              </div>
+              </>
             )}
           </div>
         </div>
