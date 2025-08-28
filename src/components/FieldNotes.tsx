@@ -610,11 +610,15 @@ const FieldNotes: React.FC = () => {
           <div className="sm:hidden px-3 py-2 border-b border-gray-200 flex justify-center">
             <div className="flex items-center space-x-2">
               {session.user?.image && (
-                <img
-                  src={session.user.image}
-                  alt="Profile"
-                  className="w-6 h-6 rounded-full"
-                />
+                <Link href="/user/profile">
+                  <Image
+                    src={session.user.image}
+                    alt={session.user?.name || "User profile"}
+                    width={24}
+                    height={24}
+                    className="rounded-full cursor-pointer hover:shadow-md border border-gray-300"
+                  />
+                </Link>
               )}
               <span className="text-gray-700 font-mono text-sm">
                 {nameFromDB ? `Signed in as ${nameFromDB}` : ""}
