@@ -162,7 +162,16 @@ const RecipeBuilder: React.FC = () => {
           }) => {
             const temperature = step.temperature;
             // For imported recipes, check if temperature is custom for oven type
-            const predefinedTemps = [250, 350, 450];
+            const predefinedTemps = [
+              250,
+              350,
+              450,
+              "bake350",
+              "bake400",
+              "bake",
+              "roast",
+              "broil",
+            ];
             const isCustomTemp =
               type === "Oven" &&
               temperature !== undefined &&
@@ -415,7 +424,16 @@ const RecipeBuilder: React.FC = () => {
                   }) => {
                     const temperature = step.temperature || undefined;
                     // For oven type, determine if temperature is custom
-                    const predefinedTemps = [250, 350, 450];
+                    const predefinedTemps = [
+                      250,
+                      350,
+                      450,
+                      "bake350",
+                      "bake400",
+                      "bake",
+                      "roast",
+                      "broil",
+                    ];
                     const isCustomTemp =
                       normalizedType === "Oven" &&
                       temperature !== undefined &&
@@ -1560,14 +1578,20 @@ const RecipeBuilder: React.FC = () => {
                                                       ""
                                                     );
                                                   } else {
-                                                    const numValue =
-                                                      typeof value === "string"
+                                                    // Handle both numeric and string values
+                                                    const finalValue =
+                                                      typeof value ===
+                                                        "string" &&
+                                                      isNaN(parseInt(value))
+                                                        ? value
+                                                        : typeof value ===
+                                                          "string"
                                                         ? parseInt(value)
                                                         : value;
                                                     handleStepChange(
                                                       index,
                                                       "temperature",
-                                                      numValue
+                                                      finalValue
                                                     );
                                                   }
                                                 }}
@@ -1580,6 +1604,21 @@ const RecipeBuilder: React.FC = () => {
                                                 </MenuItem>
                                                 <MenuItem value={450}>
                                                   High Heat (450°F)
+                                                </MenuItem>
+                                                <MenuItem value="bake350">
+                                                  Bake (350°F)
+                                                </MenuItem>
+                                                <MenuItem value="bake400">
+                                                  Bake (400°F)
+                                                </MenuItem>
+                                                <MenuItem value="bake">
+                                                  Bake
+                                                </MenuItem>
+                                                <MenuItem value="roast">
+                                                  Roast
+                                                </MenuItem>
+                                                <MenuItem value="broil">
+                                                  Broil
                                                 </MenuItem>
                                                 <MenuItem value="other">
                                                   Other Temp
