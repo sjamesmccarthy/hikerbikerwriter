@@ -958,7 +958,7 @@ const RollAndWriteEntries: React.FC = () => {
                     }}
                   />
                 </div>
-              ) : entries.length === 0 ? (
+              ) : !loadingEntries && entries.length === 0 ? (
                 (() => {
                   let noEntriesContent;
                   if (!session) {

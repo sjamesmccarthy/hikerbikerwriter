@@ -1182,7 +1182,7 @@ const FieldNotes: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                ) : !session && filteredNotes.length === 0 ? (
+                ) : !loadingNotes && !session && filteredNotes.length === 0 ? (
                   <div className="text-center py-12">
                     <div className="flex justify-center mb-4">
                       <FieldNotesIcon sx={{ fontSize: 48, color: "#9CA3AF" }} />
@@ -1195,7 +1195,7 @@ const FieldNotes: React.FC = () => {
                       collection.
                     </p>
                   </div>
-                ) : filteredNotes.length === 0 ? (
+                ) : !loadingNotes && filteredNotes.length === 0 ? (
                   <div className="text-center text-gray-400 font-mono py-8">
                     {session
                       ? "No field notes yet."
@@ -1781,7 +1781,7 @@ const FieldNotes: React.FC = () => {
               </div>
             ) : (
               <div className="w-full mb-8">
-                {filteredNotes.length === 0 ? (
+                {!loadingNotes && filteredNotes.length === 0 ? (
                   <div className="text-center text-gray-400 font-mono py-8">
                     No field notes yet.
                   </div>
