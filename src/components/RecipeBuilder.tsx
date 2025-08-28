@@ -78,8 +78,8 @@ const RecipeBuilder: React.FC = () => {
   const [sourceTitle, setSourceTitle] = useState("");
   const [isCustomSourceTitle, setIsCustomSourceTitle] = useState(false);
   const [type, setType] = useState<
-    "Smoker" | "Flat-top" | "Grill" | "Oven" | "Beverage"
-  >("Grill");
+    "Smoker" | "Flat-top" | "Grill" | "Oven" | "Beverage" | ""
+  >("");
   const [recommendedPellets, setRecommendedPellets] = useState("");
   const [category, setCategory] = useState<string>("Dinner");
   const [photo, setPhoto] = useState("");
@@ -960,9 +960,14 @@ const RecipeBuilder: React.FC = () => {
                               | "Flat-top"
                               | "Grill"
                               | "Oven"
+                              | "Beverage"
                           )
                         }
+                        displayEmpty
                       >
+                        <MenuItem value="" disabled>
+                          Select Cooking Type
+                        </MenuItem>
                         {typeOptions.map((option: string) => (
                           <MenuItem key={option} value={option}>
                             {option}
@@ -1206,28 +1211,23 @@ const RecipeBuilder: React.FC = () => {
                     <div className="grid grid-cols-2 gap-4">
                       <TextField
                         label="Servings"
-                        type="number"
                         value={servings || ""}
                         onChange={(e) =>
                           setServings(parseInt(e.target.value) || 1)
                         }
-                        sx={{ "& input": { min: 1 } }}
                         size="small"
                       />
                       <TextField
                         label="Prep Time (min)"
-                        type="number"
                         value={prepTime || ""}
                         onChange={(e) => {
                           const value = e.target.value;
                           setPrepTime(value === "" ? 0 : parseInt(value) || 0);
                         }}
-                        sx={{ "& input": { min: 0 } }}
                         size="small"
                       />
                       <TextField
                         label="Cook Hours"
-                        type="number"
                         value={cookHours || ""}
                         onChange={(e) => {
                           const value = e.target.value;
@@ -1235,12 +1235,10 @@ const RecipeBuilder: React.FC = () => {
                           setCookHours(hours);
                           setCookTime(hours * 60 + cookMinutes);
                         }}
-                        sx={{ "& input": { min: 0 } }}
                         size="small"
                       />
                       <TextField
                         label="Cook Minutes"
-                        type="number"
                         value={cookMinutes || ""}
                         onChange={(e) => {
                           const value = e.target.value;
@@ -1249,7 +1247,6 @@ const RecipeBuilder: React.FC = () => {
                           setCookMinutes(minutes);
                           setCookTime(cookHours * 60 + minutes);
                         }}
-                        sx={{ "& input": { min: 0, max: 59 } }}
                         size="small"
                       />
                     </div>
