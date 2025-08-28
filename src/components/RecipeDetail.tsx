@@ -536,12 +536,16 @@ const RecipeDetail = React.memo(function RecipeDetail({
       pdf.setFontSize(16);
       pdf.setFont("helvetica", "bold");
       pdf.text("Instructions", 20, yPosition);
-      yPosition += 7;
+      yPosition += 9;
 
       pdf.setFontSize(11);
       pdf.setFont("helvetica", "normal");
       recipe?.steps.forEach((step, index) => {
-        const stepText = `${index + 1}. ${step.step}`;
+        // Remove line breaks from step text
+        const cleanedStepText = step.step
+          .replace(/\n/g, " ")
+          .replace(/\r/g, " ");
+        const stepText = `${index + 1}. ${cleanedStepText}`;
         const stepLines = pdf.splitTextToSize(stepText, pageWidth - 40);
 
         if (yPosition + stepLines.length * 5 > pageHeight - 20) {
