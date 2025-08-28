@@ -22,6 +22,7 @@ import {
   Microwave as MicrowaveIcon,
   LocalBar as LocalBarIcon,
   Flatware as FlatwareIcon,
+  GridOn as GridOnIcon,
   Edit as EditIcon,
   Public as PublicIcon,
   ArrowCircleLeft as ArrowCircleLeftIcon,
@@ -941,11 +942,15 @@ const RecipeDetail = React.memo(function RecipeDetail({
                 {recipe.type?.toLowerCase().trim() === "oven" ? (
                   <MicrowaveIcon sx={{ fontSize: 18 }} />
                 ) : recipe.type?.toLowerCase().trim() === "smoker" ? (
-                  <WhatshotIcon sx={{ fontSize: 18 }} />
+                  <OutdoorGrillIcon sx={{ fontSize: 18 }} />
                 ) : recipe.type?.toLowerCase().trim() === "beverage" ? (
                   <LocalBarIcon sx={{ fontSize: 18 }} />
+                ) : recipe.type?.toLowerCase().trim() === "flat-top" ? (
+                  <GridOnIcon sx={{ fontSize: 18 }} />
+                ) : recipe.type?.toLowerCase().trim() === "grill" ? (
+                  <WhatshotIcon sx={{ fontSize: 18 }} />
                 ) : (
-                  <OutdoorGrillIcon sx={{ fontSize: 18 }} />
+                  <FlatwareIcon sx={{ fontSize: 18 }} />
                 )}
                 {recipe.type?.charAt(0).toUpperCase() +
                   recipe.type?.slice(1).toLowerCase()}
@@ -1175,8 +1180,17 @@ const RecipeDetail = React.memo(function RecipeDetail({
                               ) : recipe.type?.toLowerCase().trim() ===
                                 "beverage" ? (
                                 <LocalBarIcon sx={{ fontSize: 16 }} />
-                              ) : (
+                              ) : recipe.type?.toLowerCase().trim() ===
+                                "flat-top" ? (
+                                <GridOnIcon sx={{ fontSize: 16 }} />
+                              ) : recipe.type?.toLowerCase().trim() ===
+                                "grill" ? (
+                                <WhatshotIcon sx={{ fontSize: 16 }} />
+                              ) : recipe.type?.toLowerCase().trim() ===
+                                "smoker" ? (
                                 <OutdoorGrillIcon sx={{ fontSize: 16 }} />
+                              ) : (
+                                <FlatwareIcon sx={{ fontSize: 16 }} />
                               )}
                               {step.temperature}°F
                             </span>
@@ -1255,8 +1269,14 @@ const RecipeDetail = React.memo(function RecipeDetail({
                           <MicrowaveIcon sx={{ color: "black" }} />
                         ) : recipe.type?.toLowerCase().trim() === "beverage" ? (
                           <LocalBarIcon sx={{ color: "black" }} />
+                        ) : recipe.type?.toLowerCase().trim() === "flat-top" ? (
+                          <GridOnIcon sx={{ color: "black" }} />
+                        ) : recipe.type?.toLowerCase().trim() === "grill" ? (
+                          <WhatshotIcon sx={{ color: "black" }} />
+                        ) : recipe.type?.toLowerCase().trim() === "smoker" ? (
+                          <OutdoorGrillIcon sx={{ color: "black" }} />
                         ) : (
-                          <ThermostatIcon sx={{ color: "black" }} />
+                          <FlatwareIcon sx={{ color: "black" }} />
                         )}
                         <span>{recipe?.steps[currentStep]?.temperature}°F</span>
                       </div>

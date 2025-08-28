@@ -154,7 +154,7 @@ const RecipeViewer: React.FC<RecipeViewerProps> = () => {
     setOpenSubmenu(null);
   };
 
-  const [showFilters, setShowFilters] = useState(false);
+  const [showFilters, setShowFilters] = useState(true);
   const [recipes, setRecipes] = useState<Recipe[]>([]);
   const [loadingRecipes, setLoadingRecipes] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
