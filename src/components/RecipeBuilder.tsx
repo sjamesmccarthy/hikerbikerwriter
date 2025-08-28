@@ -1212,9 +1212,14 @@ const RecipeBuilder: React.FC = () => {
                       <TextField
                         label="Servings"
                         value={servings || ""}
-                        onChange={(e) =>
-                          setServings(parseInt(e.target.value) || 1)
-                        }
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          if (value === "") {
+                            setServings(0);
+                          } else {
+                            setServings(parseInt(value) || 0);
+                          }
+                        }}
                         size="small"
                       />
                       <TextField
