@@ -793,6 +793,31 @@ const RecipeViewer: React.FC<RecipeViewerProps> = () => {
               for grilling, smoking, and cooking from the kitchen to the
               backyard and beyond
             </p>
+            <p className="text-center pt-4 text-blue-400">
+              <a
+                className="text-blue-400"
+                target="_blank"
+                href="https://www.hellofresh.com/recipes"
+              >
+                Hello Fresh Recipes
+              </a>{" "}
+              |{" "}
+              <a
+                className="text-blue-400"
+                target="_blank"
+                href="https://www.traeger.com/recipes"
+              >
+                Traeger Kitchen Recipes{" "}
+              </a>{" "}
+              |{" "}
+              <a
+                className="text-blue-400"
+                target="_blank"
+                href="https://www.thecocktailproject.com/drink-recipes/summer-fish-bowl"
+              >
+                Cocktail Project{" "}
+              </a>
+            </p>
           </div>
 
           {/* Filter and Add Section */}

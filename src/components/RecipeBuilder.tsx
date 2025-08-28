@@ -76,6 +76,7 @@ const RecipeBuilder: React.FC = () => {
   const [description, setDescription] = useState("");
   const [source, setSource] = useState("");
   const [sourceTitle, setSourceTitle] = useState("");
+  const [isCustomSourceTitle, setIsCustomSourceTitle] = useState(false);
   const [type, setType] = useState<
     "Smoker" | "Flat-top" | "Grill" | "Oven" | "Beverage"
   >("Grill");
@@ -130,7 +131,16 @@ const RecipeBuilder: React.FC = () => {
       setTitle(recipe.title || "");
       setDescription(recipe.description || "");
       setSource(importUrl); // Use the URL as the source
-      setSourceTitle(recipe.title || "");
+
+      // Handle sourceTitle for imported recipes - always use custom input for imported recipes
+      const importedSourceTitle = recipe.title || "";
+      if (importedSourceTitle) {
+        setSourceTitle(importedSourceTitle);
+        setIsCustomSourceTitle(true);
+      } else {
+        setSourceTitle("");
+        setIsCustomSourceTitle(false);
+      }
       setIngredients(
         recipe.ingredients?.map(
           (ing: { name?: string; amount?: string; unit?: string }) => ({
@@ -182,6 +192,17 @@ const RecipeBuilder: React.FC = () => {
   );
   const typeOptions = useMemo<string[]>(
     () => ["Smoker", "Flat-top", "Grill", "Oven", "Beverage"],
+    []
+  );
+  const sourceTitleOptions = useMemo<string[]>(
+    () => [
+      "Traeger Kitchen",
+      "Blackstone Griddle",
+      "Hello Fresh",
+      "Home Chef",
+      "Cocktail Project",
+      "Other",
+    ],
     []
   );
 
@@ -314,7 +335,20 @@ const RecipeBuilder: React.FC = () => {
           setTitle(recipe.title || "");
           setDescription(recipe.description || "");
           setSource(recipe.source || "");
-          setSourceTitle(recipe.sourceTitle || "");
+
+          // Handle sourceTitle - check if it's one of the predefined options
+          const loadedSourceTitle = recipe.sourceTitle || "";
+          if (sourceTitleOptions.includes(loadedSourceTitle)) {
+            setSourceTitle(loadedSourceTitle);
+            setIsCustomSourceTitle(false);
+          } else if (loadedSourceTitle) {
+            setSourceTitle(loadedSourceTitle);
+            setIsCustomSourceTitle(true);
+          } else {
+            setSourceTitle("");
+            setIsCustomSourceTitle(false);
+          }
+
           // Handle legacy type names ("smoker" -> "Smoker")
           const loadedType = recipe.type || "Grill";
           const normalizedType =
@@ -389,7 +423,13 @@ const RecipeBuilder: React.FC = () => {
     }
 
     loadRecipe();
-  }, [editId, session?.user?.email, categoryOptions, typeOptions]);
+  }, [
+    editId,
+    session?.user?.email,
+    categoryOptions,
+    typeOptions,
+    sourceTitleOptions,
+  ]);
 
   const handleIngredientChange = (
     index: number,
@@ -917,14 +957,59 @@ const RecipeBuilder: React.FC = () => {
                       margin="normal"
                       placeholder="e.g., www.foodnetwork.com"
                     />
-                    <TextField
-                      fullWidth
-                      label="Recipe Source Title"
-                      value={sourceTitle}
-                      onChange={(e) => setSourceTitle(e.target.value)}
-                      margin="normal"
-                      placeholder="e.g., The Best Chocolate Chip Cookies"
-                    />
+
+                    {/* Recipe Source Title - Select or Custom Input */}
+                    {isCustomSourceTitle ? (
+                      <div
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          marginTop: "16px",
+                          marginBottom: "8px",
+                        }}
+                      >
+                        <IconButton
+                          onClick={() => {
+                            setIsCustomSourceTitle(false);
+                            setSourceTitle("");
+                          }}
+                          size="small"
+                          sx={{ mr: 1 }}
+                        >
+                          <ArrowBackIcon />
+                        </IconButton>
+                        <TextField
+                          fullWidth
+                          label="Custom Recipe Source Title"
+                          value={sourceTitle}
+                          onChange={(e) => setSourceTitle(e.target.value)}
+                          placeholder="Enter custom source title"
+                        />
+                      </div>
+                    ) : (
+                      <FormControl fullWidth margin="normal">
+                        <InputLabel>Recipe Source Title</InputLabel>
+                        <Select
+                          value={sourceTitle}
+                          label="Recipe Source Title"
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            if (value === "Other") {
+                              setIsCustomSourceTitle(true);
+                              setSourceTitle("");
+                            } else {
+                              setSourceTitle(value);
+                            }
+                          }}
+                        >
+                          {sourceTitleOptions.map((option: string) => (
+                            <MenuItem key={option} value={option}>
+                              {option}
+                            </MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
+                    )}
 
                     <TextField
                       fullWidth
