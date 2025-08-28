@@ -75,6 +75,7 @@ import CasinoIcon from "@mui/icons-material/Casino";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteIcon from "@mui/icons-material/Delete";
+import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 
 console.log("Profile page component mounting...");
 
@@ -133,7 +134,18 @@ export default function UserProfilePage() {
   }, [session]);
 
   if (status === "loading") {
-    return <div className="p-8 text-center">Loading...</div>;
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="animate-spin">
+          <AccountCircleIcon
+            sx={{
+              fontSize: 80,
+              color: "#9CA3AF",
+            }}
+          />
+        </div>
+      </div>
+    );
   }
 
   if (!session) {
@@ -1757,11 +1769,7 @@ function AppSummaries({
   }, [familyInfo, userEmail]);
 
   if (loading) {
-    return (
-      <div className="mt-8 text-center text-gray-500">
-        Loading app summaries...
-      </div>
-    );
+    return null; // Hide loading state since main page has spinner
   }
 
   // Grid layout for app summaries

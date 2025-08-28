@@ -2231,11 +2231,18 @@ export default function JobTracker() {
   // Handle loading state
   if (status === "loading") {
     return (
-      <div>
+      <div className="min-h-screen bg-gray-50 flex flex-col">
         {renderHeader()}
-        {/* <div className="flex justify-center items-center h-96">
-          <div className="text-xl">Loading...</div>
-        </div> */}
+        <div className="fixed inset-0 flex items-center justify-center bg-gray-50 z-10">
+          <div className="animate-spin">
+            <WorkIcon
+              sx={{
+                fontSize: 80,
+                color: "#9CA3AF",
+              }}
+            />
+          </div>
+        </div>
         {renderFooter()}
       </div>
     );
@@ -2318,8 +2325,15 @@ export default function JobTracker() {
       <div className="max-w-7xl mx-auto p-6 min-h-screen bg-white">
         {/* Show loading state while data is being fetched */}
         {!hasLoadedData && session && (
-          <div className="flex justify-center items-center h-96">
-            <div className="text-xl text-gray-600">Loading job data...</div>
+          <div className="fixed inset-0 flex items-center justify-center bg-gray-50 z-10">
+            <div className="animate-spin">
+              <WorkIcon
+                sx={{
+                  fontSize: 80,
+                  color: "#9CA3AF",
+                }}
+              />
+            </div>
           </div>
         )}
 

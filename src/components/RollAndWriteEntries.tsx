@@ -949,8 +949,14 @@ const RollAndWriteEntries: React.FC = () => {
             {/* Entries List */}
             <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
               {loadingEntries ? (
-                <div className="text-center text-gray-500 font-mono py-8">
-                  Loading stories...
+                <div className="fixed inset-0 bg-white bg-opacity-75 flex items-center justify-center z-50">
+                  <CasinoIcon
+                    className="animate-spin"
+                    sx={{
+                      fontSize: 80,
+                      color: "#9CA3AF",
+                    }}
+                  />
                 </div>
               ) : entries.length === 0 ? (
                 (() => {

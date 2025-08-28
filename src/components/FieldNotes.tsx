@@ -24,6 +24,7 @@ import {
   TextFields as TextIcon,
   NetworkCheck as NetworkIcon,
   People as PeopleIcon,
+  Hiking as HikingIcon,
 } from "@mui/icons-material";
 import EditNoteOutlinedIcon from "@mui/icons-material/EditNoteOutlined";
 import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
@@ -1146,8 +1147,14 @@ const FieldNotes: React.FC = () => {
                 )}
 
                 {loadingNotes ? (
-                  <div className="text-center text-gray-400 font-mono py-8">
-                    Loading notes...
+                  <div className="fixed inset-0 bg-white bg-opacity-75 flex items-center justify-center z-50">
+                    <HikingIcon
+                      className="animate-spin"
+                      sx={{
+                        fontSize: 80,
+                        color: "#9CA3AF",
+                      }}
+                    />
                   </div>
                 ) : databaseError ? (
                   <div className="mx-4 mb-6 p-4 bg-red-50 border border-red-200 rounded-md">
