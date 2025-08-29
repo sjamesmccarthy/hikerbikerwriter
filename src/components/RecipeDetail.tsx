@@ -716,10 +716,11 @@ const RecipeDetail = React.memo(function RecipeDetail({
           yPosition += 3; // Space after ingredients
         }
 
-        // Add temperature and time info for smoker and oven recipes
+        // Add temperature and time info for smoker, oven, and flat-top recipes
         if (
           (recipe?.type?.toLowerCase().trim() === "smoker" ||
-            recipe?.type?.toLowerCase().trim() === "oven") &&
+            recipe?.type?.toLowerCase().trim() === "oven" ||
+            recipe?.type?.toLowerCase().trim() === "flat-top") &&
           (step.temperature || step.time || step.superSmoke)
         ) {
           let tempTimeInfo = "";
@@ -731,6 +732,8 @@ const RecipeDetail = React.memo(function RecipeDetail({
               symbol = "[OVEN] ";
             } else if (recipeType === "smoker") {
               symbol = "[SMOKER] ";
+            } else if (recipeType === "flat-top") {
+              symbol = "[FLAT-TOP] ";
             } else if (recipeType === "grill") {
               symbol = "[GRILL] ";
             } else if (recipeType === "beverage") {
@@ -739,9 +742,10 @@ const RecipeDetail = React.memo(function RecipeDetail({
               symbol = "[COOK] ";
             }
 
-            // For oven recipes, treat as heat level if value is 10 or less, otherwise as temperature
+            // For oven and flat-top recipes, treat as heat level if value is 10 or less, otherwise as temperature
             if (
-              recipe?.type?.toLowerCase().trim() === "oven" &&
+              (recipe?.type?.toLowerCase().trim() === "oven" ||
+                recipe?.type?.toLowerCase().trim() === "flat-top") &&
               step.temperature <= 10
             ) {
               tempTimeInfo += `${symbol}Heat Level ${step.temperature} `;
@@ -1324,24 +1328,29 @@ const RecipeDetail = React.memo(function RecipeDetail({
                 </ButtonGroup>
               </div>
 
-              <ul className="space-y-1">
-                {recipe.ingredients.map((ingredient, index) => (
-                  <li
-                    key={`ingredient-${index}-${ingredient.name}`}
-                    className="flex items-center text-sm"
-                  >
-                    {/* <span className="text-gray-600 mr-2">•</span> */}
-                    <span className="font-medium min-w-[100px] text-right pr-3">
-                      {formatAmountAsFraction(
-                        scaleIngredient(ingredient.amount)
-                      )}{" "}
-                      {formatUnit(ingredient.unit)}
-                    </span>
-                    <div className="w-px h-6 bg-gray-300 mx-3"></div>
-                    <span className="flex-1">{ingredient.name}</span>
-                  </li>
-                ))}
-              </ul>
+              <div className="relative">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2">
+                  {recipe.ingredients.map((ingredient, index) => (
+                    <div
+                      key={`ingredient-${index}-${ingredient.name}`}
+                      className="flex items-center text-sm border-b border-gray-200 pb-2 last:border-b-0"
+                    >
+                      <span className="font-semibold min-w-[90px] text-right pr-4 text-gray-800">
+                        {formatAmountAsFraction(
+                          scaleIngredient(ingredient.amount)
+                        )}{" "}
+                        {formatUnit(ingredient.unit)}
+                      </span>
+                      <div className="w-px h-5 bg-gray-300 mr-4"></div>
+                      <span className="flex-1 text-gray-700">
+                        {ingredient.name}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+                {/* Vertical divider line between columns - only visible on md+ screens */}
+                <div className="hidden md:block absolute top-0 left-1/2 transform -translate-x-1/2 w-px h-full bg-gray-300"></div>
+              </div>
             </div>
 
             {/* Make Now Button */}
@@ -1437,17 +1446,19 @@ const RecipeDetail = React.memo(function RecipeDetail({
                                   return (
                                     <div
                                       key={`${index}-${ingredientIndex}-${ingredient.name}`}
-                                      className="text-sm text-gray-700 font-medium flex items-center"
+                                      className="flex items-center text-sm border-b border-gray-100 pb-1 last:border-b-0"
                                     >
-                                      <span className="text-gray-600 mr-2">
-                                        •
+                                      <span className="font-semibold min-w-[70px] text-right pr-3 text-gray-800">
+                                        {formatAmountAsFraction(
+                                          scaleIngredient(ingredient.amount)
+                                        )}{" "}
+                                        {formatUnit(ingredient.unit)}
                                       </span>
-                                      {ingredient.amount || ""}
-                                      {ingredient.unit
-                                        ? ` ${ingredient.unit}`
-                                        : ""}{" "}
-                                      |{" "}
-                                      {ingredient.name || "Unknown ingredient"}
+                                      <div className="w-px h-4 bg-gray-200 mr-3"></div>
+                                      <span className="flex-1 text-gray-700">
+                                        {ingredient.name ||
+                                          "Unknown ingredient"}
+                                      </span>
                                     </div>
                                   );
                                 }

@@ -273,7 +273,7 @@ const RecipeBuilder: React.FC = () => {
       setIsImporting(false);
     }
   };
-  const [isPublic, setIsPublic] = useState(false);
+  const [isPublic, setIsPublic] = useState(true);
   const [saving, setSaving] = useState(false);
 
   // Family recipe sharing state
