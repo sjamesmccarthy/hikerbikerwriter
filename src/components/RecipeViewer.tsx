@@ -1051,7 +1051,7 @@ const RecipeViewer: React.FC<RecipeViewerProps> = () => {
                         </div>
 
                         {/* Cook Time and Sort By - 50/50 on mobile, auto on desktop */}
-                        <div className="flex gap-2 w-full md:w-auto mt-2">
+                        <div className="flex gap-2 w-full md:w-auto mt-2 sm:mt-0">
                           <FormControl
                             size="small"
                             className="w-1/2 md:w-auto"
