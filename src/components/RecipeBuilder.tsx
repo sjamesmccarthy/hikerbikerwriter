@@ -963,11 +963,7 @@ const RecipeBuilder: React.FC = () => {
                               | "Beverage"
                           )
                         }
-                        displayEmpty
                       >
-                        <MenuItem value="" disabled>
-                          Select Cooking Type
-                        </MenuItem>
                         {typeOptions.map((option: string) => (
                           <MenuItem key={option} value={option}>
                             {option}
@@ -1451,13 +1447,13 @@ const RecipeBuilder: React.FC = () => {
                               {(type === "Smoker" ||
                                 type === "Grill" ||
                                 type === "Oven") && (
-                                <div className="flex gap-4 items-center mt-2 rounded">
-                                  <div className="flex w-full gap-4">
+                                <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 items-center mt-2 rounded">
+                                  <div className="flex flex-col sm:flex-row w-full gap-2 sm:gap-4">
                                     {type === "Smoker" ? (
                                       <>
-                                        <div className="w-3/5 sm:w-3/5">
+                                        <div className="w-full sm:w-3/5">
                                           <TextField
-                                            placeholder="Temp"
+                                            placeholder="Temperature"
                                             type="text"
                                             value={step.temperature || ""}
                                             onChange={(e) =>
@@ -1471,9 +1467,9 @@ const RecipeBuilder: React.FC = () => {
                                             fullWidth
                                           />
                                         </div>
-                                        <div className="w-3/5 sm:w-3/5">
+                                        <div className="w-full sm:w-3/5">
                                           <TextField
-                                            placeholder="Time"
+                                            placeholder="Time (e.g., 2h, 90m, 1h 30m)"
                                             type="text"
                                             value={
                                               typeof step.timeInput ===
@@ -1674,7 +1670,7 @@ const RecipeBuilder: React.FC = () => {
                                     )}
                                   </div>
                                   {type === "Smoker" && (
-                                    <div className="w-full mt-2">
+                                    <div className="w-full text-right sm:w-auto">
                                       <FormControlLabel
                                         control={
                                           <Switch
@@ -1690,7 +1686,6 @@ const RecipeBuilder: React.FC = () => {
                                           />
                                         }
                                         label="Super Smoke"
-                                        sx={{ ml: 1 }}
                                       />
                                     </div>
                                   )}
