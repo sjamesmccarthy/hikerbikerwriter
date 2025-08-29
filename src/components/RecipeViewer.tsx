@@ -161,6 +161,7 @@ const RecipeViewer: React.FC<RecipeViewerProps> = () => {
   const [activeCategory, setActiveCategory] = useState<string>("All");
   const [activeCookingType, setActiveCookingType] = useState<string>("All");
   const [activeCookTime, setActiveCookTime] = useState<string>("All");
+  const [sortBy, setSortBy] = useState<string>("Newest");
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [showPublicRecipes, setShowPublicRecipes] = useState(false);
   const [showFamilyOnly, setShowFamilyOnly] = useState(false);
@@ -568,7 +569,18 @@ const RecipeViewer: React.FC<RecipeViewerProps> = () => {
 
       return finalResult;
     })
-    .sort((a, b) => a.title.localeCompare(b.title));
+    .sort((a, b) => {
+      switch (sortBy) {
+        case "Newest":
+          return new Date(b.date).getTime() - new Date(a.date).getTime();
+        case "Oldest":
+          return new Date(a.date).getTime() - new Date(b.date).getTime();
+        case "Alphabetical":
+          return a.title.localeCompare(b.title);
+        default:
+          return a.title.localeCompare(b.title);
+      }
+    });
 
   const getTotalTime = (recipe: Recipe) => {
     return recipe.prepTime + recipe.cookTime;
@@ -965,7 +977,7 @@ const RecipeViewer: React.FC<RecipeViewerProps> = () => {
                       {/* Category, Cooking Type, Cook Time, and Filter Buttons on same line for desktop */}
                       <div className="flex flex-col md:flex-row gap-2 md:gap-3 md:items-center md:flex-shrink-0">
                         {/* First row: Category and Cooking Type (50% each on mobile) */}
-                        <div className="flex gap-2 md:contents">
+                        <div className="flex gap-2 mt-2 md:contents">
                           <FormControl
                             size="small"
                             className="flex-1 md:flex-none"
@@ -1038,40 +1050,76 @@ const RecipeViewer: React.FC<RecipeViewerProps> = () => {
                           </FormControl>
                         </div>
 
-                        {/* Cook Time - now on same row for desktop */}
-                        <FormControl
-                          size="small"
-                          className="w-full md:w-auto"
-                          sx={{ minWidth: { xs: 0, md: 140 } }}
-                        >
-                          <InputLabel>Cook Time</InputLabel>
-                          <Select
-                            value={activeCookTime}
-                            label="Cook Time"
-                            open={openSelect === "cookTime"}
-                            onOpen={() => setOpenSelect("cookTime")}
-                            onClose={() => setOpenSelect(null)}
-                            onChange={(e) => setActiveCookTime(e.target.value)}
-                            MenuProps={{
-                              PaperProps: {
-                                style: {
-                                  zIndex: 10000,
-                                },
-                              },
-                            }}
+                        {/* Cook Time and Sort By - 50/50 on mobile, auto on desktop */}
+                        <div className="flex gap-2 w-full md:w-auto mt-2">
+                          <FormControl
+                            size="small"
+                            className="w-1/2 md:w-auto"
+                            sx={{ minWidth: { xs: 0, md: 140 } }}
                           >
-                            {cookTimes.map((timeCategory) => (
-                              <MenuItem key={timeCategory} value={timeCategory}>
-                                <div className="flex items-center">
-                                  {getCookTimeIcon(timeCategory)}
-                                  {timeCategory}
-                                </div>
-                              </MenuItem>
-                            ))}
-                          </Select>
-                        </FormControl>
+                            <InputLabel>Cook Time</InputLabel>
+                            <Select
+                              value={activeCookTime}
+                              label="Cook Time"
+                              open={openSelect === "cookTime"}
+                              onOpen={() => setOpenSelect("cookTime")}
+                              onClose={() => setOpenSelect(null)}
+                              onChange={(e) =>
+                                setActiveCookTime(e.target.value)
+                              }
+                              MenuProps={{
+                                PaperProps: {
+                                  style: {
+                                    zIndex: 10000,
+                                  },
+                                },
+                              }}
+                            >
+                              {cookTimes.map((timeCategory) => (
+                                <MenuItem
+                                  key={timeCategory}
+                                  value={timeCategory}
+                                >
+                                  <div className="flex items-center">
+                                    {getCookTimeIcon(timeCategory)}
+                                    {timeCategory}
+                                  </div>
+                                </MenuItem>
+                              ))}
+                            </Select>
+                          </FormControl>
 
-                        {/* Filter Buttons - after Cook Time */}
+                          <FormControl
+                            size="small"
+                            className="w-1/2 md:w-auto"
+                            sx={{ minWidth: { xs: 0, md: 140 } }}
+                          >
+                            <InputLabel>Sort By</InputLabel>
+                            <Select
+                              value={sortBy}
+                              label="Sort By"
+                              open={openSelect === "sortBy"}
+                              onOpen={() => setOpenSelect("sortBy")}
+                              onClose={() => setOpenSelect(null)}
+                              onChange={(e) => setSortBy(e.target.value)}
+                              MenuProps={{
+                                PaperProps: {
+                                  style: {
+                                    zIndex: 10000,
+                                  },
+                                },
+                              }}
+                            >
+                              <MenuItem value="Newest">Newest</MenuItem>
+                              <MenuItem value="Oldest">Oldest</MenuItem>
+                              <MenuItem value="Alphabetical">
+                                Alphabetical
+                              </MenuItem>
+                            </Select>
+                          </FormControl>
+                        </div>
+
+                        {/* Filter Buttons - after Sort By */}
                         <div className="flex flex-col md:flex-row gap-2 md:gap-2 md:items-center">
                           {/* Filter buttons on mobile: stacked, on desktop: inline */}
                           <div className="flex gap-2 md:contents">
