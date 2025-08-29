@@ -164,38 +164,39 @@ const RecipeBuilder: React.FC = () => {
         setSourceTitle("");
         setIsCustomSourceTitle(false);
       }
-      setIngredients(
-        recipe.ingredients?.map(
-          (ing: {
-            name?: string;
-            amount?: string;
-            unit?: string;
-            stepNumber?: number;
-          }) => {
-            const unit = ing.unit || "";
-            // Check if the unit is in our predefined options
-            const isCustomUnit =
-              unit && !unitOptions.includes(unit) && unit !== "Other";
-            return {
-              id: crypto.randomUUID(),
-              name: ing.name || "",
-              amount: ing.amount || "",
-              unit: isCustomUnit ? "" : unit,
-              customUnit: isCustomUnit ? unit : "",
-              showCustomUnit: isCustomUnit,
-              stepNumber: ing.stepNumber || 0,
-            };
-          }
-        ) || [
-          {
+      // Process ingredients first so we can reference them when loading step ingredients
+      const processedIngredients = recipe.ingredients?.map(
+        (ing: {
+          name?: string;
+          amount?: string;
+          unit?: string;
+          stepNumber?: number;
+        }) => {
+          const unit = ing.unit || "";
+          // Check if the unit is in our predefined options
+          const isCustomUnit =
+            unit && !unitOptions.includes(unit) && unit !== "Other";
+          return {
             id: crypto.randomUUID(),
-            name: "",
-            amount: "",
-            unit: "",
-            stepNumber: 0,
-          },
-        ]
-      );
+            name: ing.name || "",
+            amount: ing.amount || "",
+            unit: isCustomUnit ? "" : unit,
+            customUnit: isCustomUnit ? unit : "",
+            showCustomUnit: isCustomUnit,
+            stepNumber: ing.stepNumber || 0,
+          };
+        }
+      ) || [
+        {
+          id: crypto.randomUUID(),
+          name: "",
+          amount: "",
+          unit: "",
+          stepNumber: 0,
+        },
+      ];
+      
+      setIngredients(processedIngredients);
       setSteps(
         recipe.steps?.map(
           (step: {
@@ -232,10 +233,27 @@ const RecipeBuilder: React.FC = () => {
               superSmoke: step.superSmoke,
               isCustomTemp: isCustomTemp,
               stepIngredients:
-                step.stepIngredients?.map((si) => ({
-                  id: crypto.randomUUID(),
-                  ingredientId: si.ingredientId,
-                })) || [],
+                step.stepIngredients?.map((si: { ingredientIndex?: number; ingredientId?: string }) => {
+                  let ingredientId = '';
+                  
+                  // Handle new ingredientIndex format
+                  if (typeof si.ingredientIndex === 'number' && si.ingredientIndex >= 0) {
+                    // Find the ingredient at the saved index and use its current ID
+                    const targetIngredient = processedIngredients[si.ingredientIndex];
+                    if (targetIngredient) {
+                      ingredientId = targetIngredient.id;
+                    }
+                  }
+                  // Handle legacy ingredientId format  
+                  else if (si.ingredientId) {
+                    ingredientId = si.ingredientId;
+                  }
+                  
+                  return {
+                    id: crypto.randomUUID(),
+                    ingredientId: ingredientId,
+                  };
+                }).filter(si => si.ingredientId) || [],
             };
           }
         ) || [{ id: crypto.randomUUID(), step: "" }]
@@ -484,40 +502,41 @@ const RecipeBuilder: React.FC = () => {
           setCookMinutes((recipe.cookTime || 0) % 60);
           setServings(recipe.servings || 1);
           setSlug(recipe.slug || "");
-          setIngredients(
-            recipe.ingredients?.length
-              ? recipe.ingredients.map(
-                  (ing: {
-                    name?: string;
-                    amount?: number;
-                    unit?: string;
-                    stepNumber?: number;
-                  }) => {
-                    const unit = ing.unit || "";
-                    // Check if the unit is in our predefined options
-                    const isCustomUnit =
-                      unit && !unitOptions.includes(unit) && unit !== "Other";
-                    return {
-                      id: crypto.randomUUID(),
-                      name: ing.name || "",
-                      amount: formatAmountAsFraction(ing.amount || 0),
-                      unit: isCustomUnit ? "" : unit,
-                      customUnit: isCustomUnit ? unit : "",
-                      showCustomUnit: isCustomUnit,
-                      stepNumber: ing.stepNumber || 0,
-                    };
-                  }
-                )
-              : [
-                  {
+          // Process ingredients first for URL import
+          const urlImportIngredients = recipe.ingredients?.length
+            ? recipe.ingredients.map(
+                (ing: {
+                  name?: string;
+                  amount?: number;
+                  unit?: string;
+                  stepNumber?: number;
+                }) => {
+                  const unit = ing.unit || "";
+                  // Check if the unit is in our predefined options
+                  const isCustomUnit =
+                    unit && !unitOptions.includes(unit) && unit !== "Other";
+                  return {
                     id: crypto.randomUUID(),
-                    name: "",
-                    amount: "",
-                    unit: "",
-                    stepNumber: 0,
-                  },
-                ]
-          );
+                    name: ing.name || "",
+                    amount: formatAmountAsFraction(ing.amount || 0),
+                    unit: isCustomUnit ? "" : unit,
+                    customUnit: isCustomUnit ? unit : "",
+                    showCustomUnit: isCustomUnit,
+                    stepNumber: ing.stepNumber || 0,
+                  };
+                }
+              )
+            : [
+                {
+                  id: crypto.randomUUID(),
+                  name: "",
+                  amount: "",
+                  unit: "",
+                  stepNumber: 0,
+                },
+              ];
+              
+          setIngredients(urlImportIngredients);
           setSteps(
             recipe.steps?.length
               ? recipe.steps.map(
@@ -555,10 +574,27 @@ const RecipeBuilder: React.FC = () => {
                       superSmoke: step.superSmoke || false,
                       isCustomTemp: isCustomTemp,
                       stepIngredients:
-                        step.stepIngredients?.map((si) => ({
-                          id: crypto.randomUUID(),
-                          ingredientId: si.ingredientId,
-                        })) || [],
+                        step.stepIngredients?.map((si: { ingredientIndex?: number; ingredientId?: string }) => {
+                          let ingredientId = '';
+                          
+                          // Handle new ingredientIndex format
+                          if (typeof si.ingredientIndex === 'number' && si.ingredientIndex >= 0) {
+                            // Find the ingredient at the saved index and use its current ID
+                            const targetIngredient = urlImportIngredients[si.ingredientIndex];
+                            if (targetIngredient) {
+                              ingredientId = targetIngredient.id;
+                            }
+                          }
+                          // Handle legacy ingredientId format  
+                          else if (si.ingredientId) {
+                            ingredientId = si.ingredientId;
+                          }
+                          
+                          return {
+                            id: crypto.randomUUID(),
+                            ingredientId: ingredientId,
+                          };
+                        }).filter(si => si.ingredientId) || [],
                     };
                   }
                 )
