@@ -11,7 +11,6 @@ import {
   Share as ShareIcon,
   AccessTime as AccessTimeIcon,
   LocalDining as LocalDiningIcon,
-  Thermostat as ThermostatIcon,
   Timer as TimerIcon,
   Whatshot as WhatshotIcon,
   Close as CloseIcon,
@@ -492,20 +491,26 @@ const RecipeDetail = React.memo(function RecipeDetail({
       // Dynamic import to avoid SSR issues
       const { jsPDF } = await import("jspdf");
 
-      const pdf = new jsPDF("p", "mm", "a4");
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "letter",
+      });
       const pageWidth = pdf.internal.pageSize.getWidth();
       const pageHeight = pdf.internal.pageSize.getHeight();
       let yPosition = 20;
 
+      // Set margins
+      const leftMargin = 20;
+      const rightMargin = 50;
+      const textWidth = pageWidth - leftMargin - rightMargin;
+
       // Title
       pdf.setFontSize(20);
       pdf.setFont("helvetica", "bold");
-      const titleLines = pdf.splitTextToSize(
-        recipe?.title || "",
-        pageWidth - 40
-      );
-      pdf.text(titleLines, 20, yPosition);
-      yPosition += titleLines.length * 7 + 1; // Reduced spacing from 10 to 5
+      const titleLines = pdf.splitTextToSize(recipe?.title || "", textWidth);
+      pdf.text(titleLines, leftMargin, yPosition);
+      yPosition += titleLines.length * 7 + 1;
 
       // Times
       pdf.setFontSize(12);
@@ -514,20 +519,20 @@ const RecipeDetail = React.memo(function RecipeDetail({
         `Prep: ${recipe?.prepTime}m | Cook: ${formatTime(
           recipe?.cookTime || 0
         )}`,
-        20,
+        leftMargin,
         yPosition
       );
       yPosition += 10;
 
       // Author
-      pdf.text(`By ${recipe?.author}`, 20, yPosition);
+      pdf.text(`By ${recipe?.author}`, leftMargin, yPosition);
       yPosition += 5;
 
       // Source (if available)
       if (recipe?.source) {
         pdf.text(
           `Inspired by ${recipe.sourceTitle || recipe.source}`,
-          20,
+          leftMargin,
           yPosition
         );
         yPosition += 10;
@@ -538,15 +543,15 @@ const RecipeDetail = React.memo(function RecipeDetail({
       // Description
       const descLines = pdf.splitTextToSize(
         recipe?.description || "",
-        pageWidth - 40
+        textWidth
       );
-      pdf.text(descLines, 20, yPosition);
+      pdf.text(descLines, leftMargin, yPosition);
       yPosition += descLines.length * 5 + 7;
 
       // Ingredients
       pdf.setFontSize(16);
       pdf.setFont("helvetica", "bold");
-      pdf.text("Ingredients", 20, yPosition);
+      pdf.text("Ingredients", leftMargin, yPosition);
       yPosition += 10;
 
       pdf.setFontSize(11);
@@ -555,10 +560,15 @@ const RecipeDetail = React.memo(function RecipeDetail({
         const text = `• ${formatAmountAsFraction(
           ingredient.amount
         )} ${formatUnit(ingredient.unit)} ${ingredient.name}`;
-        pdf.text(text, 25, yPosition);
-        yPosition += 6;
+
+        // Split ingredient text to ensure it wraps properly with conservative width
+        const ingredientLines = pdf.splitTextToSize(text, textWidth - 10);
+        ingredientLines.forEach((line: string, lineIndex: number) => {
+          pdf.text(line, leftMargin + 5, yPosition + lineIndex * 5);
+        });
+        yPosition += ingredientLines.length * 5 + 1;
       });
-      yPosition += 7;
+      yPosition += 1;
 
       // Instructions
       if (yPosition > pageHeight - 50) {
@@ -566,46 +576,193 @@ const RecipeDetail = React.memo(function RecipeDetail({
         yPosition = 20;
       }
 
+      // Add padding above Instructions heading
+      yPosition += 5;
+
       pdf.setFontSize(16);
       pdf.setFont("helvetica", "bold");
-      pdf.text("Instructions", 20, yPosition);
+      pdf.text("Instructions", leftMargin, yPosition);
       yPosition += 9;
 
       pdf.setFontSize(11);
       pdf.setFont("helvetica", "normal");
       recipe?.steps.forEach((step, index) => {
-        // Remove line breaks from step text
+        // Remove line breaks and clean up text - enhanced to handle all types of whitespace and Unicode fractions
         const cleanedStepText = step.step
-          .replace(/\n/g, " ")
-          .replace(/\r/g, " ");
+          .replace(/\n/g, " ") // Line feeds
+          .replace(/\r/g, " ") // Carriage returns
+          .replace(/\t/g, " ") // Tabs
+          .replace(/\u00A0/g, " ") // Non-breaking spaces
+          .replace(/\u2000-\u200F/g, " ") // En quad, em quad, en space, em space, etc.
+          .replace(/\u2028/g, " ") // Line separator
+          .replace(/\u2029/g, " ") // Paragraph separator
+          .replace(/\uFEFF/g, "") // Zero width no-break space (BOM)
+          .replace(/[\u200B-\u200D]/g, "") // Zero width spaces
+          // Convert Unicode fraction characters to ASCII equivalents
+          .replace(/\u00BC/g, "1/4") // ¼
+          .replace(/\u00BD/g, "1/2") // ½
+          .replace(/\u00BE/g, "3/4") // ¾
+          .replace(/\u2150/g, "1/7") // ⅐
+          .replace(/\u2151/g, "1/9") // ⅑
+          .replace(/\u2152/g, "1/10") // ⅒
+          .replace(/\u2153/g, "1/3") // ⅓
+          .replace(/\u2154/g, "2/3") // ⅔
+          .replace(/\u2155/g, "1/5") // ⅕
+          .replace(/\u2156/g, "2/5") // ⅖
+          .replace(/\u2157/g, "3/5") // ⅗
+          .replace(/\u2158/g, "4/5") // ⅘
+          .replace(/\u2159/g, "1/6") // ⅙
+          .replace(/\u215A/g, "5/6") // ⅚
+          .replace(/\u215B/g, "1/8") // ⅛
+          .replace(/\u215C/g, "3/8") // ⅜
+          .replace(/\u215D/g, "5/8") // ⅝
+          .replace(/\u215E/g, "7/8") // ⅞
+          .replace(/\s+/g, " ") // Replace multiple spaces with single space
+          .trim();
         const stepText = `${index + 1}. ${cleanedStepText}`;
-        const stepLines = pdf.splitTextToSize(stepText, pageWidth - 40);
 
-        if (yPosition + stepLines.length * 5 > pageHeight - 20) {
+        // Use consistent text width for wrapping
+        const stepLines = pdf.splitTextToSize(stepText, textWidth);
+
+        // Calculate space needed for step + ingredients + smoker info
+        let totalSpaceNeeded = stepLines.length * 6;
+        if (step.stepIngredients && step.stepIngredients.length > 0) {
+          totalSpaceNeeded += 10 + step.stepIngredients.length * 5; // Header + ingredients
+        }
+        if (
+          (recipe?.type?.toLowerCase().trim() === "smoker" ||
+            recipe?.type?.toLowerCase().trim() === "oven") &&
+          (step.temperature || step.time || step.superSmoke)
+        ) {
+          totalSpaceNeeded += 10; // Temperature/time info space
+        }
+
+        if (yPosition + totalSpaceNeeded > pageHeight - 30) {
           pdf.addPage();
           yPosition = 20;
         }
 
-        pdf.text(stepLines, 20, yPosition);
-        yPosition +=
-          step.temperature || step.time || step.superSmoke
-            ? stepLines.length * 5
-            : stepLines.length * 2; // Adjust spacing based on smoker info
+        // Ensure we're using the correct font for step text
+        pdf.setFontSize(11);
+        pdf.setFont("helvetica", "normal");
 
+        // Render each line of the step text with proper spacing
+        stepLines.forEach((line: string, lineIndex: number) => {
+          pdf.text(line, leftMargin, yPosition + lineIndex * 6);
+        });
+        yPosition += stepLines.length * 6 + 5; // Base spacing after step text
+
+        // Add step ingredients if they exist
+        if (step.stepIngredients && step.stepIngredients.length > 0) {
+          // Add "INGREDIENTS" header
+          pdf.setFontSize(9);
+          pdf.setFont("helvetica", "bold");
+          pdf.text("INGREDIENTS", leftMargin + 5, yPosition);
+          yPosition += 6;
+
+          pdf.setFontSize(9);
+          pdf.setFont("helvetica", "normal");
+
+          step.stepIngredients.forEach((stepIngredient) => {
+            let ingredient;
+
+            // First try to find by ingredientIndex (new format)
+            if (
+              typeof stepIngredient.ingredientIndex === "number" &&
+              stepIngredient.ingredientIndex >= 0 &&
+              stepIngredient.ingredientIndex < (recipe?.ingredients.length || 0)
+            ) {
+              ingredient = recipe?.ingredients[stepIngredient.ingredientIndex];
+            }
+
+            // Fallback to ID matching (legacy format)
+            if (!ingredient && stepIngredient.ingredientId) {
+              ingredient = recipe?.ingredients.find(
+                (ing) => ing.id === stepIngredient.ingredientId
+              );
+            }
+
+            // Fallback to index parsing from ingredientId
+            if (!ingredient && stepIngredient.ingredientId) {
+              const ingredientIdx = parseInt(stepIngredient.ingredientId);
+              if (
+                !isNaN(ingredientIdx) &&
+                ingredientIdx >= 0 &&
+                ingredientIdx < (recipe?.ingredients.length || 0)
+              ) {
+                ingredient = recipe?.ingredients[ingredientIdx];
+              }
+            }
+
+            if (ingredient) {
+              const ingredientText = `• ${formatAmountAsFraction(
+                ingredient.amount
+              )}${ingredient.unit ? ` ${formatUnit(ingredient.unit)}` : ""} | ${
+                ingredient.name
+              }`;
+
+              // Split ingredient text to ensure it wraps properly with conservative width
+              const ingredientLines = pdf.splitTextToSize(
+                ingredientText,
+                textWidth - 10
+              );
+              ingredientLines.forEach((line: string, lineIndex: number) => {
+                pdf.text(line, leftMargin + 10, yPosition + lineIndex * 5);
+              });
+              yPosition += ingredientLines.length * 5;
+            }
+          });
+
+          yPosition += 3; // Space after ingredients
+        }
+
+        // Add temperature and time info for smoker and oven recipes
         if (
-          recipe?.type === "smoker" &&
+          (recipe?.type?.toLowerCase().trim() === "smoker" ||
+            recipe?.type?.toLowerCase().trim() === "oven") &&
           (step.temperature || step.time || step.superSmoke)
         ) {
-          let smokerInfo = "";
-          if (step.temperature) smokerInfo += `${step.temperature}°F `;
-          if (step.time) smokerInfo += `${step.time}min `;
-          if (step.superSmoke) smokerInfo += " | Super Smoke";
-          if (smokerInfo) {
-            yPosition += 3; // Only add spacing if we have smoker info
+          let tempTimeInfo = "";
+          if (step.temperature) {
+            // Add appropriate symbol based on recipe type (using ASCII symbols for PDF compatibility)
+            let symbol = "";
+            const recipeType = recipe?.type?.toLowerCase().trim();
+            if (recipeType === "oven") {
+              symbol = "[OVEN] ";
+            } else if (recipeType === "smoker") {
+              symbol = "[SMOKER] ";
+            } else if (recipeType === "grill") {
+              symbol = "[GRILL] ";
+            } else if (recipeType === "beverage") {
+              symbol = "[DRINK] ";
+            } else {
+              symbol = "[COOK] ";
+            }
+
+            // For oven recipes, treat as heat level if value is 10 or less, otherwise as temperature
+            if (
+              recipe?.type?.toLowerCase().trim() === "oven" &&
+              step.temperature <= 10
+            ) {
+              tempTimeInfo += `${symbol}Heat Level ${step.temperature} `;
+            } else {
+              tempTimeInfo += `${symbol}${step.temperature}°F `;
+            }
+          }
+          if (step.time) {
+            tempTimeInfo += `[TIME] ${step.time}min `;
+          }
+          if (
+            step.superSmoke &&
+            recipe?.type?.toLowerCase().trim() === "smoker"
+          )
+            tempTimeInfo += " | [SMOKE] Super Smoke";
+          if (tempTimeInfo) {
+            // Ensure proper font for temperature/time info
             pdf.setFontSize(9);
-            pdf.text(`   ${smokerInfo}`, 25, yPosition);
-            yPosition += 1; // Spacing after temp/time
-            pdf.setFontSize(11);
+            pdf.setFont("helvetica", "normal");
+            pdf.text(`   ${tempTimeInfo}`, leftMargin + 5, yPosition);
+            yPosition += 5; // Consistent spacing after temp/time info
           }
         }
 
@@ -614,7 +771,7 @@ const RecipeDetail = React.memo(function RecipeDetail({
           yPosition += 3; // Spacing before line
           pdf.setDrawColor(180, 180, 180); // Light gray color
           pdf.setLineWidth(0.25); // Slim line
-          pdf.line(20, yPosition, pageWidth - 20, yPosition); // Horizontal line
+          pdf.line(leftMargin, yPosition, pageWidth - rightMargin, yPosition); // Horizontal line
           yPosition += 8; // Spacing after line
         } else {
           yPosition += 5; // Regular spacing for last step
@@ -630,13 +787,13 @@ const RecipeDetail = React.memo(function RecipeDetail({
 
         pdf.setFontSize(16);
         pdf.setFont("helvetica", "bold");
-        pdf.text("My Notes", 20, yPosition);
+        pdf.text("My Notes", leftMargin, yPosition);
         yPosition += 10;
 
         pdf.setFontSize(11);
         pdf.setFont("helvetica", "normal");
-        const notesLines = pdf.splitTextToSize(recipe.myNotes, pageWidth - 40);
-        pdf.text(notesLines, 20, yPosition);
+        const notesLines = pdf.splitTextToSize(recipe.myNotes, textWidth);
+        pdf.text(notesLines, leftMargin, yPosition);
       }
 
       // Save the PDF

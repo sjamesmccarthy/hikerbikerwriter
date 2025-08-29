@@ -195,7 +195,7 @@ const RecipeBuilder: React.FC = () => {
           stepNumber: 0,
         },
       ];
-      
+
       setIngredients(processedIngredients);
       setSteps(
         recipe.steps?.map(
@@ -233,27 +233,38 @@ const RecipeBuilder: React.FC = () => {
               superSmoke: step.superSmoke,
               isCustomTemp: isCustomTemp,
               stepIngredients:
-                step.stepIngredients?.map((si: { ingredientIndex?: number; ingredientId?: string }) => {
-                  let ingredientId = '';
-                  
-                  // Handle new ingredientIndex format
-                  if (typeof si.ingredientIndex === 'number' && si.ingredientIndex >= 0) {
-                    // Find the ingredient at the saved index and use its current ID
-                    const targetIngredient = processedIngredients[si.ingredientIndex];
-                    if (targetIngredient) {
-                      ingredientId = targetIngredient.id;
+                step.stepIngredients
+                  ?.map(
+                    (si: {
+                      ingredientIndex?: number;
+                      ingredientId?: string;
+                    }) => {
+                      let ingredientId = "";
+
+                      // Handle new ingredientIndex format
+                      if (
+                        typeof si.ingredientIndex === "number" &&
+                        si.ingredientIndex >= 0
+                      ) {
+                        // Find the ingredient at the saved index and use its current ID
+                        const targetIngredient =
+                          processedIngredients[si.ingredientIndex];
+                        if (targetIngredient) {
+                          ingredientId = targetIngredient.id;
+                        }
+                      }
+                      // Handle legacy ingredientId format
+                      else if (si.ingredientId) {
+                        ingredientId = si.ingredientId;
+                      }
+
+                      return {
+                        id: crypto.randomUUID(),
+                        ingredientId: ingredientId,
+                      };
                     }
-                  }
-                  // Handle legacy ingredientId format  
-                  else if (si.ingredientId) {
-                    ingredientId = si.ingredientId;
-                  }
-                  
-                  return {
-                    id: crypto.randomUUID(),
-                    ingredientId: ingredientId,
-                  };
-                }).filter(si => si.ingredientId) || [],
+                  )
+                  .filter((si) => si.ingredientId) || [],
             };
           }
         ) || [{ id: crypto.randomUUID(), step: "" }]
@@ -535,7 +546,7 @@ const RecipeBuilder: React.FC = () => {
                   stepNumber: 0,
                 },
               ];
-              
+
           setIngredients(urlImportIngredients);
           setSteps(
             recipe.steps?.length
@@ -574,27 +585,38 @@ const RecipeBuilder: React.FC = () => {
                       superSmoke: step.superSmoke || false,
                       isCustomTemp: isCustomTemp,
                       stepIngredients:
-                        step.stepIngredients?.map((si: { ingredientIndex?: number; ingredientId?: string }) => {
-                          let ingredientId = '';
-                          
-                          // Handle new ingredientIndex format
-                          if (typeof si.ingredientIndex === 'number' && si.ingredientIndex >= 0) {
-                            // Find the ingredient at the saved index and use its current ID
-                            const targetIngredient = urlImportIngredients[si.ingredientIndex];
-                            if (targetIngredient) {
-                              ingredientId = targetIngredient.id;
+                        step.stepIngredients
+                          ?.map(
+                            (si: {
+                              ingredientIndex?: number;
+                              ingredientId?: string;
+                            }) => {
+                              let ingredientId = "";
+
+                              // Handle new ingredientIndex format
+                              if (
+                                typeof si.ingredientIndex === "number" &&
+                                si.ingredientIndex >= 0
+                              ) {
+                                // Find the ingredient at the saved index and use its current ID
+                                const targetIngredient =
+                                  urlImportIngredients[si.ingredientIndex];
+                                if (targetIngredient) {
+                                  ingredientId = targetIngredient.id;
+                                }
+                              }
+                              // Handle legacy ingredientId format
+                              else if (si.ingredientId) {
+                                ingredientId = si.ingredientId;
+                              }
+
+                              return {
+                                id: crypto.randomUUID(),
+                                ingredientId: ingredientId,
+                              };
                             }
-                          }
-                          // Handle legacy ingredientId format  
-                          else if (si.ingredientId) {
-                            ingredientId = si.ingredientId;
-                          }
-                          
-                          return {
-                            id: crypto.randomUUID(),
-                            ingredientId: ingredientId,
-                          };
-                        }).filter(si => si.ingredientId) || [],
+                          )
+                          .filter((si) => si.ingredientId) || [],
                     };
                   }
                 )
