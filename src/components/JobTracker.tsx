@@ -517,7 +517,7 @@ export default function JobTracker() {
         } else {
           setNameFromDB(session.user?.name ?? null);
         }
-      } catch (error) {
+      } catch {
         setNameFromDB(session.user?.name ?? null);
       }
     }
@@ -2427,9 +2427,11 @@ export default function JobTracker() {
         <div className="sm:hidden px-3 py-2 border-b border-gray-200 flex justify-center">
           <div className="flex items-center space-x-2">
             {session.user?.image && (
-              <img
+              <Image
                 src={session.user.image}
                 alt="Profile"
+                width={24}
+                height={24}
                 className="w-6 h-6 rounded-full"
               />
             )}
@@ -3244,14 +3246,14 @@ export default function JobTracker() {
                                                           {
                                                             statusLabels[
                                                               statusUpdate
-                                                                .fromStatus
+                                                                .fromStatus as keyof typeof statusLabels
                                                             ]
                                                           }{" "}
                                                           →{" "}
                                                           {
                                                             statusLabels[
                                                               statusUpdate
-                                                                .toStatus
+                                                                .toStatus as keyof typeof statusLabels
                                                             ]
                                                           }
                                                         </Typography>
@@ -3750,13 +3752,13 @@ export default function JobTracker() {
                                           >
                                             {
                                               statusLabels[
-                                                statusUpdate.fromStatus
+                                                statusUpdate.fromStatus as keyof typeof statusLabels
                                               ]
                                             }{" "}
                                             →{" "}
                                             {
                                               statusLabels[
-                                                statusUpdate.toStatus
+                                                statusUpdate.toStatus as keyof typeof statusLabels
                                               ]
                                             }
                                           </Typography>
