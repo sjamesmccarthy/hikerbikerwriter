@@ -155,15 +155,9 @@ const RecipeBuilder: React.FC = () => {
       setDescription(recipe.description || "");
       setSource(importUrl); // Use the URL as the source
 
-      // Handle sourceTitle for imported recipes - always use custom input for imported recipes
-      const importedSourceTitle = recipe.title || "";
-      if (importedSourceTitle) {
-        setSourceTitle(importedSourceTitle);
-        setIsCustomSourceTitle(true);
-      } else {
-        setSourceTitle("");
-        setIsCustomSourceTitle(false);
-      }
+      // Handle sourceTitle for imported recipes - leave empty for user to fill manually
+      setSourceTitle("");
+      setIsCustomSourceTitle(false);
       // Process ingredients first so we can reference them when loading step ingredients
       const processedIngredients = recipe.ingredients?.map(
         (ing: {
