@@ -3245,15 +3245,13 @@ export default function JobTracker() {
                                                         >
                                                           {
                                                             statusLabels[
-                                                              statusUpdate
-                                                                .fromStatus as keyof typeof statusLabels
+                                                              statusUpdate.fromStatus as keyof typeof statusLabels
                                                             ]
                                                           }{" "}
                                                           →{" "}
                                                           {
                                                             statusLabels[
-                                                              statusUpdate
-                                                                .toStatus as keyof typeof statusLabels
+                                                              statusUpdate.toStatus as keyof typeof statusLabels
                                                             ]
                                                           }
                                                         </Typography>

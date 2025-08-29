@@ -1735,7 +1735,7 @@ const RecipeBuilder: React.FC = () => {
                                 type === "Grill" ||
                                 type === "Oven") && (
                                 <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 items-center mt-2 rounded">
-                                  <div className="flex flex-col sm:flex-row w-full gap-2 sm:gap-4">
+                                  <div className="flex flex-row w-full gap-2 sm:gap-4">
                                     {type === "Smoker" ? (
                                       <>
                                         <div className="w-full sm:w-3/5">

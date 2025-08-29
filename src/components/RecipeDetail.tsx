@@ -1448,7 +1448,7 @@ const RecipeDetail = React.memo(function RecipeDetail({
                                       key={`${index}-${ingredientIndex}-${ingredient.name}`}
                                       className="flex items-center text-sm border-b border-gray-100 pb-1 last:border-b-0"
                                     >
-                                      <span className="font-semibold min-w-[70px] text-right pr-3 text-gray-800">
+                                      <span className="font-semibold min-w-[100px] text-right pr-3 text-gray-800">
                                         {formatAmountAsFraction(
                                           scaleIngredient(ingredient.amount)
                                         )}{" "}
