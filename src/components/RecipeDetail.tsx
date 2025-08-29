@@ -42,11 +42,9 @@ import {
   Casino as RollIcon,
 } from "@mui/icons-material";
 import {
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
   Typography,
-  Slider,
+  ButtonGroup,
+  Button,
   IconButton,
   Dialog,
   DialogContent,
@@ -113,7 +111,7 @@ const RecipeDetail = React.memo(function RecipeDetail({
   const router = useRouter();
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [loading, setLoading] = useState(true);
-  const [servings, setServings] = useState(1);
+  const [servings, setServings] = useState(4);
   const [makeModeOpen, setMakeModeOpen] = useState(false);
   const [currentStep, setCurrentStep] = useState(0);
   const [showCopiedMessage, setShowCopiedMessage] = useState(false);
@@ -216,6 +214,25 @@ const RecipeDetail = React.memo(function RecipeDetail({
     return amount.toFixed(1);
   };
 
+  // Function to format ingredient units
+  const formatUnit = (unit: string): string => {
+    const unitMap: { [key: string]: string } = {
+      ounce: "oz",
+      ounces: "oz",
+      teaspoon: "tsp",
+      teaspoons: "tsp",
+      tablespoon: "Tbsp",
+      tablespoons: "Tbsp",
+      "to taste": "taste",
+      unit: "each",
+      units: "each",
+      pound: "lb",
+      pounds: "lb",
+    };
+
+    return unitMap[unit.toLowerCase()] || unit;
+  };
+
   const formatTime = (minutes: number) => {
     if (minutes < 60) {
       return `${minutes}m`;
@@ -293,7 +310,17 @@ const RecipeDetail = React.memo(function RecipeDetail({
 
         if (foundRecipe && isMounted) {
           setRecipe(foundRecipe);
-          setServings(foundRecipe.servings);
+          // Set servings to the closest available option (2, 4, 6, 8)
+          const availableServings = [2, 4, 6, 8];
+          const closestServing = availableServings.reduce(
+            (prev, curr) =>
+              Math.abs(curr - foundRecipe.servings) <
+              Math.abs(prev - foundRecipe.servings)
+                ? curr
+                : prev,
+            availableServings[0]
+          );
+          setServings(closestServing);
         } else if (isMounted) {
           console.error("Recipe not found");
           setRecipe(null);
@@ -520,9 +547,9 @@ const RecipeDetail = React.memo(function RecipeDetail({
       pdf.setFontSize(11);
       pdf.setFont("helvetica", "normal");
       recipe?.ingredients.forEach((ingredient) => {
-        const text = `• ${formatAmountAsFraction(ingredient.amount)} ${
-          ingredient.unit
-        } ${ingredient.name}`;
+        const text = `• ${formatAmountAsFraction(
+          ingredient.amount
+        )} ${formatUnit(ingredient.unit)} ${ingredient.name}`;
         pdf.text(text, 25, yPosition);
         yPosition += 6;
       });
@@ -928,33 +955,33 @@ const RecipeDetail = React.memo(function RecipeDetail({
             </div>
 
             {/* Recipe Title and Times */}
-            <h1 className="text-3xl font-bold text-gray-900 mb-2 uppercase text-center">
+            <h1 className="text-3xl font-bold text-gray-900 mb-8 uppercase text-center">
               {recipe.title}
             </h1>
-            <div className="flex items-center justify-center gap-4 text-gray-600 mb-4">
+            <div className="flex items-center justify-center gap-4 text-gray-600 mb-6">
               <span className="flex items-center gap-1">
-                <AccessTimeIcon sx={{ fontSize: 18 }} />
-                Prep: {recipe.prepTime}m
+                <AccessTimeIcon sx={{ fontSize: 14 }} />
+                Prep {recipe.prepTime}m
               </span>
               <span>|</span>
               <span className="flex items-center gap-1">
-                <AccessTimeIcon sx={{ fontSize: 18 }} />
-                Cook: {formatTime(recipe.cookTime)}
+                <AccessTimeIcon sx={{ fontSize: 14 }} />
+                Cook {formatTime(recipe.cookTime)}
               </span>
               <span>|</span>
               <span className="flex items-center gap-1">
                 {recipe.type?.toLowerCase().trim() === "oven" ? (
-                  <MicrowaveIcon sx={{ fontSize: 18 }} />
+                  <MicrowaveIcon sx={{ fontSize: 14 }} />
                 ) : recipe.type?.toLowerCase().trim() === "smoker" ? (
-                  <OutdoorGrillIcon sx={{ fontSize: 18 }} />
+                  <OutdoorGrillIcon sx={{ fontSize: 14 }} />
                 ) : recipe.type?.toLowerCase().trim() === "beverage" ? (
-                  <LocalBarIcon sx={{ fontSize: 18 }} />
+                  <LocalBarIcon sx={{ fontSize: 14 }} />
                 ) : recipe.type?.toLowerCase().trim() === "flat-top" ? (
-                  <GridOnIcon sx={{ fontSize: 18 }} />
+                  <GridOnIcon sx={{ fontSize: 14 }} />
                 ) : recipe.type?.toLowerCase().trim() === "grill" ? (
-                  <WhatshotIcon sx={{ fontSize: 18 }} />
+                  <WhatshotIcon sx={{ fontSize: 14 }} />
                 ) : (
-                  <FlatwareIcon sx={{ fontSize: 18 }} />
+                  <FlatwareIcon sx={{ fontSize: 14 }} />
                 )}
                 {recipe.type?.charAt(0).toUpperCase() +
                   recipe.type?.slice(1).toLowerCase()}
@@ -1021,7 +1048,7 @@ const RecipeDetail = React.memo(function RecipeDetail({
             </div>
 
             {/* Description */}
-            <p className="text-gray-700 leading-relaxed text-xl text-center">
+            <p className="text-gray-800 mt-8  leading-relaxed text-lg text-center">
               {recipe?.description}
             </p>
           </div>
@@ -1100,70 +1127,78 @@ const RecipeDetail = React.memo(function RecipeDetail({
 
           {/* Recipe Content */}
           <div className="space-y-4">
-            <Accordion defaultExpanded elevation={0}>
-              <AccordionSummary
-                expandIcon={<ExpandMoreIcon />}
-                sx={{ backgroundColor: "rgb(249 250 251)" }}
+            {/* Ingredients Section */}
+            <div className="bg-gray-50 p-6 rounded-lg">
+              <Typography
+                variant="h6"
+                sx={{ fontWeight: 600, mb: 0, textAlign: "center" }}
               >
-                <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                  Ingredients
-                </Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                <div className="mb-4">
-                  <Typography variant="subtitle2" sx={{ mb: 2 }}>
-                    Servings: {servings}
-                  </Typography>
-                  <Slider
-                    value={servings}
-                    onChange={(_, value) => setServings(value)}
-                    min={1}
-                    max={24}
-                    marks={[
-                      { value: 1, label: "1" },
-                      { value: 2, label: "2" },
-                      { value: 4, label: "4" },
-                      { value: 8, label: "8" },
-                      { value: 12, label: "12" },
-                      { value: 24, label: "24" },
-                    ]}
-                    valueLabelDisplay="auto"
-                    sx={{ maxWidth: 300 }}
-                  />
-                </div>
-                <ul className="space-y-2">
-                  {recipe.ingredients.map((ingredient, index) => (
-                    <li
-                      key={`ingredient-${index}-${ingredient.name}`}
-                      className="flex justify-between"
-                    >
-                      <span>{ingredient.name}</span>
-                      <span className="font-medium">
-                        {formatAmountAsFraction(
-                          scaleIngredient(ingredient.amount)
-                        )}{" "}
-                        {ingredient.unit}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              </AccordionDetails>
-            </Accordion>
+                Ingredients
+              </Typography>
+
+              <div className="mb-6 mt-3 text-center">
+                <ButtonGroup variant="outlined" size="small">
+                  <Button
+                    onClick={() => setServings(2)}
+                    variant={servings === 2 ? "contained" : "outlined"}
+                  >
+                    2
+                  </Button>
+                  <Button
+                    onClick={() => setServings(4)}
+                    variant={servings === 4 ? "contained" : "outlined"}
+                  >
+                    4
+                  </Button>
+                  <Button
+                    onClick={() => setServings(6)}
+                    variant={servings === 6 ? "contained" : "outlined"}
+                  >
+                    6
+                  </Button>
+                  <Button
+                    onClick={() => setServings(8)}
+                    variant={servings === 8 ? "contained" : "outlined"}
+                  >
+                    8
+                  </Button>
+                </ButtonGroup>
+              </div>
+
+              <ul className="space-y-1">
+                {recipe.ingredients.map((ingredient, index) => (
+                  <li
+                    key={`ingredient-${index}-${ingredient.name}`}
+                    className="flex items-center text-sm"
+                  >
+                    <span className="font-medium min-w-[100px] text-right pr-3">
+                      {formatAmountAsFraction(
+                        scaleIngredient(ingredient.amount)
+                      )}{" "}
+                      {formatUnit(ingredient.unit)}
+                    </span>
+                    <div className="w-px h-6 bg-gray-300 mx-3"></div>
+                    <span className="flex-1">{ingredient.name}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
 
             {/* Make Now Button */}
-            <div className="text-center my-6">
+            <div className="text-center my-8">
               <button
                 onClick={handleMakeMode}
-                className="px-3 py-1 rounded text-sm font-medium transition-colors flex items-center gap-1 bg-gray-100 text-gray-800 hover:text-gray-600 hover:bg-gray-200 mx-auto cursor-pointer"
+                className="px-8 py-4 rounded-lg text-xl font-bold transition-colors flex items-center gap-2 bg-gray-200 text-gray-900 hover:text-gray-700 hover:bg-gray-300 mx-auto cursor-pointer"
+                style={{ minWidth: 220 }}
               >
-                <FlatwareIcon />
+                <FlatwareIcon sx={{ fontSize: 36 }} />
                 MAKE NOW
               </button>
             </div>
 
             {/* Steps */}
             <div>
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Steps</h2>
+              {/* <h2 className="text-xl font-bold text-gray-900 mb-4">Steps</h2> */}
               <div className="space-y-6">
                 {recipe.steps.map((step, index) => (
                   <div
