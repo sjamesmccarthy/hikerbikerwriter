@@ -82,6 +82,7 @@ interface JobOpportunity {
   location?: string;
   interviews: Interview[];
   contacts: Contact[];
+  statusUpdates: StatusUpdate[];
   notes?: string;
 }
 
@@ -101,6 +102,14 @@ interface Contact {
   company?: string;
   email?: string;
   phone?: string;
+  notes?: string;
+}
+
+interface StatusUpdate {
+  id: string;
+  fromStatus: string;
+  toStatus: string;
+  timestamp: string;
   notes?: string;
 }
 
@@ -458,7 +467,7 @@ export default function JobTracker() {
             id: job.id.toString(),
             name: job.searchName || job.status || "Job Search",
             isActive: job.closed === 0,
-            opportunities: job.opportunities || [],
+            opportunities: migrateOpportunities(job.opportunities || []),
             recruiters: job.recruiters || [],
             resources: job.resources || [],
             log: job.log || [],
@@ -479,6 +488,16 @@ export default function JobTracker() {
       setHasLoadedData(true);
     }
   }, [session?.user?.email]);
+
+  // Migrate opportunities to ensure they have statusUpdates field
+  const migrateOpportunities = (
+    opportunities: JobOpportunity[]
+  ): JobOpportunity[] => {
+    return opportunities.map((opp) => ({
+      ...opp,
+      statusUpdates: opp.statusUpdates || [],
+    }));
+  };
 
   // Fetch user's name from database
   useEffect(() => {
@@ -800,6 +819,25 @@ export default function JobTracker() {
         (opportunityForm.status || editingOpportunity.status) !==
         editingOpportunity.status;
 
+      const updatedContacts = [...editingOpportunity.contacts];
+      let updatedStatusUpdates = [...(editingOpportunity.statusUpdates || [])];
+
+      // Add status change entry if status changed
+      if (statusChanged) {
+        const now = new Date();
+        const newStatus = opportunityForm.status || editingOpportunity.status;
+        const statusUpdate: StatusUpdate = {
+          id: `status_${Date.now()}`,
+          fromStatus: editingOpportunity.status,
+          toStatus: newStatus,
+          timestamp: now.toISOString(),
+          notes: `Status changed from ${
+            statusLabels[editingOpportunity.status]
+          } to ${statusLabels[newStatus]}`,
+        };
+        updatedStatusUpdates = [...updatedStatusUpdates, statusUpdate];
+      }
+
       const updatedOpportunity: JobOpportunity = {
         ...editingOpportunity,
         company: opportunityForm.company,
@@ -813,6 +851,8 @@ export default function JobTracker() {
         jobSource: opportunityForm.jobSource,
         salary: opportunityForm.salary,
         location: opportunityForm.location,
+        contacts: updatedContacts,
+        statusUpdates: updatedStatusUpdates,
         notes: opportunityForm.notes,
       };
 
@@ -853,6 +893,7 @@ export default function JobTracker() {
         location: opportunityForm.location,
         interviews: [],
         contacts: [],
+        statusUpdates: [],
         notes: opportunityForm.notes,
       };
 
@@ -907,16 +948,45 @@ export default function JobTracker() {
   ) => {
     if (!currentSearch || opportunity.status === newStatus) return;
 
-    const updatedOpportunity: JobOpportunity = {
-      ...opportunity,
-      status: newStatus,
+    const now = new Date();
+    const newDateApplied = getLocalDateString();
+
+    // Create a new status update entry
+    const statusUpdate: StatusUpdate = {
+      id: `status_${Date.now()}`,
+      fromStatus: opportunity.status,
+      toStatus: newStatus,
+      timestamp: now.toISOString(),
+      notes: `Status changed from ${statusLabels[opportunity.status]} to ${
+        statusLabels[newStatus]
+      }`,
     };
+
+    const updatedOpportunity: JobOpportunity = {
+      id: opportunity.id,
+      company: opportunity.company,
+      position: opportunity.position,
+      dateApplied: newDateApplied,
+      createdAt: opportunity.createdAt,
+      status: newStatus,
+      description: opportunity.description,
+      jobUrl: opportunity.jobUrl,
+      jobSource: opportunity.jobSource,
+      salary: opportunity.salary,
+      location: opportunity.location,
+      interviews: [...opportunity.interviews],
+      contacts: [...opportunity.contacts],
+      statusUpdates: [...(opportunity.statusUpdates || []), statusUpdate],
+      notes: opportunity.notes,
+    };
+
+    const updatedOpportunities = currentSearch.opportunities.map((opp) =>
+      opp.id === opportunity.id ? updatedOpportunity : opp
+    );
 
     let updatedSearch = {
       ...currentSearch,
-      opportunities: currentSearch.opportunities.map((opp) =>
-        opp.id === opportunity.id ? updatedOpportunity : opp
-      ),
+      opportunities: updatedOpportunities,
     };
 
     // Add automated log entry for status change
@@ -1009,12 +1079,36 @@ export default function JobTracker() {
       (opp) => opp.id === currentOpportunityForInterview.id
     );
 
+    const statusWillChange =
+      originalOpportunity && originalOpportunity.status !== "interview";
+
+    // Create status update if status is changing
+    let statusUpdate: StatusUpdate | null = null;
+    if (statusWillChange && originalOpportunity) {
+      const now = new Date();
+      statusUpdate = {
+        id: `status_${Date.now() + 1}`, // Use different timestamp to avoid ID conflicts
+        fromStatus: originalOpportunity.status,
+        toStatus: "interview",
+        timestamp: now.toISOString(),
+        notes: `Status changed from ${
+          statusLabels[originalOpportunity.status]
+        } to Interview (interview added)`,
+      };
+    }
+
     const updatedOpportunities = currentSearch.opportunities.map((opp) =>
       opp.id === currentOpportunityForInterview.id
         ? {
             ...opp,
             interviews: [...opp.interviews, newInterview],
             status: "interview" as const, // Automatically update status to interview
+            dateApplied: statusWillChange
+              ? getLocalDateString()
+              : opp.dateApplied, // Update last changed date if status changed
+            statusUpdates: statusUpdate
+              ? [...(opp.statusUpdates || []), statusUpdate]
+              : opp.statusUpdates || [], // Add status update if applicable
           }
         : opp
     );
@@ -1114,6 +1208,10 @@ export default function JobTracker() {
   ) => {
     if (!currentSearch) return;
 
+    const originalOpportunity = currentSearch.opportunities.find(
+      (opp) => opp.id === opportunityId
+    );
+
     const updatedOpportunities = currentSearch.opportunities.map((opp) => {
       if (opp.id === opportunityId) {
         const updatedInterviews = opp.interviews.filter(
@@ -1124,10 +1222,33 @@ export default function JobTracker() {
         const newStatus =
           updatedInterviews.length === 0 ? ("applied" as const) : opp.status;
 
+        const statusWillChange = newStatus !== opp.status;
+
+        // Create status update if status is changing
+        let statusUpdate: StatusUpdate | null = null;
+        if (statusWillChange) {
+          const now = new Date();
+          statusUpdate = {
+            id: `status_${Date.now()}`,
+            fromStatus: opp.status,
+            toStatus: newStatus,
+            timestamp: now.toISOString(),
+            notes: `Status changed from ${statusLabels[opp.status]} to ${
+              statusLabels[newStatus]
+            } (interview deleted)`,
+          };
+        }
+
         return {
           ...opp,
           interviews: updatedInterviews,
           status: newStatus,
+          dateApplied: statusWillChange
+            ? getLocalDateString()
+            : opp.dateApplied, // Update last changed date if status changed
+          statusUpdates: statusUpdate
+            ? [...(opp.statusUpdates || []), statusUpdate]
+            : opp.statusUpdates || [], // Add status update if applicable
         };
       }
       return opp;
@@ -1140,9 +1261,6 @@ export default function JobTracker() {
 
     // Add automated log entry if status changed due to interview deletion
     const changedOpportunity = updatedOpportunities.find(
-      (opp) => opp.id === opportunityId
-    );
-    const originalOpportunity = currentSearch.opportunities.find(
       (opp) => opp.id === opportunityId
     );
 
@@ -3083,6 +3201,95 @@ export default function JobTracker() {
                                               No contacts added
                                             </Typography>
                                           )}
+
+                                          {/* Status Updates Section */}
+                                          <Typography
+                                            variant="h6"
+                                            className="mb-3 mt-6"
+                                            style={{ marginTop: "1.5rem" }}
+                                          >
+                                            Status Updates (
+                                            {
+                                              (opportunity.statusUpdates || [])
+                                                .length
+                                            }
+                                            )
+                                          </Typography>
+
+                                          {/* Status Updates list */}
+                                          {(opportunity.statusUpdates || [])
+                                            .length > 0 ? (
+                                            <div className="space-y-3 mb-4">
+                                              {(opportunity.statusUpdates || [])
+                                                .sort(
+                                                  (a, b) =>
+                                                    new Date(
+                                                      b.timestamp
+                                                    ).getTime() -
+                                                    new Date(
+                                                      a.timestamp
+                                                    ).getTime()
+                                                )
+                                                .map((statusUpdate) => (
+                                                  <div
+                                                    key={statusUpdate.id}
+                                                    className="rounded p-3 bg-blue-50 border-l-4 border-blue-400"
+                                                  >
+                                                    <div className="flex justify-between items-start">
+                                                      <div className="flex-1">
+                                                        <Typography
+                                                          variant="body2"
+                                                          className="font-semibold mb-1 text-blue-800"
+                                                        >
+                                                          {
+                                                            statusLabels[
+                                                              statusUpdate
+                                                                .fromStatus
+                                                            ]
+                                                          }{" "}
+                                                          →{" "}
+                                                          {
+                                                            statusLabels[
+                                                              statusUpdate
+                                                                .toStatus
+                                                            ]
+                                                          }
+                                                        </Typography>
+
+                                                        <Typography
+                                                          variant="body2"
+                                                          className="text-gray-600 mb-1"
+                                                        >
+                                                          {new Date(
+                                                            statusUpdate.timestamp
+                                                          ).toLocaleDateString()}{" "}
+                                                          at{" "}
+                                                          {new Date(
+                                                            statusUpdate.timestamp
+                                                          ).toLocaleTimeString()}
+                                                        </Typography>
+
+                                                        {statusUpdate.notes && (
+                                                          <Typography
+                                                            variant="body2"
+                                                            className="text-gray-600 mt-1"
+                                                          >
+                                                            {statusUpdate.notes}
+                                                          </Typography>
+                                                        )}
+                                                      </div>
+                                                    </div>
+                                                  </div>
+                                                ))}
+                                            </div>
+                                          ) : (
+                                            <Typography
+                                              variant="body2"
+                                              className="text-gray-500 mb-4"
+                                            >
+                                              No status updates
+                                            </Typography>
+                                          )}
                                         </div>
                                       </div>
 
@@ -3509,6 +3716,79 @@ export default function JobTracker() {
                                     className="text-gray-500 italic"
                                   >
                                     No contacts added
+                                  </Typography>
+                                )}
+                              </div>
+
+                              {/* Status Updates Section */}
+                              <div>
+                                <Typography
+                                  variant="subtitle1"
+                                  className="font-semibold mb-2"
+                                >
+                                  Status Updates (
+                                  {(opportunity.statusUpdates || []).length})
+                                </Typography>
+
+                                {(opportunity.statusUpdates || []).length >
+                                0 ? (
+                                  <div className="space-y-2">
+                                    {(opportunity.statusUpdates || [])
+                                      .sort(
+                                        (a, b) =>
+                                          new Date(b.timestamp).getTime() -
+                                          new Date(a.timestamp).getTime()
+                                      )
+                                      .map((statusUpdate) => (
+                                        <div
+                                          key={statusUpdate.id}
+                                          className="rounded p-2 bg-blue-50 border-l-4 border-blue-400"
+                                        >
+                                          <Typography
+                                            variant="body2"
+                                            className="font-medium text-blue-800"
+                                          >
+                                            {
+                                              statusLabels[
+                                                statusUpdate.fromStatus
+                                              ]
+                                            }{" "}
+                                            →{" "}
+                                            {
+                                              statusLabels[
+                                                statusUpdate.toStatus
+                                              ]
+                                            }
+                                          </Typography>
+                                          <Typography
+                                            variant="caption"
+                                            className="text-gray-600 block"
+                                          >
+                                            {new Date(
+                                              statusUpdate.timestamp
+                                            ).toLocaleDateString()}{" "}
+                                            at{" "}
+                                            {new Date(
+                                              statusUpdate.timestamp
+                                            ).toLocaleTimeString()}
+                                          </Typography>
+                                          {statusUpdate.notes && (
+                                            <Typography
+                                              variant="caption"
+                                              className="text-gray-600 block mt-1"
+                                            >
+                                              {statusUpdate.notes}
+                                            </Typography>
+                                          )}
+                                        </div>
+                                      ))}
+                                  </div>
+                                ) : (
+                                  <Typography
+                                    variant="body2"
+                                    className="text-gray-500 italic"
+                                  >
+                                    No status updates
                                   </Typography>
                                 )}
                               </div>
