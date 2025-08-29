@@ -98,8 +98,11 @@ const RecipeBuilder: React.FC = () => {
       unit: string;
       customUnit?: string;
       showCustomUnit?: boolean;
+      stepNumber?: number;
     }>
-  >([{ id: crypto.randomUUID(), name: "", amount: "", unit: "" }]);
+  >([
+    { id: crypto.randomUUID(), name: "", amount: "", unit: "", stepNumber: 0 },
+  ]);
   const [steps, setSteps] = useState<
     Array<{
       id: string;
@@ -109,6 +112,10 @@ const RecipeBuilder: React.FC = () => {
       timeInput?: string;
       superSmoke?: boolean;
       isCustomTemp?: boolean;
+      stepIngredients?: Array<{
+        id: string;
+        ingredientId: string;
+      }>;
     }>
   >([{ id: crypto.randomUUID(), step: "", timeInput: "" }]);
   const [myNotes, setMyNotes] = useState("");
@@ -151,7 +158,12 @@ const RecipeBuilder: React.FC = () => {
       }
       setIngredients(
         recipe.ingredients?.map(
-          (ing: { name?: string; amount?: string; unit?: string }) => {
+          (ing: {
+            name?: string;
+            amount?: string;
+            unit?: string;
+            stepNumber?: number;
+          }) => {
             const unit = ing.unit || "";
             // Check if the unit is in our predefined options
             const isCustomUnit =
@@ -163,9 +175,18 @@ const RecipeBuilder: React.FC = () => {
               unit: isCustomUnit ? "" : unit,
               customUnit: isCustomUnit ? unit : "",
               showCustomUnit: isCustomUnit,
+              stepNumber: ing.stepNumber || 0,
             };
           }
-        ) || [{ id: crypto.randomUUID(), name: "", amount: "", unit: "" }]
+        ) || [
+          {
+            id: crypto.randomUUID(),
+            name: "",
+            amount: "",
+            unit: "",
+            stepNumber: 0,
+          },
+        ]
       );
       setSteps(
         recipe.steps?.map(
@@ -174,6 +195,9 @@ const RecipeBuilder: React.FC = () => {
             temperature?: number;
             time?: number;
             superSmoke?: boolean;
+            stepIngredients?: Array<{
+              ingredientId: string;
+            }>;
           }) => {
             const temperature = step.temperature;
             // For imported recipes, check if temperature is custom for oven type
@@ -199,6 +223,11 @@ const RecipeBuilder: React.FC = () => {
               time: step.time,
               superSmoke: step.superSmoke,
               isCustomTemp: isCustomTemp,
+              stepIngredients:
+                step.stepIngredients?.map((si) => ({
+                  id: crypto.randomUUID(),
+                  ingredientId: si.ingredientId,
+                })) || [],
             };
           }
         ) || [{ id: crypto.randomUUID(), step: "" }]
@@ -450,7 +479,12 @@ const RecipeBuilder: React.FC = () => {
           setIngredients(
             recipe.ingredients?.length
               ? recipe.ingredients.map(
-                  (ing: { name?: string; amount?: number; unit?: string }) => {
+                  (ing: {
+                    name?: string;
+                    amount?: number;
+                    unit?: string;
+                    stepNumber?: number;
+                  }) => {
                     const unit = ing.unit || "";
                     // Check if the unit is in our predefined options
                     const isCustomUnit =
@@ -462,10 +496,19 @@ const RecipeBuilder: React.FC = () => {
                       unit: isCustomUnit ? "" : unit,
                       customUnit: isCustomUnit ? unit : "",
                       showCustomUnit: isCustomUnit,
+                      stepNumber: ing.stepNumber || 0,
                     };
                   }
                 )
-              : [{ id: crypto.randomUUID(), name: "", amount: "", unit: "" }]
+              : [
+                  {
+                    id: crypto.randomUUID(),
+                    name: "",
+                    amount: "",
+                    unit: "",
+                    stepNumber: 0,
+                  },
+                ]
           );
           setSteps(
             recipe.steps?.length
@@ -475,6 +518,9 @@ const RecipeBuilder: React.FC = () => {
                     temperature?: number;
                     time?: number;
                     superSmoke?: boolean;
+                    stepIngredients?: Array<{
+                      ingredientId: string;
+                    }>;
                   }) => {
                     const temperature = step.temperature || undefined;
                     // For oven type, determine if temperature is custom
@@ -500,6 +546,11 @@ const RecipeBuilder: React.FC = () => {
                       time: step.time || undefined,
                       superSmoke: step.superSmoke || false,
                       isCustomTemp: isCustomTemp,
+                      stepIngredients:
+                        step.stepIngredients?.map((si) => ({
+                          id: crypto.randomUUID(),
+                          ingredientId: si.ingredientId,
+                        })) || [],
                     };
                   }
                 )
@@ -573,7 +624,13 @@ const RecipeBuilder: React.FC = () => {
   const addIngredient = () => {
     setIngredients((prev) => [
       ...prev,
-      { id: crypto.randomUUID(), name: "", amount: "", unit: "" },
+      {
+        id: crypto.randomUUID(),
+        name: "",
+        amount: "",
+        unit: "",
+        stepNumber: 0,
+      },
     ]);
   };
 
@@ -642,6 +699,57 @@ const RecipeBuilder: React.FC = () => {
     if (steps.length > 1) {
       setSteps((prev) => prev.filter((_, i) => i !== index));
     }
+  };
+
+  // Step ingredient functions
+  const addStepIngredient = (stepIndex: number) => {
+    setSteps((prev) =>
+      prev.map((step, i) =>
+        i === stepIndex
+          ? {
+              ...step,
+              stepIngredients: [
+                ...(step.stepIngredients || []),
+                { id: crypto.randomUUID(), ingredientId: "" },
+              ],
+            }
+          : step
+      )
+    );
+  };
+
+  const updateStepIngredient = (
+    stepIndex: number,
+    ingredientIndex: number,
+    ingredientId: string
+  ) => {
+    setSteps((prev) =>
+      prev.map((step, i) =>
+        i === stepIndex
+          ? {
+              ...step,
+              stepIngredients: step.stepIngredients?.map((ing, j) =>
+                j === ingredientIndex ? { ...ing, ingredientId } : ing
+              ),
+            }
+          : step
+      )
+    );
+  };
+
+  const removeStepIngredient = (stepIndex: number, ingredientIndex: number) => {
+    setSteps((prev) =>
+      prev.map((step, i) =>
+        i === stepIndex
+          ? {
+              ...step,
+              stepIngredients: step.stepIngredients?.filter(
+                (_, j) => j !== ingredientIndex
+              ),
+            }
+          : step
+      )
+    );
   };
 
   // Reorder functions
@@ -735,6 +843,7 @@ const RecipeBuilder: React.FC = () => {
           name: ing.name.trim(),
           amount: parseFractionToNumber(ing.amount),
           unit: ing.customUnit || ing.unit || "",
+          stepNumber: ing.stepNumber || 0,
         }));
 
       // Convert steps format for API
@@ -745,6 +854,12 @@ const RecipeBuilder: React.FC = () => {
           temperature: step.temperature,
           time: step.time,
           superSmoke: step.superSmoke || false,
+          stepIngredients:
+            step.stepIngredients
+              ?.filter((si) => si.ingredientId)
+              .map((si) => ({
+                ingredientId: si.ingredientId,
+              })) || [],
         }));
 
       const recipeData = {
@@ -1342,172 +1457,11 @@ const RecipeBuilder: React.FC = () => {
                   </CardContent>
                 </Card>
 
-                {/* Ingredients */}
-                <Card sx={{ boxShadow: "none", border: "none" }}>
-                  <CardContent>
-                    <div className="mb-4">
-                      <Typography variant="h6">Ingredients</Typography>
-                    </div>
-
-                    <div className="space-y-3 flex flex-col items-start">
-                      {ingredients.map((ingredient, index) => (
-                        <div
-                          key={ingredient.id}
-                          className={`w-full mb-8 p-3 border border-gray-200 rounded-lg bg-white hover:shadow-sm transition-all ${
-                            draggedItem?.type === "ingredient" &&
-                            draggedItem?.index === index
-                              ? "opacity-50 shadow-lg scale-105"
-                              : "hover:border-gray-300"
-                          }`}
-                          draggable
-                          onDragStart={(e) =>
-                            handleDragStart(e, index, "ingredient")
-                          }
-                          onDragEnd={handleDragEnd}
-                          onDragOver={handleDragOver}
-                          onDrop={(e) => handleDrop(e, index, "ingredient")}
-                        >
-                          <div className="flex items-start gap-2 w-full">
-                            <div className="flex-shrink-0 pt-1">
-                              <DragIndicatorIcon
-                                sx={{
-                                  fontSize: 20,
-                                  color: "#9ca3af",
-                                  cursor: "grab",
-                                  "&:active": { cursor: "grabbing" },
-                                }}
-                              />
-                            </div>
-                            <div className="flex-1">
-                              <div className="w-full">
-                                <TextField
-                                  placeholder="Ingredient name"
-                                  value={ingredient.name || ""}
-                                  onChange={(e) =>
-                                    handleIngredientChange(
-                                      index,
-                                      "name",
-                                      e.target.value
-                                    )
-                                  }
-                                  size="small"
-                                  fullWidth
-                                  multiline
-                                  minRows={1}
-                                  maxRows={4}
-                                />
-                              </div>
-                              <div className="flex flex-row sm:flex-row gap-2 mt-2">
-                                <TextField
-                                  placeholder="Amount (e.g., 1, ½, 2¾, 1/3)"
-                                  value={ingredient.amount || ""}
-                                  onChange={(e) =>
-                                    handleIngredientChange(
-                                      index,
-                                      "amount",
-                                      e.target.value
-                                    )
-                                  }
-                                  size="small"
-                                  sx={{ minWidth: 60, width: 60 }}
-                                />
-                                {ingredient.showCustomUnit ? (
-                                  <div
-                                    className="flex items-center gap-1"
-                                    style={{ minWidth: 80, flex: 2 }}
-                                  >
-                                    <IconButton
-                                      onClick={() =>
-                                        handleBackToUnitSelect(index)
-                                      }
-                                      size="small"
-                                      sx={{
-                                        minWidth: "auto",
-                                        p: 0.5,
-                                        color: "#6b7280",
-                                        "&:hover": {
-                                          color: "#374151",
-                                          backgroundColor:
-                                            "rgba(107, 114, 128, 0.1)",
-                                        },
-                                      }}
-                                    >
-                                      <ArrowBackIcon fontSize="small" />
-                                    </IconButton>
-                                    <TextField
-                                      placeholder="Custom unit"
-                                      value={ingredient.customUnit || ""}
-                                      onChange={(e) =>
-                                        handleCustomUnitChange(
-                                          index,
-                                          e.target.value
-                                        )
-                                      }
-                                      size="small"
-                                      sx={{ flex: 1 }}
-                                    />
-                                  </div>
-                                ) : (
-                                  <FormControl
-                                    size="small"
-                                    sx={{ minWidth: 80, flex: 2 }}
-                                  >
-                                    <InputLabel>Unit</InputLabel>
-                                    <Select
-                                      value={ingredient.unit || ""}
-                                      label="Unit"
-                                      onChange={(e) =>
-                                        handleUnitChange(index, e.target.value)
-                                      }
-                                    >
-                                      {unitOptions.map((unit) => (
-                                        <MenuItem key={unit} value={unit}>
-                                          {unit}
-                                        </MenuItem>
-                                      ))}
-                                    </Select>
-                                  </FormControl>
-                                )}
-                                <IconButton
-                                  onClick={() => removeIngredient(index)}
-                                  disabled={ingredients.length === 1}
-                                  size="small"
-                                  sx={{
-                                    color: "#9ca3af",
-                                    "&:hover": {
-                                      color: "#ef4444",
-                                      backgroundColor:
-                                        "rgba(239, 68, 68, 0.04)",
-                                    },
-                                  }}
-                                >
-                                  <DeleteIcon fontSize="small" />
-                                </IconButton>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-
-                      {/* Add button at bottom left */}
-                      <div className="flex justify-start mt-3">
-                        <IconButton
-                          onClick={addIngredient}
-                          color="primary"
-                          size="small"
-                        >
-                          <AddIcon />
-                        </IconButton>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
                 {/* Steps */}
                 <Card sx={{ boxShadow: "none", border: "none" }}>
                   <CardContent>
                     <div className="mb-4">
-                      <Typography variant="h6">Instructions</Typography>
+                      <Typography variant="h6">Steps</Typography>
                     </div>
 
                     <div className="space-y-4">
@@ -1575,6 +1529,133 @@ const RecipeBuilder: React.FC = () => {
                                 fullWidth
                                 sx={{ mb: "8px" }}
                               />
+
+                              {/* Include Ingredient Link */}
+                              <div className="flex justify-start">
+                                <button
+                                  type="button"
+                                  onClick={() => addStepIngredient(index)}
+                                  className="text-blue-600 hover:text-blue-800 text-sm font-medium cursor-pointer"
+                                >
+                                  + Include Ingredient
+                                </button>
+                              </div>
+
+                              {/* Step Ingredients */}
+                              {step.stepIngredients &&
+                                step.stepIngredients.length > 0 && (
+                                  <div className="space-y-2 mt-2">
+                                    {step.stepIngredients.map(
+                                      (stepIngredient, stepIngIndex) => {
+                                        const selectedIngredient =
+                                          ingredients.find(
+                                            (ing) =>
+                                              ing.id ===
+                                              stepIngredient.ingredientId
+                                          );
+
+                                        return (
+                                          <div
+                                            key={stepIngredient.id}
+                                            className="flex items-center gap-2"
+                                          >
+                                            {stepIngredient.ingredientId ? (
+                                              <div className="flex items-center gap-2 flex-1">
+                                                <span className="text-sm text-gray-700 bg-gray-100 px-2 py-1 rounded">
+                                                  {selectedIngredient?.amount}{" "}
+                                                  {selectedIngredient?.unit ||
+                                                    selectedIngredient?.customUnit}{" "}
+                                                  {selectedIngredient?.name}
+                                                </span>
+                                                <IconButton
+                                                  onClick={() =>
+                                                    removeStepIngredient(
+                                                      index,
+                                                      stepIngIndex
+                                                    )
+                                                  }
+                                                  size="small"
+                                                  sx={{
+                                                    color: "#9ca3af",
+                                                    "&:hover": {
+                                                      color: "#ef4444",
+                                                      backgroundColor:
+                                                        "rgba(239, 68, 68, 0.04)",
+                                                    },
+                                                  }}
+                                                >
+                                                  <DeleteIcon fontSize="small" />
+                                                </IconButton>
+                                              </div>
+                                            ) : (
+                                              <div className="flex items-center gap-2 flex-1">
+                                                <FormControl
+                                                  size="small"
+                                                  sx={{
+                                                    minWidth: 200,
+                                                    flex: 1,
+                                                  }}
+                                                >
+                                                  <InputLabel>
+                                                    Select Ingredient
+                                                  </InputLabel>
+                                                  <Select
+                                                    value=""
+                                                    label="Select Ingredient"
+                                                    onChange={(e) =>
+                                                      updateStepIngredient(
+                                                        index,
+                                                        stepIngIndex,
+                                                        e.target.value
+                                                      )
+                                                    }
+                                                  >
+                                                    {ingredients
+                                                      .filter(
+                                                        (ing) =>
+                                                          ing.name &&
+                                                          ing.name.trim()
+                                                      )
+                                                      .map((ingredient) => (
+                                                        <MenuItem
+                                                          key={ingredient.id}
+                                                          value={ingredient.id}
+                                                        >
+                                                          {ingredient.amount}{" "}
+                                                          {ingredient.unit ||
+                                                            ingredient.customUnit}{" "}
+                                                          {ingredient.name}
+                                                        </MenuItem>
+                                                      ))}
+                                                  </Select>
+                                                </FormControl>
+                                                <IconButton
+                                                  onClick={() =>
+                                                    removeStepIngredient(
+                                                      index,
+                                                      stepIngIndex
+                                                    )
+                                                  }
+                                                  size="small"
+                                                  sx={{
+                                                    color: "#9ca3af",
+                                                    "&:hover": {
+                                                      color: "#ef4444",
+                                                      backgroundColor:
+                                                        "rgba(239, 68, 68, 0.04)",
+                                                    },
+                                                  }}
+                                                >
+                                                  <DeleteIcon fontSize="small" />
+                                                </IconButton>
+                                              </div>
+                                            )}
+                                          </div>
+                                        );
+                                      }
+                                    )}
+                                  </div>
+                                )}
 
                               {(type === "Smoker" ||
                                 type === "Grill" ||
@@ -1842,6 +1923,202 @@ const RecipeBuilder: React.FC = () => {
                   </CardContent>
                 </Card>
 
+                {/* Ingredients */}
+                <Card sx={{ boxShadow: "none", border: "none" }}>
+                  <CardContent>
+                    <div className="mb-4">
+                      <Typography variant="h6">Ingredients</Typography>
+                    </div>
+
+                    <div className="space-y-3 flex flex-col items-start">
+                      {ingredients.map((ingredient, index) => (
+                        <div
+                          key={ingredient.id}
+                          className={`w-full mb-8 p-3 border border-gray-200 rounded-lg bg-white hover:shadow-sm transition-all ${
+                            draggedItem?.type === "ingredient" &&
+                            draggedItem?.index === index
+                              ? "opacity-50 shadow-lg scale-105"
+                              : "hover:border-gray-300"
+                          }`}
+                          draggable
+                          onDragStart={(e) =>
+                            handleDragStart(e, index, "ingredient")
+                          }
+                          onDragEnd={handleDragEnd}
+                          onDragOver={handleDragOver}
+                          onDrop={(e) => handleDrop(e, index, "ingredient")}
+                        >
+                          <div className="flex items-start gap-2 w-full">
+                            <div className="flex-shrink-0 pt-1">
+                              <DragIndicatorIcon
+                                sx={{
+                                  fontSize: 20,
+                                  color: "#9ca3af",
+                                  cursor: "grab",
+                                  "&:active": { cursor: "grabbing" },
+                                }}
+                              />
+                            </div>
+                            <div className="flex-1">
+                              <div className="w-full">
+                                <div className="flex flex-col sm:flex-row gap-2 mb-2">
+                                  <FormControl
+                                    size="small"
+                                    sx={{
+                                      minWidth: 120,
+                                      width: { xs: "100%", sm: "auto" },
+                                    }}
+                                  >
+                                    <InputLabel>Include in Step</InputLabel>
+                                    <Select
+                                      value={ingredient.stepNumber || 0}
+                                      label="Include in Step"
+                                      onChange={(e) =>
+                                        handleIngredientChange(
+                                          index,
+                                          "stepNumber",
+                                          Number(e.target.value)
+                                        )
+                                      }
+                                    >
+                                      <MenuItem value={0}>None</MenuItem>
+                                      {Array.from(
+                                        { length: steps.length },
+                                        (_, i) => (
+                                          <MenuItem key={i + 1} value={i + 1}>
+                                            Step {i + 1}
+                                          </MenuItem>
+                                        )
+                                      )}
+                                    </Select>
+                                  </FormControl>
+                                  <TextField
+                                    label="Ingredient name"
+                                    placeholder="Enter ingredient name"
+                                    value={ingredient.name || ""}
+                                    onChange={(e) =>
+                                      handleIngredientChange(
+                                        index,
+                                        "name",
+                                        e.target.value
+                                      )
+                                    }
+                                    size="small"
+                                    multiline
+                                    minRows={1}
+                                    maxRows={4}
+                                    sx={{ flex: 1 }}
+                                  />
+                                </div>
+                              </div>
+                              <div className="flex flex-row sm:flex-row gap-2 mt-2">
+                                <TextField
+                                  label="Amount"
+                                  placeholder="e.g., 1, ½, 2¾, 1/3"
+                                  value={ingredient.amount || ""}
+                                  onChange={(e) =>
+                                    handleIngredientChange(
+                                      index,
+                                      "amount",
+                                      e.target.value
+                                    )
+                                  }
+                                  size="small"
+                                  sx={{ minWidth: 60, width: 80 }}
+                                />
+                                {ingredient.showCustomUnit ? (
+                                  <div
+                                    className="flex items-center gap-1"
+                                    style={{ minWidth: 80, flex: 2 }}
+                                  >
+                                    <IconButton
+                                      onClick={() =>
+                                        handleBackToUnitSelect(index)
+                                      }
+                                      size="small"
+                                      sx={{
+                                        minWidth: "auto",
+                                        p: 0.5,
+                                        color: "#6b7280",
+                                        "&:hover": {
+                                          color: "#374151",
+                                          backgroundColor:
+                                            "rgba(107, 114, 128, 0.1)",
+                                        },
+                                      }}
+                                    >
+                                      <ArrowBackIcon fontSize="small" />
+                                    </IconButton>
+                                    <TextField
+                                      label="Custom unit"
+                                      placeholder="Enter custom unit"
+                                      value={ingredient.customUnit || ""}
+                                      onChange={(e) =>
+                                        handleCustomUnitChange(
+                                          index,
+                                          e.target.value
+                                        )
+                                      }
+                                      size="small"
+                                      sx={{ flex: 1 }}
+                                    />
+                                  </div>
+                                ) : (
+                                  <FormControl
+                                    size="small"
+                                    sx={{ minWidth: 80, flex: 2 }}
+                                  >
+                                    <InputLabel>Unit</InputLabel>
+                                    <Select
+                                      value={ingredient.unit || ""}
+                                      label="Unit"
+                                      onChange={(e) =>
+                                        handleUnitChange(index, e.target.value)
+                                      }
+                                    >
+                                      {unitOptions.map((unit) => (
+                                        <MenuItem key={unit} value={unit}>
+                                          {unit}
+                                        </MenuItem>
+                                      ))}
+                                    </Select>
+                                  </FormControl>
+                                )}
+                                <IconButton
+                                  onClick={() => removeIngredient(index)}
+                                  disabled={ingredients.length === 1}
+                                  size="small"
+                                  sx={{
+                                    color: "#9ca3af",
+                                    "&:hover": {
+                                      color: "#ef4444",
+                                      backgroundColor:
+                                        "rgba(239, 68, 68, 0.04)",
+                                    },
+                                  }}
+                                >
+                                  <DeleteIcon fontSize="small" />
+                                </IconButton>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+
+                      {/* Add button at bottom left */}
+                      <div className="flex justify-start mt-3">
+                        <IconButton
+                          onClick={addIngredient}
+                          color="primary"
+                          size="small"
+                        >
+                          <AddIcon />
+                        </IconButton>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
                 {/* My Notes */}
                 <Card sx={{ boxShadow: "none", border: "none" }}>
                   <CardContent>
@@ -1850,6 +2127,7 @@ const RecipeBuilder: React.FC = () => {
                     </Typography>
                     <TextField
                       fullWidth
+                      label="My Notes"
                       placeholder="Add any personal notes, tips, or variations..."
                       value={myNotes}
                       onChange={(e) => setMyNotes(e.target.value)}
