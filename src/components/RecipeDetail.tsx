@@ -1159,7 +1159,7 @@ const RecipeDetail = React.memo(function RecipeDetail({
               <div>Cooked Up by {recipe.author}</div>
               {(recipe.source || recipe.sourceTitle) && (
                 <div className="mt-1">
-                  Inspired by{" "}
+                  Inspired by
                   {!recipe.sourceTitle && recipe.source && (
                     <span className="text-gray-500">{recipe.source}</span>
                   )}
