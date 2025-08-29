@@ -2832,6 +2832,13 @@ export default function JobTracker() {
                                     borderBottom: 0,
                                   },
                                 }}
+                                onClick={() =>
+                                  setExpandedRow(
+                                    expandedRow === opportunity.id
+                                      ? null
+                                      : opportunity.id
+                                  )
+                                }
                               >
                                 <TableCell>{opportunity.company}</TableCell>
                                 <TableCell>{opportunity.position}</TableCell>
@@ -2855,6 +2862,7 @@ export default function JobTracker() {
                                     }}
                                     size="small"
                                     onClick={(e) => {
+                                      e.stopPropagation();
                                       setStatusChangeAnchor(e.currentTarget);
                                       setSelectedOpportunityForStatusChange(
                                         opportunity
@@ -2864,13 +2872,14 @@ export default function JobTracker() {
                                 </TableCell>
                                 <TableCell style={{ textAlign: "right" }}>
                                   <IconButton
-                                    onClick={() =>
+                                    onClick={(e) => {
+                                      e.stopPropagation();
                                       setExpandedRow(
                                         expandedRow === opportunity.id
                                           ? null
                                           : opportunity.id
-                                      )
-                                    }
+                                      );
+                                    }}
                                   >
                                     {expandedRow === opportunity.id ? (
                                       <ExpandLessIcon />
@@ -3359,6 +3368,7 @@ export default function JobTracker() {
                         boxShadow: "none",
                         border: "none",
                         outline: "none",
+                        cursor: "pointer",
                       }}
                       style={{
                         backgroundColor: `${
@@ -3368,6 +3378,11 @@ export default function JobTracker() {
                         border: "none",
                         outline: "none",
                       }}
+                      onClick={() =>
+                        setExpandedRow(
+                          expandedRow === opportunity.id ? null : opportunity.id
+                        )
+                      }
                     >
                       <CardContent
                         sx={{
@@ -3417,6 +3432,7 @@ export default function JobTracker() {
                               }}
                               size="small"
                               onClick={(e) => {
+                                e.stopPropagation();
                                 setStatusChangeAnchor(e.currentTarget);
                                 setSelectedOpportunityForStatusChange(
                                   opportunity
@@ -3424,13 +3440,14 @@ export default function JobTracker() {
                               }}
                             />
                             <IconButton
-                              onClick={() =>
+                              onClick={(e) => {
+                                e.stopPropagation();
                                 setExpandedRow(
                                   expandedRow === opportunity.id
                                     ? null
                                     : opportunity.id
-                                )
-                              }
+                                );
+                              }}
                               size="small"
                             >
                               {expandedRow === opportunity.id ? (
