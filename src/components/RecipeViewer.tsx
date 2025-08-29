@@ -472,8 +472,8 @@ const RecipeViewer: React.FC<RecipeViewerProps> = () => {
   };
 
   // Filter recipes - ensure recipes is always an array
-  const filteredRecipes = (Array.isArray(recipes) ? recipes : []).filter(
-    (recipe) => {
+  const filteredRecipes = (Array.isArray(recipes) ? recipes : [])
+    .filter((recipe) => {
       const categoryMatch =
         activeCategory === "All" ||
         (recipe.categories && recipe.categories.includes(activeCategory)) ||
@@ -567,8 +567,8 @@ const RecipeViewer: React.FC<RecipeViewerProps> = () => {
       }
 
       return finalResult;
-    }
-  );
+    })
+    .sort((a, b) => a.title.localeCompare(b.title));
 
   const getTotalTime = (recipe: Recipe) => {
     return recipe.prepTime + recipe.cookTime;
