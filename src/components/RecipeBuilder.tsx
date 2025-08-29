@@ -91,7 +91,14 @@ const RecipeBuilder: React.FC = () => {
   const [servings, setServings] = useState(1);
   const [slug, setSlug] = useState("");
   const [ingredients, setIngredients] = useState<
-    Array<{ id: string; name: string; amount: string; unit: string }>
+    Array<{
+      id: string;
+      name: string;
+      amount: string;
+      unit: string;
+      customUnit?: string;
+      showCustomUnit?: boolean;
+    }>
   >([{ id: crypto.randomUUID(), name: "", amount: "", unit: "" }]);
   const [steps, setSteps] = useState<
     Array<{
@@ -144,12 +151,20 @@ const RecipeBuilder: React.FC = () => {
       }
       setIngredients(
         recipe.ingredients?.map(
-          (ing: { name?: string; amount?: string; unit?: string }) => ({
-            id: crypto.randomUUID(),
-            name: ing.name || "",
-            amount: ing.amount || "",
-            unit: ing.unit || "",
-          })
+          (ing: { name?: string; amount?: string; unit?: string }) => {
+            const unit = ing.unit || "";
+            // Check if the unit is in our predefined options
+            const isCustomUnit =
+              unit && !unitOptions.includes(unit) && unit !== "Other";
+            return {
+              id: crypto.randomUUID(),
+              name: ing.name || "",
+              amount: ing.amount || "",
+              unit: isCustomUnit ? "" : unit,
+              customUnit: isCustomUnit ? unit : "",
+              showCustomUnit: isCustomUnit,
+            };
+          }
         ) || [{ id: crypto.randomUUID(), name: "", amount: "", unit: "" }]
       );
       setSteps(
@@ -222,6 +237,37 @@ const RecipeBuilder: React.FC = () => {
       "Hello Fresh",
       "Home Chef",
       "Cocktail Project",
+      "Other",
+    ],
+    []
+  );
+
+  const unitOptions = useMemo<string[]>(
+    () => [
+      "oz",
+      "tsp",
+      "Tbsp",
+      "taste",
+      "each",
+      "lb",
+      "cup",
+      "cups",
+      "pint",
+      "quart",
+      "gallon",
+      "ml",
+      "liter",
+      "gram",
+      "kg",
+      "clove",
+      "cloves",
+      "slice",
+      "slices",
+      "bunch",
+      "head",
+      "can",
+      "bottle",
+      "package",
       "Other",
     ],
     []
@@ -404,12 +450,20 @@ const RecipeBuilder: React.FC = () => {
           setIngredients(
             recipe.ingredients?.length
               ? recipe.ingredients.map(
-                  (ing: { name?: string; amount?: number; unit?: string }) => ({
-                    id: crypto.randomUUID(),
-                    name: ing.name || "",
-                    amount: formatAmountAsFraction(ing.amount || 0),
-                    unit: ing.unit || "",
-                  })
+                  (ing: { name?: string; amount?: number; unit?: string }) => {
+                    const unit = ing.unit || "";
+                    // Check if the unit is in our predefined options
+                    const isCustomUnit =
+                      unit && !unitOptions.includes(unit) && unit !== "Other";
+                    return {
+                      id: crypto.randomUUID(),
+                      name: ing.name || "",
+                      amount: formatAmountAsFraction(ing.amount || 0),
+                      unit: isCustomUnit ? "" : unit,
+                      customUnit: isCustomUnit ? unit : "",
+                      showCustomUnit: isCustomUnit,
+                    };
+                  }
                 )
               : [{ id: crypto.randomUUID(), name: "", amount: "", unit: "" }]
           );
@@ -470,6 +524,7 @@ const RecipeBuilder: React.FC = () => {
     categoryOptions,
     typeOptions,
     sourceTitleOptions,
+    unitOptions,
   ]);
 
   const handleIngredientChange = (
@@ -479,6 +534,39 @@ const RecipeBuilder: React.FC = () => {
   ) => {
     setIngredients((prev) =>
       prev.map((ing, i) => (i === index ? { ...ing, [field]: value } : ing))
+    );
+  };
+
+  const handleUnitChange = (index: number, unit: string) => {
+    setIngredients((prev) =>
+      prev.map((ing, i) => {
+        if (i === index) {
+          if (unit === "Other") {
+            return { ...ing, unit: "", showCustomUnit: true, customUnit: "" };
+          } else {
+            return { ...ing, unit, showCustomUnit: false, customUnit: "" };
+          }
+        }
+        return ing;
+      })
+    );
+  };
+
+  const handleCustomUnitChange = (index: number, customUnit: string) => {
+    setIngredients((prev) =>
+      prev.map((ing, i) =>
+        i === index ? { ...ing, customUnit, unit: customUnit } : ing
+      )
+    );
+  };
+
+  const handleBackToUnitSelect = (index: number) => {
+    setIngredients((prev) =>
+      prev.map((ing, i) =>
+        i === index
+          ? { ...ing, showCustomUnit: false, unit: "", customUnit: "" }
+          : ing
+      )
     );
   };
 
@@ -646,7 +734,7 @@ const RecipeBuilder: React.FC = () => {
         .map((ing) => ({
           name: ing.name.trim(),
           amount: parseFractionToNumber(ing.amount),
-          unit: ing.unit || "",
+          unit: ing.customUnit || ing.unit || "",
         }));
 
       // Convert steps format for API
@@ -1321,21 +1409,65 @@ const RecipeBuilder: React.FC = () => {
                                     )
                                   }
                                   size="small"
-                                  sx={{ minWidth: 80, flex: 1 }}
+                                  sx={{ minWidth: 60, width: 60 }}
                                 />
-                                <TextField
-                                  placeholder="Unit"
-                                  value={ingredient.unit || ""}
-                                  onChange={(e) =>
-                                    handleIngredientChange(
-                                      index,
-                                      "unit",
-                                      e.target.value
-                                    )
-                                  }
-                                  size="small"
-                                  sx={{ minWidth: 80, flex: 1 }}
-                                />
+                                {ingredient.showCustomUnit ? (
+                                  <div
+                                    className="flex items-center gap-1"
+                                    style={{ minWidth: 80, flex: 2 }}
+                                  >
+                                    <IconButton
+                                      onClick={() =>
+                                        handleBackToUnitSelect(index)
+                                      }
+                                      size="small"
+                                      sx={{
+                                        minWidth: "auto",
+                                        p: 0.5,
+                                        color: "#6b7280",
+                                        "&:hover": {
+                                          color: "#374151",
+                                          backgroundColor:
+                                            "rgba(107, 114, 128, 0.1)",
+                                        },
+                                      }}
+                                    >
+                                      <ArrowBackIcon fontSize="small" />
+                                    </IconButton>
+                                    <TextField
+                                      placeholder="Custom unit"
+                                      value={ingredient.customUnit || ""}
+                                      onChange={(e) =>
+                                        handleCustomUnitChange(
+                                          index,
+                                          e.target.value
+                                        )
+                                      }
+                                      size="small"
+                                      sx={{ flex: 1 }}
+                                    />
+                                  </div>
+                                ) : (
+                                  <FormControl
+                                    size="small"
+                                    sx={{ minWidth: 80, flex: 2 }}
+                                  >
+                                    <InputLabel>Unit</InputLabel>
+                                    <Select
+                                      value={ingredient.unit || ""}
+                                      label="Unit"
+                                      onChange={(e) =>
+                                        handleUnitChange(index, e.target.value)
+                                      }
+                                    >
+                                      {unitOptions.map((unit) => (
+                                        <MenuItem key={unit} value={unit}>
+                                          {unit}
+                                        </MenuItem>
+                                      ))}
+                                    </Select>
+                                  </FormControl>
+                                )}
                                 <IconButton
                                   onClick={() => removeIngredient(index)}
                                   disabled={ingredients.length === 1}
