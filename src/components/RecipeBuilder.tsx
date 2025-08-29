@@ -25,7 +25,11 @@ import {
   Card,
   CardContent,
   Typography,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
 } from "@mui/material";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { renderFooter } from "./shared/footerHelpers";
 import { useSession, signIn, signOut } from "next-auth/react";
 
@@ -122,6 +126,10 @@ const RecipeBuilder: React.FC = () => {
   const [favorite, setFavorite] = useState(false);
   const [importUrl, setImportUrl] = useState("");
   const [isImporting, setIsImporting] = useState(false);
+
+  // Accordion state
+  const [stepsExpanded, setStepsExpanded] = useState(false);
+  const [ingredientsExpanded, setIngredientsExpanded] = useState(true);
 
   const handleImportRecipe = async () => {
     if (!importUrl) return;
@@ -857,9 +865,16 @@ const RecipeBuilder: React.FC = () => {
           stepIngredients:
             step.stepIngredients
               ?.filter((si) => si.ingredientId)
-              .map((si) => ({
-                ingredientId: si.ingredientId,
-              })) || [],
+              .map((si) => {
+                // Find the ingredient index for this ingredient ID
+                const ingredientIndex = ingredients.findIndex(
+                  (ing) => ing.id === si.ingredientId
+                );
+                return {
+                  ingredientIndex: ingredientIndex,
+                };
+              })
+              .filter((si) => si.ingredientIndex >= 0) || [],
         }));
 
       const recipeData = {
@@ -1458,12 +1473,19 @@ const RecipeBuilder: React.FC = () => {
                 </Card>
 
                 {/* Steps */}
-                <Card sx={{ boxShadow: "none", border: "none" }}>
-                  <CardContent>
-                    <div className="mb-4">
-                      <Typography variant="h6">Steps</Typography>
-                    </div>
-
+                <Accordion
+                  expanded={stepsExpanded}
+                  onChange={() => setStepsExpanded(!stepsExpanded)}
+                  sx={{ boxShadow: "none", border: "none" }}
+                >
+                  <AccordionSummary
+                    expandIcon={<ExpandMoreIcon />}
+                    aria-controls="steps-content"
+                    id="steps-header"
+                  >
+                    <Typography variant="h6">Steps</Typography>
+                  </AccordionSummary>
+                  <AccordionDetails>
                     <div className="space-y-4">
                       {steps.map((step, index) => (
                         <div
@@ -1531,7 +1553,7 @@ const RecipeBuilder: React.FC = () => {
                               />
 
                               {/* Include Ingredient Link */}
-                              <div className="flex justify-start">
+                              <div className="flex justify-start mb-2">
                                 <button
                                   type="button"
                                   onClick={() => addStepIngredient(index)}
@@ -1920,16 +1942,23 @@ const RecipeBuilder: React.FC = () => {
                         </IconButton>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
+                  </AccordionDetails>
+                </Accordion>
 
                 {/* Ingredients */}
-                <Card sx={{ boxShadow: "none", border: "none" }}>
-                  <CardContent>
-                    <div className="mb-4">
-                      <Typography variant="h6">Ingredients</Typography>
-                    </div>
-
+                <Accordion
+                  expanded={ingredientsExpanded}
+                  onChange={() => setIngredientsExpanded(!ingredientsExpanded)}
+                  sx={{ boxShadow: "none", border: "none" }}
+                >
+                  <AccordionSummary
+                    expandIcon={<ExpandMoreIcon />}
+                    aria-controls="ingredients-content"
+                    id="ingredients-header"
+                  >
+                    <Typography variant="h6">Ingredients</Typography>
+                  </AccordionSummary>
+                  <AccordionDetails>
                     <div className="space-y-3 flex flex-col items-start">
                       {ingredients.map((ingredient, index) => (
                         <div
@@ -1960,38 +1989,8 @@ const RecipeBuilder: React.FC = () => {
                               />
                             </div>
                             <div className="flex-1">
-                              <div className="w-full">
+                              <div className="w-full mt-2">
                                 <div className="flex flex-col sm:flex-row gap-2 mb-2">
-                                  <FormControl
-                                    size="small"
-                                    sx={{
-                                      minWidth: 120,
-                                      width: { xs: "100%", sm: "auto" },
-                                    }}
-                                  >
-                                    <InputLabel>Include in Step</InputLabel>
-                                    <Select
-                                      value={ingredient.stepNumber || 0}
-                                      label="Include in Step"
-                                      onChange={(e) =>
-                                        handleIngredientChange(
-                                          index,
-                                          "stepNumber",
-                                          Number(e.target.value)
-                                        )
-                                      }
-                                    >
-                                      <MenuItem value={0}>None</MenuItem>
-                                      {Array.from(
-                                        { length: steps.length },
-                                        (_, i) => (
-                                          <MenuItem key={i + 1} value={i + 1}>
-                                            Step {i + 1}
-                                          </MenuItem>
-                                        )
-                                      )}
-                                    </Select>
-                                  </FormControl>
                                   <TextField
                                     label="Ingredient name"
                                     placeholder="Enter ingredient name"
@@ -2011,7 +2010,7 @@ const RecipeBuilder: React.FC = () => {
                                   />
                                 </div>
                               </div>
-                              <div className="flex flex-row sm:flex-row gap-2 mt-2">
+                              <div className="flex flex-row sm:flex-row gap-2 mt-4">
                                 <TextField
                                   label="Amount"
                                   placeholder="e.g., 1, ½, 2¾, 1/3"
@@ -2116,8 +2115,8 @@ const RecipeBuilder: React.FC = () => {
                         </IconButton>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
+                  </AccordionDetails>
+                </Accordion>
 
                 {/* My Notes */}
                 <Card sx={{ boxShadow: "none", border: "none" }}>

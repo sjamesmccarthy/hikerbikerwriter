@@ -42,7 +42,6 @@ import {
   Casino as RollIcon,
 } from "@mui/icons-material";
 import {
-  Typography,
   ButtonGroup,
   Button,
   IconButton,
@@ -68,6 +67,7 @@ type Recipe = {
   cookTime: number;
   servings: number;
   ingredients: Array<{
+    id?: string;
     name: string;
     amount: number;
     unit: string;
@@ -77,6 +77,11 @@ type Recipe = {
     temperature?: number;
     time?: number;
     superSmoke?: boolean;
+    stepIngredients?: Array<{
+      id?: string;
+      ingredientId?: string;
+      ingredientIndex?: number;
+    }>;
   }>;
   myNotes?: string;
   author: string;
@@ -1129,12 +1134,9 @@ const RecipeDetail = React.memo(function RecipeDetail({
           <div className="space-y-4">
             {/* Ingredients Section */}
             <div className="bg-gray-50 p-6 rounded-lg">
-              <Typography
-                variant="h6"
-                sx={{ fontWeight: 600, mb: 0, textAlign: "center" }}
-              >
+              <h2 className="text-xl font-bold text-black mb-4 text-center">
                 Ingredients
-              </Typography>
+              </h2>
 
               <div className="mb-6 mt-3 text-center">
                 <ButtonGroup variant="outlined" size="small">
@@ -1171,6 +1173,7 @@ const RecipeDetail = React.memo(function RecipeDetail({
                     key={`ingredient-${index}-${ingredient.name}`}
                     className="flex items-center text-sm"
                   >
+                    {/* <span className="text-gray-600 mr-2">•</span> */}
                     <span className="font-medium min-w-[100px] text-right pr-3">
                       {formatAmountAsFraction(
                         scaleIngredient(ingredient.amount)
@@ -1210,6 +1213,91 @@ const RecipeDetail = React.memo(function RecipeDetail({
                     </h4>
                     <div className="space-y-2">
                       <p className="text-gray-800">{step.step}</p>
+                      {step.stepIngredients &&
+                        step.stepIngredients.length > 0 && (
+                          <div className="mb-3">
+                            <h5 className="text-sm font-bold text-black uppercase mb-2">
+                              INGREDIENTS
+                            </h5>
+                            <div className="space-y-1">
+                              {step.stepIngredients.map(
+                                (stepIngredient, ingredientIndex) => {
+                                  let ingredient;
+
+                                  // First try to find by ingredientIndex (new format)
+                                  if (
+                                    typeof stepIngredient.ingredientIndex ===
+                                      "number" &&
+                                    stepIngredient.ingredientIndex >= 0 &&
+                                    stepIngredient.ingredientIndex <
+                                      recipe.ingredients.length
+                                  ) {
+                                    ingredient =
+                                      recipe.ingredients[
+                                        stepIngredient.ingredientIndex
+                                      ];
+                                  }
+
+                                  // Fallback to ID matching (legacy format)
+                                  if (
+                                    !ingredient &&
+                                    stepIngredient.ingredientId
+                                  ) {
+                                    ingredient = recipe.ingredients.find(
+                                      (ing) =>
+                                        ing.id === stepIngredient.ingredientId
+                                    );
+                                  }
+
+                                  // Fallback to index parsing from ingredientId
+                                  if (
+                                    !ingredient &&
+                                    stepIngredient.ingredientId
+                                  ) {
+                                    const ingredientIdx = parseInt(
+                                      stepIngredient.ingredientId
+                                    );
+                                    if (
+                                      !isNaN(ingredientIdx) &&
+                                      ingredientIdx >= 0 &&
+                                      ingredientIdx < recipe.ingredients.length
+                                    ) {
+                                      ingredient =
+                                        recipe.ingredients[ingredientIdx];
+                                    }
+                                  }
+
+                                  if (!ingredient) {
+                                    console.log(
+                                      "Could not find ingredient for stepIngredient:",
+                                      stepIngredient,
+                                      "Available ingredients:",
+                                      recipe.ingredients
+                                    );
+                                    return null;
+                                  }
+
+                                  return (
+                                    <div
+                                      key={`${index}-${ingredientIndex}-${ingredient.name}`}
+                                      className="text-sm text-gray-700 font-medium flex items-center"
+                                    >
+                                      <span className="text-gray-600 mr-2">
+                                        •
+                                      </span>
+                                      {ingredient.amount || ""}
+                                      {ingredient.unit
+                                        ? ` ${ingredient.unit}`
+                                        : ""}{" "}
+                                      |{" "}
+                                      {ingredient.name || "Unknown ingredient"}
+                                    </div>
+                                  );
+                                }
+                              )}
+                            </div>
+                          </div>
+                        )}
                       {(step.temperature || step.time || step.superSmoke) && (
                         <div className="flex gap-4 text-sm text-gray-600">
                           {step.temperature && (
@@ -1296,6 +1384,75 @@ const RecipeDetail = React.memo(function RecipeDetail({
               <p className="text-2xl text-gray-700 mb-8 leading-relaxed">
                 {recipe?.steps[currentStep]?.step}
               </p>
+
+              {/* Step Ingredients */}
+              {recipe?.steps[currentStep]?.stepIngredients &&
+                recipe?.steps[currentStep]?.stepIngredients.length > 0 && (
+                  <div className="mb-6">
+                    <h4 className="text-lg font-semibold text-gray-800 mb-3">
+                      INGREDIENTS
+                    </h4>
+                    <div className="flex flex-col items-center space-y-2">
+                      {recipe?.steps[currentStep]?.stepIngredients.map(
+                        (stepIngredient, ingredientIndex) => {
+                          let ingredient;
+
+                          // First try to find by ingredientIndex (new format)
+                          if (
+                            typeof stepIngredient.ingredientIndex ===
+                              "number" &&
+                            stepIngredient.ingredientIndex >= 0 &&
+                            stepIngredient.ingredientIndex <
+                              recipe.ingredients.length
+                          ) {
+                            ingredient =
+                              recipe.ingredients[
+                                stepIngredient.ingredientIndex
+                              ];
+                          }
+
+                          // Fallback to ID matching (legacy format)
+                          if (!ingredient && stepIngredient.ingredientId) {
+                            ingredient = recipe.ingredients.find(
+                              (ing) => ing.id === stepIngredient.ingredientId
+                            );
+                          }
+
+                          // Fallback to index parsing from ingredientId
+                          if (!ingredient && stepIngredient.ingredientId) {
+                            const ingredientIdx = parseInt(
+                              stepIngredient.ingredientId
+                            );
+                            if (
+                              !isNaN(ingredientIdx) &&
+                              ingredientIdx >= 0 &&
+                              ingredientIdx < recipe.ingredients.length
+                            ) {
+                              ingredient = recipe.ingredients[ingredientIdx];
+                            }
+                          }
+
+                          if (!ingredient) {
+                            return null;
+                          }
+
+                          return (
+                            <div
+                              key={`make-now-${currentStep}-${ingredientIndex}-${ingredient.name}`}
+                              className="text-lg font-medium text-gray-800 bg-gray-100 px-4 py-2 rounded-lg"
+                            >
+                              {ingredient.amount || ""}
+                              {ingredient.unit
+                                ? ` ${ingredient.unit}`
+                                : ""} |{" "}
+                              {ingredient.name || "Unknown ingredient"}
+                            </div>
+                          );
+                        }
+                      )}
+                    </div>
+                  </div>
+                )}
 
               {recipe?.steps[currentStep] &&
                 (recipe?.steps[currentStep]?.temperature ||
