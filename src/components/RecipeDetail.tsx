@@ -1796,9 +1796,8 @@ const RecipeDetail = React.memo(function RecipeDetail({
                     </>
                   ) : (
                     <>
-                      COOKED!
                       <FactCheckIcon sx={{ fontSize: 36 }} />
-                      RATE THIS RECIPE
+                      Cooked, Write Review
                     </>
                   )}
                 </button>
