@@ -750,7 +750,7 @@ const RecipeDetail = React.memo(function RecipeDetail({
             ) {
               tempTimeInfo += `${symbol}Heat Level ${step.temperature} `;
             } else {
-              tempTimeInfo += `${symbol}${step.temperature}°F `;
+              tempTimeInfo += `${symbol}${step.temperature} deg F `;
             }
           }
           if (step.time) {
