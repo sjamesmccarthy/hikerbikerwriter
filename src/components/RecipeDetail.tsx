@@ -1770,31 +1770,33 @@ const RecipeDetail = React.memo(function RecipeDetail({
               </div>
             </div>
 
-            {/* Cooked This One Up Button */}
-            <div className="text-center my-8">
-              <button
-                onClick={reviewSubmitted ? undefined : handleCookedThisOneUp}
-                disabled={reviewSubmitted}
-                className={`px-8 py-4 rounded-lg text-xl font-bold transition-colors flex items-center gap-2 mx-auto ${
-                  reviewSubmitted
-                    ? "bg-green-200 text-green-800 cursor-not-allowed"
-                    : "bg-gray-200 text-gray-900 hover:text-gray-700 hover:bg-gray-300 cursor-pointer"
-                }`}
-                style={{ minWidth: 220 }}
-              >
-                {reviewSubmitted ? (
-                  <>
-                    <CheckCircleIcon sx={{ fontSize: 36 }} />
-                    REVIEW SUBMITTED
-                  </>
-                ) : (
-                  <>
-                    <FactCheckIcon sx={{ fontSize: 36 }} />
-                    COOKED THIS ONE UP
-                  </>
-                )}
-              </button>
-            </div>
+            {/* Cooked This One Up Button - Only for logged in users */}
+            {session?.user?.email && (
+              <div className="text-center my-8">
+                <button
+                  onClick={reviewSubmitted ? undefined : handleCookedThisOneUp}
+                  disabled={reviewSubmitted}
+                  className={`px-8 py-4 rounded-lg text-xl font-bold transition-colors flex items-center gap-2 mx-auto ${
+                    reviewSubmitted
+                      ? "bg-green-200 text-green-800 cursor-not-allowed"
+                      : "bg-gray-200 text-gray-900 hover:text-gray-700 hover:bg-gray-300 cursor-pointer"
+                  }`}
+                  style={{ minWidth: 220 }}
+                >
+                  {reviewSubmitted ? (
+                    <>
+                      <CheckCircleIcon sx={{ fontSize: 36 }} />
+                      REVIEW SUBMITTED
+                    </>
+                  ) : (
+                    <>
+                      <FactCheckIcon sx={{ fontSize: 36 }} />
+                      COOKED THIS ONE UP
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
 
             {/* Reviews Section */}
             {recipe.reviews && recipe.reviews.length > 0 && (
