@@ -299,6 +299,12 @@ const RecipeDetail = React.memo(function RecipeDetail({
     setReviewModalOpen(true);
   };
 
+  // Handle closing make mode and opening review modal
+  const handleMakeModeToReview = () => {
+    setMakeModeOpen(false);
+    setReviewModalOpen(true);
+  };
+
   // Handle closing the review modal
   const handleCloseReviewModal = () => {
     setReviewModalOpen(false);
@@ -1790,8 +1796,9 @@ const RecipeDetail = React.memo(function RecipeDetail({
                     </>
                   ) : (
                     <>
+                      COOKED!
                       <FactCheckIcon sx={{ fontSize: 36 }} />
-                      COOKED THIS ONE UP
+                      RATE THIS RECIPE
                     </>
                   )}
                 </button>
@@ -2114,9 +2121,18 @@ const RecipeDetail = React.memo(function RecipeDetail({
               <h2 className="text-3xl font-bold text-gray-900 mb-4">
                 Bon Appétit!
               </h2>
-              <p className="text-lg text-gray-600">
+              <p className="text-lg text-gray-600 mb-6">
                 Your recipe is complete. Enjoy your meal!
               </p>
+              {session?.user?.email && (
+                <button
+                  onClick={handleMakeModeToReview}
+                  className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 mx-auto"
+                >
+                  <FactCheckIcon sx={{ fontSize: 24 }} />
+                  Rate This Recipe
+                </button>
+              )}
             </div>
           )}
         </DialogContent>
