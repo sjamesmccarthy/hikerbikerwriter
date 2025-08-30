@@ -1669,13 +1669,18 @@ const RecipeBuilder: React.FC = () => {
                               className="w-full h-48 object-contain rounded-lg bg-gray-50"
                               onError={() => setImageError(true)}
                             />
-                            <div className="flex gap-2 justify-center flex-wrap">
+                            <div className="flex gap-1 sm:gap-2">
                               <Button
                                 variant="outlined"
                                 startIcon={<PhotoCameraIcon />}
                                 component="label"
+                                size="small"
+                                className="flex-1 text-xs sm:text-sm"
                               >
-                                Change Photo
+                                <span className="hidden sm:inline">
+                                  Change Photo
+                                </span>
+                                <span className="sm:hidden">Change</span>
                                 <input
                                   type="file"
                                   hidden
@@ -1690,8 +1695,13 @@ const RecipeBuilder: React.FC = () => {
                                   setOriginalImage(photo);
                                   setShowCropDialog(true);
                                 }}
+                                size="small"
+                                className="flex-1 text-xs sm:text-sm"
                               >
-                                Crop & Zoom
+                                <span className="hidden sm:inline">
+                                  Crop & Zoom
+                                </span>
+                                <span className="sm:hidden">Crop</span>
                               </Button>
                             </div>
                           </div>
@@ -1702,13 +1712,18 @@ const RecipeBuilder: React.FC = () => {
                                 sx={{ fontSize: 48, color: "#9CA3AF" }}
                               />
                             </div>
-                            <div className="flex gap-2 justify-center flex-wrap">
+                            <div className="flex gap-1 sm:gap-2">
                               <Button
                                 variant="outlined"
                                 startIcon={<PhotoCameraIcon />}
                                 component="label"
+                                size="small"
+                                className="flex-1 text-xs sm:text-sm"
                               >
-                                Change Photo
+                                <span className="hidden sm:inline">
+                                  Change Photo
+                                </span>
+                                <span className="sm:hidden">Change</span>
                                 <input
                                   type="file"
                                   hidden
@@ -1723,8 +1738,13 @@ const RecipeBuilder: React.FC = () => {
                                   setOriginalImage(photo);
                                   setShowCropDialog(true);
                                 }}
+                                size="small"
+                                className="flex-1 text-xs sm:text-sm"
                               >
-                                Crop & Zoom
+                                <span className="hidden sm:inline">
+                                  Crop & Zoom
+                                </span>
+                                <span className="sm:hidden">Crop</span>
                               </Button>
                             </div>
                           </div>
@@ -1936,13 +1956,18 @@ const RecipeBuilder: React.FC = () => {
                                   className="w-full h-48 object-contain rounded-lg bg-gray-50"
                                   onError={() => setFamilyPhotoError(true)}
                                 />
-                                <div className="flex gap-2 justify-center flex-wrap">
+                                <div className="flex gap-1 sm:gap-2">
                                   <Button
                                     variant="outlined"
                                     startIcon={<PhotoCameraIcon />}
                                     component="label"
+                                    size="small"
+                                    className="flex-1 text-xs sm:text-sm"
                                   >
-                                    Change Family Photo
+                                    <span className="hidden sm:inline">
+                                      Change Family Photo
+                                    </span>
+                                    <span className="sm:hidden">Change</span>
                                     <input
                                       type="file"
                                       hidden
@@ -1957,8 +1982,13 @@ const RecipeBuilder: React.FC = () => {
                                       setOriginalFamilyImage(familyPhoto);
                                       setShowFamilyCropDialog(true);
                                     }}
+                                    size="small"
+                                    className="flex-1 text-xs sm:text-sm"
                                   >
-                                    Crop & Zoom
+                                    <span className="hidden sm:inline">
+                                      Crop & Zoom
+                                    </span>
+                                    <span className="sm:hidden">Crop</span>
                                   </Button>
                                 </div>
                               </div>
