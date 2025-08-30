@@ -733,17 +733,17 @@ const RecipeDetail = React.memo(function RecipeDetail({
             let symbol = "";
             const recipeType = recipe?.type?.toLowerCase().trim();
             if (recipeType === "oven") {
-              symbol = "[OVEN] ";
+              symbol = "OVEN / ";
             } else if (recipeType === "smoker") {
-              symbol = "[SMOKER] ";
+              symbol = "SMOKER / ";
             } else if (recipeType === "flat-top") {
-              symbol = "[FLAT-TOP] ";
+              symbol = "FLAT-TOP / ";
             } else if (recipeType === "grill") {
-              symbol = "[GRILL] ";
+              symbol = "GRILL / ";
             } else if (recipeType === "beverage") {
-              symbol = "[DRINK] ";
+              symbol = "COCKTAIL / ";
             } else {
-              symbol = "[COOK] ";
+              symbol = "COOK / ";
             }
 
             // For oven and flat-top recipes, treat as heat level if value is 10 or less, otherwise as temperature
@@ -758,13 +758,13 @@ const RecipeDetail = React.memo(function RecipeDetail({
             }
           }
           if (step.time) {
-            tempTimeInfo += `[TIME] ${step.time}min `;
+            tempTimeInfo += `/ ${step.time}min `;
           }
           if (
             step.superSmoke &&
             recipe?.type?.toLowerCase().trim() === "smoker"
           )
-            tempTimeInfo += " | [SMOKE] Super Smoke";
+            tempTimeInfo += "/ Super Smoke";
           if (tempTimeInfo) {
             // Ensure proper font for temperature/time info
             pdf.setFontSize(9);
