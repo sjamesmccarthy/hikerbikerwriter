@@ -581,7 +581,7 @@ const RecipeDetail = React.memo(function RecipeDetail({
 
       pdf.setFontSize(16);
       pdf.setFont("helvetica", "bold");
-      pdf.text("Instructions", leftMargin, yPosition);
+      pdf.text("Steps", leftMargin, yPosition);
       yPosition += 9;
 
       pdf.setFontSize(11);
