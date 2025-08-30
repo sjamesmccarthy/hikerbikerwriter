@@ -1666,7 +1666,7 @@ const RecipeBuilder: React.FC = () => {
                               alt="Recipe preview"
                               width={400}
                               height={225}
-                              className="w-full h-48 object-contain rounded-lg bg-gray-50"
+                              className="w-full h-48 object-cover rounded-lg bg-gray-50"
                               onError={() => setImageError(true)}
                             />
                             <div className="flex gap-1 sm:gap-2">
