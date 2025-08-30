@@ -1,6 +1,12 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useRef,
+  useCallback,
+} from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -11,6 +17,12 @@ import {
   LocalDining as LocalDiningIcon,
   Delete as DeleteIcon,
   DragIndicator as DragIndicatorIcon,
+  Crop as CropIcon,
+  ZoomIn as ZoomInIcon,
+  ZoomOut as ZoomOutIcon,
+  Check as CheckIcon,
+  Close as CloseIcon,
+  RestartAlt as ResetIcon,
 } from "@mui/icons-material";
 import {
   FormControl,
@@ -28,8 +40,16 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  Slider,
+  Box,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ReactCrop, { Crop, PixelCrop } from "react-image-crop";
+import "react-image-crop/dist/ReactCrop.css";
 import { renderFooter } from "./shared/footerHelpers";
 import { useSession, signIn, signOut } from "next-auth/react";
 
@@ -88,6 +108,21 @@ const RecipeBuilder: React.FC = () => {
   const [category, setCategory] = useState<string>("Dinner");
   const [photo, setPhoto] = useState("");
   const [imageError, setImageError] = useState(false);
+
+  // Image crop state
+  const [showCropDialog, setShowCropDialog] = useState(false);
+  const [originalImage, setOriginalImage] = useState("");
+  const [crop, setCrop] = useState<Crop>({
+    unit: "%",
+    width: 90,
+    height: 90,
+    x: 5,
+    y: 5,
+  });
+  const [zoom, setZoom] = useState(1);
+  const [sharpening, setSharpening] = useState(0.5); // 0 = no sharpening, 1 = max sharpening
+  const imgRef = useRef<HTMLImageElement>(null);
+
   const [prepTime, setPrepTime] = useState(0);
   const [cookTime, setCookTime] = useState(0);
   const [cookHours, setCookHours] = useState(0);
@@ -281,6 +316,20 @@ const RecipeBuilder: React.FC = () => {
   const [familyPhoto, setFamilyPhoto] = useState("");
   const [familyNotes, setFamilyNotes] = useState("");
   const [familyPhotoError, setFamilyPhotoError] = useState(false);
+
+  // Family image crop state
+  const [showFamilyCropDialog, setShowFamilyCropDialog] = useState(false);
+  const [originalFamilyImage, setOriginalFamilyImage] = useState("");
+  const [familyCrop, setFamilyCrop] = useState<Crop>({
+    unit: "%",
+    width: 90,
+    height: 90,
+    x: 5,
+    y: 5,
+  });
+  const [familyZoom, setFamilyZoom] = useState(1);
+  const [familySharpening, setFamilySharpening] = useState(0.5);
+  const familyImgRef = useRef<HTMLImageElement>(null);
 
   const categoryOptions = useMemo<string[]>(
     () => ["Dinner", "Side", "Dessert", "Breakfast", "Cocktails"],
@@ -881,11 +930,268 @@ const RecipeBuilder: React.FC = () => {
     if (file) {
       const reader = new FileReader();
       reader.onload = (e) => {
-        setPhoto(e.target?.result as string);
-        setImageError(false); // Reset image error when new photo is uploaded
+        const imageDataUrl = e.target?.result as string;
+        setOriginalImage(imageDataUrl);
+        setShowCropDialog(true);
+        setImageError(false);
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  // Function to apply sharpening filter to canvas
+  const sharpenImage = useCallback(
+    (canvas: HTMLCanvasElement, intensity: number = 0.5): HTMLCanvasElement => {
+      const ctx = canvas.getContext("2d");
+      if (!ctx || intensity === 0) return canvas;
+
+      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      const data = imageData.data;
+      const width = canvas.width;
+      const height = canvas.height;
+
+      // Create a copy for the sharpened image
+      const sharpened = new ImageData(width, height);
+      const sharpenedData = sharpened.data;
+
+      // Adaptive sharpening kernel based on intensity
+      // Base kernel for intensity = 1.0
+      const baseCenter = 5;
+      const baseEdge = -1;
+
+      // Scale kernel values by intensity
+      const center = 1 + (baseCenter - 1) * intensity;
+      const edge = baseEdge * intensity;
+
+      const kernel = [0, edge, 0, edge, center, edge, 0, edge, 0];
+
+      // Apply convolution
+      for (let y = 1; y < height - 1; y++) {
+        for (let x = 1; x < width - 1; x++) {
+          for (let c = 0; c < 3; c++) {
+            // RGB channels only
+            let sum = 0;
+            for (let ky = -1; ky <= 1; ky++) {
+              for (let kx = -1; kx <= 1; kx++) {
+                const pixelIndex = ((y + ky) * width + (x + kx)) * 4 + c;
+                const kernelIndex = (ky + 1) * 3 + (kx + 1);
+                sum += data[pixelIndex] * kernel[kernelIndex];
+              }
+            }
+
+            const outputIndex = (y * width + x) * 4 + c;
+            sharpenedData[outputIndex] = Math.max(0, Math.min(255, sum));
+          }
+
+          // Copy alpha channel unchanged
+          const alphaIndex = (y * width + x) * 4 + 3;
+          const originalAlphaIndex = (y * width + x) * 4 + 3;
+          sharpenedData[alphaIndex] = data[originalAlphaIndex];
+        }
+      }
+
+      // Copy edges unchanged (kernel can't be applied to edges)
+      for (let y = 0; y < height; y++) {
+        for (let x = 0; x < width; x++) {
+          if (y === 0 || y === height - 1 || x === 0 || x === width - 1) {
+            const index = (y * width + x) * 4;
+            for (let c = 0; c < 4; c++) {
+              sharpenedData[index + c] = data[index + c];
+            }
+          }
+        }
+      }
+
+      // Create new canvas with sharpened image
+      const sharpenedCanvas = document.createElement("canvas");
+      sharpenedCanvas.width = width;
+      sharpenedCanvas.height = height;
+      const sharpenedCtx = sharpenedCanvas.getContext("2d");
+      if (sharpenedCtx) {
+        sharpenedCtx.putImageData(sharpened, 0, 0);
+      }
+
+      return sharpenedCanvas;
+    },
+    []
+  );
+
+  // Function to generate cropped canvas
+  const getCroppedImg = useCallback(
+    (
+      image: HTMLImageElement,
+      crop: PixelCrop,
+      zoom: number = 1,
+      sharpeningIntensity: number = 0.5
+    ): HTMLCanvasElement => {
+      const canvas = document.createElement("canvas");
+      const ctx = canvas.getContext("2d");
+
+      if (!ctx) {
+        throw new Error("Could not get canvas context");
+      }
+
+      // Since we're now properly converting percentage to pixels,
+      // and the crop coordinates are relative to the displayed image,
+      // we need to scale them to the natural image dimensions
+      const scaleX = image.naturalWidth / image.width;
+      const scaleY = image.naturalHeight / image.height;
+
+      // Convert the crop coordinates to natural image coordinates
+      const sourceX = crop.x * scaleX;
+      const sourceY = crop.y * scaleY;
+      const sourceWidth = crop.width * scaleX;
+      const sourceHeight = crop.height * scaleY;
+
+      // Set consistent output canvas size to match preview aspect ratio (16:9)
+      const outputWidth = 400;
+      const outputHeight = 225; // 16:9 aspect ratio (400/225 = 1.78)
+
+      canvas.width = outputWidth;
+      canvas.height = outputHeight;
+
+      // Enable image smoothing for better quality
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+
+      // Draw the cropped portion from the natural image, scaling to fit the output size
+      ctx.drawImage(
+        image,
+        sourceX,
+        sourceY,
+        sourceWidth,
+        sourceHeight,
+        0,
+        0,
+        outputWidth,
+        outputHeight
+      );
+
+      // Apply sharpening to the cropped image
+      return sharpenImage(canvas, sharpeningIntensity);
+    },
+    [sharpenImage]
+  );
+
+  const handleCropComplete = useCallback(() => {
+    if (!imgRef.current || !crop.width || !crop.height) return;
+
+    // Convert percentage crop to pixel crop based on the actual displayed image size
+    const imageElement = imgRef.current;
+    const pixelCrop: PixelCrop = {
+      x: (crop.x / 100) * imageElement.width,
+      y: (crop.y / 100) * imageElement.height,
+      width: (crop.width / 100) * imageElement.width,
+      height: (crop.height / 100) * imageElement.height,
+      unit: "px",
+    };
+
+    const croppedCanvas = getCroppedImg(
+      imageElement,
+      pixelCrop,
+      zoom,
+      sharpening
+    );
+
+    const croppedImageUrl = croppedCanvas.toDataURL("image/jpeg", 0.9);
+    setPhoto(croppedImageUrl);
+    // Update originalImage so subsequent crops work from the latest version
+    setOriginalImage(croppedImageUrl);
+    setShowCropDialog(false);
+  }, [crop, zoom, sharpening, getCroppedImg]);
+
+  const handleCropCancel = () => {
+    setShowCropDialog(false);
+    setCrop({
+      unit: "%",
+      width: 90,
+      height: 90,
+      x: 5,
+      y: 5,
+    });
+    setZoom(1);
+  };
+
+  // Family photo handlers
+  const handleFamilyPhotoUpload = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const imageDataUrl = e.target?.result as string;
+        setOriginalFamilyImage(imageDataUrl);
+        setShowFamilyCropDialog(true);
+        setFamilyPhotoError(false);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleFamilyCropComplete = useCallback(() => {
+    if (!familyImgRef.current || !familyCrop.width || !familyCrop.height)
+      return;
+
+    // Convert percentage crop to pixel crop based on the actual displayed image size
+    const imageElement = familyImgRef.current;
+    const pixelCrop: PixelCrop = {
+      x: (familyCrop.x / 100) * imageElement.width,
+      y: (familyCrop.y / 100) * imageElement.height,
+      width: (familyCrop.width / 100) * imageElement.width,
+      height: (familyCrop.height / 100) * imageElement.height,
+      unit: "px",
+    };
+
+    const croppedCanvas = getCroppedImg(
+      imageElement,
+      pixelCrop,
+      familyZoom,
+      familySharpening
+    );
+
+    const croppedImageUrl = croppedCanvas.toDataURL("image/jpeg", 0.9);
+    setFamilyPhoto(croppedImageUrl);
+    // Update originalFamilyImage so subsequent crops work from the latest version
+    setOriginalFamilyImage(croppedImageUrl);
+    setShowFamilyCropDialog(false);
+  }, [familyCrop, familyZoom, familySharpening, getCroppedImg]);
+
+  const handleFamilyCropCancel = () => {
+    setShowFamilyCropDialog(false);
+    setFamilyCrop({
+      unit: "%",
+      width: 90,
+      height: 90,
+      x: 5,
+      y: 5,
+    });
+    setFamilyZoom(1);
+  };
+
+  // Reset functions for crop modals
+  const handleCropReset = () => {
+    setCrop({
+      unit: "%",
+      width: 90,
+      height: 90,
+      x: 5,
+      y: 5,
+    });
+    setZoom(1);
+    setSharpening(0.5);
+  };
+
+  const handleFamilyCropReset = () => {
+    setFamilyCrop({
+      unit: "%",
+      width: 90,
+      height: 90,
+      x: 5,
+      y: 5,
+    });
+    setFamilyZoom(1);
+    setFamilySharpening(0.5);
   };
 
   const handleSave = async () => {
@@ -1052,6 +1358,226 @@ const RecipeBuilder: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* Image Crop Dialog */}
+      <Dialog
+        open={showCropDialog}
+        onClose={handleCropCancel}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>
+          <div className="flex items-center justify-between">
+            <span>Crop & Zoom Photo</span>
+            <IconButton onClick={handleCropCancel}>
+              <CloseIcon />
+            </IconButton>
+          </div>
+        </DialogTitle>
+        <DialogContent>
+          <div className="space-y-4">
+            {originalImage && (
+              <div className="relative">
+                <ReactCrop
+                  crop={crop}
+                  onChange={(_, percentCrop) => setCrop(percentCrop)}
+                  aspect={16 / 9}
+                  circularCrop={false}
+                >
+                  <img
+                    ref={imgRef}
+                    alt="Crop me"
+                    src={originalImage}
+                    style={{
+                      transform: `scale(${zoom})`,
+                      transformOrigin: "center",
+                      maxWidth: "100%",
+                      maxHeight: "400px",
+                    }}
+                  />
+                </ReactCrop>
+              </div>
+            )}
+
+            {/* Zoom Control */}
+            <Box sx={{ px: 2 }}>
+              <Typography variant="body2" gutterBottom>
+                Zoom
+              </Typography>
+              <div className="flex items-center gap-2">
+                <IconButton
+                  size="small"
+                  onClick={() => setZoom(Math.max(1, zoom - 0.1))}
+                >
+                  <ZoomOutIcon />
+                </IconButton>
+                <Slider
+                  value={zoom}
+                  onChange={(_, value) => setZoom(value as number)}
+                  min={1}
+                  max={2}
+                  step={0.1}
+                  sx={{ flex: 1, mx: 2 }}
+                />
+                <IconButton
+                  size="small"
+                  onClick={() => setZoom(Math.min(2, zoom + 0.1))}
+                >
+                  <ZoomInIcon />
+                </IconButton>
+              </div>
+            </Box>
+
+            {/* Sharpening Control */}
+            <Box sx={{ px: 2 }}>
+              <Typography variant="body2" gutterBottom>
+                Sharpening
+              </Typography>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-500 w-8">Off</span>
+                <Slider
+                  value={sharpening}
+                  onChange={(_, value) => setSharpening(value as number)}
+                  min={0}
+                  max={1}
+                  step={0.1}
+                  sx={{ flex: 1, mx: 2 }}
+                />
+                <span className="text-xs text-gray-500 w-8">Max</span>
+              </div>
+            </Box>
+          </div>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCropCancel} variant="outlined">
+            Cancel
+          </Button>
+          <Button
+            onClick={handleCropReset}
+            variant="outlined"
+            startIcon={<ResetIcon />}
+          >
+            Reset
+          </Button>
+          <Button
+            onClick={handleCropComplete}
+            variant="contained"
+            startIcon={<CheckIcon />}
+          >
+            Apply Crop
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Family Image Crop Dialog */}
+      <Dialog
+        open={showFamilyCropDialog}
+        onClose={handleFamilyCropCancel}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>
+          <div className="flex items-center justify-between">
+            <span>Crop & Zoom Family Photo</span>
+            <IconButton onClick={handleFamilyCropCancel}>
+              <CloseIcon />
+            </IconButton>
+          </div>
+        </DialogTitle>
+        <DialogContent>
+          <div className="space-y-4">
+            {originalFamilyImage && (
+              <div className="relative">
+                <ReactCrop
+                  crop={familyCrop}
+                  onChange={(_, percentCrop) => setFamilyCrop(percentCrop)}
+                  aspect={16 / 9}
+                  circularCrop={false}
+                >
+                  <img
+                    ref={familyImgRef}
+                    alt="Crop family photo"
+                    src={originalFamilyImage}
+                    style={{
+                      transform: `scale(${familyZoom})`,
+                      transformOrigin: "center",
+                      maxWidth: "100%",
+                      maxHeight: "400px",
+                    }}
+                  />
+                </ReactCrop>
+              </div>
+            )}
+
+            {/* Zoom Control */}
+            <Box sx={{ px: 2 }}>
+              <Typography variant="body2" gutterBottom>
+                Zoom
+              </Typography>
+              <div className="flex items-center gap-2">
+                <IconButton
+                  size="small"
+                  onClick={() => setFamilyZoom(Math.max(1, familyZoom - 0.1))}
+                >
+                  <ZoomOutIcon />
+                </IconButton>
+                <Slider
+                  value={familyZoom}
+                  onChange={(_, value) => setFamilyZoom(value as number)}
+                  min={1}
+                  max={2}
+                  step={0.1}
+                  sx={{ flex: 1, mx: 2 }}
+                />
+                <IconButton
+                  size="small"
+                  onClick={() => setFamilyZoom(Math.min(2, familyZoom + 0.1))}
+                >
+                  <ZoomInIcon />
+                </IconButton>
+              </div>
+            </Box>
+
+            {/* Sharpening Control */}
+            <Box sx={{ px: 2 }}>
+              <Typography variant="body2" gutterBottom>
+                Sharpening
+              </Typography>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-gray-500 w-8">Off</span>
+                <Slider
+                  value={familySharpening}
+                  onChange={(_, value) => setFamilySharpening(value as number)}
+                  min={0}
+                  max={1}
+                  step={0.1}
+                  sx={{ flex: 1, mx: 2 }}
+                />
+                <span className="text-xs text-gray-500 w-8">Max</span>
+              </div>
+            </Box>
+          </div>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleFamilyCropCancel} variant="outlined">
+            Cancel
+          </Button>
+          <Button
+            onClick={handleFamilyCropReset}
+            variant="outlined"
+            startIcon={<ResetIcon />}
+          >
+            Reset
+          </Button>
+          <Button
+            onClick={handleFamilyCropComplete}
+            variant="contained"
+            startIcon={<CheckIcon />}
+          >
+            Apply Crop
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       <div className="max-xl bg-white flex-1">
         {/* Header */}
         <div className="flex items-center justify-between h-[61px] border-b border-gray-200 px-3">
@@ -1139,23 +1665,35 @@ const RecipeBuilder: React.FC = () => {
                               src={photo}
                               alt="Recipe preview"
                               width={400}
-                              height={192}
-                              className="w-full h-48 object-cover rounded-lg"
+                              height={225}
+                              className="w-full h-48 object-contain rounded-lg bg-gray-50"
                               onError={() => setImageError(true)}
                             />
-                            <Button
-                              variant="outlined"
-                              startIcon={<PhotoCameraIcon />}
-                              component="label"
-                            >
-                              Change Photo
-                              <input
-                                type="file"
-                                hidden
-                                accept="image/*"
-                                onChange={handlePhotoUpload}
-                              />
-                            </Button>
+                            <div className="flex gap-2 justify-center flex-wrap">
+                              <Button
+                                variant="outlined"
+                                startIcon={<PhotoCameraIcon />}
+                                component="label"
+                              >
+                                Change Photo
+                                <input
+                                  type="file"
+                                  hidden
+                                  accept="image/*"
+                                  onChange={handlePhotoUpload}
+                                />
+                              </Button>
+                              <Button
+                                variant="outlined"
+                                startIcon={<CropIcon />}
+                                onClick={() => {
+                                  setOriginalImage(photo);
+                                  setShowCropDialog(true);
+                                }}
+                              >
+                                Crop & Zoom
+                              </Button>
+                            </div>
                           </div>
                         ) : photo && imageError ? (
                           <div className="space-y-4">
@@ -1164,19 +1702,31 @@ const RecipeBuilder: React.FC = () => {
                                 sx={{ fontSize: 48, color: "#9CA3AF" }}
                               />
                             </div>
-                            <Button
-                              variant="outlined"
-                              startIcon={<PhotoCameraIcon />}
-                              component="label"
-                            >
-                              Change Photo
-                              <input
-                                type="file"
-                                hidden
-                                accept="image/*"
-                                onChange={handlePhotoUpload}
-                              />
-                            </Button>
+                            <div className="flex gap-2 justify-center flex-wrap">
+                              <Button
+                                variant="outlined"
+                                startIcon={<PhotoCameraIcon />}
+                                component="label"
+                              >
+                                Change Photo
+                                <input
+                                  type="file"
+                                  hidden
+                                  accept="image/*"
+                                  onChange={handlePhotoUpload}
+                                />
+                              </Button>
+                              <Button
+                                variant="outlined"
+                                startIcon={<CropIcon />}
+                                onClick={() => {
+                                  setOriginalImage(photo);
+                                  setShowCropDialog(true);
+                                }}
+                              >
+                                Crop & Zoom
+                              </Button>
+                            </div>
                           </div>
                         ) : (
                           <div className="space-y-4">
@@ -1382,35 +1932,35 @@ const RecipeBuilder: React.FC = () => {
                                   src={familyPhoto}
                                   alt="Family recipe card"
                                   width={400}
-                                  height={192}
-                                  className="w-full h-48 object-cover rounded-lg"
+                                  height={225}
+                                  className="w-full h-48 object-contain rounded-lg bg-gray-50"
                                   onError={() => setFamilyPhotoError(true)}
                                 />
-                                <Button
-                                  variant="outlined"
-                                  startIcon={<PhotoCameraIcon />}
-                                  component="label"
-                                >
-                                  Change Family Recipe Photo
-                                  <input
-                                    type="file"
-                                    hidden
-                                    accept="image/*"
-                                    onChange={(e) => {
-                                      const file = e.target.files?.[0];
-                                      if (file) {
-                                        const reader = new FileReader();
-                                        reader.onloadend = () => {
-                                          setFamilyPhoto(
-                                            reader.result as string
-                                          );
-                                          setFamilyPhotoError(false);
-                                        };
-                                        reader.readAsDataURL(file);
-                                      }
+                                <div className="flex gap-2 justify-center flex-wrap">
+                                  <Button
+                                    variant="outlined"
+                                    startIcon={<PhotoCameraIcon />}
+                                    component="label"
+                                  >
+                                    Change Family Photo
+                                    <input
+                                      type="file"
+                                      hidden
+                                      accept="image/*"
+                                      onChange={handleFamilyPhotoUpload}
+                                    />
+                                  </Button>
+                                  <Button
+                                    variant="outlined"
+                                    startIcon={<CropIcon />}
+                                    onClick={() => {
+                                      setOriginalFamilyImage(familyPhoto);
+                                      setShowFamilyCropDialog(true);
                                     }}
-                                  />
-                                </Button>
+                                  >
+                                    Crop & Zoom
+                                  </Button>
+                                </div>
                               </div>
                             ) : (
                               <div className="space-y-4">
@@ -1428,19 +1978,7 @@ const RecipeBuilder: React.FC = () => {
                                       type="file"
                                       hidden
                                       accept="image/*"
-                                      onChange={(e) => {
-                                        const file = e.target.files?.[0];
-                                        if (file) {
-                                          const reader = new FileReader();
-                                          reader.onloadend = () => {
-                                            setFamilyPhoto(
-                                              reader.result as string
-                                            );
-                                            setFamilyPhotoError(false);
-                                          };
-                                          reader.readAsDataURL(file);
-                                        }
-                                      }}
+                                      onChange={handleFamilyPhotoUpload}
                                     />
                                   </Button>
                                 </div>
