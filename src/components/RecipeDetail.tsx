@@ -1776,6 +1776,16 @@ const RecipeDetail = React.memo(function RecipeDetail({
               </div>
             </div>
 
+            {/* My Notes */}
+            {recipe.myNotes && (
+              <div>
+                <h2 className="text-xl font-bold text-gray-900 mb-4">Notes</h2>
+                <p className="text-gray-700 whitespace-pre-wrap">
+                  {recipe.myNotes}
+                </p>
+              </div>
+            )}
+
             {/* Cooked This One Up Button - Only for logged in users */}
             {session?.user?.email && (
               <div className="text-center my-8">
@@ -1961,16 +1971,6 @@ const RecipeDetail = React.memo(function RecipeDetail({
                       </div>
                     ))}
                 </div>
-              </div>
-            )}
-
-            {/* My Notes */}
-            {recipe.myNotes && (
-              <div>
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Notes</h2>
-                <p className="text-gray-700 whitespace-pre-wrap">
-                  {recipe.myNotes}
-                </p>
               </div>
             )}
           </div>
