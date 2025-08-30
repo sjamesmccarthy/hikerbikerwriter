@@ -39,6 +39,10 @@ import {
   TextFields as TextIcon,
   NetworkCheck as NetworkIcon,
   Casino as RollIcon,
+  FactCheck as FactCheckIcon,
+  Favorite as HeartIcon,
+  CheckCircle as CheckCircleIcon,
+  Delete as DeleteIcon,
 } from "@mui/icons-material";
 import {
   ButtonGroup,
@@ -47,6 +51,10 @@ import {
   Dialog,
   DialogContent,
   DialogActions,
+  Rating,
+  TextField,
+  DialogTitle,
+  Typography,
 } from "@mui/material";
 import { renderFooter } from "./shared/footerHelpers";
 import { useSession, signOut } from "next-auth/react";
@@ -91,6 +99,15 @@ type Recipe = {
   familyPhoto?: string;
   familyNotes?: string;
   userEmail?: string;
+  reviews?: Array<{
+    uuid: string;
+    userEmail: string;
+    userName: string;
+    stars: number;
+    reviewText: string;
+    createDate: string;
+    status: number; // 1 for published
+  }>;
 };
 
 interface RecipeDetailProps {
@@ -128,6 +145,13 @@ const RecipeDetail = React.memo(function RecipeDetail({
     Array<{ name: string; email: string; relationship?: string }>
   >([]);
   const [hasFamilyMembers, setHasFamilyMembers] = useState(false);
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [rating, setRating] = useState<number | null>(0);
+  const [reviewText, setReviewText] = useState("");
+  const [reviewSubmitted, setReviewSubmitted] = useState(false);
+  const [editingReviewId, setEditingReviewId] = useState<string | null>(null);
+  const [editRating, setEditRating] = useState<number | null>(0);
+  const [editReviewText, setEditReviewText] = useState("");
   const { data: session } = useSession();
 
   // Apps menu configuration
@@ -249,6 +273,220 @@ const RecipeDetail = React.memo(function RecipeDetail({
     return `${hours}h ${remainingMinutes}m`;
   };
 
+  // Helper function to count words
+  const countWords = (text: string): number => {
+    if (!text || text.trim().length === 0) return 0;
+    return text
+      .trim()
+      .split(/\s+/)
+      .filter((word) => word.length > 0).length;
+  };
+
+  // Handle review text change with word limit
+  const handleReviewTextChange = (
+    event: React.ChangeEvent<HTMLTextAreaElement>
+  ) => {
+    const newText = event.target.value;
+    const wordCount = countWords(newText);
+
+    if (wordCount <= 100) {
+      setReviewText(newText);
+    }
+  };
+
+  // Handle opening the review modal
+  const handleCookedThisOneUp = () => {
+    setReviewModalOpen(true);
+  };
+
+  // Handle closing the review modal
+  const handleCloseReviewModal = () => {
+    setReviewModalOpen(false);
+    setRating(0);
+    setReviewText("");
+  };
+
+  // Handle submitting the review
+  const handleSubmitReview = async () => {
+    if (!recipe || !session?.user?.email || !rating) return;
+
+    try {
+      // Check if user has already submitted a review for this recipe
+      const existingReview = recipe.reviews?.find(
+        (review) => review.userEmail === session.user?.email
+      );
+
+      if (existingReview) {
+        console.log("User has already submitted a review for this recipe");
+        // You might want to show a user-friendly message here
+        alert("You have already submitted a review for this recipe.");
+        return;
+      }
+
+      // Generate UUID for the review
+      const uuid = crypto.randomUUID();
+
+      // Create the review object
+      const newReview = {
+        uuid: uuid,
+        userEmail: session.user.email,
+        userName: nameFromDB || session.user?.name || session.user.email,
+        stars: rating,
+        reviewText: reviewText.trim(),
+        createDate: new Date().toISOString(),
+        status: 1, // Published
+      };
+
+      // Add the review to the recipe's reviews array
+      const updatedRecipe = {
+        ...recipe,
+        reviews: [...(recipe.reviews || []), newReview],
+      };
+
+      // Save to database
+      const response = await fetch("/api/recipes", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updatedRecipe),
+      });
+
+      if (response.ok) {
+        // Update local state with the new review
+        setRecipe(updatedRecipe);
+        setReviewSubmitted(true); // Mark review as submitted
+        console.log("Review submitted successfully");
+        handleCloseReviewModal();
+      } else {
+        console.error("Failed to submit review");
+        // You might want to show an error message to the user here
+      }
+    } catch (error) {
+      console.error("Error submitting review:", error);
+      // You might want to show an error message to the user here
+    }
+  };
+
+  // Handle editing a review
+  const handleEditReview = (review: {
+    uuid: string;
+    userEmail: string;
+    userName: string;
+    stars: number;
+    reviewText: string;
+    createDate: string;
+    status: number;
+  }) => {
+    setEditingReviewId(review.uuid);
+    setEditRating(review.stars);
+    setEditReviewText(review.reviewText);
+  };
+
+  // Handle canceling edit
+  const handleCancelEdit = () => {
+    setEditingReviewId(null);
+    setEditRating(0);
+    setEditReviewText("");
+  };
+
+  // Handle saving edited review
+  const handleSaveEdit = async (reviewUuid: string) => {
+    if (!recipe || !session?.user?.email || !editRating) return;
+
+    try {
+      const updatedReviews =
+        recipe.reviews?.map((review) =>
+          review.uuid === reviewUuid
+            ? {
+                ...review,
+                stars: editRating,
+                reviewText: editReviewText.trim(),
+              }
+            : review
+        ) || [];
+
+      const updatedRecipe = {
+        ...recipe,
+        reviews: updatedReviews,
+      };
+
+      const response = await fetch("/api/recipes", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(updatedRecipe),
+      });
+
+      if (response.ok) {
+        setRecipe(updatedRecipe);
+        handleCancelEdit();
+        console.log("Review updated successfully");
+      } else {
+        console.error("Failed to update review");
+      }
+    } catch (error) {
+      console.error("Error updating review:", error);
+    }
+  };
+
+  // Handle deleting a review
+  const handleDeleteReview = async (reviewUuid: string) => {
+    if (!recipe || !session?.user?.email) return;
+
+    if (window.confirm("Are you sure you want to delete this review?")) {
+      try {
+        const updatedReviews =
+          recipe.reviews?.filter((review) => review.uuid !== reviewUuid) || [];
+
+        const updatedRecipe = {
+          ...recipe,
+          reviews: updatedReviews,
+        };
+
+        const response = await fetch("/api/recipes", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(updatedRecipe),
+        });
+
+        if (response.ok) {
+          setRecipe(updatedRecipe);
+          setReviewSubmitted(false); // Allow user to submit a new review
+          console.log("Review deleted successfully");
+        } else {
+          console.error("Failed to delete review");
+        }
+      } catch (error) {
+        console.error("Error deleting review:", error);
+      }
+    }
+  };
+
+  // Helper function to count words for edit text
+  const countWordsEdit = (text: string): number => {
+    if (!text || text.trim().length === 0) return 0;
+    return text
+      .trim()
+      .split(/\s+/)
+      .filter((word) => word.length > 0).length;
+  };
+
+  // Handle edit review text change with word limit
+  const handleEditReviewTextChange = (
+    event: React.ChangeEvent<HTMLTextAreaElement>
+  ) => {
+    const newText = event.target.value;
+    const wordCount = countWordsEdit(newText);
+
+    if (wordCount <= 100) {
+      setEditReviewText(newText);
+    }
+  };
+
   useEffect(() => {
     let isMounted = true;
 
@@ -314,6 +552,16 @@ const RecipeDetail = React.memo(function RecipeDetail({
 
         if (foundRecipe && isMounted) {
           setRecipe(foundRecipe);
+
+          // Check if current user has already submitted a review
+          if (session?.user?.email) {
+            const userHasReviewed = foundRecipe.reviews?.some(
+              (review: { userEmail: string }) =>
+                review.userEmail === session.user?.email
+            );
+            setReviewSubmitted(userHasReviewed || false);
+          }
+
           // Set servings to the closest available option (2, 4, 6, 8)
           const availableServings = [2, 4, 6, 8];
           const closestServing = availableServings.reduce(
@@ -1522,6 +1770,192 @@ const RecipeDetail = React.memo(function RecipeDetail({
               </div>
             </div>
 
+            {/* Cooked This One Up Button */}
+            <div className="text-center my-8">
+              <button
+                onClick={reviewSubmitted ? undefined : handleCookedThisOneUp}
+                disabled={reviewSubmitted}
+                className={`px-8 py-4 rounded-lg text-xl font-bold transition-colors flex items-center gap-2 mx-auto ${
+                  reviewSubmitted
+                    ? "bg-green-200 text-green-800 cursor-not-allowed"
+                    : "bg-gray-200 text-gray-900 hover:text-gray-700 hover:bg-gray-300 cursor-pointer"
+                }`}
+                style={{ minWidth: 220 }}
+              >
+                {reviewSubmitted ? (
+                  <>
+                    <CheckCircleIcon sx={{ fontSize: 36 }} />
+                    REVIEW SUBMITTED
+                  </>
+                ) : (
+                  <>
+                    <FactCheckIcon sx={{ fontSize: 36 }} />
+                    COOKED THIS ONE UP
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* Reviews Section */}
+            {recipe.reviews && recipe.reviews.length > 0 && (
+              <div className="mb-8">
+                <div className="space-y-1">
+                  {recipe.reviews
+                    .filter((review) => review.status === 1) // Only show published reviews
+                    .map((review, index, filteredReviews) => (
+                      <div
+                        key={review.uuid}
+                        className="pb-2 border-b border-gray-300 last:border-b-0"
+                      >
+                        {editingReviewId === review.uuid ? (
+                          // Edit mode
+                          <div>
+                            {/* Edit Heart Rating */}
+                            <div className="mb-1">
+                              <Rating
+                                name={`edit-review-rating-${review.uuid}`}
+                                value={editRating}
+                                onChange={(event, newValue) => {
+                                  setEditRating(newValue);
+                                }}
+                                icon={
+                                  <HeartIcon
+                                    sx={{ color: "#e91e63", fontSize: 20 }}
+                                  />
+                                }
+                                emptyIcon={
+                                  <HeartIcon
+                                    sx={{ color: "#ccc", fontSize: 20 }}
+                                  />
+                                }
+                                size="small"
+                              />
+                            </div>
+                            <div className="text-sm text-gray-600 mb-1">
+                              Cooked up by {review.userName || review.userEmail}
+                              {filteredReviews.length > 1 && index === 0 && (
+                                <span>
+                                  {" "}
+                                  and {filteredReviews.length - 1} others
+                                </span>
+                              )}{" "}
+                              on{" "}
+                              {new Date(review.createDate).toLocaleDateString(
+                                "en-US",
+                                {
+                                  year: "numeric",
+                                  month: "long",
+                                  day: "numeric",
+                                }
+                              )}
+                            </div>
+                            {/* Edit Textarea */}
+                            <div className="mb-2">
+                              <textarea
+                                value={editReviewText}
+                                onChange={handleEditReviewTextChange}
+                                className="w-full p-2 border border-gray-300 rounded-md resize-none"
+                                rows={3}
+                                placeholder="Edit your review..."
+                              />
+                              <div className="text-xs text-gray-500 text-right">
+                                {countWordsEdit(editReviewText)}/100 words
+                              </div>
+                            </div>
+                            {/* Edit Actions */}
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => handleSaveEdit(review.uuid)}
+                                disabled={
+                                  !editRating ||
+                                  editReviewText.trim().length === 0
+                                }
+                                className="px-3 py-1 bg-blue-600 text-white rounded text-sm hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                              >
+                                Save
+                              </button>
+                              <button
+                                onClick={handleCancelEdit}
+                                className="px-3 py-1 bg-gray-500 text-white rounded text-sm hover:bg-gray-600"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          // View mode
+                          <div>
+                            {/* Heart Rating */}
+                            <div className="mb-1 flex items-center justify-between">
+                              <Rating
+                                name={`review-rating-${review.uuid}`}
+                                value={review.stars}
+                                readOnly
+                                icon={
+                                  <HeartIcon
+                                    sx={{ color: "#e91e63", fontSize: 20 }}
+                                  />
+                                }
+                                emptyIcon={
+                                  <HeartIcon
+                                    sx={{ color: "#ccc", fontSize: 20 }}
+                                  />
+                                }
+                                size="small"
+                              />
+                              {/* Edit/Delete buttons for own reviews */}
+                              {session?.user?.email === review.userEmail && (
+                                <div className="flex gap-1">
+                                  <IconButton
+                                    size="small"
+                                    onClick={() => handleEditReview(review)}
+                                    sx={{ fontSize: 16 }}
+                                    title="Edit review"
+                                  >
+                                    <EditIcon sx={{ fontSize: 16 }} />
+                                  </IconButton>
+                                  <IconButton
+                                    size="small"
+                                    onClick={() =>
+                                      handleDeleteReview(review.uuid)
+                                    }
+                                    sx={{ fontSize: 16 }}
+                                    title="Delete review"
+                                  >
+                                    <DeleteIcon sx={{ fontSize: 16 }} />
+                                  </IconButton>
+                                </div>
+                              )}
+                            </div>
+                            <div className="text-sm text-gray-600 mb-1">
+                              Cooked up by {review.userName || review.userEmail}
+                              {filteredReviews.length > 1 && index === 0 && (
+                                <span>
+                                  {" "}
+                                  and {filteredReviews.length - 1} others
+                                </span>
+                              )}{" "}
+                              on{" "}
+                              {new Date(review.createDate).toLocaleDateString(
+                                "en-US",
+                                {
+                                  year: "numeric",
+                                  month: "long",
+                                  day: "numeric",
+                                }
+                              )}
+                            </div>
+                            <div className="text-gray-800">
+                              {review.reviewText}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
+
             {/* My Notes */}
             {recipe.myNotes && (
               <div>
@@ -1745,6 +2179,61 @@ const RecipeDetail = React.memo(function RecipeDetail({
               <CloseIcon sx={{ fontSize: 48 }} />
             </IconButton>
           )}
+        </DialogActions>
+      </Dialog>
+
+      {/* Review Modal Dialog */}
+      <Dialog
+        open={reviewModalOpen}
+        onClose={handleCloseReviewModal}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle></DialogTitle>
+        <DialogContent sx={{ p: 3 }}>
+          {/* Rating with Hearts */}
+          <div className="text-center mb-6">
+            <Rating
+              name="recipe-rating"
+              value={rating}
+              onChange={(event, newValue) => {
+                setRating(newValue);
+              }}
+              icon={<HeartIcon sx={{ color: "#e91e63", fontSize: 48 }} />}
+              emptyIcon={<HeartIcon sx={{ color: "#ccc", fontSize: 48 }} />}
+              size="large"
+              max={5}
+            />
+          </div>
+
+          {/* Review Textarea */}
+          <div>
+            <TextField
+              multiline
+              rows={4}
+              fullWidth
+              variant="outlined"
+              value={reviewText}
+              onChange={handleReviewTextChange}
+              placeholder="In 100 words share your thoughts about this recipe"
+              sx={{ mb: 1 }}
+            />
+            <div className="text-right text-sm text-gray-500">
+              {countWords(reviewText)}/100 words
+            </div>
+          </div>
+        </DialogContent>
+        <DialogActions sx={{ justifyContent: "space-between", p: 3 }}>
+          <Button onClick={handleCloseReviewModal} color="inherit">
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSubmitReview}
+            variant="contained"
+            disabled={!rating || reviewText.trim().length === 0}
+          >
+            Submit Review
+          </Button>
         </DialogActions>
       </Dialog>
 

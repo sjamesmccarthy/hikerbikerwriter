@@ -348,6 +348,7 @@ export default async function handler(req, res) {
         userEmail,
         personalNotes,
         isFavorite,
+        reviews, // Add reviews field
       } = req.body;
 
       if (!userEmail) {
@@ -412,6 +413,7 @@ export default async function handler(req, res) {
         personalNotes: personalNotes || "",
         isFavorite: isFavorite || false,
         sourceTitle: sourceTitle || existingRecipe.sourceTitle || undefined,
+        reviews: reviews || existingRecipe.reviews || [], // Include reviews
       };
 
       // Update in database
