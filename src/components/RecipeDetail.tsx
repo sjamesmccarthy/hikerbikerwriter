@@ -617,6 +617,10 @@ const RecipeDetail = React.memo(function RecipeDetail({
           .replace(/\u215C/g, "3/8") // ⅜
           .replace(/\u215D/g, "5/8") // ⅝
           .replace(/\u215E/g, "7/8") // ⅞
+          // Convert degree symbol to ASCII equivalent
+          .replace(/°F/g, " deg F") // Replace degree symbol with deg
+          .replace(/°C/g, " deg C") // Replace Celsius degree symbol
+          .replace(/°/g, " deg") // Replace any remaining degree symbols
           .replace(/\s+/g, " ") // Replace multiple spaces with single space
           .trim();
         const stepText = `${index + 1}. ${cleanedStepText}`;
@@ -750,7 +754,7 @@ const RecipeDetail = React.memo(function RecipeDetail({
             ) {
               tempTimeInfo += `${symbol}Heat Level ${step.temperature} `;
             } else {
-              tempTimeInfo += `${symbol}${step.temperature} deg F `;
+              tempTimeInfo += `${symbol}${step.temperature}°F `;
             }
           }
           if (step.time) {
