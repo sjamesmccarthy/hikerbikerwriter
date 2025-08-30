@@ -579,10 +579,10 @@ const RecipeDetail = React.memo(function RecipeDetail({
       // Add padding above Instructions heading
       yPosition += 5;
 
-      pdf.setFontSize(16);
-      pdf.setFont("helvetica", "bold");
-      pdf.text("Steps", leftMargin, yPosition);
-      yPosition += 9;
+      // pdf.setFontSize(16);
+      // pdf.setFont("helvetica", "bold");
+      // pdf.text("Steps", leftMargin, yPosition);
+      // yPosition += 9;
 
       pdf.setFontSize(11);
       pdf.setFont("helvetica", "normal");
@@ -650,7 +650,15 @@ const RecipeDetail = React.memo(function RecipeDetail({
         pdf.setFontSize(11);
         pdf.setFont("helvetica", "normal");
 
-        // Render each line of the step text with proper spacing
+        // Render step header as "Step [Number]"
+        pdf.setFontSize(12);
+        pdf.setFont("helvetica", "bold");
+        pdf.text(`Step ${index + 1}`, leftMargin, yPosition);
+        yPosition += 7;
+
+        // Render step text below the header
+        pdf.setFontSize(11);
+        pdf.setFont("helvetica", "normal");
         stepLines.forEach((line: string, lineIndex: number) => {
           pdf.text(line, leftMargin, yPosition + lineIndex * 6);
         });
