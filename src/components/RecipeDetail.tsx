@@ -1591,6 +1591,18 @@ const RecipeDetail = React.memo(function RecipeDetail({
                   >
                     8
                   </Button>
+                  <Button
+                    onClick={() => setServings(10)}
+                    variant={servings === 10 ? "contained" : "outlined"}
+                  >
+                    10
+                  </Button>
+                  <Button
+                    onClick={() => setServings(12)}
+                    variant={servings === 12 ? "contained" : "outlined"}
+                  >
+                    12
+                  </Button>
                 </ButtonGroup>
               </div>
 
