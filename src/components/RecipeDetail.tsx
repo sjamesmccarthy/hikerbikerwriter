@@ -812,7 +812,7 @@ const RecipeDetail = React.memo(function RecipeDetail({
       pdf.setFont("helvetica", "normal");
       recipe?.ingredients.forEach((ingredient) => {
         const text = `• ${formatAmountAsFraction(
-          ingredient.amount
+          scaleIngredient(ingredient.amount)
         )} ${formatUnit(ingredient.unit)} ${ingredient.name}`;
 
         // Split ingredient text to ensure it wraps properly with conservative width
@@ -962,7 +962,7 @@ const RecipeDetail = React.memo(function RecipeDetail({
 
             if (ingredient) {
               const ingredientText = `• ${formatAmountAsFraction(
-                ingredient.amount
+                scaleIngredient(ingredient.amount)
               )}${ingredient.unit ? ` ${formatUnit(ingredient.unit)}` : ""} | ${
                 ingredient.name
               }`;
