@@ -637,7 +637,18 @@ const FieldNotes: React.FC = () => {
               </span>{" "}
               <br />
               about anything and everything but mostly about hiking, biking,
-              writing, photography & brewing{" "}
+              writing, photography & brewing
+            </p>
+            <p className="text-gray-600 leading-relaxed font-mono text-center mt-2">
+              Inspired by{" "}
+              <a
+                target="_blank"
+                rel="noopener noreferrer"
+                href="https://jmgalleries.com/fieldnotes"
+                className="text-blue-500"
+              >
+                jM Galleries Field Notes
+              </a>
             </p>
           </div>
 
