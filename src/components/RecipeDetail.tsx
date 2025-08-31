@@ -740,6 +740,29 @@ const RecipeDetail = React.memo(function RecipeDetail({
     handleExportPDF();
   };
 
+  // Helper function to convert Unicode fractions to ASCII for PDF compatibility
+  const convertUnicodeToAscii = (text: string): string => {
+    return text
+      .replace(/¼/g, "1/4")
+      .replace(/½/g, "1/2")
+      .replace(/¾/g, "3/4")
+      .replace(/⅐/g, "1/7")
+      .replace(/⅑/g, "1/9")
+      .replace(/⅒/g, "1/10")
+      .replace(/⅓/g, "1/3")
+      .replace(/⅔/g, "2/3")
+      .replace(/⅕/g, "1/5")
+      .replace(/⅖/g, "2/5")
+      .replace(/⅗/g, "3/5")
+      .replace(/⅘/g, "4/5")
+      .replace(/⅙/g, "1/6")
+      .replace(/⅚/g, "5/6")
+      .replace(/⅛/g, "1/8")
+      .replace(/⅜/g, "3/8")
+      .replace(/⅝/g, "5/8")
+      .replace(/⅞/g, "7/8");
+  };
+
   const handleExportPDF = async () => {
     try {
       // Dynamic import to avoid SSR issues
@@ -811,9 +834,12 @@ const RecipeDetail = React.memo(function RecipeDetail({
       pdf.setFontSize(11);
       pdf.setFont("helvetica", "normal");
       recipe?.ingredients.forEach((ingredient) => {
-        const text = `• ${formatAmountAsFraction(
+        const amount = formatAmountAsFraction(
           scaleIngredient(ingredient.amount)
-        )} ${formatUnit(ingredient.unit)} ${ingredient.name}`;
+        );
+        const text = `• ${convertUnicodeToAscii(amount)} ${formatUnit(
+          ingredient.unit
+        )} ${ingredient.name}`;
 
         // Split ingredient text to ensure it wraps properly with conservative width
         const ingredientLines = pdf.splitTextToSize(text, textWidth - 10);
@@ -961,11 +987,12 @@ const RecipeDetail = React.memo(function RecipeDetail({
             }
 
             if (ingredient) {
-              const ingredientText = `• ${formatAmountAsFraction(
+              const amount = formatAmountAsFraction(
                 scaleIngredient(ingredient.amount)
-              )}${ingredient.unit ? ` ${formatUnit(ingredient.unit)}` : ""} | ${
-                ingredient.name
-              }`;
+              );
+              const ingredientText = `• ${convertUnicodeToAscii(amount)}${
+                ingredient.unit ? ` ${formatUnit(ingredient.unit)}` : ""
+              } | ${ingredient.name}`;
 
               // Split ingredient text to ensure it wraps properly with conservative width
               const ingredientLines = pdf.splitTextToSize(
