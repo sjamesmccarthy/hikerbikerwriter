@@ -783,14 +783,14 @@ const RecipeDetail = React.memo(function RecipeDetail({
       const textWidth = pageWidth - leftMargin - rightMargin;
 
       // Title
-      pdf.setFontSize(20);
+      pdf.setFontSize(18);
       pdf.setFont("helvetica", "bold");
       const titleLines = pdf.splitTextToSize(recipe?.title || "", textWidth);
       pdf.text(titleLines, leftMargin, yPosition);
       yPosition += titleLines.length * 7 + 1;
 
       // Times
-      pdf.setFontSize(12);
+      pdf.setFontSize(10);
       pdf.setFont("helvetica", "normal");
       pdf.text(
         `Prep: ${recipe?.prepTime}m | Cook: ${formatTime(
@@ -845,7 +845,7 @@ const RecipeDetail = React.memo(function RecipeDetail({
       pdf.text(`Ingredients (Servings: ${servings})`, leftMargin, yPosition);
       yPosition += 10;
 
-      pdf.setFontSize(11);
+      pdf.setFontSize(10);
       pdf.setFont("helvetica", "normal");
       recipe?.ingredients.forEach((ingredient) => {
         const amount = formatAmountAsFraction(
@@ -878,7 +878,7 @@ const RecipeDetail = React.memo(function RecipeDetail({
       // pdf.text("Steps", leftMargin, yPosition);
       // yPosition += 9;
 
-      pdf.setFontSize(11);
+      pdf.setFontSize(10);
       pdf.setFont("helvetica", "normal");
       recipe?.steps.forEach((step, index) => {
         // Remove line breaks and clean up text - enhanced to handle all types of whitespace and Unicode fractions
@@ -941,7 +941,7 @@ const RecipeDetail = React.memo(function RecipeDetail({
         }
 
         // Ensure we're using the correct font for step text
-        pdf.setFontSize(11);
+        pdf.setFontSize(10);
         pdf.setFont("helvetica", "normal");
 
         // Render step header as "Step [Number]"
@@ -951,7 +951,7 @@ const RecipeDetail = React.memo(function RecipeDetail({
         yPosition += 7;
 
         // Render step text below the header
-        pdf.setFontSize(11);
+        pdf.setFontSize(10);
         pdf.setFont("helvetica", "normal");
         stepLines.forEach((line: string, lineIndex: number) => {
           pdf.text(line, leftMargin, yPosition + lineIndex * 6);
@@ -1096,12 +1096,12 @@ const RecipeDetail = React.memo(function RecipeDetail({
           yPosition = 20;
         }
 
-        pdf.setFontSize(16);
+        pdf.setFontSize(12);
         pdf.setFont("helvetica", "bold");
         pdf.text("My Notes", leftMargin, yPosition);
         yPosition += 10;
 
-        pdf.setFontSize(11);
+        pdf.setFontSize(10);
         pdf.setFont("helvetica", "normal");
         const notesLines = pdf.splitTextToSize(recipe.myNotes, textWidth);
         pdf.text(notesLines, leftMargin, yPosition);
