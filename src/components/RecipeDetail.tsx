@@ -843,7 +843,7 @@ const RecipeDetail = React.memo(function RecipeDetail({
       pdf.setFontSize(12);
       pdf.setFont("helvetica", "bold");
       pdf.text(`Ingredients (Servings: ${servings})`, leftMargin, yPosition);
-      yPosition += 10;
+      yPosition += 8;
 
       pdf.setFontSize(10);
       pdf.setFont("helvetica", "normal");
@@ -956,7 +956,7 @@ const RecipeDetail = React.memo(function RecipeDetail({
         stepLines.forEach((line: string, lineIndex: number) => {
           pdf.text(line, leftMargin, yPosition + lineIndex * 6);
         });
-        yPosition += stepLines.length * 6 + 5; // Base spacing after step text
+        yPosition += stepLines.length * 6 + 1; // Base spacing after step text
 
         // Add step ingredients if they exist
         if (step.stepIngredients && step.stepIngredients.length > 0) {
@@ -1020,7 +1020,7 @@ const RecipeDetail = React.memo(function RecipeDetail({
             }
           });
 
-          yPosition += 3; // Space after ingredients
+          yPosition += 0; // Space after ingredients
         }
 
         // Add temperature and time info for smoker, oven, and flat-top recipes
@@ -1071,21 +1071,49 @@ const RecipeDetail = React.memo(function RecipeDetail({
           if (tempTimeInfo) {
             // Ensure proper font for temperature/time info
             pdf.setFontSize(9);
+            pdf.setFont("helvetica", "bold");
+            yPosition += 3; // Consistent spacing after temp/time info
+            pdf.text("TEMP and TIME", leftMargin + 5, yPosition);
+            yPosition += 6;
+
+            pdf.setFontSize(9);
             pdf.setFont("helvetica", "normal");
             pdf.text(`   ${tempTimeInfo}`, leftMargin + 5, yPosition);
-            yPosition += 5; // Consistent spacing after temp/time info
+            yPosition += 3; // Consistent spacing after temp/time info
           }
         }
 
         // Add horizontal line between steps (except after the last step)
         if (index < (recipe?.steps.length || 0) - 1) {
-          yPosition += 3; // Spacing before line
+          // Check if step has ingredients or temp/time info for spacing
+          const hasStepIngredients =
+            step.stepIngredients && step.stepIngredients.length > 0;
+          const hasTempTimeInfo =
+            (recipe?.type?.toLowerCase().trim() === "smoker" ||
+              recipe?.type?.toLowerCase().trim() === "oven" ||
+              recipe?.type?.toLowerCase().trim() === "flat-top") &&
+            (step.temperature || step.time || step.superSmoke);
+
+          if (hasStepIngredients || hasTempTimeInfo) {
+            // Larger spacing for steps with extra info
+            yPosition += 3; // Spacing before line
+            pdf.setDrawColor(180, 180, 180); // Light gray color
+            pdf.setLineWidth(0.25); // Slim line
+            pdf.line(leftMargin, yPosition, pageWidth - rightMargin, yPosition); // Horizontal line
+            yPosition += 8; // Spacing after line
+          } else {
+            // Much tighter spacing for simple text-only steps but still with underline
+            yPosition += 1; // Minimal spacing before line
+            pdf.setDrawColor(180, 180, 180); // Light gray color
+            pdf.setLineWidth(0.25); // Slim line
+            pdf.line(leftMargin, yPosition, pageWidth - rightMargin, yPosition); // Horizontal line
+            yPosition += 8; // Minimal spacing after line
+          }
+        } else {
           pdf.setDrawColor(180, 180, 180); // Light gray color
           pdf.setLineWidth(0.25); // Slim line
           pdf.line(leftMargin, yPosition, pageWidth - rightMargin, yPosition); // Horizontal line
-          yPosition += 8; // Spacing after line
-        } else {
-          yPosition += 5; // Regular spacing for last step
+          yPosition += 16; // Regular spacing for last step
         }
       });
 
