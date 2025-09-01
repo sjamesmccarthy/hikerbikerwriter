@@ -842,7 +842,7 @@ const RecipeDetail = React.memo(function RecipeDetail({
       // Ingredients
       pdf.setFontSize(16);
       pdf.setFont("helvetica", "bold");
-      pdf.text("Ingredients", leftMargin, yPosition);
+      pdf.text(`Ingredients (Servings: ${servings})`, leftMargin, yPosition);
       yPosition += 10;
 
       pdf.setFontSize(11);
