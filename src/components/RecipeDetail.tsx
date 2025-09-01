@@ -806,13 +806,27 @@ const RecipeDetail = React.memo(function RecipeDetail({
       yPosition += 5;
 
       // Source (if available)
-      if (recipe?.source) {
+      if (recipe?.source || recipe?.sourceTitle) {
         pdf.text(
           `Inspired by ${recipe.sourceTitle || recipe.source}`,
           leftMargin,
           yPosition
         );
-        yPosition += 10;
+        yPosition += 5;
+
+        // Add URL if it's a valid URL
+        if (recipe?.source && recipe.source.trim() !== "") {
+          try {
+            new URL(recipe.source);
+            pdf.text(recipe.source, leftMargin, yPosition);
+            yPosition += 10;
+          } catch {
+            // Not a valid URL, just add some spacing
+            yPosition += 5;
+          }
+        } else {
+          yPosition += 5;
+        }
       } else {
         yPosition += 5;
       }
