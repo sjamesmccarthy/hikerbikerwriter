@@ -837,7 +837,7 @@ const RecipeDetail = React.memo(function RecipeDetail({
         textWidth
       );
       pdf.text(descLines, leftMargin, yPosition);
-      yPosition += descLines.length * 5 + 7;
+      yPosition += descLines.length * 5 + 4;
 
       // Ingredients
       pdf.setFontSize(12);
