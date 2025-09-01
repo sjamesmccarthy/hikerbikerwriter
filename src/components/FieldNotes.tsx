@@ -633,7 +633,7 @@ const FieldNotes: React.FC = () => {
           <div className="w-full px-6 mb-12 mt-0">
             <p className="text-gray-600 leading-relaxed font-mono text-center">
               <span className="text-2xl font-bold">
-                a collection of thoughts
+                a collection of thoughts & ideas
               </span>{" "}
               <br />
               about anything and everything but mostly about hiking, biking,
@@ -783,7 +783,7 @@ const FieldNotes: React.FC = () => {
                     <Link href="/fieldnotes/builder">
                       <button className="px-4 py-2 rounded bg-blue-600 text-white font-mono text-sm hover:bg-blue-700 transition flex items-center gap-2 cursor-pointer">
                         <EditNoteOutlinedIcon sx={{ fontSize: 16 }} />
-                        New Field Note
+                        New Field Note/Idea
                       </button>
                     </Link>
                   )}

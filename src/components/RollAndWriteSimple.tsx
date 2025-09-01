@@ -21,11 +21,14 @@ import {
   ColorLens as ColorIcon,
   TextFields as TextIcon,
   NetworkCheck as NetworkIcon,
+  Replay as ReplayIcon,
 } from "@mui/icons-material";
+import CancelIcon from "@mui/icons-material/Cancel";
 import { Button, TextField, FormControlLabel, Switch } from "@mui/material";
 import { renderFooter } from "./shared/footerHelpers";
 import { useSession, signIn, signOut } from "next-auth/react";
 import Image from "next/image";
+import promptsData from "../data/prompts.json";
 
 interface AppMenuItem {
   name: string;
@@ -95,6 +98,8 @@ const RollAndWrite: React.FC = () => {
   const [colorsSwapped, setColorsSwapped] = useState(false);
   const [makePublic, setMakePublic] = useState(false);
   const [sharedFamily, setSharedFamily] = useState(false);
+  const [showPromptLink, setShowPromptLink] = useState(true);
+  const [selectedPrompt, setSelectedPrompt] = useState<string | null>(null);
 
   // Add authentication
   const { data: session, status } = useSession();
@@ -146,6 +151,8 @@ const RollAndWrite: React.FC = () => {
     setIsRolling(true);
     setShowForm(false);
     setContent("");
+    setShowPromptLink(true);
+    setSelectedPrompt(null);
 
     // Simulate rolling animation
     const rollInterval = setInterval(() => {
@@ -275,6 +282,26 @@ const RollAndWrite: React.FC = () => {
     if (remaining <= 5) return "text-red-500";
     if (percentUsed >= 60) return "text-orange-500";
     return "text-green-500";
+  };
+
+  const showRandomPrompt = () => {
+    const prompts = promptsData.prompts;
+    const randomIndex = Math.floor(Math.random() * prompts.length);
+    const randomPrompt = prompts[randomIndex];
+    setSelectedPrompt(randomPrompt);
+    setShowPromptLink(false);
+  };
+
+  const replacePrompt = () => {
+    const prompts = promptsData.prompts;
+    const randomIndex = Math.floor(Math.random() * prompts.length);
+    const randomPrompt = prompts[randomIndex];
+    setSelectedPrompt(randomPrompt);
+  };
+
+  const closePrompt = () => {
+    setSelectedPrompt(null);
+    setShowPromptLink(true);
   };
 
   return (
@@ -657,6 +684,46 @@ const RollAndWrite: React.FC = () => {
                         Sign in to save your stories
                       </div>
                     )}
+                  </div>
+                )}
+
+                {/* Writing Prompt */}
+                {showPromptLink && (
+                  <div className="text-center mb-4">
+                    <button
+                      onClick={showRandomPrompt}
+                      className="mt-2 text-blue-600 hover:text-blue-800 underline text-sm font-medium cursor-pointer"
+                    >
+                      Show A Writing Prompt
+                    </button>
+                  </div>
+                )}
+
+                {/* Selected Writing Prompt */}
+                {selectedPrompt && (
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 mt-2">
+                    <div className="flex justify-between items-start">
+                      <h3 className="text-lg font-semibold text-blue-900 mb-2">
+                        Writing Prompt
+                      </h3>
+                      <div className="flex gap-1">
+                        <button
+                          onClick={replacePrompt}
+                          className="text-blue-600 hover:text-blue-800 p-1 rounded-full hover:bg-blue-100 transition-colors cursor-pointer"
+                          title="Get a new prompt"
+                        >
+                          <ReplayIcon sx={{ fontSize: 20 }} />
+                        </button>
+                        <button
+                          onClick={closePrompt}
+                          className="text-blue-600 hover:text-blue-800 p-1 rounded-full hover:bg-blue-100 transition-colors cursor-pointer"
+                          title="Close prompt"
+                        >
+                          <CancelIcon sx={{ fontSize: 20 }} />
+                        </button>
+                      </div>
+                    </div>
+                    <p className="text-blue-800 italic">{selectedPrompt}</p>
                   </div>
                 )}
               </div>
