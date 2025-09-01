@@ -569,7 +569,7 @@ const RecipeDetail = React.memo(function RecipeDetail({
           }
 
           // Set servings to the closest available option (2, 4, 6, 8)
-          const availableServings = [2, 4, 6, 8];
+          const availableServings = [2, 4, 6, 8, 10, 12];
           const closestServing = availableServings.reduce(
             (prev, curr) =>
               Math.abs(curr - foundRecipe.servings) <
