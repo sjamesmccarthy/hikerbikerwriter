@@ -948,7 +948,7 @@ const RecipeDetail = React.memo(function RecipeDetail({
         pdf.setFontSize(12);
         pdf.setFont("helvetica", "bold");
         pdf.text(`Step ${index + 1}`, leftMargin, yPosition);
-        yPosition += 7;
+        yPosition += 8;
 
         // Render step text below the header
         pdf.setFontSize(10);
@@ -956,13 +956,14 @@ const RecipeDetail = React.memo(function RecipeDetail({
         stepLines.forEach((line: string, lineIndex: number) => {
           pdf.text(line, leftMargin, yPosition + lineIndex * 6);
         });
-        yPosition += stepLines.length * 6 + 1; // Base spacing after step text
+        yPosition += stepLines.length * 5 + 1; // Base spacing after step text
 
         // Add step ingredients if they exist
         if (step.stepIngredients && step.stepIngredients.length > 0) {
           // Add "INGREDIENTS" header
           pdf.setFontSize(9);
           pdf.setFont("helvetica", "bold");
+          yPosition += 3;
           pdf.text("INGREDIENTS", leftMargin + 5, yPosition);
           yPosition += 6;
 
