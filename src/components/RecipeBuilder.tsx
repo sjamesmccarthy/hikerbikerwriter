@@ -120,7 +120,7 @@ const RecipeBuilder: React.FC = () => {
     y: 5,
   });
   const [zoom, setZoom] = useState(1);
-  const [sharpening, setSharpening] = useState(0.5); // 0 = no sharpening, 1 = max sharpening
+  const [sharpening, setSharpening] = useState(0.05); // 0 = no sharpening, 1 = max sharpening
   const imgRef = useRef<HTMLImageElement>(null);
 
   const [prepTime, setPrepTime] = useState(0);
@@ -328,7 +328,7 @@ const RecipeBuilder: React.FC = () => {
     y: 5,
   });
   const [familyZoom, setFamilyZoom] = useState(1);
-  const [familySharpening, setFamilySharpening] = useState(0.5);
+  const [familySharpening, setFamilySharpening] = useState(0.05);
   const familyImgRef = useRef<HTMLImageElement>(null);
 
   const categoryOptions = useMemo<string[]>(
@@ -941,7 +941,10 @@ const RecipeBuilder: React.FC = () => {
 
   // Function to apply sharpening filter to canvas
   const sharpenImage = useCallback(
-    (canvas: HTMLCanvasElement, intensity: number = 0.5): HTMLCanvasElement => {
+    (
+      canvas: HTMLCanvasElement,
+      intensity: number = 0.05
+    ): HTMLCanvasElement => {
       const ctx = canvas.getContext("2d");
       if (!ctx || intensity === 0) return canvas;
 
@@ -1021,7 +1024,7 @@ const RecipeBuilder: React.FC = () => {
     (
       image: HTMLImageElement,
       crop: PixelCrop,
-      sharpeningIntensity: number = 0.5
+      sharpeningIntensity: number = 0.05
     ): HTMLCanvasElement => {
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
@@ -2735,11 +2738,11 @@ const RecipeBuilder: React.FC = () => {
                 <Card sx={{ boxShadow: "none", border: "none" }}>
                   <CardContent>
                     <Typography variant="h6" sx={{ mb: 2 }}>
-                      My Notes
+                      Pro Tips
                     </Typography>
                     <TextField
                       fullWidth
-                      label="My Notes"
+                      label="Pro Tips"
                       placeholder="Add any personal notes, tips, or variations..."
                       value={myNotes}
                       onChange={(e) => setMyNotes(e.target.value)}

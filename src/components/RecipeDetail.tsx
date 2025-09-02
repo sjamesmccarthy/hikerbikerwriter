@@ -1150,7 +1150,7 @@ const RecipeDetail = React.memo(function RecipeDetail({
 
         pdf.setFontSize(12);
         pdf.setFont("helvetica", "bold");
-        pdf.text("My Notes", leftMargin, yPosition);
+        pdf.text("Pro Tips", leftMargin, yPosition);
         yPosition += 10;
 
         pdf.setFontSize(10);
@@ -1884,7 +1884,9 @@ const RecipeDetail = React.memo(function RecipeDetail({
             {/* My Notes */}
             {recipe.myNotes && (
               <div>
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Notes</h2>
+                <h2 className="text-xl font-bold text-gray-900 mb-4">
+                  Pro Tips
+                </h2>
                 <p className="text-gray-700 whitespace-pre-wrap">
                   {recipe.myNotes}
                 </p>
