@@ -1277,7 +1277,14 @@ const RecipeBuilder: React.FC = () => {
       });
 
       if (res.ok) {
-        router.push("/recipes");
+        const savedRecipe = await res.json();
+        // Redirect to the specific recipe instead of the recipes list
+        const recipeSlug = savedRecipe.slug || slug;
+        if (recipeSlug) {
+          router.push(`/recipes/${recipeSlug}`);
+        } else {
+          router.push("/recipes");
+        }
       } else {
         const errorData = await res.text();
         console.error("Server error:", errorData);
