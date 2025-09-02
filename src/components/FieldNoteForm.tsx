@@ -5,6 +5,10 @@ import Image from "next/image";
 import {
   CloudUpload as CloudUploadIcon,
   Delete as DeleteIcon,
+  Timer as TimerIcon,
+  StopCircle as StopCircleIcon,
+  PlayCircleFilled as PlayCircleFilledIcon,
+  HighlightOff as HighlightOffIcon,
 } from "@mui/icons-material";
 import {
   TextField,
@@ -17,6 +21,7 @@ import {
   IconButton,
   FormControlLabel,
   Switch,
+  MenuItem,
 } from "@mui/material";
 import { renderMoodMenuItems } from "./shared/moodHelpers";
 
@@ -61,6 +66,15 @@ const FieldNoteForm: React.FC<FieldNoteFormProps> = ({
     initialData?.shared_family || false
   );
 
+  // Timer state
+  const [showTimerSelect, setShowTimerSelect] = useState(false);
+  const [timerMinutes, setTimerMinutes] = useState(5);
+  const [isTimerRunning, setIsTimerRunning] = useState(false);
+  const [timeRemaining, setTimeRemaining] = useState(0);
+  const [timerInterval, setTimerInterval] = useState<NodeJS.Timeout | null>(
+    null
+  );
+
   // Update form when initialData changes
   useEffect(() => {
     if (initialData) {
@@ -73,6 +87,57 @@ const FieldNoteForm: React.FC<FieldNoteFormProps> = ({
       setShareWithFamily(initialData.shared_family || false);
     }
   }, [initialData]);
+
+  // Timer cleanup on unmount
+  useEffect(() => {
+    return () => {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+      }
+    };
+  }, [timerInterval]);
+
+  // Word counter
+  const wordCount =
+    content.trim() === "" ? 0 : content.trim().split(/\s+/).length;
+
+  // Timer functions
+  const startTimer = () => {
+    const totalSeconds = timerMinutes * 60;
+    setTimeRemaining(totalSeconds);
+    setIsTimerRunning(true);
+    setShowTimerSelect(false);
+
+    const interval = setInterval(() => {
+      setTimeRemaining((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          setIsTimerRunning(false);
+          setTimerInterval(null);
+          alert("Timer finished! Time to wrap up your field note.");
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    setTimerInterval(interval);
+  };
+
+  const stopTimer = () => {
+    if (timerInterval) {
+      clearInterval(timerInterval);
+      setTimerInterval(null);
+    }
+    setIsTimerRunning(false);
+    setTimeRemaining(0);
+  };
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  };
 
   // Convert file to base64
   const convertToBase64 = (file: File): Promise<string> => {
@@ -185,6 +250,91 @@ const FieldNoteForm: React.FC<FieldNoteFormProps> = ({
             placeholder="Write your field note content here..."
             sx={{ mb: 2 }}
           />
+
+          {/* Timer and Word Counter Section */}
+          <div className="flex items-center justify-between mb-4 p-3 bg-gray-50 rounded">
+            {/* Timer Section */}
+            <div className="flex items-center gap-3">
+              {!isTimerRunning && !showTimerSelect && (
+                <button
+                  type="button"
+                  onClick={() => setShowTimerSelect(true)}
+                  className="flex items-center gap-1 px-3 py-1 text-gray-600 hover:text-gray-800 hover:bg-gray-200 rounded transition-colors"
+                >
+                  <TimerIcon sx={{ fontSize: 20 }} />
+                  Set Timer
+                </button>
+              )}
+
+              {showTimerSelect && !isTimerRunning && (
+                <div className="flex items-center gap-3">
+                  <FormControl size="small" sx={{ minWidth: 120 }}>
+                    <InputLabel>Timer</InputLabel>
+                    <Select
+                      value={timerMinutes}
+                      onChange={(e) => setTimerMinutes(Number(e.target.value))}
+                      label="Timer"
+                    >
+                      <MenuItem value={5}>5 minutes</MenuItem>
+                      <MenuItem value={10}>10 minutes</MenuItem>
+                      <MenuItem value={15}>15 minutes</MenuItem>
+                      <MenuItem value={20}>20 minutes</MenuItem>
+                      <MenuItem value={25}>25 minutes</MenuItem>
+                      <MenuItem value={30}>30 minutes</MenuItem>
+                      <MenuItem value={60}>60 minutes</MenuItem>
+                    </Select>
+                  </FormControl>
+                  <IconButton
+                    type="button"
+                    onClick={startTimer}
+                    color="success"
+                    size="small"
+                    sx={{ height: "40px", width: "20px" }}
+                  >
+                    <PlayCircleFilledIcon />
+                  </IconButton>
+                  <IconButton
+                    type="button"
+                    onClick={() => setShowTimerSelect(false)}
+                    size="small"
+                    sx={{
+                      height: "40px",
+                      width: "20px",
+                      color: "#6b7280",
+                      "&:hover": {
+                        backgroundColor: "#f9fafb",
+                        color: "#9ca3af",
+                      },
+                    }}
+                  >
+                    <HighlightOffIcon />
+                  </IconButton>
+                </div>
+              )}
+
+              {isTimerRunning && (
+                <div className="flex items-center gap-0.5">
+                  <div className="text-2xl font-bold text-green-600">
+                    {formatTime(timeRemaining)}
+                  </div>
+                  <IconButton
+                    type="button"
+                    onClick={stopTimer}
+                    color="error"
+                    size="small"
+                    sx={{ height: "40px", width: "40px" }}
+                  >
+                    <StopCircleIcon />
+                  </IconButton>
+                </div>
+              )}
+            </div>
+
+            {/* Word Counter */}
+            <div className="text-gray-600">
+              <span className="font-semibold">{wordCount}</span> Words
+            </div>
+          </div>
 
           <TextField
             fullWidth
