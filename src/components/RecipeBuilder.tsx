@@ -1021,7 +1021,6 @@ const RecipeBuilder: React.FC = () => {
     (
       image: HTMLImageElement,
       crop: PixelCrop,
-      zoom: number = 1,
       sharpeningIntensity: number = 0.5
     ): HTMLCanvasElement => {
       const canvas = document.createElement("canvas");
@@ -1043,9 +1042,9 @@ const RecipeBuilder: React.FC = () => {
       const sourceWidth = crop.width * scaleX;
       const sourceHeight = crop.height * scaleY;
 
-      // Set consistent output canvas size to match preview aspect ratio (16:9)
-      const outputWidth = 400;
-      const outputHeight = 225; // 16:9 aspect ratio (400/225 = 1.78)
+      // Use the actual cropped dimensions to maintain original resolution
+      const outputWidth = Math.round(sourceWidth);
+      const outputHeight = Math.round(sourceHeight);
 
       canvas.width = outputWidth;
       canvas.height = outputHeight;
@@ -1086,19 +1085,14 @@ const RecipeBuilder: React.FC = () => {
       unit: "px",
     };
 
-    const croppedCanvas = getCroppedImg(
-      imageElement,
-      pixelCrop,
-      zoom,
-      sharpening
-    );
+    const croppedCanvas = getCroppedImg(imageElement, pixelCrop, sharpening);
 
     const croppedImageUrl = croppedCanvas.toDataURL("image/jpeg", 0.9);
     setPhoto(croppedImageUrl);
     // Update originalImage so subsequent crops work from the latest version
     setOriginalImage(croppedImageUrl);
     setShowCropDialog(false);
-  }, [crop, zoom, sharpening, getCroppedImg]);
+  }, [crop, sharpening, getCroppedImg]);
 
   const handleCropCancel = () => {
     setShowCropDialog(false);
@@ -1146,7 +1140,6 @@ const RecipeBuilder: React.FC = () => {
     const croppedCanvas = getCroppedImg(
       imageElement,
       pixelCrop,
-      familyZoom,
       familySharpening
     );
 
@@ -1155,7 +1148,7 @@ const RecipeBuilder: React.FC = () => {
     // Update originalFamilyImage so subsequent crops work from the latest version
     setOriginalFamilyImage(croppedImageUrl);
     setShowFamilyCropDialog(false);
-  }, [familyCrop, familyZoom, familySharpening, getCroppedImg]);
+  }, [familyCrop, familySharpening, getCroppedImg]);
 
   const handleFamilyCropCancel = () => {
     setShowFamilyCropDialog(false);
