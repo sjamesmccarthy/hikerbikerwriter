@@ -104,6 +104,7 @@ type Recipe = {
     userEmail: string;
     userName: string;
     stars: number;
+    reviewTitle?: string;
     reviewText: string;
     createDate: string;
     status: number; // 1 for published
@@ -147,10 +148,12 @@ const RecipeDetail = React.memo(function RecipeDetail({
   const [hasFamilyMembers, setHasFamilyMembers] = useState(false);
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [rating, setRating] = useState<number | null>(0);
+  const [reviewTitle, setReviewTitle] = useState("");
   const [reviewText, setReviewText] = useState("");
   const [reviewSubmitted, setReviewSubmitted] = useState(false);
   const [editingReviewId, setEditingReviewId] = useState<string | null>(null);
   const [editRating, setEditRating] = useState<number | null>(0);
+  const [editReviewTitle, setEditReviewTitle] = useState("");
   const [editReviewText, setEditReviewText] = useState("");
   const { data: session } = useSession();
 
@@ -294,6 +297,13 @@ const RecipeDetail = React.memo(function RecipeDetail({
     }
   };
 
+  // Handle review title change
+  const handleReviewTitleChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setReviewTitle(event.target.value);
+  };
+
   // Handle opening the review modal
   const handleCookedThisOneUp = () => {
     setReviewModalOpen(true);
@@ -309,6 +319,7 @@ const RecipeDetail = React.memo(function RecipeDetail({
   const handleCloseReviewModal = () => {
     setReviewModalOpen(false);
     setRating(0);
+    setReviewTitle("");
     setReviewText("");
   };
 
@@ -338,6 +349,7 @@ const RecipeDetail = React.memo(function RecipeDetail({
         userEmail: session.user.email,
         userName: nameFromDB || session.user?.name || session.user.email,
         stars: rating,
+        reviewTitle: reviewTitle.trim(),
         reviewText: reviewText.trim(),
         createDate: new Date().toISOString(),
         status: 1, // Published
@@ -380,12 +392,14 @@ const RecipeDetail = React.memo(function RecipeDetail({
     userEmail: string;
     userName: string;
     stars: number;
+    reviewTitle?: string;
     reviewText: string;
     createDate: string;
     status: number;
   }) => {
     setEditingReviewId(review.uuid);
     setEditRating(review.stars);
+    setEditReviewTitle(review.reviewTitle || "");
     setEditReviewText(review.reviewText);
   };
 
@@ -393,6 +407,7 @@ const RecipeDetail = React.memo(function RecipeDetail({
   const handleCancelEdit = () => {
     setEditingReviewId(null);
     setEditRating(0);
+    setEditReviewTitle("");
     setEditReviewText("");
   };
 
@@ -407,6 +422,7 @@ const RecipeDetail = React.memo(function RecipeDetail({
             ? {
                 ...review,
                 stars: editRating,
+                reviewTitle: editReviewTitle.trim(),
                 reviewText: editReviewText.trim(),
               }
             : review
@@ -491,6 +507,13 @@ const RecipeDetail = React.memo(function RecipeDetail({
     if (wordCount <= 100) {
       setEditReviewText(newText);
     }
+  };
+
+  // Handle edit review title change
+  const handleEditReviewTitleChange = (
+    event: React.ChangeEvent<HTMLInputElement>
+  ) => {
+    setEditReviewTitle(event.target.value);
   };
 
   useEffect(() => {
@@ -1889,7 +1912,7 @@ const RecipeDetail = React.memo(function RecipeDetail({
                   ) : (
                     <>
                       <FactCheckIcon sx={{ fontSize: 36 }} />
-                      Cooked, Write Review
+                      Cooked, Rate & Review
                     </>
                   )}
                 </button>
@@ -1911,7 +1934,7 @@ const RecipeDetail = React.memo(function RecipeDetail({
                           // Edit mode
                           <div>
                             {/* Edit Heart Rating */}
-                            <div className="mb-1">
+                            <div className="mb-0">
                               <Rating
                                 name={`edit-review-rating-${review.uuid}`}
                                 value={editRating}
@@ -1931,7 +1954,7 @@ const RecipeDetail = React.memo(function RecipeDetail({
                                 size="small"
                               />
                             </div>
-                            <div className="text-sm text-gray-600 mb-1">
+                            <div className="text-sm text-gray-600 mb-2">
                               Cooked up by {review.userName || review.userEmail}
                               {filteredReviews.length > 1 && index === 0 && (
                                 <span>
@@ -1949,8 +1972,18 @@ const RecipeDetail = React.memo(function RecipeDetail({
                                 }
                               )}
                             </div>
-                            {/* Edit Textarea */}
+                            {/* Edit Title */}
                             <div className="mb-2">
+                              <input
+                                type="text"
+                                value={editReviewTitle}
+                                onChange={handleEditReviewTitleChange}
+                                className="w-full p-2 border border-gray-300 rounded-md"
+                                placeholder="Review title (optional)"
+                              />
+                            </div>
+                            {/* Edit Textarea */}
+                            <div className="mb-0">
                               <textarea
                                 value={editReviewText}
                                 onChange={handleEditReviewTextChange}
@@ -2027,7 +2060,17 @@ const RecipeDetail = React.memo(function RecipeDetail({
                                 </div>
                               )}
                             </div>
-                            <div className="text-sm text-gray-600 mb-1">
+                            {/* Review Title */}
+                            {review.reviewTitle && (
+                              <div className="font-semibold text-gray-900">
+                                {review.reviewTitle}
+                              </div>
+                            )}
+
+                            <div className="text-gray-800">
+                              {review.reviewText}
+                            </div>
+                            <div className="text-sm text-gray-600 mt-2 mb-1">
                               Cooked up by {review.userName || review.userEmail}
                               {filteredReviews.length > 1 && index === 0 && (
                                 <span>
@@ -2044,9 +2087,6 @@ const RecipeDetail = React.memo(function RecipeDetail({
                                   day: "numeric",
                                 }
                               )}
-                            </div>
-                            <div className="text-gray-800">
-                              {review.reviewText}
                             </div>
                           </div>
                         )}
@@ -2288,7 +2328,11 @@ const RecipeDetail = React.memo(function RecipeDetail({
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle></DialogTitle>
+        <DialogTitle>
+          <Typography variant="h6" component="div" className="text-center">
+            Rate & Review This Recipe
+          </Typography>
+        </DialogTitle>
         <DialogContent sx={{ p: 3 }}>
           {/* Rating with Hearts */}
           <div className="text-center mb-6">
@@ -2305,6 +2349,19 @@ const RecipeDetail = React.memo(function RecipeDetail({
             />
           </div>
 
+          {/* Review Title */}
+          <div className="mb-4">
+            <TextField
+              fullWidth
+              variant="outlined"
+              label="Review Title (Optional)"
+              value={reviewTitle}
+              onChange={handleReviewTitleChange}
+              placeholder="Give your review a catchy title"
+              sx={{ mb: 2 }}
+            />
+          </div>
+
           {/* Review Textarea */}
           <div>
             <TextField
@@ -2312,6 +2369,7 @@ const RecipeDetail = React.memo(function RecipeDetail({
               rows={4}
               fullWidth
               variant="outlined"
+              label="Your Review"
               value={reviewText}
               onChange={handleReviewTextChange}
               placeholder="In 100 words share your thoughts about this recipe"
