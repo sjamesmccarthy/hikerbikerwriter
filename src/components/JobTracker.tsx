@@ -585,7 +585,8 @@ export default function JobTracker() {
   };
 
   const getStatusCounts = () => {
-    if (!currentSearch) return { total: 0, applied: 0, closed: 0, saved: 0 };
+    if (!currentSearch)
+      return { total: 0, applied: 0, closed: 0, saved: 0, rejected: 0 };
 
     const opportunities = currentSearch.opportunities;
     return {
@@ -593,10 +594,9 @@ export default function JobTracker() {
         (o) => o.status !== "closed" && o.status !== "rejected"
       ).length,
       applied: opportunities.filter((o) => o.status === "applied").length,
-      closed: opportunities.filter(
-        (o) => o.status === "closed" || o.status === "rejected"
-      ).length,
+      closed: opportunities.filter((o) => o.status === "closed").length,
       saved: opportunities.filter((o) => o.status === "saved").length,
+      rejected: opportunities.filter((o) => o.status === "rejected").length,
     };
   };
 
@@ -1672,6 +1672,7 @@ export default function JobTracker() {
         applied: statusCounts.applied,
         saved: statusCounts.saved,
         closed: statusCounts.closed,
+        rejected: statusCounts.rejected,
       },
       opportunities: currentSearch.opportunities.map((opp) => ({
         company: opp.company,
@@ -1778,6 +1779,7 @@ export default function JobTracker() {
     csvContent += `Applied,${statusCounts.applied}\n`;
     csvContent += `Saved,${statusCounts.saved}\n`;
     csvContent += `Closed,${statusCounts.closed}\n`;
+    csvContent += `Rejected,${statusCounts.rejected}\n`;
     csvContent += `Total Recruiters,${currentSearch.recruiters.length}\n`;
     csvContent += `Total Resources,${currentSearch.resources.length}\n`;
     csvContent += "\n\n";
@@ -2476,7 +2478,7 @@ export default function JobTracker() {
 
             {/* Progress Table */}
             <div className="mb-8">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-2 md:gap-4">
                 <div className="w-full">
                   <div className="p-2 md:p-4 text-center bg-green-50 rounded">
                     <Typography
@@ -2493,52 +2495,76 @@ export default function JobTracker() {
                     </Typography>
                   </div>
                 </div>
-                <div className="w-full">
-                  <div className="p-2 md:p-4 text-center bg-blue-50 rounded">
-                    <Typography
-                      variant="h5"
-                      className="text-blue-600 font-bold text-lg md:text-3xl"
-                    >
-                      {statusCounts.applied}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      className="text-blue-700 text-xs md:text-base"
-                    >
-                      Applied
-                    </Typography>
+                <div className="w-full md:contents">
+                  <div className="grid grid-cols-2 gap-2 md:contents">
+                    <div className="w-full">
+                      <div className="p-2 md:p-4 text-center bg-blue-50 rounded">
+                        <Typography
+                          variant="h5"
+                          className="text-blue-600 font-bold text-lg md:text-3xl"
+                        >
+                          {statusCounts.applied}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          className="text-blue-700 text-xs md:text-base"
+                        >
+                          Applied
+                        </Typography>
+                      </div>
+                    </div>
+                    <div className="w-full">
+                      <div className="p-2 md:p-4 text-center bg-purple-50 rounded">
+                        <Typography
+                          variant="h5"
+                          className="text-purple-600 font-bold text-lg md:text-3xl"
+                        >
+                          {statusCounts.saved}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          className="text-purple-700 text-xs md:text-base"
+                        >
+                          Saved
+                        </Typography>
+                      </div>
+                    </div>
                   </div>
                 </div>
-                <div className="w-full">
-                  <div className="p-2 md:p-4 text-center bg-purple-50 rounded">
-                    <Typography
-                      variant="h5"
-                      className="text-purple-600 font-bold text-lg md:text-3xl"
-                    >
-                      {statusCounts.saved}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      className="text-purple-700 text-xs md:text-base"
-                    >
-                      Saved
-                    </Typography>
-                  </div>
-                </div>
-                <div className="w-full">
-                  <div className="p-2 md:p-4 text-center bg-gray-50 rounded">
-                    <Typography
-                      variant="h5"
-                      className="text-gray-600 font-bold text-lg md:text-3xl"
-                    >
-                      {statusCounts.closed}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      className="text-gray-700 text-xs md:text-base"
-                    >
-                      Closed
-                    </Typography>
+                <div className="w-full md:contents">
+                  <div className="grid grid-cols-2 gap-2 md:contents">
+                    <div className="w-full">
+                      <div className="p-2 md:p-4 text-center bg-gray-50 rounded">
+                        <Typography
+                          variant="h5"
+                          className="text-gray-600 font-bold text-lg md:text-3xl"
+                        >
+                          {statusCounts.closed}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          className="text-gray-700 text-xs md:text-base"
+                        >
+                          Closed
+                        </Typography>
+                      </div>
+                    </div>
+                    <div className="w-full">
+                      <div className="p-2 md:p-4 text-center bg-red-50 rounded">
+                        <Typography
+                          variant="h5"
+                          className="text-red-600 font-bold text-lg md:text-3xl"
+                        >
+                          {statusCounts.rejected}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          className="text-red-700 text-xs md:text-base"
+                        >
+                          Rejected
+                        </Typography>
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
