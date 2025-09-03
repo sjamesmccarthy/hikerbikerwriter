@@ -782,8 +782,8 @@ const FieldNotes: React.FC = () => {
                   {session && (
                     <Link href="/fieldnotes/builder">
                       <button className="px-4 py-2 rounded bg-blue-600 text-white font-mono text-sm hover:bg-blue-700 transition flex items-center gap-2 cursor-pointer">
-                        <EditNoteOutlinedIcon sx={{ fontSize: 16 }} />
-                        New Field Note/Idea
+                        {/* <EditNoteOutlinedIcon sx={{ fontSize: 16 }} /> */}
+                        New Field Note
                       </button>
                     </Link>
                   )}
