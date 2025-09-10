@@ -815,7 +815,7 @@ const MarkdownEditor: React.FC = () => {
         </div>
 
         {/* Mobile View Mode Buttons - Mobile only */}
-        <div className="lg:hidden mt-3 px-3 flex flex-wrap items-center gap-2">
+        <div className="lg:hidden mt-3 px-3 flex flex-wrap items-center justify-center gap-2">
           {/* View Mode Buttons */}
           <div className="flex items-center space-x-1 bg-gray-100 rounded-md p-1">
             <button
