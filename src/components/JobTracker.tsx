@@ -2884,8 +2884,8 @@ export default function JobTracker() {
                                       value={opportunity.status}
                                       onChange={(e) => {
                                         const newStatus = e.target.value;
-                                        handleStatusChange(
-                                          opportunity.id,
+                                        handleQuickStatusChange(
+                                          opportunity,
                                           newStatus
                                         );
                                       }}
