@@ -31,9 +31,9 @@ import {
   NetworkCheck as NetworkIcon,
   FileDownload as FileDownloadIcon,
   TableChart as TableChartIcon,
-  Close as CloseIcon,
   Search as SearchIcon,
   FilterList as FilterListIcon,
+  Inventory2Outlined as Inventory2OutlinedIcon,
 } from "@mui/icons-material";
 import {
   FormControl,
@@ -65,6 +65,8 @@ import {
   Pagination,
   Menu,
   InputAdornment,
+  Switch,
+  FormControlLabel,
 } from "@mui/material";
 import { renderFooter } from "./shared/footerHelpers";
 
@@ -84,6 +86,9 @@ interface JobOpportunity {
   contacts: Contact[];
   statusUpdates: StatusUpdate[];
   notes?: string;
+  resumeFilename?: string;
+  coverLetterIncluded?: boolean;
+  coverLetter?: string;
 }
 
 interface Interview {
@@ -397,6 +402,11 @@ export default function JobTracker() {
 
   // Mobile filter menu state
   const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
+
+  // Cover letter expansion state
+  const [expandedCoverLetter, setExpandedCoverLetter] = useState<string | null>(
+    null
+  );
 
   // Apps data
   const apps = [
@@ -854,6 +864,9 @@ export default function JobTracker() {
         contacts: updatedContacts,
         statusUpdates: updatedStatusUpdates,
         notes: opportunityForm.notes,
+        resumeFilename: opportunityForm.resumeFilename,
+        coverLetterIncluded: opportunityForm.coverLetterIncluded,
+        coverLetter: opportunityForm.coverLetter,
       };
 
       let updatedSearch = {
@@ -895,6 +908,10 @@ export default function JobTracker() {
         contacts: [],
         statusUpdates: [],
         notes: opportunityForm.notes,
+        resumeFilename:
+          opportunityForm.resumeFilename || "resume_jmccarthy_2025.pdf",
+        coverLetterIncluded: opportunityForm.coverLetterIncluded || false,
+        coverLetter: opportunityForm.coverLetter,
       };
 
       let updatedSearch = {
@@ -1009,7 +1026,13 @@ export default function JobTracker() {
 
   const handleEditOpportunity = (opportunity: JobOpportunity) => {
     setEditingOpportunity(opportunity);
-    setOpportunityForm(opportunity);
+    // Ensure new fields have default values for existing opportunities
+    setOpportunityForm({
+      ...opportunity,
+      resumeFilename: opportunity.resumeFilename || "resume_jmccarthy_2025.pdf",
+      coverLetterIncluded: opportunity.coverLetterIncluded || false,
+      coverLetter: opportunity.coverLetter || "",
+    });
 
     // If no resources or recruiters available, always use text field
     const hasResources = (currentSearch?.resources?.length ?? 0) > 0;
@@ -2581,7 +2604,13 @@ export default function JobTracker() {
                     <Button
                       variant="contained"
                       startIcon={<AddIcon />}
-                      onClick={() => setShowOpportunityDialog(true)}
+                      onClick={() => {
+                        setOpportunityForm({
+                          resumeFilename: "resume_jmccarthy_2025.pdf",
+                          coverLetterIncluded: false,
+                        });
+                        setShowOpportunityDialog(true);
+                      }}
                       className="bg-green-600 hover:bg-green-700"
                       size="large"
                     >
@@ -3080,7 +3109,63 @@ export default function JobTracker() {
                                                 </Typography>
                                               </div>
                                             )}
+                                            {(opportunity.resumeFilename ||
+                                              true) && (
+                                              <div>
+                                                <Typography variant="body2">
+                                                  <span className="font-semibold">
+                                                    Resume Version:
+                                                  </span>{" "}
+                                                  {opportunity.resumeFilename ||
+                                                    "resume_jmccarthy_2025.pdf"}
+                                                  {(opportunity.coverLetterIncluded ||
+                                                    opportunity.coverLetter) && (
+                                                    <span>
+                                                      {" | "}
+                                                      <button
+                                                        onClick={() => {
+                                                          setExpandedCoverLetter(
+                                                            expandedCoverLetter ===
+                                                              opportunity.id
+                                                              ? null
+                                                              : opportunity.id
+                                                          );
+                                                        }}
+                                                        className="text-blue-600 hover:underline cursor-pointer bg-transparent border-none"
+                                                      >
+                                                        cover letter
+                                                      </button>
+                                                    </span>
+                                                  )}
+                                                </Typography>
+                                              </div>
+                                            )}
                                           </div>
+
+                                          {/* Cover Letter - only show if expanded */}
+                                          {expandedCoverLetter ===
+                                            opportunity.id &&
+                                            opportunity.coverLetter && (
+                                              <div className="mb-4 p-3 bg-gray-50 border border-gray-200 rounded">
+                                                <Typography
+                                                  variant="subtitle2"
+                                                  className="font-bold mb-2"
+                                                >
+                                                  <span className="font-semibold">
+                                                    Cover Letter
+                                                  </span>
+                                                </Typography>
+                                                <Typography
+                                                  variant="body2"
+                                                  style={{
+                                                    whiteSpace: "pre-wrap",
+                                                    lineHeight: "1.5",
+                                                  }}
+                                                >
+                                                  {opportunity.coverLetter}
+                                                </Typography>
+                                              </div>
+                                            )}
 
                                           {/* Notes - only show if notes exist */}
                                           {opportunity.notes && (
@@ -3661,7 +3746,57 @@ export default function JobTracker() {
                                       {opportunity.jobSource}
                                     </Typography>
                                   )}
+                                  <Typography variant="body2">
+                                    <span className="font-medium">
+                                      Resume Version:
+                                    </span>{" "}
+                                    {opportunity.resumeFilename ||
+                                      "resume_jmccarthy_2025.pdf"}
+                                    {(opportunity.coverLetterIncluded ||
+                                      opportunity.coverLetter) && (
+                                      <span>
+                                        {" | "}
+                                        <button
+                                          onClick={() => {
+                                            setExpandedCoverLetter(
+                                              expandedCoverLetter ===
+                                                opportunity.id
+                                                ? null
+                                                : opportunity.id
+                                            );
+                                          }}
+                                          className="text-blue-600 hover:underline cursor-pointer bg-transparent border-none"
+                                        >
+                                          cover letter
+                                        </button>
+                                      </span>
+                                    )}
+                                  </Typography>
                                 </div>
+
+                                {/* Cover Letter - only show if expanded */}
+                                {expandedCoverLetter === opportunity.id &&
+                                  opportunity.coverLetter && (
+                                    <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded">
+                                      <Typography
+                                        variant="body2"
+                                        className="text-gray-600 mb-1"
+                                      >
+                                        <span className="font-medium">
+                                          Cover Letter:
+                                        </span>
+                                      </Typography>
+                                      <Typography
+                                        variant="body2"
+                                        style={{
+                                          whiteSpace: "pre-wrap",
+                                          lineHeight: "1.5",
+                                        }}
+                                      >
+                                        {opportunity.coverLetter}
+                                      </Typography>
+                                    </div>
+                                  )}
 
                                 {/* Notes */}
                                 {opportunity.notes && (
@@ -4819,36 +4954,43 @@ export default function JobTracker() {
               </div>
             </div>
 
-            {/* Export and Close Buttons */}
-            <div className="flex flex-col sm:flex-row justify-center gap-3 mt-8">
-              <Button
-                variant="outlined"
-                startIcon={<FileDownloadIcon />}
-                onClick={() => handleExportSearch()}
-                size="large"
-                className="w-full sm:w-auto"
-              >
-                Export as JSON
-              </Button>
-              <Button
-                variant="outlined"
-                startIcon={<TableChartIcon />}
-                onClick={() => handleExportAsExcel()}
-                size="large"
-                className="w-full sm:w-auto"
-              >
-                Export as CSV
-              </Button>
-              <Button
-                variant="outlined"
-                color="error"
-                startIcon={<CloseIcon />}
-                onClick={() => handleCloseJobSearch()}
-                size="large"
-                className="w-full sm:w-auto"
-              >
-                Close This Job Search
-              </Button>
+            {/* Export and Archive Buttons */}
+            <div className="flex flex-col sm:flex-row sm:justify-between gap-3 mt-8">
+              {/* Left side - Export buttons */}
+              <div className="flex flex-col sm:flex-row gap-3">
+                <Button
+                  variant="outlined"
+                  startIcon={<FileDownloadIcon />}
+                  onClick={() => handleExportSearch()}
+                  size="large"
+                  className="w-full sm:w-auto"
+                >
+                  Export as JSON
+                </Button>
+                <Button
+                  variant="outlined"
+                  startIcon={<TableChartIcon />}
+                  onClick={() => handleExportAsExcel()}
+                  size="large"
+                  className="w-full sm:w-auto"
+                >
+                  Export as CSV
+                </Button>
+              </div>
+
+              {/* Right side - Archive button */}
+              <div className="flex justify-center sm:justify-end">
+                <Button
+                  variant="outlined"
+                  color="error"
+                  startIcon={<Inventory2OutlinedIcon />}
+                  onClick={() => handleCloseJobSearch()}
+                  size="large"
+                  className="w-full sm:w-auto"
+                >
+                  Archive This Job Search
+                </Button>
+              </div>
             </div>
           </div>
         )}
@@ -5283,6 +5425,57 @@ export default function JobTracker() {
                 }
               />
             </div>
+            <div className="w-full">
+              <TextField
+                label="Resume (filename)"
+                fullWidth
+                variant="outlined"
+                value={
+                  opportunityForm.resumeFilename || "resume_jmccarthy_2025.pdf"
+                }
+                onChange={(e) =>
+                  setOpportunityForm({
+                    ...opportunityForm,
+                    resumeFilename: e.target.value,
+                  })
+                }
+              />
+            </div>
+            <div className="w-full flex items-center">
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={opportunityForm.coverLetterIncluded || false}
+                    onChange={(e) =>
+                      setOpportunityForm({
+                        ...opportunityForm,
+                        coverLetterIncluded: e.target.checked,
+                      })
+                    }
+                  />
+                }
+                label="Cover Letter Included"
+              />
+            </div>
+            {opportunityForm.coverLetterIncluded && (
+              <div className="w-full md:col-span-2">
+                <TextField
+                  label="Cover Letter"
+                  fullWidth
+                  multiline
+                  rows={6}
+                  variant="outlined"
+                  placeholder="Copy and paste your cover letter here..."
+                  value={opportunityForm.coverLetter || ""}
+                  onChange={(e) =>
+                    setOpportunityForm({
+                      ...opportunityForm,
+                      coverLetter: e.target.value,
+                    })
+                  }
+                />
+              </div>
+            )}
           </div>
         </DialogContent>
         <DialogActions
@@ -5598,7 +5791,8 @@ export default function JobTracker() {
               </Select>
             </FormControl>
 
-            {logForm.type === "phone_call" && (
+            {(logForm.type === "phone_call" ||
+              logForm.type === "follow_up") && (
               <FormControl fullWidth>
                 <InputLabel>Recruiter (Optional)</InputLabel>
                 <Select
@@ -5622,7 +5816,7 @@ export default function JobTracker() {
               <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                 {!showEmailRecruiterOther ? (
                   <FormControl fullWidth>
-                    <InputLabel>Email Contact</InputLabel>
+                    <InputLabel>Email Contact (or Recruiter)</InputLabel>
                     <Select
                       value={logForm.recruiterId || ""}
                       onChange={(e) => {
@@ -5636,7 +5830,7 @@ export default function JobTracker() {
                           });
                         }
                       }}
-                      label="Email Contact"
+                      label="Email Contact (or Recruiter)"
                     >
                       <MenuItem value="">None</MenuItem>
                       {currentSearch?.recruiters.map((recruiter) => (
@@ -5689,11 +5883,16 @@ export default function JobTracker() {
                 label="Related Opportunity (Optional)"
               >
                 <MenuItem value="">None</MenuItem>
-                {currentSearch?.opportunities.map((opp) => (
-                  <MenuItem key={opp.id} value={opp.id}>
-                    {opp.company} - {opp.position}
-                  </MenuItem>
-                ))}
+                {currentSearch?.opportunities
+                  .filter(
+                    (opp) =>
+                      opp.status !== "closed" && opp.status !== "rejected"
+                  )
+                  .map((opp) => (
+                    <MenuItem key={opp.id} value={opp.id}>
+                      {opp.company} - {opp.position}
+                    </MenuItem>
+                  ))}
               </Select>
             </FormControl>
 
