@@ -1797,7 +1797,7 @@ export default function JobTracker() {
       "Status",
       "Location",
       "Salary",
-      "Description",
+      "Job Description",
       "Job URL",
       "Job Source",
       "Notes",
@@ -2845,9 +2845,10 @@ export default function JobTracker() {
                             <React.Fragment key={opportunity.id}>
                               <TableRow
                                 style={{
-                                  backgroundColor: `${
-                                    statusColors[opportunity.status]
-                                  }10`,
+                                  backgroundColor:
+                                    expandedRow === opportunity.id
+                                      ? "white"
+                                      : `${statusColors[opportunity.status]}10`,
                                 }}
                                 className="cursor-pointer hover:bg-gray-50"
                                 sx={{
@@ -2878,41 +2879,109 @@ export default function JobTracker() {
                                   days
                                 </TableCell>
                                 <TableCell>
-                                  <Chip
-                                    label={statusLabels[opportunity.status]}
-                                    style={{
-                                      backgroundColor:
-                                        statusColors[opportunity.status],
-                                      color: "white",
-                                      cursor: "pointer",
-                                    }}
-                                    size="small"
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setStatusChangeAnchor(e.currentTarget);
-                                      setSelectedOpportunityForStatusChange(
-                                        opportunity
-                                      );
-                                    }}
-                                  />
+                                  {expandedRow === opportunity.id ? (
+                                    <Select
+                                      value={opportunity.status}
+                                      onChange={(e) => {
+                                        const newStatus = e.target.value;
+                                        handleStatusChange(
+                                          opportunity.id,
+                                          newStatus
+                                        );
+                                      }}
+                                      size="small"
+                                      style={{
+                                        backgroundColor:
+                                          statusColors[opportunity.status],
+                                        color: "white",
+                                        minWidth: "120px",
+                                      }}
+                                      sx={{
+                                        "& .MuiOutlinedInput-notchedOutline": {
+                                          borderColor:
+                                            statusColors[opportunity.status],
+                                        },
+                                        "& .MuiSelect-icon": {
+                                          color: "white",
+                                        },
+                                        "&:hover .MuiOutlinedInput-notchedOutline":
+                                          {
+                                            borderColor:
+                                              statusColors[opportunity.status],
+                                          },
+                                        "&.Mui-focused .MuiOutlinedInput-notchedOutline":
+                                          {
+                                            borderColor:
+                                              statusColors[opportunity.status],
+                                          },
+                                      }}
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      {Object.entries(statusLabels).map(
+                                        ([status, label]) => (
+                                          <MenuItem key={status} value={status}>
+                                            {label}
+                                          </MenuItem>
+                                        )
+                                      )}
+                                    </Select>
+                                  ) : (
+                                    <Chip
+                                      label={statusLabels[opportunity.status]}
+                                      style={{
+                                        backgroundColor:
+                                          statusColors[opportunity.status],
+                                        color: "white",
+                                        cursor: "pointer",
+                                      }}
+                                      size="small"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setStatusChangeAnchor(e.currentTarget);
+                                        setSelectedOpportunityForStatusChange(
+                                          opportunity
+                                        );
+                                      }}
+                                    />
+                                  )}
                                 </TableCell>
                                 <TableCell style={{ textAlign: "right" }}>
-                                  <IconButton
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setExpandedRow(
-                                        expandedRow === opportunity.id
-                                          ? null
-                                          : opportunity.id
-                                      );
+                                  <div
+                                    style={{
+                                      display: "flex",
+                                      alignItems: "center",
+                                      justifyContent: "flex-end",
                                     }}
                                   >
-                                    {expandedRow === opportunity.id ? (
-                                      <ExpandLessIcon />
-                                    ) : (
-                                      <ExpandMoreIcon />
+                                    {expandedRow === opportunity.id && (
+                                      <IconButton
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleEditOpportunity(opportunity);
+                                        }}
+                                        size="small"
+                                        style={{ marginRight: "4px" }}
+                                      >
+                                        <EditIcon fontSize="small" />
+                                      </IconButton>
                                     )}
-                                  </IconButton>
+                                    <IconButton
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setExpandedRow(
+                                          expandedRow === opportunity.id
+                                            ? null
+                                            : opportunity.id
+                                        );
+                                      }}
+                                    >
+                                      {expandedRow === opportunity.id ? (
+                                        <ExpandLessIcon />
+                                      ) : (
+                                        <ExpandMoreIcon />
+                                      )}
+                                    </IconButton>
+                                  </div>
                                 </TableCell>
                               </TableRow>
                               <TableRow>
@@ -2926,25 +2995,33 @@ export default function JobTracker() {
                                     unmountOnExit
                                   >
                                     <Box className="p-4">
-                                      {/* Two column layout */}
-                                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                        {/* Left Column - Opportunity Details */}
-                                        <div>
+                                      {/* Two column layout with larger left column */}
+                                      <div className="grid grid-cols-1 md:grid-cols-5 gap-10">
+                                        {/* Left Column - Opportunity Details (3/5 width) */}
+                                        <div className="md:col-span-3">
                                           <Typography
                                             variant="h6"
-                                            style={{ marginBottom: "1.5rem" }}
+                                            style={{ marginBottom: "0" }}
                                           >
                                             Opportunity Details
                                           </Typography>
+                                          <Typography
+                                            variant="body2"
+                                            className="text-gray-600"
+                                            style={{ marginBottom: "1.5rem" }}
+                                          >
+                                            {opportunity.position} at{" "}
+                                            {opportunity.company}
+                                          </Typography>
 
-                                          {/* Description */}
+                                          {/* Job Description */}
                                           <div className="mb-4">
                                             <Typography
                                               variant="subtitle2"
                                               className="mb-2"
                                             >
                                               <span className="font-semibold">
-                                                Description
+                                                Job Description
                                               </span>
                                             </Typography>
                                             <Typography
@@ -3023,15 +3100,24 @@ export default function JobTracker() {
                                           )}
                                         </div>
 
-                                        {/* Right Column - Interviews */}
-                                        <div>
-                                          <Typography
-                                            variant="h6"
-                                            className="mb-3"
-                                          >
-                                            Interviews (
-                                            {opportunity.interviews.length})
-                                          </Typography>
+                                        {/* Right Column - Interviews, Contacts & Status Updates (2/5 width) */}
+                                        <div className="md:col-span-2">
+                                          <div className="flex items-center justify-between mb-0">
+                                            <Typography variant="h6">
+                                              Interviews (
+                                              {opportunity.interviews.length})
+                                            </Typography>
+                                            <IconButton
+                                              size="small"
+                                              onClick={() =>
+                                                handleAddInterview(opportunity)
+                                              }
+                                              style={{ color: "#2196F3" }}
+                                              title="Add Interview"
+                                            >
+                                              <AddIcon />
+                                            </IconButton>
+                                          </div>
 
                                           {/* Interview list */}
                                           {opportunity.interviews.length > 0 ? (
@@ -3134,14 +3220,25 @@ export default function JobTracker() {
                                             </Typography>
                                           )}
 
-                                          <Typography
-                                            variant="h6"
-                                            className="mb-3 mt-6"
+                                          <div
+                                            className="flex items-center justify-between mb-0 mt-6"
                                             style={{ marginTop: "1.5rem" }}
                                           >
-                                            Contacts (
-                                            {opportunity.contacts.length})
-                                          </Typography>
+                                            <Typography variant="h6">
+                                              Contacts (
+                                              {opportunity.contacts.length})
+                                            </Typography>
+                                            <IconButton
+                                              size="small"
+                                              onClick={() =>
+                                                handleAddContact(opportunity)
+                                              }
+                                              style={{ color: "#2196F3" }}
+                                              title="Add Contact"
+                                            >
+                                              <AddIcon />
+                                            </IconButton>
+                                          </div>
 
                                           {/* Contact list */}
                                           {opportunity.contacts.length > 0 ? (
@@ -3329,36 +3426,6 @@ export default function JobTracker() {
                                       </div>
 
                                       <div className="flex justify-end space-x-3 pt-6 px-0 pb-2 gap-2">
-                                        <Button
-                                          variant="outlined"
-                                          size="small"
-                                          className="px-4 py-2"
-                                          onClick={() =>
-                                            handleEditOpportunity(opportunity)
-                                          }
-                                        >
-                                          Edit
-                                        </Button>
-                                        <Button
-                                          variant="outlined"
-                                          size="small"
-                                          className="px-4 py-2"
-                                          onClick={() =>
-                                            handleAddInterview(opportunity)
-                                          }
-                                        >
-                                          Add Interview
-                                        </Button>
-                                        <Button
-                                          variant="outlined"
-                                          size="small"
-                                          className="px-4 py-2"
-                                          onClick={() =>
-                                            handleAddContact(opportunity)
-                                          }
-                                        >
-                                          Add Contact
-                                        </Button>
                                         <IconButton
                                           size="small"
                                           onClick={() =>
@@ -3397,9 +3464,10 @@ export default function JobTracker() {
                         cursor: "pointer",
                       }}
                       style={{
-                        backgroundColor: `${
-                          statusColors[opportunity.status]
-                        }08`,
+                        backgroundColor:
+                          expandedRow === opportunity.id
+                            ? "white"
+                            : `${statusColors[opportunity.status]}08`,
                         boxShadow: "none",
                         border: "none",
                         outline: "none",
@@ -3465,23 +3533,42 @@ export default function JobTracker() {
                                 );
                               }}
                             />
-                            <IconButton
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setExpandedRow(
-                                  expandedRow === opportunity.id
-                                    ? null
-                                    : opportunity.id
-                                );
+                            <div
+                              style={{
+                                display: "flex",
+                                alignItems: "center",
+                                gap: "4px",
                               }}
-                              size="small"
                             >
-                              {expandedRow === opportunity.id ? (
-                                <ExpandLessIcon />
-                              ) : (
-                                <ExpandMoreIcon />
+                              {expandedRow === opportunity.id && (
+                                <IconButton
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleEditOpportunity(opportunity);
+                                  }}
+                                  size="small"
+                                >
+                                  <EditIcon fontSize="small" />
+                                </IconButton>
                               )}
-                            </IconButton>
+                              <IconButton
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setExpandedRow(
+                                    expandedRow === opportunity.id
+                                      ? null
+                                      : opportunity.id
+                                  );
+                                }}
+                                size="small"
+                              >
+                                {expandedRow === opportunity.id ? (
+                                  <ExpandLessIcon />
+                                ) : (
+                                  <ExpandMoreIcon />
+                                )}
+                              </IconButton>
+                            </div>
                           </div>
                         </div>
 
@@ -3510,7 +3597,7 @@ export default function JobTracker() {
                           timeout="auto"
                           unmountOnExit
                         >
-                          <div className="border-t border-gray-200 pt-4 mt-4">
+                          <div className=" pt-2">
                             {/* Two column layout */}
                             <div className="space-y-4">
                               {/* Opportunity Details */}
@@ -3519,17 +3606,18 @@ export default function JobTracker() {
                                   variant="subtitle1"
                                   className="font-semibold mb-2"
                                 >
-                                  Opportunity Details
+                                  Opportunity Details for {opportunity.position}{" "}
+                                  at {opportunity.company}
                                 </Typography>
 
-                                {/* Description */}
-                                <div className="mb-3">
+                                {/* Job Description */}
+                                <div className="mb-3 mt-3">
                                   <Typography
                                     variant="body2"
                                     className="text-gray-600 mb-1"
                                   >
                                     <span className="font-medium">
-                                      Description:
+                                      Job Description:
                                     </span>
                                   </Typography>
                                   <Typography variant="body2">
@@ -3602,16 +3690,17 @@ export default function JobTracker() {
                                   >
                                     Interviews ({opportunity.interviews.length})
                                   </Typography>
-                                  <Button
+                                  <IconButton
                                     size="small"
-                                    startIcon={<AddIcon />}
-                                    onClick={() =>
-                                      handleAddInterview(opportunity)
-                                    }
-                                    className="text-blue-600"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleAddInterview(opportunity);
+                                    }}
+                                    style={{ color: "#2196F3" }}
+                                    title="Add Interview"
                                   >
-                                    Add
-                                  </Button>
+                                    <AddIcon />
+                                  </IconButton>
                                 </div>
 
                                 {opportunity.interviews.length > 0 ? (
@@ -3683,16 +3772,17 @@ export default function JobTracker() {
                                   >
                                     Contacts ({opportunity.contacts.length})
                                   </Typography>
-                                  <Button
+                                  <IconButton
                                     size="small"
-                                    startIcon={<AddIcon />}
-                                    onClick={() =>
-                                      handleAddContact(opportunity)
-                                    }
-                                    className="text-blue-600"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleAddContact(opportunity);
+                                    }}
+                                    style={{ color: "#2196F3" }}
+                                    title="Add Contact"
                                   >
-                                    Add
-                                  </Button>
+                                    <AddIcon />
+                                  </IconButton>
                                 </div>
 
                                 {opportunity.contacts.length > 0 ? (
@@ -3837,28 +3927,17 @@ export default function JobTracker() {
                               </div>
 
                               {/* Actions */}
-                              <div className="flex flex-wrap gap-2 pt-2 border-t border-gray-100">
-                                <Button
+                              <div className="flex justify-end pb-2">
+                                <IconButton
                                   size="small"
-                                  startIcon={<EditIcon />}
-                                  onClick={() =>
-                                    handleEditOpportunity(opportunity)
-                                  }
-                                  variant="outlined"
-                                >
-                                  Edit
-                                </Button>
-                                <Button
-                                  size="small"
-                                  startIcon={<DeleteIcon />}
                                   onClick={() =>
                                     handleDeleteOpportunity(opportunity.id)
                                   }
-                                  variant="outlined"
-                                  color="error"
+                                  sx={{ color: "#dc2626" }}
+                                  title="Delete Opportunity"
                                 >
-                                  Delete
-                                </Button>
+                                  <DeleteIcon fontSize="small" />
+                                </IconButton>
                               </div>
                             </div>
                           </div>
@@ -5174,7 +5253,7 @@ export default function JobTracker() {
             </div>
             <div className="w-full md:col-span-2">
               <TextField
-                label="Description"
+                label="Job Description"
                 fullWidth
                 multiline
                 rows={3}
