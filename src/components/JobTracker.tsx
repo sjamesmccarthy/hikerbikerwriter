@@ -2615,6 +2615,7 @@ export default function JobTracker() {
                       }}
                       className="bg-green-600 hover:bg-green-700"
                       size="large"
+                      sx={{ textTransform: "none" }}
                     >
                       Add Opportunity
                     </Button>
@@ -4155,6 +4156,7 @@ export default function JobTracker() {
                     onClick={() => handleAddLogEntry()}
                     className="bg-blue-600 hover:bg-blue-700"
                     size="small"
+                    sx={{ textTransform: "none" }}
                   >
                     Add
                   </Button>
@@ -4742,6 +4744,7 @@ export default function JobTracker() {
                       onClick={() => setShowRecruiterDialog(true)}
                       className="bg-purple-600 hover:bg-purple-700"
                       size="small"
+                      sx={{ textTransform: "none" }}
                     >
                       Add
                     </Button>
@@ -4885,6 +4888,7 @@ export default function JobTracker() {
                       onClick={() => setShowResourceDialog(true)}
                       className="bg-teal-600 hover:bg-teal-700"
                       size="small"
+                      sx={{ textTransform: "none" }}
                     >
                       Add
                     </Button>
@@ -4966,6 +4970,7 @@ export default function JobTracker() {
                   onClick={() => handleExportSearch()}
                   size="large"
                   className="w-full sm:w-auto"
+                  sx={{ textTransform: "none" }}
                 >
                   Export as JSON
                 </Button>
@@ -4975,6 +4980,7 @@ export default function JobTracker() {
                   onClick={() => handleExportAsExcel()}
                   size="large"
                   className="w-full sm:w-auto"
+                  sx={{ textTransform: "none" }}
                 >
                   Export as CSV
                 </Button>
@@ -4989,6 +4995,7 @@ export default function JobTracker() {
                   onClick={() => handleCloseJobSearch()}
                   size="large"
                   className="w-full sm:w-auto"
+                  sx={{ textTransform: "none" }}
                 >
                   Archive This Job Search
                 </Button>
@@ -5011,6 +5018,7 @@ export default function JobTracker() {
                 startIcon={<AddIcon />}
                 onClick={() => setShowNewSearchDialog(true)}
                 className="bg-blue-600 hover:bg-blue-700 mb-8"
+                sx={{ textTransform: "none" }}
               >
                 Start New Search
               </Button>
@@ -5069,6 +5077,7 @@ export default function JobTracker() {
                           <Button
                             variant="outlined"
                             size="small"
+                            sx={{ textTransform: "none" }}
                             onClick={() => {
                               const reactivatedSearch = {
                                 ...search,
@@ -5122,6 +5131,7 @@ export default function JobTracker() {
                 startIcon={<AddIcon />}
                 onClick={() => setShowNewSearchDialog(true)}
                 className="bg-blue-600 hover:bg-blue-700"
+                sx={{ textTransform: "none" }}
               >
                 Start Your First Search
               </Button>
@@ -5166,6 +5176,7 @@ export default function JobTracker() {
             variant="outlined"
             size="large"
             style={{ minWidth: "120px" }}
+            sx={{ textTransform: "none" }}
           >
             Cancel
           </Button>
@@ -5174,6 +5185,7 @@ export default function JobTracker() {
             variant="contained"
             size="large"
             style={{ minWidth: "120px" }}
+            sx={{ textTransform: "none" }}
           >
             Create
           </Button>
@@ -5497,6 +5509,7 @@ export default function JobTracker() {
             variant="outlined"
             size="large"
             style={{ minWidth: "120px" }}
+            sx={{ textTransform: "none" }}
           >
             Cancel
           </Button>
@@ -5505,6 +5518,7 @@ export default function JobTracker() {
             variant="contained"
             size="large"
             style={{ minWidth: "120px" }}
+            sx={{ textTransform: "none" }}
           >
             {editingOpportunity ? "Update" : "Add"}
           </Button>
@@ -5629,6 +5643,7 @@ export default function JobTracker() {
             variant="outlined"
             size="large"
             style={{ minWidth: "120px" }}
+            sx={{ textTransform: "none" }}
           >
             Cancel
           </Button>
@@ -5637,6 +5652,7 @@ export default function JobTracker() {
             variant="contained"
             size="large"
             style={{ minWidth: "120px" }}
+            sx={{ textTransform: "none" }}
           >
             {editingRecruiter ? "Update Recruiter" : "Add Recruiter"}
           </Button>
@@ -5734,6 +5750,7 @@ export default function JobTracker() {
             variant="outlined"
             size="large"
             style={{ minWidth: "120px" }}
+            sx={{ textTransform: "none" }}
           >
             Cancel
           </Button>
@@ -5742,6 +5759,7 @@ export default function JobTracker() {
             variant="contained"
             size="large"
             style={{ minWidth: "120px" }}
+            sx={{ textTransform: "none" }}
           >
             {editingResource ? "Update Resource" : "Add Resource"}
           </Button>
@@ -5932,6 +5950,7 @@ export default function JobTracker() {
             variant="outlined"
             size="large"
             style={{ minWidth: "120px" }}
+            sx={{ textTransform: "none" }}
           >
             Cancel
           </Button>
@@ -6010,6 +6029,7 @@ export default function JobTracker() {
             variant="contained"
             size="large"
             style={{ minWidth: "120px" }}
+            sx={{ textTransform: "none" }}
           >
             {editingLog ? "Update Entry" : "Add Entry"}
           </Button>
@@ -6137,6 +6157,7 @@ export default function JobTracker() {
             variant="outlined"
             size="large"
             style={{ minWidth: "120px" }}
+            sx={{ textTransform: "none" }}
           >
             Cancel
           </Button>
@@ -6146,6 +6167,7 @@ export default function JobTracker() {
             size="large"
             style={{ minWidth: "120px" }}
             disabled={!interviewForm.date || !interviewForm.type}
+            sx={{ textTransform: "none" }}
           >
             Add Interview
           </Button>
@@ -6323,6 +6345,7 @@ export default function JobTracker() {
             variant="outlined"
             size="large"
             style={{ minWidth: "120px" }}
+            sx={{ textTransform: "none" }}
           >
             Cancel
           </Button>
@@ -6331,6 +6354,7 @@ export default function JobTracker() {
             variant="contained"
             size="large"
             style={{ minWidth: "120px" }}
+            sx={{ textTransform: "none" }}
           >
             Add Contact
           </Button>

@@ -71,7 +71,7 @@ import CodeIcon from "@mui/icons-material/Code";
 import ColorLensIcon from "@mui/icons-material/ColorLens";
 import TextFieldsIcon from "@mui/icons-material/TextFields";
 import NetworkCheckIcon from "@mui/icons-material/NetworkCheck";
-import CasinoIcon from "@mui/icons-material/Casino";
+
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -250,7 +250,6 @@ export default function UserProfilePage() {
         },
       ],
     },
-    { name: "Roll And Write", path: "/rollandwrite", icon: CasinoIcon },
     { name: "Brew Log", path: "/brewday", icon: AssignmentIcon },
     {
       name: "Creative Writing",
@@ -585,11 +584,6 @@ function AppSummaries({
   readonly familylineIdRemote?: string | null;
   readonly nameFromFB?: string | null;
 }) {
-  const [rollCounts, setRollCounts] = useState<{
-    total: number;
-    public: number;
-    sharedWithFamily: number;
-  }>({ total: 0, public: 0, sharedWithFamily: 0 });
   const [fieldCounts, setFieldCounts] = useState<{
     total: number;
     public: number;
@@ -614,7 +608,6 @@ function AppSummaries({
   // State for storing real counts for each family member
   const [personCounts, setPersonCounts] = useState<{
     [personId: string]: {
-      rollAndWrite: number;
       fieldNotes: number;
       recipes: number;
     };
@@ -642,69 +635,7 @@ function AppSummaries({
     network?: string;
   }
 
-  interface RollAndWriteEntry {
-    created_at: string;
-    title: string;
-    is_public: boolean;
-    shared_family: boolean;
-    content: string;
-  }
-
   const [searchResults, setSearchResults] = useState<SearchUser[]>([]);
-
-  // Function to handle Roll and Write entries download
-  const handleRollAndWriteDownload = async () => {
-    try {
-      const res = await fetch(
-        `/api/rollnwrite?userEmail=${encodeURIComponent(userEmail)}`
-      );
-      if (!res.ok) throw new Error("Failed to fetch entries");
-
-      const entries = (await res.json()) as RollAndWriteEntry[];
-      const formattedData = entries.map((entry: RollAndWriteEntry) => ({
-        date: entry.created_at,
-        title: entry.title,
-        is_public: entry.is_public ? "Yes" : "No",
-        shared_family: entry.shared_family ? "Yes" : "No",
-        content: entry.content,
-      }));
-
-      type FormattedEntry = {
-        date: string;
-        title: string;
-        is_public: string;
-        shared_family: string;
-        content: string;
-      };
-
-      const csvContent = [
-        ["Date", "Title", "Public", "Shared with Family", "Content"],
-        ...formattedData.map((entry: FormattedEntry) => [
-          entry.date,
-          entry.title,
-          entry.is_public,
-          entry.shared_family,
-          entry.content,
-        ]),
-      ]
-        .map((row) => row.map((cell: string) => `"${cell}"`).join(","))
-        .join("\n");
-
-      const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.setAttribute(
-        "download",
-        `roll-and-write-entries-${new Date().toISOString().split("T")[0]}.csv`
-      );
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } catch (error) {
-      console.error("Error downloading entries:", error);
-      alert("Failed to download entries. Please try again.");
-    }
-  };
 
   // Helper function to determine image file extension
   const getImageExtension = (mimeType: string): string => {
@@ -1580,10 +1511,6 @@ function AppSummaries({
   };
 
   // Define types for entries
-  interface RollEntry {
-    is_public: boolean;
-    [key: string]: unknown;
-  }
   interface FieldEntry {
     is_public: boolean;
     [key: string]: unknown;
@@ -1597,12 +1524,7 @@ function AppSummaries({
   // Function to fetch counts for a specific family member
   async function fetchPersonCounts(personEmail: string) {
     try {
-      const [rollRes, fieldRes, recipeRes] = await Promise.all([
-        fetch(
-          `/api/rollnwrite?userEmail=${encodeURIComponent(
-            personEmail
-          )}&family=true`
-        ),
+      const [fieldRes, recipeRes] = await Promise.all([
         fetch(
           `/api/creativewriting?userEmail=${encodeURIComponent(
             personEmail
@@ -1615,20 +1537,15 @@ function AppSummaries({
         ),
       ]);
 
-      const [rollData, fieldData, recipeData] = await Promise.all([
-        rollRes.json(),
+      const [fieldData, recipeData] = await Promise.all([
         fieldRes.json(),
         recipeRes.json(),
       ]);
 
-      const rollEntries = Array.isArray(rollData) ? rollData : [];
       const fieldEntries = Array.isArray(fieldData) ? fieldData : [];
       const recipeEntries = Array.isArray(recipeData) ? recipeData : [];
 
       return {
-        rollAndWrite: rollEntries.filter(
-          (entry) => entry.shared_family && entry.userEmail === personEmail
-        ).length,
         fieldNotes: fieldEntries.filter(
           (entry) => entry.shared_family && entry.userEmail === personEmail
         ).length,
@@ -1638,7 +1555,7 @@ function AppSummaries({
       };
     } catch (error) {
       console.error(`Error fetching counts for ${personEmail}:`, error);
-      return { rollAndWrite: 0, fieldNotes: 0, recipes: 0 };
+      return { fieldNotes: 0, recipes: 0 };
     }
   }
 
@@ -1646,32 +1563,24 @@ function AppSummaries({
     async function fetchCounts() {
       setLoading(true);
       // Fetch all API data in parallel
-      const [rollRes, fieldRes, recipeRes, jobsRes] = await Promise.all([
-        fetch(`/api/rollnwrite?userEmail=${encodeURIComponent(userEmail)}`),
+      const [fieldRes, recipeRes, jobsRes] = await Promise.all([
         fetch(
           `/api/creativewriting?userEmail=${encodeURIComponent(userEmail)}`
         ),
         fetch(`/api/recipes?userEmail=${encodeURIComponent(userEmail)}`),
         fetch(`/api/jobs?userEmail=${encodeURIComponent(userEmail)}`),
       ]);
-      const [rollRaw, fieldRaw, recipeRaw, jobsRaw] = await Promise.all([
-        rollRes.json(),
+      const [fieldRaw, recipeRaw, jobsRaw] = await Promise.all([
         fieldRes.json(),
         recipeRes.json(),
         jobsRes.json(),
       ]);
-      const rollEntries: RollEntry[] = Array.isArray(rollRaw) ? rollRaw : [];
       const fieldEntries: FieldEntry[] = Array.isArray(fieldRaw)
         ? fieldRaw
         : [];
       const recipeEntries: RecipeEntry[] = Array.isArray(recipeRaw)
         ? recipeRaw
         : [];
-      setRollCounts({
-        total: rollEntries.length,
-        public: rollEntries.filter((e) => e.is_public).length,
-        sharedWithFamily: rollEntries.filter((e) => e.shared_family).length,
-      });
       setFieldCounts({
         total: fieldEntries.length,
         public: fieldEntries.filter((e) => e.is_public).length,
@@ -1758,7 +1667,6 @@ function AppSummaries({
       if (familyInfo?.json?.people) {
         const personCountsData: {
           [personId: string]: {
-            rollAndWrite: number;
             fieldNotes: number;
             recipes: number;
           };
@@ -1835,42 +1743,6 @@ function AppSummaries({
   return (
     <>
       <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* Roll And Write Card */}
-        <div className="relative flex flex-col items-center justify-center bg-blue-50 p-6 transition-all duration-200 hover:shadow-lg hover:-translate-y-1 cursor-pointer min-h-[140px]">
-          <div className="absolute top-2 right-2">
-            <SimCardDownloadIcon
-              fontSize="small"
-              className="text-gray-400 hover:text-gray-600 cursor-pointer"
-              onClick={(e) => {
-                e.preventDefault();
-                handleRollAndWriteDownload();
-              }}
-            />
-          </div>
-          <CasinoIcon fontSize="large" className="mb-2 text-gray-700" />
-          <Link
-            href="/rollandwrite"
-            className="font-semibold text-black hover:underline text-lg mb-2"
-          >
-            Roll And Write
-          </Link>
-          <div className="flex items-center gap-3 mt-1">
-            <span className="flex items-center gap-1 text-xs text-black">
-              <span className="font-bold text-lg">{rollCounts.total}</span>{" "}
-              Entries
-            </span>
-            <span className="flex items-center gap-1 text-xs text-black">
-              <PublicIcon fontSize="small" className="text-gray-500" />
-              <span className="font-bold text-lg">
-                {rollCounts.public}
-              </span>{" "}
-              Public
-            </span>
-          </div>
-          <span className="text-xs text-gray-700 mt-1 w-full text-center block">
-            {rollCounts.sharedWithFamily ?? 0} Shared With Family
-          </span>
-        </div>
         {/* Field Notes Card */}
         <div className="relative flex flex-col items-center justify-center bg-blue-50 p-6 transition-all duration-200 hover:shadow-lg hover:-translate-y-1 cursor-pointer min-h-[140px]">
           <div className="absolute top-2 right-2">
@@ -2333,45 +2205,6 @@ function AppSummaries({
                 {/* Icons section */}
                 <div className="flex flex-row items-center gap-4 mt-4 sm:mt-0 justify-end sm:ml-auto">
                   <div className="relative flex items-center">
-                    {rollCounts.sharedWithFamily > 0 ? (
-                      <Link href="/rollandwrite?family=true">
-                        <CasinoIcon
-                          fontSize="medium"
-                          style={{ color: "#757575", cursor: "pointer" }}
-                        />
-                      </Link>
-                    ) : (
-                      <CasinoIcon
-                        fontSize="medium"
-                        style={{ color: "#757575" }}
-                      />
-                    )}
-                    {/* Badge shown only when there are shared items */}
-                    {rollCounts.sharedWithFamily > 0 && (
-                      <span
-                        className="absolute -top-2 -right-2"
-                        style={{
-                          background: "#1B5E20",
-                          color: "#fff",
-                          borderRadius: "50%",
-                          padding: "0",
-                          fontWeight: "bold",
-                          minWidth: "20px",
-                          fontSize: "0.7rem",
-                          height: "20px",
-                          width: "20px",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          textAlign: "center",
-                          boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
-                        }}
-                      >
-                        {rollCounts.sharedWithFamily}
-                      </span>
-                    )}
-                  </div>
-                  <div className="relative flex items-center">
                     {fieldCounts.sharedWithFamily > 0 ? (
                       <Link href="/creativewriting?family=true">
                         <StickyNote2Icon
@@ -2473,7 +2306,6 @@ function AppSummaries({
                   relation: string;
                   network_level: number;
                   shared_data?: {
-                    roll_and_write?: number;
                     field_notes?: number;
                     recipes?: number;
                   };
@@ -2489,7 +2321,6 @@ function AppSummaries({
                   relation: string;
                   network_level: number;
                   shared_data?: {
-                    roll_and_write?: number;
                     field_notes?: number;
                     recipes?: number;
                   };
@@ -2593,7 +2424,6 @@ function AppSummaries({
 
                       // Get real counts from API data instead of hardcoded shared_data
                       const realCounts = personCounts[person.person_id] || {
-                        rollAndWrite: 0,
                         fieldNotes: 0,
                         recipes: 0,
                       };
@@ -2685,51 +2515,6 @@ function AppSummaries({
 
                             {/* Icons section - responsive layout like Me card */}
                             <div className="flex flex-row items-center gap-4 mt-4 sm:mt-0 justify-end sm:ml-auto flex-shrink-0">
-                              <div className="relative flex items-center">
-                                {realCounts.rollAndWrite > 0 ? (
-                                  <Link
-                                    href={`/rollandwrite?family=true&familyMember=${encodeURIComponent(
-                                      person.name
-                                    )}`}
-                                  >
-                                    <CasinoIcon
-                                      fontSize="medium"
-                                      style={{
-                                        color: "#757575",
-                                        cursor: "pointer",
-                                      }}
-                                    />
-                                  </Link>
-                                ) : (
-                                  <CasinoIcon
-                                    fontSize="medium"
-                                    style={{ color: "#757575" }}
-                                  />
-                                )}
-                                {realCounts.rollAndWrite > 0 && (
-                                  <span
-                                    className="absolute -top-2 -right-2"
-                                    style={{
-                                      background: "#1B5E20",
-                                      color: "#fff",
-                                      borderRadius: "50%",
-                                      padding: "0",
-                                      fontWeight: "bold",
-                                      minWidth: "20px",
-                                      fontSize: "0.7rem",
-                                      height: "20px",
-                                      width: "20px",
-                                      display: "flex",
-                                      alignItems: "center",
-                                      justifyContent: "center",
-                                      textAlign: "center",
-                                      boxShadow: "0 2px 6px rgba(0,0,0,0.15)",
-                                    }}
-                                  >
-                                    {realCounts.rollAndWrite}
-                                  </span>
-                                )}
-                              </div>
                               <div className="relative flex items-center">
                                 {realCounts.fieldNotes > 0 ? (
                                   <Link
