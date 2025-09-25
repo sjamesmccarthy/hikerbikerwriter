@@ -60,11 +60,11 @@ const getEntryUrl = (entry: Entry): string => {
       if (entry.json && typeof entry.json === "object") {
         const slug = entry.json.slug || entry.slug;
         if (slug && typeof slug === "string") {
-          return `/fieldnotes/${slug}`;
+          return `/creativewriting/${slug}`;
         }
       }
-      // Fallback to fieldnotes page if no slug available
-      return "/fieldnotes";
+      // Fallback to creativewriting page if no slug available
+      return "/creativewriting";
 
     case "Roll & Write":
       // For roll & write entries, link to the specific entry by ID

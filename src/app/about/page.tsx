@@ -541,6 +541,14 @@ export default function AboutPage() {
               </a>
             </h2>
 
+            <h3 className="font-semibold mt-4 mb-1">v2.0.0</h3>
+            <ul className="list-disc ml-6 mb-2">
+              <li>
+                Merged Roll and Write and Field Notes into new Creative Writing
+                tool.
+              </li>
+            </ul>
+
             <h3 className="font-semibold mt-4 mb-1">v1.9.6</h3>
             <ul className="list-disc ml-6 mb-2">
               <li>Updated job tracking UI to be more user-friendly.</li>

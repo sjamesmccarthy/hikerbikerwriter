@@ -14,7 +14,7 @@ import {
   Home as HomeIcon,
   EditNote as EditNoteIcon,
   Assignment as LogIcon,
-  StickyNote2 as FieldNotesIcon,
+  DrawOutlined as CreativeWritingIcon,
   Restaurant as RestaurantIcon,
   PhotoCamera as PhotoCameraIcon,
   IntegrationInstructions as DevToolsIcon,
@@ -112,7 +112,11 @@ const RollAndWriteEntries: React.FC = () => {
       ],
     },
     { name: "Brew Log", path: "/brewday", icon: LogIcon },
-    { name: "Field Notes", path: "/fieldnotes", icon: FieldNotesIcon },
+    {
+      name: "Creative Writing",
+      path: "/creativewriting",
+      icon: CreativeWritingIcon,
+    },
     { name: "Recipes", path: "/recipes", icon: RestaurantIcon },
     { name: "jM Galleries", path: "/jmgalleries", icon: PhotoCameraIcon },
   ];

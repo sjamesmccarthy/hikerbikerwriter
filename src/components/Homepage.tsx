@@ -7,7 +7,6 @@ import { useSession, signIn } from "next-auth/react";
 import {
   EditNote as EditNoteIcon,
   Assignment as LogIcon,
-  Casino as RollIcon,
   DrawOutlined as DrawOutlinedIcon,
   Restaurant as RestaurantIcon,
   PhotoCamera as PhotoCameraIcon,
@@ -170,14 +169,7 @@ const Homepage: React.FC = () => {
     },
     {
       type: "link" as const,
-      href: "/rollandwrite",
-      icon: <RollIcon sx={{ fontSize: 18 }} />,
-      label: "Roll&Write",
-      disabled: true,
-    },
-    {
-      type: "link" as const,
-      href: "/fieldnotes",
+      href: "/creativewriting",
       icon: <DrawOutlinedIcon sx={{ fontSize: 18 }} />,
       label: "Creative Writing",
     },
@@ -326,32 +318,18 @@ const Homepage: React.FC = () => {
                     </div>
                   );
                 } else {
-                  if (button.disabled) {
-                    return (
-                      <div key={button.href} className="flex-1">
-                        <button
-                          disabled
-                          className="w-full px-6 py-4 bg-gray-300/70 backdrop-blur-sm text-gray-500 rounded-md text-sm font-medium transition-all duration-200 flex items-center justify-center gap-2 shadow-lg border border-gray-300/50 cursor-not-allowed opacity-60"
-                        >
-                          {button.icon}
-                          {button.label}
-                        </button>
-                      </div>
-                    );
-                  } else {
-                    return (
-                      <Link
-                        key={button.href}
-                        href={button.href}
-                        className="flex-1"
-                      >
-                        <button className="w-full px-6 py-4 bg-white/90 backdrop-blur-sm text-gray-700 rounded-md text-sm font-medium hover:bg-white hover:text-gray-800 transition-all duration-200 flex items-center justify-center gap-2 shadow-lg border border-white/30 cursor-pointer">
-                          {button.icon}
-                          {button.label}
-                        </button>
-                      </Link>
-                    );
-                  }
+                  return (
+                    <Link
+                      key={button.href}
+                      href={button.href}
+                      className="flex-1"
+                    >
+                      <button className="w-full px-6 py-4 bg-white/90 backdrop-blur-sm text-gray-700 rounded-md text-sm font-medium hover:bg-white hover:text-gray-800 transition-all duration-200 flex items-center justify-center gap-2 shadow-lg border border-white/30 cursor-pointer">
+                        {button.icon}
+                        {button.label}
+                      </button>
+                    </Link>
+                  );
                 }
               })}
             </div>

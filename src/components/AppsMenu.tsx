@@ -5,8 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import {
   Apps as AppsIcon,
   Assignment as LogIcon,
-  Casino as RollIcon,
-  MenuBook as FieldNotesIcon,
+  DrawOutlined as CreativeWritingIcon,
   Restaurant as RestaurantIcon,
   PhotoCamera as PhotoCameraIcon,
   Home as HomeIcon,
@@ -23,8 +22,11 @@ const apps: AppItem[] = [
   { name: "Home", path: "/", icon: HomeIcon },
   { name: "Dev Tools", path: "/utilities", icon: DevToolsIcon },
   { name: "Brew Log AppsMenu", path: "/brewday", icon: LogIcon },
-  { name: "Roll&Write", path: "/rollandwrite", icon: RollIcon },
-  { name: "Field Notes", path: "/fieldnotes", icon: FieldNotesIcon },
+  {
+    name: "Creative Writing",
+    path: "/creativewriting",
+    icon: CreativeWritingIcon,
+  },
   { name: "Recipes", path: "/recipes", icon: RestaurantIcon },
   { name: "jM Galleries", path: "/jmgalleries", icon: PhotoCameraIcon },
 ];
@@ -41,7 +43,7 @@ const AppsMenu: React.FC = () => {
     pathname === "/markdown" ||
     pathname === "/brewday" ||
     pathname === "/rollandwrite" ||
-    pathname === "/fieldnotes" ||
+    pathname === "/creativewriting" ||
     pathname === "/jmgalleries" ||
     pathname.startsWith("/recipes")
   ) {

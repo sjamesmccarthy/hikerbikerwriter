@@ -252,7 +252,11 @@ export default function UserProfilePage() {
     },
     { name: "Roll And Write", path: "/rollandwrite", icon: CasinoIcon },
     { name: "Brew Log", path: "/brewday", icon: AssignmentIcon },
-    { name: "Field Notes", path: "/fieldnotes", icon: StickyNote2Icon },
+    {
+      name: "Creative Writing",
+      path: "/creativewriting",
+      icon: StickyNote2Icon,
+    },
     { name: "Recipes", path: "/recipes", icon: RestaurantIcon },
     { name: "jM Galleries", path: "/jmgalleries", icon: PhotoCameraIcon },
     { name: "Job Tracker", path: "/jobs", icon: WorkIcon },
@@ -805,7 +809,7 @@ function AppSummaries({
   const handleFieldNotesDownload = async () => {
     try {
       const res = await fetch(
-        `/api/fieldnotes?userEmail=${encodeURIComponent(userEmail)}`
+        `/api/creativewriting?userEmail=${encodeURIComponent(userEmail)}`
       );
       if (!res.ok) throw new Error("Failed to fetch field notes");
 
@@ -1600,7 +1604,7 @@ function AppSummaries({
           )}&family=true`
         ),
         fetch(
-          `/api/fieldnotes?userEmail=${encodeURIComponent(
+          `/api/creativewriting?userEmail=${encodeURIComponent(
             personEmail
           )}&family=true`
         ),
@@ -1644,7 +1648,9 @@ function AppSummaries({
       // Fetch all API data in parallel
       const [rollRes, fieldRes, recipeRes, jobsRes] = await Promise.all([
         fetch(`/api/rollnwrite?userEmail=${encodeURIComponent(userEmail)}`),
-        fetch(`/api/fieldnotes?userEmail=${encodeURIComponent(userEmail)}`),
+        fetch(
+          `/api/creativewriting?userEmail=${encodeURIComponent(userEmail)}`
+        ),
         fetch(`/api/recipes?userEmail=${encodeURIComponent(userEmail)}`),
         fetch(`/api/jobs?userEmail=${encodeURIComponent(userEmail)}`),
       ]);
@@ -1879,10 +1885,10 @@ function AppSummaries({
           </div>
           <StickyNote2Icon fontSize="large" className="mb-2 text-gray-700" />
           <Link
-            href="/fieldnotes"
+            href="/creativewriting"
             className="font-semibold text-black hover:underline text-lg mb-2"
           >
-            Field Notes
+            Creative Writing
           </Link>
           <div className="flex items-center gap-3 mt-1">
             <span className="flex items-center gap-1 text-xs text-black">
@@ -2367,7 +2373,7 @@ function AppSummaries({
                   </div>
                   <div className="relative flex items-center">
                     {fieldCounts.sharedWithFamily > 0 ? (
-                      <Link href="/fieldnotes?family=true">
+                      <Link href="/creativewriting?family=true">
                         <StickyNote2Icon
                           fontSize="medium"
                           style={{ color: "#757575", cursor: "pointer" }}
@@ -2727,7 +2733,7 @@ function AppSummaries({
                               <div className="relative flex items-center">
                                 {realCounts.fieldNotes > 0 ? (
                                   <Link
-                                    href={`/fieldnotes?family=true&familyMember=${encodeURIComponent(
+                                    href={`/creativewriting?family=true&familyMember=${encodeURIComponent(
                                       person.name
                                     )}`}
                                   >

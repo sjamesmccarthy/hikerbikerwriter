@@ -19,8 +19,7 @@ import {
   ExpandLess as ExpandLessIcon,
   Apps as AppsIcon,
   EditNote as EditNoteIcon,
-  Casino as RollIcon,
-  MenuBook as FieldNotesIcon,
+  DrawOutlined as CreativeWritingIcon,
   Restaurant as RestaurantIcon,
   PhotoCamera as PhotoCameraIcon,
   Home as HomeIcon,
@@ -186,8 +185,11 @@ const BrewDayLog: React.FC = () => {
         },
       ],
     },
-    { name: "Roll&Write", path: "/rollandwrite", icon: RollIcon },
-    { name: "Field Notes", path: "/fieldnotes", icon: FieldNotesIcon },
+    {
+      name: "Creative Writing",
+      path: "/creativewriting",
+      icon: CreativeWritingIcon,
+    },
     { name: "Recipes", path: "/recipes", icon: RestaurantIcon },
     { name: "jM Galleries", path: "/jmgalleries", icon: PhotoCameraIcon },
   ];

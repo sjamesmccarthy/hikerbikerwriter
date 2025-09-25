@@ -14,7 +14,6 @@ import {
   Description as TextIcon,
   Apps as AppsIcon,
   Assignment as LogIcon,
-  Casino as RollIcon,
   Restaurant as RestaurantIcon,
   PhotoCamera as PhotoCameraIcon,
   Home as HomeIcon,
@@ -23,7 +22,7 @@ import {
   ColorLens as ColorIcon,
   TextFields as TextFieldsIcon,
   NetworkCheck as NetworkIcon,
-  MenuBook as FieldNotesIcon,
+  DrawOutlined as CreativeWritingIcon,
 } from "@mui/icons-material";
 import { renderFooter } from "./shared/footerHelpers";
 
@@ -77,9 +76,12 @@ const JsonPreviewer: React.FC = () => {
       ],
     },
     { name: "Brew Log", path: "/brewday", icon: LogIcon },
-    { name: "Roll&Write", path: "/rollandwrite", icon: RollIcon },
     { name: "Recipes", path: "/recipes", icon: RestaurantIcon },
-    { name: "Field Notes", path: "/fieldnotes", icon: FieldNotesIcon },
+    {
+      name: "Creative Writing",
+      path: "/creativewriting",
+      icon: CreativeWritingIcon,
+    },
     { name: "jM Galleries", path: "/jmgalleries", icon: PhotoCameraIcon },
   ];
 

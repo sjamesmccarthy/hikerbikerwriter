@@ -17,8 +17,7 @@ import {
   FileDownload as FileDownloadIcon,
   Apps as AppsIcon,
   Assignment as LogIcon,
-  Casino as RollIcon,
-  MenuBook as FieldNotesIcon,
+  DrawOutlined as CreativeWritingIcon,
   Restaurant as RestaurantIcon,
   PhotoCamera as PhotoCameraIcon,
   Home as HomeIcon,
@@ -80,8 +79,11 @@ const MarkdownEditor: React.FC = () => {
       ],
     },
     { name: "Brew Log", path: "/brewday", icon: LogIcon },
-    { name: "Roll&Write", path: "/rollandwrite", icon: RollIcon },
-    { name: "Field Notes", path: "/fieldnotes", icon: FieldNotesIcon },
+    {
+      name: "Creative Writing",
+      path: "/creativewriting",
+      icon: CreativeWritingIcon,
+    },
     { name: "Recipes", path: "/recipes", icon: RestaurantIcon },
     { name: "jM Galleries", path: "/jmgalleries", icon: PhotoCameraIcon },
   ];

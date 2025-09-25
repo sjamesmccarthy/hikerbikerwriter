@@ -32,8 +32,7 @@ import {
   Apps as AppsIcon,
   EditNote as EditNoteIcon,
   Assignment as LogIcon,
-  Casino as RollIcon,
-  MenuBook as FieldNotesIcon,
+  DrawOutlined as CreativeWritingIcon,
   PhotoCamera as PhotoCameraIcon,
   People as PeopleIcon,
   Home as HomeIcon,
@@ -141,8 +140,11 @@ const RecipeViewer: React.FC<RecipeViewerProps> = () => {
       ],
     },
     { name: "Brew Log", path: "/brewday", icon: LogIcon },
-    { name: "Roll&Write", path: "/rollandwrite", icon: RollIcon },
-    { name: "Field Notes", path: "/fieldnotes", icon: FieldNotesIcon },
+    {
+      name: "Creative Writing",
+      path: "/creativewriting",
+      icon: CreativeWritingIcon,
+    },
     { name: "Recipes", path: "/recipes", icon: RestaurantIcon },
     { name: "jM Galleries", path: "/jmgalleries", icon: PhotoCameraIcon },
   ];
@@ -879,7 +881,7 @@ const RecipeViewer: React.FC<RecipeViewerProps> = () => {
         ) : (
           <div className="flex-1 flex flex-col px-0 py-6">
             {/* Intro */}
-            <div className="w-full px-6 mb-12 mt-0">
+            <div className="w-full px-6 py-6 mb-12 mt-0">
               <p className="text-gray-600 leading-relaxed font-mono text-center">
                 <span className="text-2xl font-bold">
                   a collection of{" "}

@@ -18,8 +18,7 @@ import {
   Apps as AppsIcon,
   Home as HomeIcon,
   Assignment as LogIcon,
-  MenuBook as FieldNotesIcon,
-  Casino as RollIcon,
+  DrawOutlined as CreativeWritingIcon,
   Restaurant as RestaurantIcon,
   PhotoCamera as PhotoCameraIcon,
   IntegrationInstructions as DevToolsIcon,
@@ -437,8 +436,11 @@ export default function JobTracker() {
       ],
     },
     { name: "Brew Log", path: "/brewday", icon: LogIcon },
-    { name: "Roll&Write", path: "/rollandwrite", icon: RollIcon },
-    { name: "Field Notes", path: "/fieldnotes", icon: FieldNotesIcon },
+    {
+      name: "Creative Writing",
+      path: "/creativewriting",
+      icon: CreativeWritingIcon,
+    },
     { name: "Recipes", path: "/recipes", icon: RestaurantIcon },
     { name: "jM Galleries", path: "/jmgalleries", icon: PhotoCameraIcon },
   ];
