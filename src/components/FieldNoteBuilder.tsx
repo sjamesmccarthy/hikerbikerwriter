@@ -46,6 +46,7 @@ const FieldNoteBuilder: React.FC = () => {
     content: string;
     tags?: string;
     mood?: string;
+    type?: string;
     images?: string[];
   }) => {
     setIsSubmitting(true);

@@ -4,6 +4,8 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import {
   ArrowBack as ArrowBackIcon,
   Edit as EditIcon,
@@ -33,6 +35,7 @@ type FieldNote = {
   author: string;
   date: string;
   tags?: string;
+  type?: string;
   mood?: string;
   images?: string[];
   is_public?: boolean;
@@ -155,6 +158,7 @@ const FieldNoteDetail: React.FC<FieldNoteDetailProps> = ({ slug }) => {
     content: string;
     tags?: string;
     mood?: string;
+    type?: string;
     images?: string[];
     is_public?: boolean;
     shared_family?: boolean;
@@ -445,9 +449,17 @@ const FieldNoteDetail: React.FC<FieldNoteDetailProps> = ({ slug }) => {
 
               {/* Content */}
               <div className="prose max-w-none">
-                <div className="whitespace-pre-wrap text-gray-800 leading-relaxed">
-                  {fieldNote.content}
-                </div>
+                {fieldNote.type === "ShortStory" ? (
+                  <div className="text-gray-800 leading-relaxed">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {fieldNote.content}
+                    </ReactMarkdown>
+                  </div>
+                ) : (
+                  <div className="whitespace-pre-wrap text-gray-800 leading-relaxed">
+                    {fieldNote.content}
+                  </div>
+                )}
               </div>
 
               {/* Images */}

@@ -221,6 +221,7 @@ export async function POST(request) {
       author_email: userEmail,
       tags: fieldNoteData.tags || "",
       mood: fieldNoteData.mood || "",
+      type: fieldNoteData.type || "FieldNote",
       images: fieldNoteData.images || [],
       date: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
