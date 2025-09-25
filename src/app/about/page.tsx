@@ -541,6 +541,15 @@ export default function AboutPage() {
               </a>
             </h2>
 
+            <h3 className="font-semibold mt-4 mb-1">v1.9.6</h3>
+            <ul className="list-disc ml-6 mb-2">
+              <li>Updated job tracking UI to be more user-friendly.</li>
+              <li>
+                Updated job tracking to include recruiter in more log tracking
+                types.
+              </li>
+            </ul>
+
             <h3 className="font-semibold mt-4 mb-1">v1.9.5</h3>
             <ul className="list-disc ml-6 mb-2">
               <li>Added new loading states with large icons, spinnning.</li>
