@@ -59,6 +59,13 @@ interface Chapter {
   createdAt: Date;
 }
 
+interface Outline {
+  id: string;
+  title: string;
+  content: string; // JSON string of Quill delta
+  createdAt: Date;
+}
+
 interface TwainStoryWriterProps {
   book: { id: number; title: string; wordCount: number };
   onBackToBookshelf: () => void;
@@ -77,6 +84,9 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [isEditingChapter, setIsEditingChapter] = useState(false);
   const [currentChapter, setCurrentChapter] = useState<Chapter | null>(null);
+  const [outlines, setOutlines] = useState<Outline[]>([]);
+  const [isEditingOutline, setIsEditingOutline] = useState(false);
+  const [currentOutline, setCurrentOutline] = useState<Outline | null>(null);
   const [totalWordCount, setTotalWordCount] = useState(0);
   const [createIdeaModalOpen, setCreateIdeaModalOpen] = useState(false);
   const [createCharacterModalOpen, setCreateCharacterModalOpen] =
@@ -131,20 +141,37 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
 
             // Add auto-save on text change
             quill.on("text-change", () => {
-              if (isEditingChapter && currentChapter) {
-                const delta = quill.getContents();
-                const updatedChapter = {
-                  ...currentChapter,
-                  content: JSON.stringify(delta),
-                };
-                const updatedChapters = chapters.map((ch) =>
-                  ch.id === currentChapter.id ? updatedChapter : ch
-                );
-                setChapters(updatedChapters);
-                localStorage.setItem(
-                  `twain-chapters-${book.id}`,
-                  JSON.stringify(updatedChapters)
-                );
+              if (
+                (isEditingChapter && currentChapter) ||
+                (isEditingOutline && currentOutline)
+              ) {
+                const item = currentChapter || currentOutline;
+                if (item) {
+                  const delta = quill.getContents();
+                  const updatedItem = {
+                    ...item,
+                    content: JSON.stringify(delta),
+                  };
+                  if (currentChapter) {
+                    const updatedChapters = chapters.map((ch) =>
+                      ch.id === currentChapter.id ? updatedItem : ch
+                    );
+                    setChapters(updatedChapters);
+                    localStorage.setItem(
+                      `twain-chapters-${book.id}`,
+                      JSON.stringify(updatedChapters)
+                    );
+                  } else if (currentOutline) {
+                    const updatedOutlines = outlines.map((ol) =>
+                      ol.id === currentOutline.id ? updatedItem : ol
+                    );
+                    setOutlines(updatedOutlines);
+                    localStorage.setItem(
+                      `twain-outlines-${book.id}`,
+                      JSON.stringify(updatedOutlines)
+                    );
+                  }
+                }
               }
             });
 
@@ -155,7 +182,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
           console.error("Failed to load Quill:", error);
         });
     }
-  }, [quillInstance]);
+  }, []);
 
   // Load ideas from localStorage on component mount
   useEffect(() => {
@@ -215,23 +242,44 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
     }
   }, [book.id]);
 
-  // Calculate total word count when chapters change
+  // Load outlines from localStorage on component mount
+  useEffect(() => {
+    const storedOutlines = localStorage.getItem(`twain-outlines-${book.id}`);
+    if (storedOutlines) {
+      try {
+        const parsedOutlines = JSON.parse(storedOutlines).map(
+          (outline: Omit<Outline, "createdAt"> & { createdAt: string }) => ({
+            ...outline,
+            createdAt: new Date(outline.createdAt),
+          })
+        );
+        setOutlines(parsedOutlines);
+      } catch (error) {
+        console.error("Failed to parse stored outlines:", error);
+      }
+    }
+  }, [book.id]);
+
+  // Calculate total word count when chapters or outlines change
   useEffect(() => {
     const calculateWordCount = () => {
       let total = 0;
-      chapters.forEach((ch) => {
+      [...chapters, ...outlines].forEach((item) => {
         try {
-          const delta = JSON.parse(ch.content);
-          const words = delta.ops.reduce((acc: number, op: any) => {
-            if (op.insert && typeof op.insert === "string") {
-              return (
-                acc +
-                op.insert.split(/\s+/).filter((w: string) => w.length > 0)
-                  .length
-              );
-            }
-            return acc;
-          }, 0);
+          const delta = JSON.parse(item.content);
+          const words = delta.ops.reduce(
+            (acc: number, op: { insert?: unknown }) => {
+              if (op.insert && typeof op.insert === "string") {
+                return (
+                  acc +
+                  op.insert.split(/\s+/).filter((w: string) => w.length > 0)
+                    .length
+                );
+              }
+              return acc;
+            },
+            0
+          );
           total += words;
         } catch {
           // ignore parsing errors
@@ -240,16 +288,19 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
       setTotalWordCount(total);
     };
     calculateWordCount();
-  }, [chapters]);
+  }, [chapters, outlines]);
 
-  // Set Quill content when currentChapter changes
+  // Set Quill content when currentChapter or currentOutline changes
   useEffect(() => {
-    if (quillInstance && currentChapter) {
-      const delta = JSON.parse(currentChapter.content);
-      quillInstance.setContents(delta);
-      quillInstance.focus();
+    if (quillInstance && (currentChapter || currentOutline)) {
+      const item = currentChapter || currentOutline;
+      if (item) {
+        const delta = JSON.parse(item.content);
+        quillInstance.setContents(delta);
+        quillInstance.focus();
+      }
     }
-  }, [quillInstance, currentChapter]);
+  }, [quillInstance, currentChapter, currentOutline]);
 
   const handleCreateIdeaClick = () => {
     setCreateIdeaModalOpen(true);
@@ -366,6 +417,30 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
     setIsEditingChapter(true);
   };
 
+  const handleCreateOutlineClick = () => {
+    const outlineNumber = outlines.length + 1;
+    const defaultDelta = { ops: [{ insert: `Outline ${outlineNumber}\n` }] };
+    const newOutline: Outline = {
+      id: Date.now().toString(),
+      title: `Outline ${outlineNumber}`,
+      content: JSON.stringify(defaultDelta),
+      createdAt: new Date(),
+    };
+
+    const updatedOutlines = [...outlines, newOutline];
+    setOutlines(updatedOutlines);
+
+    // Store in localStorage
+    localStorage.setItem(
+      `twain-outlines-${book.id}`,
+      JSON.stringify(updatedOutlines)
+    );
+
+    // Set editing mode
+    setCurrentOutline(newOutline);
+    setIsEditingOutline(true);
+  };
+
   const accordionSections = [
     {
       title: "IDEAS",
@@ -456,6 +531,8 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                         handleCreateCharacterClick();
                       } else if (section.title === "CHAPTERS") {
                         handleCreateChapterClick();
+                      } else if (section.title === "OUTLINE") {
+                        handleCreateOutlineClick();
                       }
                     }}
                     sx={{
@@ -595,6 +672,51 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                       </div>
                     ))}
                   </div>
+                ) : section.title === "OUTLINE" && outlines.length > 0 ? (
+                  <div className="space-y-3">
+                    {outlines.map((outline) => (
+                      <div
+                        key={outline.id}
+                        className="flex items-start gap-3 p-3 bg-white rounded-md border border-gray-200"
+                      >
+                        <DescriptionOutlinedIcon
+                          sx={{
+                            fontSize: 20,
+                            color: "rgb(107, 114, 128)",
+                            marginTop: "2px",
+                          }}
+                        />
+                        <div className="flex-1">
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontFamily: "'Rubik', sans-serif",
+                              fontWeight: 500,
+                              fontSize: "14px",
+                              color: "#1f2937",
+                              lineHeight: 1.4,
+                            }}
+                          >
+                            {outline.title}
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontFamily: "'Rubik', sans-serif",
+                              fontWeight: 400,
+                              fontSize: "12px",
+                              color: "rgb(107, 114, 128)",
+                              lineHeight: 1.4,
+                              marginTop: "4px",
+                            }}
+                          >
+                            Created:{" "}
+                            {new Date(outline.createdAt).toLocaleDateString()}
+                          </Typography>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 ) : section.title === "CHAPTERS" && chapters.length > 0 ? (
                   <div className="space-y-3">
                     {chapters.map((chapter) => (
@@ -681,27 +803,46 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
             {isEditingChapter && currentChapter
               ? ` : ${currentChapter.title}`
               : ""}
+            {isEditingOutline && currentOutline
+              ? ` : ${currentOutline.title}`
+              : ""}
           </Typography>
-          {isEditingChapter && (
+          {isEditingChapter || isEditingOutline ? (
             <IconButton
               onClick={() => {
-                if (quillInstance && currentChapter) {
-                  const delta = quillInstance.getContents();
-                  const updatedChapter = {
-                    ...currentChapter,
-                    content: JSON.stringify(delta),
-                  };
-                  const updatedChapters = chapters.map((ch) =>
-                    ch.id === currentChapter.id ? updatedChapter : ch
-                  );
-                  setChapters(updatedChapters);
-                  localStorage.setItem(
-                    `twain-chapters-${book.id}`,
-                    JSON.stringify(updatedChapters)
-                  );
+                if (quillInstance && (currentChapter || currentOutline)) {
+                  const item = currentChapter || currentOutline;
+                  if (item) {
+                    const delta = quillInstance.getContents();
+                    const updatedItem = {
+                      ...item,
+                      content: JSON.stringify(delta),
+                    };
+                    if (currentChapter) {
+                      const updatedChapters = chapters.map((ch) =>
+                        ch.id === currentChapter.id ? updatedItem : ch
+                      );
+                      setChapters(updatedChapters);
+                      localStorage.setItem(
+                        `twain-chapters-${book.id}`,
+                        JSON.stringify(updatedChapters)
+                      );
+                    } else if (currentOutline) {
+                      const updatedOutlines = outlines.map((ol) =>
+                        ol.id === currentOutline.id ? updatedItem : ol
+                      );
+                      setOutlines(updatedOutlines);
+                      localStorage.setItem(
+                        `twain-outlines-${book.id}`,
+                        JSON.stringify(updatedOutlines)
+                      );
+                    }
+                  }
                 }
                 setIsEditingChapter(false);
                 setCurrentChapter(null);
+                setIsEditingOutline(false);
+                setCurrentOutline(null);
               }}
               sx={{
                 color: "rgb(19, 135, 194)",
@@ -712,18 +853,20 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
             >
               <CancelIcon />
             </IconButton>
-          )}
+          ) : null}
         </div>
 
         {/* Dashboard Container */}
         <div className="flex-1 relative p-4">
           <div
             ref={quillRef}
-            className={`h-full ${isEditingChapter ? "" : "hidden"}`}
+            className={`h-full ${
+              isEditingChapter || isEditingOutline ? "" : "hidden"
+            }`}
           ></div>
           <div
             className={`h-full bg-white rounded-lg p-6 ${
-              isEditingChapter ? "hidden" : ""
+              isEditingChapter || isEditingOutline ? "hidden" : ""
             }`}
           >
             <Typography
@@ -740,7 +883,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
             </Typography>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
               <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
                 <div className="flex items-center gap-3">
                   <DescriptionOutlinedIcon
@@ -864,6 +1007,41 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                         color: "#1f2937",
                       }}
                     >
+                      {outlines.length}
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        fontFamily: "'Rubik', sans-serif",
+                        fontWeight: 400,
+                        fontSize: "14px",
+                        color: "rgb(107, 114, 128)",
+                      }}
+                    >
+                      Outlines
+                    </Typography>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                <div className="flex items-center gap-3">
+                  <DescriptionOutlinedIcon
+                    sx={{
+                      fontSize: 32,
+                      color: "rgb(19, 135, 194)",
+                    }}
+                  />
+                  <div>
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        fontFamily: "'Rubik', sans-serif",
+                        fontWeight: 600,
+                        fontSize: "18px",
+                        color: "#1f2937",
+                      }}
+                    >
                       {totalWordCount}
                     </Typography>
                     <Typography
@@ -897,7 +1075,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                 Recent Activity
               </Typography>
               <div className="space-y-3">
-                {[...ideas, ...characters, ...chapters]
+                {[...ideas, ...characters, ...chapters, ...outlines]
                   .sort(
                     (a, b) =>
                       new Date(b.createdAt).getTime() -
@@ -918,6 +1096,13 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                         />
                       ) : "gender" in item ? (
                         <FaceOutlinedIcon
+                          sx={{
+                            fontSize: 20,
+                            color: "rgb(107, 114, 128)",
+                          }}
+                        />
+                      ) : "content" in item && "title" in item ? (
+                        <DescriptionOutlinedIcon
                           sx={{
                             fontSize: 20,
                             color: "rgb(107, 114, 128)",
@@ -945,7 +1130,13 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                             ? `New idea: ${item.title}`
                             : "gender" in item
                             ? `New character: ${item.name}`
-                            : `New chapter: ${item.title}`}
+                            : "content" in item && "title" in item
+                            ? `New ${
+                                chapters.some((c) => c.id === item.id)
+                                  ? "chapter"
+                                  : "outline"
+                              }: ${item.title}`
+                            : `New item`}
                         </Typography>
                         <Typography
                           variant="body2"
@@ -963,7 +1154,8 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                   ))}
                 {ideas.length === 0 &&
                   characters.length === 0 &&
-                  chapters.length === 0 && (
+                  chapters.length === 0 &&
+                  outlines.length === 0 && (
                     <div className="text-center py-8">
                       <Typography
                         variant="body2"
@@ -996,7 +1188,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
               >
                 Quick Actions
               </Typography>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 <Button
                   variant="outlined"
                   onClick={handleCreateIdeaClick}
@@ -1034,6 +1226,44 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                   }}
                 >
                   Create Character
+                </Button>
+                <Button
+                  variant="outlined"
+                  onClick={handleCreateOutlineClick}
+                  startIcon={<DescriptionOutlinedIcon />}
+                  sx={{
+                    justifyContent: "flex-start",
+                    padding: "12px 16px",
+                    borderColor: "rgb(19, 135, 194)",
+                    color: "rgb(19, 135, 194)",
+                    textTransform: "none",
+                    fontFamily: "'Rubik', sans-serif",
+                    "&:hover": {
+                      borderColor: "rgb(15, 108, 155)",
+                      backgroundColor: "rgba(19, 135, 194, 0.04)",
+                    },
+                  }}
+                >
+                  Create Outline
+                </Button>
+                <Button
+                  variant="outlined"
+                  onClick={handleCreateChapterClick}
+                  startIcon={<DescriptionOutlinedIcon />}
+                  sx={{
+                    justifyContent: "flex-start",
+                    padding: "12px 16px",
+                    borderColor: "rgb(19, 135, 194)",
+                    color: "rgb(19, 135, 194)",
+                    textTransform: "none",
+                    fontFamily: "'Rubik', sans-serif",
+                    "&:hover": {
+                      borderColor: "rgb(15, 108, 155)",
+                      backgroundColor: "rgba(19, 135, 194, 0.04)",
+                    },
+                  }}
+                >
+                  Write Chapter
                 </Button>
               </div>
             </div>
