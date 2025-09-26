@@ -18,6 +18,7 @@ import AddCircleOutlinedIcon from "@mui/icons-material/AddCircleOutlined";
 import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
 import CloseIcon from "@mui/icons-material/Close";
 import FaceOutlinedIcon from "@mui/icons-material/FaceOutlined";
+import CancelIcon from "@mui/icons-material/Cancel";
 
 // Define Quill types
 interface QuillInstance {
@@ -51,6 +52,13 @@ interface Character {
   createdAt: Date;
 }
 
+interface Chapter {
+  id: string;
+  title: string;
+  content: string; // JSON string of Quill delta
+  createdAt: Date;
+}
+
 interface TwainStoryWriterProps {
   book: { id: number; title: string; wordCount: number };
   onBackToBookshelf: () => void;
@@ -66,6 +74,10 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
   );
   const [ideas, setIdeas] = useState<Idea[]>([]);
   const [characters, setCharacters] = useState<Character[]>([]);
+  const [chapters, setChapters] = useState<Chapter[]>([]);
+  const [isEditingChapter, setIsEditingChapter] = useState(false);
+  const [currentChapter, setCurrentChapter] = useState<Chapter | null>(null);
+  const [totalWordCount, setTotalWordCount] = useState(0);
   const [createIdeaModalOpen, setCreateIdeaModalOpen] = useState(false);
   const [createCharacterModalOpen, setCreateCharacterModalOpen] =
     useState(false);
@@ -117,6 +129,25 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
             quill.root.style.fontSize = "18px";
             quill.root.style.lineHeight = "1.6";
 
+            // Add auto-save on text change
+            quill.on("text-change", () => {
+              if (isEditingChapter && currentChapter) {
+                const delta = quill.getContents();
+                const updatedChapter = {
+                  ...currentChapter,
+                  content: JSON.stringify(delta),
+                };
+                const updatedChapters = chapters.map((ch) =>
+                  ch.id === currentChapter.id ? updatedChapter : ch
+                );
+                setChapters(updatedChapters);
+                localStorage.setItem(
+                  `twain-chapters-${book.id}`,
+                  JSON.stringify(updatedChapters)
+                );
+              }
+            });
+
             setQuillInstance(quill);
           }
         })
@@ -165,6 +196,60 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
       }
     }
   }, [book.id]);
+
+  // Load chapters from localStorage on component mount
+  useEffect(() => {
+    const storedChapters = localStorage.getItem(`twain-chapters-${book.id}`);
+    if (storedChapters) {
+      try {
+        const parsedChapters = JSON.parse(storedChapters).map(
+          (chapter: Omit<Chapter, "createdAt"> & { createdAt: string }) => ({
+            ...chapter,
+            createdAt: new Date(chapter.createdAt),
+          })
+        );
+        setChapters(parsedChapters);
+      } catch (error) {
+        console.error("Failed to parse stored chapters:", error);
+      }
+    }
+  }, [book.id]);
+
+  // Calculate total word count when chapters change
+  useEffect(() => {
+    const calculateWordCount = () => {
+      let total = 0;
+      chapters.forEach((ch) => {
+        try {
+          const delta = JSON.parse(ch.content);
+          const words = delta.ops.reduce((acc: number, op: any) => {
+            if (op.insert && typeof op.insert === "string") {
+              return (
+                acc +
+                op.insert.split(/\s+/).filter((w: string) => w.length > 0)
+                  .length
+              );
+            }
+            return acc;
+          }, 0);
+          total += words;
+        } catch {
+          // ignore parsing errors
+        }
+      });
+      setTotalWordCount(total);
+    };
+    calculateWordCount();
+  }, [chapters]);
+
+  // Set Quill content when currentChapter changes
+  useEffect(() => {
+    if (quillInstance && currentChapter) {
+      const delta = JSON.parse(currentChapter.content);
+      quillInstance.setContents(delta);
+      quillInstance.focus();
+    }
+  }, [quillInstance, currentChapter]);
 
   const handleCreateIdeaClick = () => {
     setCreateIdeaModalOpen(true);
@@ -257,6 +342,30 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
     }
   };
 
+  const handleCreateChapterClick = () => {
+    const chapterNumber = chapters.length + 1;
+    const defaultDelta = { ops: [{ insert: `Chapter ${chapterNumber}\n` }] };
+    const newChapter: Chapter = {
+      id: Date.now().toString(),
+      title: `Chapter ${chapterNumber}`,
+      content: JSON.stringify(defaultDelta),
+      createdAt: new Date(),
+    };
+
+    const updatedChapters = [...chapters, newChapter];
+    setChapters(updatedChapters);
+
+    // Store in localStorage
+    localStorage.setItem(
+      `twain-chapters-${book.id}`,
+      JSON.stringify(updatedChapters)
+    );
+
+    // Set editing mode
+    setCurrentChapter(newChapter);
+    setIsEditingChapter(true);
+  };
+
   const accordionSections = [
     {
       title: "IDEAS",
@@ -345,6 +454,8 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                         handleCreateIdeaClick();
                       } else if (section.title === "CHARACTERS") {
                         handleCreateCharacterClick();
+                      } else if (section.title === "CHAPTERS") {
+                        handleCreateChapterClick();
                       }
                     }}
                     sx={{
@@ -484,6 +595,51 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                       </div>
                     ))}
                   </div>
+                ) : section.title === "CHAPTERS" && chapters.length > 0 ? (
+                  <div className="space-y-3">
+                    {chapters.map((chapter) => (
+                      <div
+                        key={chapter.id}
+                        className="flex items-start gap-3 p-3 bg-white rounded-md border border-gray-200"
+                      >
+                        <DescriptionOutlinedIcon
+                          sx={{
+                            fontSize: 20,
+                            color: "rgb(107, 114, 128)",
+                            marginTop: "2px",
+                          }}
+                        />
+                        <div className="flex-1">
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontFamily: "'Rubik', sans-serif",
+                              fontWeight: 500,
+                              fontSize: "14px",
+                              color: "#1f2937",
+                              lineHeight: 1.4,
+                            }}
+                          >
+                            {chapter.title}
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontFamily: "'Rubik', sans-serif",
+                              fontWeight: 400,
+                              fontSize: "12px",
+                              color: "rgb(107, 114, 128)",
+                              lineHeight: 1.4,
+                              marginTop: "4px",
+                            }}
+                          >
+                            Created:{" "}
+                            {new Date(chapter.createdAt).toLocaleDateString()}
+                          </Typography>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 ) : (
                   <Typography
                     variant="body2"
@@ -508,7 +664,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
       <div className="flex-1 flex flex-col">
         {/* Header with Title */}
         <div
-          className="p-4 border-b min-h-[67px] border-gray-200 bg-white flex items-center"
+          className="p-4 border-b min-h-[67px] border-gray-200 bg-white flex items-center justify-between"
           style={{ zIndex: 10 }}
         >
           <Typography
@@ -519,16 +675,57 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
               fontSize: "20px",
               color: "#1f2937",
               lineHeight: 1,
-              display: "block",
             }}
           >
             {book?.title || "Untitled Book"}
+            {isEditingChapter && currentChapter
+              ? ` : ${currentChapter.title}`
+              : ""}
           </Typography>
+          {isEditingChapter && (
+            <IconButton
+              onClick={() => {
+                if (quillInstance && currentChapter) {
+                  const delta = quillInstance.getContents();
+                  const updatedChapter = {
+                    ...currentChapter,
+                    content: JSON.stringify(delta),
+                  };
+                  const updatedChapters = chapters.map((ch) =>
+                    ch.id === currentChapter.id ? updatedChapter : ch
+                  );
+                  setChapters(updatedChapters);
+                  localStorage.setItem(
+                    `twain-chapters-${book.id}`,
+                    JSON.stringify(updatedChapters)
+                  );
+                }
+                setIsEditingChapter(false);
+                setCurrentChapter(null);
+              }}
+              sx={{
+                color: "rgb(19, 135, 194)",
+                "&:hover": {
+                  backgroundColor: "rgba(19, 135, 194, 0.1)",
+                },
+              }}
+            >
+              <CancelIcon />
+            </IconButton>
+          )}
         </div>
 
         {/* Dashboard Container */}
         <div className="flex-1 relative p-4">
-          <div className="h-full bg-white rounded-lg p-6">
+          <div
+            ref={quillRef}
+            className={`h-full ${isEditingChapter ? "" : "hidden"}`}
+          ></div>
+          <div
+            className={`h-full bg-white rounded-lg p-6 ${
+              isEditingChapter ? "hidden" : ""
+            }`}
+          >
             <Typography
               variant="h4"
               sx={{
@@ -543,7 +740,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
             </Typography>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
               <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
                 <div className="flex items-center gap-3">
                   <DescriptionOutlinedIcon
@@ -632,7 +829,42 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                         color: "#1f2937",
                       }}
                     >
-                      {book?.wordCount || 0}
+                      {chapters.length}
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        fontFamily: "'Rubik', sans-serif",
+                        fontWeight: 400,
+                        fontSize: "14px",
+                        color: "rgb(107, 114, 128)",
+                      }}
+                    >
+                      Chapters
+                    </Typography>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                <div className="flex items-center gap-3">
+                  <DescriptionOutlinedIcon
+                    sx={{
+                      fontSize: 32,
+                      color: "rgb(19, 135, 194)",
+                    }}
+                  />
+                  <div>
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        fontFamily: "'Rubik', sans-serif",
+                        fontWeight: 600,
+                        fontSize: "18px",
+                        color: "#1f2937",
+                      }}
+                    >
+                      {totalWordCount}
                     </Typography>
                     <Typography
                       variant="body2"
@@ -665,7 +897,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                 Recent Activity
               </Typography>
               <div className="space-y-3">
-                {[...ideas, ...characters]
+                {[...ideas, ...characters, ...chapters]
                   .sort(
                     (a, b) =>
                       new Date(b.createdAt).getTime() -
@@ -677,15 +909,22 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                       key={item.id}
                       className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200"
                     >
-                      {"title" in item ? (
+                      {"notes" in item ? (
                         <DescriptionOutlinedIcon
                           sx={{
                             fontSize: 20,
                             color: "rgb(107, 114, 128)",
                           }}
                         />
-                      ) : (
+                      ) : "gender" in item ? (
                         <FaceOutlinedIcon
+                          sx={{
+                            fontSize: 20,
+                            color: "rgb(107, 114, 128)",
+                          }}
+                        />
+                      ) : (
+                        <DescriptionOutlinedIcon
                           sx={{
                             fontSize: 20,
                             color: "rgb(107, 114, 128)",
@@ -702,9 +941,11 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                             color: "#1f2937",
                           }}
                         >
-                          {"title" in item
+                          {"notes" in item
                             ? `New idea: ${item.title}`
-                            : `New character: ${item.name}`}
+                            : "gender" in item
+                            ? `New character: ${item.name}`
+                            : `New chapter: ${item.title}`}
                         </Typography>
                         <Typography
                           variant="body2"
@@ -720,22 +961,24 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                       </div>
                     </div>
                   ))}
-                {ideas.length === 0 && characters.length === 0 && (
-                  <div className="text-center py-8">
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        fontFamily: "'Rubik', sans-serif",
-                        fontWeight: 400,
-                        fontSize: "14px",
-                        color: "rgb(107, 114, 128)",
-                      }}
-                    >
-                      No recent activity. Start by creating your first idea or
-                      character!
-                    </Typography>
-                  </div>
-                )}
+                {ideas.length === 0 &&
+                  characters.length === 0 &&
+                  chapters.length === 0 && (
+                    <div className="text-center py-8">
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontFamily: "'Rubik', sans-serif",
+                          fontWeight: 400,
+                          fontSize: "14px",
+                          color: "rgb(107, 114, 128)",
+                        }}
+                      >
+                        No recent activity. Start by creating your first idea or
+                        character!
+                      </Typography>
+                    </div>
+                  )}
               </div>
             </div>
 
