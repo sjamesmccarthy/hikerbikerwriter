@@ -11,6 +11,12 @@ import {
   Box,
   TextField,
   Button,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Checkbox,
+  ListItemText,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -66,6 +72,13 @@ interface Outline {
   createdAt: Date;
 }
 
+interface Part {
+  id: string;
+  title: string;
+  chapterIds: string[]; // Array of chapter IDs
+  createdAt: Date;
+}
+
 interface TwainStoryWriterProps {
   book: { id: number; title: string; wordCount: number };
   onBackToBookshelf: () => void;
@@ -87,10 +100,12 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
   const [outlines, setOutlines] = useState<Outline[]>([]);
   const [isEditingOutline, setIsEditingOutline] = useState(false);
   const [currentOutline, setCurrentOutline] = useState<Outline | null>(null);
+  const [parts, setParts] = useState<Part[]>([]);
   const [totalWordCount, setTotalWordCount] = useState(0);
   const [createIdeaModalOpen, setCreateIdeaModalOpen] = useState(false);
   const [createCharacterModalOpen, setCreateCharacterModalOpen] =
     useState(false);
+  const [createPartModalOpen, setCreatePartModalOpen] = useState(false);
   const [ideaTitle, setIdeaTitle] = useState("");
   const [ideaNotes, setIdeaNotes] = useState("");
   const [characterName, setCharacterName] = useState("");
@@ -104,6 +119,8 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
   const [characterFavorites, setCharacterFavorites] = useState("");
   const [characterMisc, setCharacterMisc] = useState("");
   const [characterAvatar, setCharacterAvatar] = useState<string | null>(null);
+  const [partTitle, setPartTitle] = useState("");
+  const [selectedChapterIds, setSelectedChapterIds] = useState<string[]>([]);
 
   // Initialize Quill editor
   useEffect(() => {
@@ -256,6 +273,24 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
         setOutlines(parsedOutlines);
       } catch (error) {
         console.error("Failed to parse stored outlines:", error);
+      }
+    }
+  }, [book.id]);
+
+  // Load parts from localStorage on component mount
+  useEffect(() => {
+    const storedParts = localStorage.getItem(`twain-parts-${book.id}`);
+    if (storedParts) {
+      try {
+        const parsedParts = JSON.parse(storedParts).map(
+          (part: Omit<Part, "createdAt"> & { createdAt: string }) => ({
+            ...part,
+            createdAt: new Date(part.createdAt),
+          })
+        );
+        setParts(parsedParts);
+      } catch (error) {
+        console.error("Failed to parse stored parts:", error);
       }
     }
   }, [book.id]);
@@ -441,6 +476,38 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
     setIsEditingOutline(true);
   };
 
+  const handleCreatePartClick = () => {
+    setCreatePartModalOpen(true);
+  };
+
+  const handleCreatePartModalClose = () => {
+    setCreatePartModalOpen(false);
+    setPartTitle("");
+    setSelectedChapterIds([]);
+  };
+
+  const handleCreatePart = () => {
+    if (partTitle.trim() && selectedChapterIds.length > 0) {
+      const newPart: Part = {
+        id: Date.now().toString(),
+        title: partTitle.trim(),
+        chapterIds: selectedChapterIds,
+        createdAt: new Date(),
+      };
+
+      const updatedParts = [...parts, newPart];
+      setParts(updatedParts);
+
+      // Store in localStorage
+      localStorage.setItem(
+        `twain-parts-${book.id}`,
+        JSON.stringify(updatedParts)
+      );
+
+      handleCreatePartModalClose();
+    }
+  };
+
   const accordionSections = [
     {
       title: "IDEAS",
@@ -533,6 +600,8 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                         handleCreateChapterClick();
                       } else if (section.title === "OUTLINE") {
                         handleCreateOutlineClick();
+                      } else if (section.title === "PARTS") {
+                        handleCreatePartClick();
                       }
                     }}
                     sx={{
@@ -549,7 +618,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                     sx={{
                       fontFamily: "'Rubik', sans-serif",
                       fontWeight: 500,
-                      fontSize: "14px",
+                      fontSize: "18px",
                       color: "#1f2937",
                       letterSpacing: "0.5px",
                     }}
@@ -762,6 +831,51 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                       </div>
                     ))}
                   </div>
+                ) : section.title === "PARTS" && parts.length > 0 ? (
+                  <div className="space-y-3">
+                    {parts.map((part) => (
+                      <div
+                        key={part.id}
+                        className="flex items-start gap-3 p-3 bg-white rounded-md border border-gray-200"
+                      >
+                        <DescriptionOutlinedIcon
+                          sx={{
+                            fontSize: 20,
+                            color: "rgb(107, 114, 128)",
+                            marginTop: "2px",
+                          }}
+                        />
+                        <div className="flex-1">
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontFamily: "'Rubik', sans-serif",
+                              fontWeight: 500,
+                              fontSize: "14px",
+                              color: "#1f2937",
+                              lineHeight: 1.4,
+                            }}
+                          >
+                            {part.title}
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontFamily: "'Rubik', sans-serif",
+                              fontWeight: 400,
+                              fontSize: "12px",
+                              color: "rgb(107, 114, 128)",
+                              lineHeight: 1.4,
+                              marginTop: "4px",
+                            }}
+                          >
+                            Chapters: {part.chapterIds.length} | Created:{" "}
+                            {new Date(part.createdAt).toLocaleDateString()}
+                          </Typography>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 ) : (
                   <Typography
                     variant="body2"
@@ -883,7 +997,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
             </Typography>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-8">
+            <div className="grid grid-cols-1 md:grid-cols-6 gap-6 mb-8">
               <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
                 <div className="flex items-center gap-3">
                   <DescriptionOutlinedIcon
@@ -1042,6 +1156,41 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                         color: "#1f2937",
                       }}
                     >
+                      {parts.length}
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        fontFamily: "'Rubik', sans-serif",
+                        fontWeight: 400,
+                        fontSize: "14px",
+                        color: "rgb(107, 114, 128)",
+                      }}
+                    >
+                      Parts
+                    </Typography>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                <div className="flex items-center gap-3">
+                  <DescriptionOutlinedIcon
+                    sx={{
+                      fontSize: 32,
+                      color: "rgb(19, 135, 194)",
+                    }}
+                  />
+                  <div>
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        fontFamily: "'Rubik', sans-serif",
+                        fontWeight: 600,
+                        fontSize: "18px",
+                        color: "#1f2937",
+                      }}
+                    >
                       {totalWordCount}
                     </Typography>
                     <Typography
@@ -1075,7 +1224,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                 Recent Activity
               </Typography>
               <div className="space-y-3">
-                {[...ideas, ...characters, ...chapters, ...outlines]
+                {[...ideas, ...characters, ...chapters, ...outlines, ...parts]
                   .sort(
                     (a, b) =>
                       new Date(b.createdAt).getTime() -
@@ -1134,7 +1283,9 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                             ? `New ${
                                 chapters.some((c) => c.id === item.id)
                                   ? "chapter"
-                                  : "outline"
+                                  : outlines.some((o) => o.id === item.id)
+                                  ? "outline"
+                                  : "part"
                               }: ${item.title}`
                             : `New item`}
                         </Typography>
@@ -1155,7 +1306,8 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                 {ideas.length === 0 &&
                   characters.length === 0 &&
                   chapters.length === 0 &&
-                  outlines.length === 0 && (
+                  outlines.length === 0 &&
+                  parts.length === 0 && (
                     <div className="text-center py-8">
                       <Typography
                         variant="body2"
@@ -1245,6 +1397,25 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                   }}
                 >
                   Create Outline
+                </Button>
+                <Button
+                  variant="outlined"
+                  onClick={handleCreatePartClick}
+                  startIcon={<DescriptionOutlinedIcon />}
+                  sx={{
+                    justifyContent: "flex-start",
+                    padding: "12px 16px",
+                    borderColor: "rgb(19, 135, 194)",
+                    color: "rgb(19, 135, 194)",
+                    textTransform: "none",
+                    fontFamily: "'Rubik', sans-serif",
+                    "&:hover": {
+                      borderColor: "rgb(15, 108, 155)",
+                      backgroundColor: "rgba(19, 135, 194, 0.04)",
+                    },
+                  }}
+                >
+                  Create Part
                 </Button>
                 <Button
                   variant="outlined"
@@ -1619,6 +1790,155 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                 }}
               >
                 Create Character
+              </Button>
+            </Box>
+          </Box>
+        </Box>
+      </Modal>
+
+      {/* Create Part Modal */}
+      <Modal
+        open={createPartModalOpen}
+        onClose={handleCreatePartModalClose}
+        aria-labelledby="create-part-modal-title"
+      >
+        <Box
+          sx={{
+            position: "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: 500,
+            bgcolor: "background.paper",
+            borderRadius: 3,
+            overflow: "hidden",
+            boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
+          }}
+        >
+          {/* Header with same background as page header */}
+          <Box
+            sx={{
+              backgroundColor: "rgb(38, 52, 63)",
+              color: "white",
+              p: 2,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+            }}
+          >
+            <Typography
+              id="create-part-modal-title"
+              variant="h6"
+              component="h2"
+              sx={{
+                fontFamily: "'Rubik', sans-serif",
+                fontWeight: 600,
+                margin: 0,
+              }}
+            >
+              Create New Part
+            </Typography>
+            <IconButton
+              onClick={handleCreatePartModalClose}
+              sx={{
+                color: "white",
+                "&:hover": {
+                  backgroundColor: "rgba(255, 255, 255, 0.1)",
+                },
+              }}
+            >
+              <CloseIcon />
+            </IconButton>
+          </Box>
+
+          {/* Modal content */}
+          <Box sx={{ p: 4 }}>
+            <TextField
+              fullWidth
+              label="Part Title"
+              value={partTitle}
+              onChange={(e) => setPartTitle(e.target.value)}
+              variant="outlined"
+              sx={{ mb: 3 }}
+              autoFocus
+            />
+            <FormControl fullWidth sx={{ mb: 4 }}>
+              <InputLabel>Select Chapters</InputLabel>
+              <Select
+                multiple
+                value={selectedChapterIds}
+                onChange={(event) => {
+                  const value = event.target.value;
+                  setSelectedChapterIds(
+                    typeof value === "string" ? value.split(",") : value
+                  );
+                }}
+                renderValue={(selected) =>
+                  chapters
+                    .filter((chapter) => selected.includes(chapter.id))
+                    .map((chapter) => chapter.title)
+                    .join(", ")
+                }
+                label="Select Chapters"
+              >
+                {chapters
+                  .filter(
+                    (chapter) =>
+                      !parts.some((part) =>
+                        part.chapterIds.includes(chapter.id)
+                      )
+                  )
+                  .map((chapter) => (
+                    <MenuItem key={chapter.id} value={chapter.id}>
+                      <Checkbox
+                        checked={selectedChapterIds.includes(chapter.id)}
+                      />
+                      <ListItemText primary={chapter.title} />
+                    </MenuItem>
+                  ))}
+              </Select>
+            </FormControl>
+            <Box
+              sx={{
+                display: "flex",
+                gap: 2,
+                justifyContent: "space-between",
+              }}
+            >
+              <Button
+                onClick={handleCreatePartModalClose}
+                variant="outlined"
+                sx={{
+                  flex: 1,
+                  boxShadow: "none",
+                  "&:hover": {
+                    boxShadow: "none",
+                  },
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleCreatePart}
+                variant="contained"
+                disabled={!partTitle.trim() || selectedChapterIds.length === 0}
+                sx={{
+                  flex: 1,
+                  backgroundColor: "rgb(19, 135, 194)",
+                  textTransform: "none",
+                  fontFamily: "'Rubik', sans-serif",
+                  py: 1.5,
+                  boxShadow: "none",
+                  "&:hover": {
+                    backgroundColor: "rgb(15, 108, 155)",
+                    boxShadow: "none",
+                  },
+                  "&:disabled": {
+                    boxShadow: "none",
+                  },
+                }}
+              >
+                Create Part
               </Button>
             </Box>
           </Box>
