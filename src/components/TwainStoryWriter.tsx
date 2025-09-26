@@ -999,11 +999,12 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-6 gap-6 mb-8">
               <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
-                <div className="flex items-center gap-3">
+                <div className="flex flex-col items-center text-center">
                   <DescriptionOutlinedIcon
                     sx={{
                       fontSize: 32,
                       color: "rgb(19, 135, 194)",
+                      marginBottom: "8px",
                     }}
                   />
                   <div>
@@ -1034,11 +1035,12 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
               </div>
 
               <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
-                <div className="flex items-center gap-3">
+                <div className="flex flex-col items-center text-center">
                   <FaceOutlinedIcon
                     sx={{
                       fontSize: 32,
                       color: "rgb(19, 135, 194)",
+                      marginBottom: "8px",
                     }}
                   />
                   <div>
@@ -1069,11 +1071,12 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
               </div>
 
               <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
-                <div className="flex items-center gap-3">
+                <div className="flex flex-col items-center text-center">
                   <DescriptionOutlinedIcon
                     sx={{
                       fontSize: 32,
                       color: "rgb(19, 135, 194)",
+                      marginBottom: "8px",
                     }}
                   />
                   <div>
@@ -1104,11 +1107,12 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
               </div>
 
               <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
-                <div className="flex items-center gap-3">
+                <div className="flex flex-col items-center text-center">
                   <DescriptionOutlinedIcon
                     sx={{
                       fontSize: 32,
                       color: "rgb(19, 135, 194)",
+                      marginBottom: "8px",
                     }}
                   />
                   <div>
@@ -1139,11 +1143,12 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
               </div>
 
               <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
-                <div className="flex items-center gap-3">
+                <div className="flex flex-col items-center text-center">
                   <DescriptionOutlinedIcon
                     sx={{
                       fontSize: 32,
                       color: "rgb(19, 135, 194)",
+                      marginBottom: "8px",
                     }}
                   />
                   <div>
@@ -1174,11 +1179,12 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
               </div>
 
               <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
-                <div className="flex items-center gap-3">
+                <div className="flex flex-col items-center text-center">
                   <DescriptionOutlinedIcon
                     sx={{
                       fontSize: 32,
                       color: "rgb(19, 135, 194)",
+                      marginBottom: "8px",
                     }}
                   />
                   <div>
@@ -1202,15 +1208,128 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                         color: "rgb(107, 114, 128)",
                       }}
                     >
-                      Words Written
+                      Words
                     </Typography>
                   </div>
                 </div>
               </div>
             </div>
 
+            {/* Quick Actions */}
+            <div>
+              <Typography
+                variant="h6"
+                sx={{
+                  fontFamily: "'Rubik', sans-serif",
+                  fontWeight: 600,
+                  fontSize: "18px",
+                  color: "#1f2937",
+                  marginBottom: "16px",
+                }}
+              >
+                Quick Actions
+              </Typography>
+              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                <Button
+                  variant="outlined"
+                  onClick={handleCreateIdeaClick}
+                  startIcon={<AddCircleOutlinedIcon />}
+                  sx={{
+                    justifyContent: "flex-start",
+                    padding: "12px 16px",
+                    borderColor: "rgb(19, 135, 194)",
+                    color: "rgb(19, 135, 194)",
+                    textTransform: "none",
+                    fontFamily: "'Rubik', sans-serif",
+                    "&:hover": {
+                      borderColor: "rgb(15, 108, 155)",
+                      backgroundColor: "rgba(19, 135, 194, 0.04)",
+                    },
+                  }}
+                >
+                  Add New Idea
+                </Button>
+                <Button
+                  variant="outlined"
+                  onClick={handleCreateCharacterClick}
+                  startIcon={<FaceOutlinedIcon />}
+                  sx={{
+                    justifyContent: "flex-start",
+                    padding: "12px 16px",
+                    borderColor: "rgb(19, 135, 194)",
+                    color: "rgb(19, 135, 194)",
+                    textTransform: "none",
+                    fontFamily: "'Rubik', sans-serif",
+                    "&:hover": {
+                      borderColor: "rgb(15, 108, 155)",
+                      backgroundColor: "rgba(19, 135, 194, 0.04)",
+                    },
+                  }}
+                >
+                  Add Character
+                </Button>
+                <Button
+                  variant="outlined"
+                  onClick={handleCreateOutlineClick}
+                  startIcon={<DescriptionOutlinedIcon />}
+                  sx={{
+                    justifyContent: "flex-start",
+                    padding: "12px 16px",
+                    borderColor: "rgb(19, 135, 194)",
+                    color: "rgb(19, 135, 194)",
+                    textTransform: "none",
+                    fontFamily: "'Rubik', sans-serif",
+                    "&:hover": {
+                      borderColor: "rgb(15, 108, 155)",
+                      backgroundColor: "rgba(19, 135, 194, 0.04)",
+                    },
+                  }}
+                >
+                  Create Outline
+                </Button>
+                <Button
+                  variant="outlined"
+                  onClick={handleCreatePartClick}
+                  startIcon={<DescriptionOutlinedIcon />}
+                  sx={{
+                    justifyContent: "flex-start",
+                    padding: "12px 16px",
+                    borderColor: "rgb(19, 135, 194)",
+                    color: "rgb(19, 135, 194)",
+                    textTransform: "none",
+                    fontFamily: "'Rubik', sans-serif",
+                    "&:hover": {
+                      borderColor: "rgb(15, 108, 155)",
+                      backgroundColor: "rgba(19, 135, 194, 0.04)",
+                    },
+                  }}
+                >
+                  Create Part
+                </Button>
+                <Button
+                  variant="outlined"
+                  onClick={handleCreateChapterClick}
+                  startIcon={<DescriptionOutlinedIcon />}
+                  sx={{
+                    justifyContent: "flex-start",
+                    padding: "12px 16px",
+                    borderColor: "rgb(19, 135, 194)",
+                    color: "rgb(19, 135, 194)",
+                    textTransform: "none",
+                    fontFamily: "'Rubik', sans-serif",
+                    "&:hover": {
+                      borderColor: "rgb(15, 108, 155)",
+                      backgroundColor: "rgba(19, 135, 194, 0.04)",
+                    },
+                  }}
+                >
+                  Write Chapter
+                </Button>
+              </div>
+            </div>
+
             {/* Recent Activity */}
-            <div className="mb-8">
+            <div className="mb-8 mt-8">
               <Typography
                 variant="h6"
                 sx={{
@@ -1326,624 +1445,516 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
               </div>
             </div>
 
-            {/* Quick Actions */}
-            <div>
+            {/* Demo Notice */}
+            <div className="w-full bg-red-400 text-center py-4 text-white font-medium">
+              DEMO ONLY - NO FUNCTIONALITY AT THIS TIME
+            </div>
+          </div>
+        </div>
+
+        {/* Column 3: Reserved for future features */}
+        <div className="w-0">
+          {/* This column is ready for future expansion */}
+        </div>
+
+        {/* Create Idea Modal */}
+        <Modal
+          open={createIdeaModalOpen}
+          onClose={handleCreateIdeaModalClose}
+          aria-labelledby="create-idea-modal-title"
+        >
+          <Box
+            sx={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              width: 500,
+              bgcolor: "background.paper",
+              borderRadius: 3,
+              overflow: "hidden",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
+            }}
+          >
+            {/* Header with same background as page header */}
+            <Box
+              sx={{
+                backgroundColor: "rgb(38, 52, 63)",
+                color: "white",
+                p: 2,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
               <Typography
+                id="create-idea-modal-title"
                 variant="h6"
+                component="h2"
                 sx={{
                   fontFamily: "'Rubik', sans-serif",
                   fontWeight: 600,
-                  fontSize: "18px",
-                  color: "#1f2937",
-                  marginBottom: "16px",
+                  margin: 0,
                 }}
               >
-                Quick Actions
+                Create New Idea
               </Typography>
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <IconButton
+                onClick={handleCreateIdeaModalClose}
+                sx={{
+                  color: "white",
+                  "&:hover": {
+                    backgroundColor: "rgba(255, 255, 255, 0.1)",
+                  },
+                }}
+              >
+                <CloseIcon />
+              </IconButton>
+            </Box>
+
+            {/* Modal content */}
+            <Box sx={{ p: 4 }}>
+              <TextField
+                fullWidth
+                label="Idea Title"
+                value={ideaTitle}
+                onChange={(e) => setIdeaTitle(e.target.value)}
+                variant="outlined"
+                sx={{ mb: 3 }}
+                autoFocus
+              />
+              <TextField
+                fullWidth
+                label="Notes (optional)"
+                value={ideaNotes}
+                onChange={(e) => setIdeaNotes(e.target.value)}
+                variant="outlined"
+                multiline
+                rows={4}
+                sx={{ mb: 4 }}
+              />
+              <Box
+                sx={{
+                  display: "flex",
+                  gap: 2,
+                  justifyContent: "space-between",
+                }}
+              >
                 <Button
+                  onClick={handleCreateIdeaModalClose}
                   variant="outlined"
-                  onClick={handleCreateIdeaClick}
-                  startIcon={<AddCircleOutlinedIcon />}
                   sx={{
-                    justifyContent: "flex-start",
-                    padding: "12px 16px",
-                    borderColor: "rgb(19, 135, 194)",
-                    color: "rgb(19, 135, 194)",
-                    textTransform: "none",
-                    fontFamily: "'Rubik', sans-serif",
+                    flex: 1,
+                    boxShadow: "none",
                     "&:hover": {
-                      borderColor: "rgb(15, 108, 155)",
-                      backgroundColor: "rgba(19, 135, 194, 0.04)",
+                      boxShadow: "none",
                     },
                   }}
                 >
-                  Add New Idea
+                  Cancel
                 </Button>
                 <Button
-                  variant="outlined"
-                  onClick={handleCreateCharacterClick}
-                  startIcon={<FaceOutlinedIcon />}
+                  onClick={handleCreateIdea}
+                  variant="contained"
+                  disabled={!ideaTitle.trim()}
                   sx={{
-                    justifyContent: "flex-start",
-                    padding: "12px 16px",
-                    borderColor: "rgb(19, 135, 194)",
-                    color: "rgb(19, 135, 194)",
+                    flex: 1,
+                    backgroundColor: "rgb(19, 135, 194)",
                     textTransform: "none",
                     fontFamily: "'Rubik', sans-serif",
+                    py: 1.5,
+                    boxShadow: "none",
                     "&:hover": {
-                      borderColor: "rgb(15, 108, 155)",
-                      backgroundColor: "rgba(19, 135, 194, 0.04)",
+                      backgroundColor: "rgb(15, 108, 155)",
+                      boxShadow: "none",
+                    },
+                    "&:disabled": {
+                      boxShadow: "none",
+                    },
+                  }}
+                >
+                  Create Idea
+                </Button>
+              </Box>
+            </Box>
+          </Box>
+        </Modal>
+
+        {/* Create Character Modal */}
+        <Modal
+          open={createCharacterModalOpen}
+          onClose={handleCreateCharacterModalClose}
+          aria-labelledby="create-character-modal-title"
+        >
+          <Box
+            sx={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              width: 600,
+              maxHeight: "80vh",
+              bgcolor: "background.paper",
+              borderRadius: 3,
+              overflow: "hidden",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
+            }}
+          >
+            {/* Header */}
+            <Box
+              sx={{
+                backgroundColor: "rgb(38, 52, 63)",
+                color: "white",
+                p: 2,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <Typography
+                id="create-character-modal-title"
+                variant="h6"
+                component="h2"
+                sx={{
+                  fontFamily: "'Rubik', sans-serif",
+                  fontWeight: 600,
+                  margin: 0,
+                }}
+              >
+                Create New Character
+              </Typography>
+              <IconButton
+                onClick={handleCreateCharacterModalClose}
+                sx={{
+                  color: "white",
+                  "&:hover": {
+                    backgroundColor: "rgba(255, 255, 255, 0.1)",
+                  },
+                }}
+              >
+                <CloseIcon />
+              </IconButton>
+            </Box>
+
+            {/* Modal content */}
+            <Box
+              sx={{ p: 4, overflowY: "auto", maxHeight: "calc(80vh - 80px)" }}
+            >
+              {/* Avatar Upload */}
+              <Box
+                sx={{ mb: 3, display: "flex", alignItems: "center", gap: 2 }}
+              >
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAvatarUpload}
+                  style={{ display: "none" }}
+                  id="avatar-upload"
+                />
+                <label htmlFor="avatar-upload">
+                  <IconButton component="span">
+                    {characterAvatar ? (
+                      <img
+                        src={characterAvatar}
+                        style={{
+                          width: "40px",
+                          height: "40px",
+                          borderRadius: "50%",
+                          objectFit: "cover",
+                        }}
+                      />
+                    ) : (
+                      <FaceOutlinedIcon sx={{ fontSize: 40 }} />
+                    )}
+                  </IconButton>
+                </label>
+              </Box>
+
+              <TextField
+                fullWidth
+                label="Name"
+                value={characterName}
+                onChange={(e) => setCharacterName(e.target.value)}
+                variant="outlined"
+                sx={{ mb: 3 }}
+                autoFocus
+              />
+              <TextField
+                fullWidth
+                label="Gender"
+                value={characterGender}
+                onChange={(e) => setCharacterGender(e.target.value)}
+                variant="outlined"
+                sx={{ mb: 3 }}
+              />
+              <TextField
+                fullWidth
+                label="Backstory"
+                value={characterBackstory}
+                onChange={(e) => setCharacterBackstory(e.target.value)}
+                variant="outlined"
+                multiline
+                rows={3}
+                sx={{ mb: 3 }}
+              />
+              <TextField
+                fullWidth
+                label="Characterization (Personality, Traits, motivations, etc)"
+                value={characterCharacterization}
+                onChange={(e) => setCharacterCharacterization(e.target.value)}
+                variant="outlined"
+                multiline
+                rows={3}
+                sx={{ mb: 3 }}
+              />
+              <TextField
+                fullWidth
+                label="Voice (Speech, vocab, sense of humor, etc)"
+                value={characterVoice}
+                onChange={(e) => setCharacterVoice(e.target.value)}
+                variant="outlined"
+                multiline
+                rows={3}
+                sx={{ mb: 3 }}
+              />
+              <TextField
+                fullWidth
+                label="Appearance (Height, weight, build, hair/eye color, etc)"
+                value={characterAppearance}
+                onChange={(e) => setCharacterAppearance(e.target.value)}
+                variant="outlined"
+                multiline
+                rows={3}
+                sx={{ mb: 3 }}
+              />
+              <TextField
+                fullWidth
+                label="Friends & Family (Relation to other characters)"
+                value={characterFriendsFamily}
+                onChange={(e) => setCharacterFriendsFamily(e.target.value)}
+                variant="outlined"
+                multiline
+                rows={3}
+                sx={{ mb: 3 }}
+              />
+              <TextField
+                fullWidth
+                label="Favorites (sport, food, animal, music, etc)"
+                value={characterFavorites}
+                onChange={(e) => setCharacterFavorites(e.target.value)}
+                variant="outlined"
+                multiline
+                rows={3}
+                sx={{ mb: 3 }}
+              />
+              <TextField
+                fullWidth
+                label="Misc (title, religion, etc)"
+                value={characterMisc}
+                onChange={(e) => setCharacterMisc(e.target.value)}
+                variant="outlined"
+                multiline
+                rows={3}
+                sx={{ mb: 3 }}
+              />
+              <Box
+                sx={{
+                  display: "flex",
+                  gap: 2,
+                  justifyContent: "space-between",
+                }}
+              >
+                <Button
+                  onClick={handleCreateCharacterModalClose}
+                  variant="outlined"
+                  sx={{
+                    flex: 1,
+                    boxShadow: "none",
+                    "&:hover": {
+                      boxShadow: "none",
+                    },
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleCreateCharacter}
+                  variant="contained"
+                  disabled={!characterName.trim()}
+                  sx={{
+                    flex: 1,
+                    backgroundColor: "rgb(19, 135, 194)",
+                    textTransform: "none",
+                    fontFamily: "'Rubik', sans-serif",
+                    py: 1.5,
+                    boxShadow: "none",
+                    "&:hover": {
+                      backgroundColor: "rgb(15, 108, 155)",
+                      boxShadow: "none",
+                    },
+                    "&:disabled": {
+                      boxShadow: "none",
                     },
                   }}
                 >
                   Create Character
                 </Button>
+              </Box>
+            </Box>
+          </Box>
+        </Modal>
+
+        {/* Create Part Modal */}
+        <Modal
+          open={createPartModalOpen}
+          onClose={handleCreatePartModalClose}
+          aria-labelledby="create-part-modal-title"
+        >
+          <Box
+            sx={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              width: 500,
+              bgcolor: "background.paper",
+              borderRadius: 3,
+              overflow: "hidden",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
+            }}
+          >
+            {/* Header with same background as page header */}
+            <Box
+              sx={{
+                backgroundColor: "rgb(38, 52, 63)",
+                color: "white",
+                p: 2,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <Typography
+                id="create-part-modal-title"
+                variant="h6"
+                component="h2"
+                sx={{
+                  fontFamily: "'Rubik', sans-serif",
+                  fontWeight: 600,
+                  margin: 0,
+                }}
+              >
+                Create New Part
+              </Typography>
+              <IconButton
+                onClick={handleCreatePartModalClose}
+                sx={{
+                  color: "white",
+                  "&:hover": {
+                    backgroundColor: "rgba(255, 255, 255, 0.1)",
+                  },
+                }}
+              >
+                <CloseIcon />
+              </IconButton>
+            </Box>
+
+            {/* Modal content */}
+            <Box sx={{ p: 4 }}>
+              <TextField
+                fullWidth
+                label="Part Title"
+                value={partTitle}
+                onChange={(e) => setPartTitle(e.target.value)}
+                variant="outlined"
+                sx={{ mb: 3 }}
+                autoFocus
+              />
+              <FormControl fullWidth sx={{ mb: 4 }}>
+                <InputLabel>Select Chapters</InputLabel>
+                <Select
+                  multiple
+                  value={selectedChapterIds}
+                  onChange={(event) => {
+                    const value = event.target.value;
+                    setSelectedChapterIds(
+                      typeof value === "string" ? value.split(",") : value
+                    );
+                  }}
+                  renderValue={(selected) =>
+                    chapters
+                      .filter((chapter) => selected.includes(chapter.id))
+                      .map((chapter) => chapter.title)
+                      .join(", ")
+                  }
+                  label="Select Chapters"
+                >
+                  {chapters
+                    .filter(
+                      (chapter) =>
+                        !parts.some((part) =>
+                          part.chapterIds.includes(chapter.id)
+                        )
+                    )
+                    .map((chapter) => (
+                      <MenuItem key={chapter.id} value={chapter.id}>
+                        <Checkbox
+                          checked={selectedChapterIds.includes(chapter.id)}
+                        />
+                        <ListItemText primary={chapter.title} />
+                      </MenuItem>
+                    ))}
+                </Select>
+              </FormControl>
+              <Box
+                sx={{
+                  display: "flex",
+                  gap: 2,
+                  justifyContent: "space-between",
+                }}
+              >
                 <Button
+                  onClick={handleCreatePartModalClose}
                   variant="outlined"
-                  onClick={handleCreateOutlineClick}
-                  startIcon={<DescriptionOutlinedIcon />}
                   sx={{
-                    justifyContent: "flex-start",
-                    padding: "12px 16px",
-                    borderColor: "rgb(19, 135, 194)",
-                    color: "rgb(19, 135, 194)",
-                    textTransform: "none",
-                    fontFamily: "'Rubik', sans-serif",
+                    flex: 1,
+                    boxShadow: "none",
                     "&:hover": {
-                      borderColor: "rgb(15, 108, 155)",
-                      backgroundColor: "rgba(19, 135, 194, 0.04)",
+                      boxShadow: "none",
                     },
                   }}
                 >
-                  Create Outline
+                  Cancel
                 </Button>
                 <Button
-                  variant="outlined"
-                  onClick={handleCreatePartClick}
-                  startIcon={<DescriptionOutlinedIcon />}
+                  onClick={handleCreatePart}
+                  variant="contained"
+                  disabled={
+                    !partTitle.trim() || selectedChapterIds.length === 0
+                  }
                   sx={{
-                    justifyContent: "flex-start",
-                    padding: "12px 16px",
-                    borderColor: "rgb(19, 135, 194)",
-                    color: "rgb(19, 135, 194)",
+                    flex: 1,
+                    backgroundColor: "rgb(19, 135, 194)",
                     textTransform: "none",
                     fontFamily: "'Rubik', sans-serif",
+                    py: 1.5,
+                    boxShadow: "none",
                     "&:hover": {
-                      borderColor: "rgb(15, 108, 155)",
-                      backgroundColor: "rgba(19, 135, 194, 0.04)",
+                      backgroundColor: "rgb(15, 108, 155)",
+                      boxShadow: "none",
+                    },
+                    "&:disabled": {
+                      boxShadow: "none",
                     },
                   }}
                 >
                   Create Part
                 </Button>
-                <Button
-                  variant="outlined"
-                  onClick={handleCreateChapterClick}
-                  startIcon={<DescriptionOutlinedIcon />}
-                  sx={{
-                    justifyContent: "flex-start",
-                    padding: "12px 16px",
-                    borderColor: "rgb(19, 135, 194)",
-                    color: "rgb(19, 135, 194)",
-                    textTransform: "none",
-                    fontFamily: "'Rubik', sans-serif",
-                    "&:hover": {
-                      borderColor: "rgb(15, 108, 155)",
-                      backgroundColor: "rgba(19, 135, 194, 0.04)",
-                    },
-                  }}
-                >
-                  Write Chapter
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Demo Notice */}
-        <div className="w-full bg-red-400 text-center py-4 text-white font-medium">
-          DEMO ONLY - NO FUNCTIONALITY AT THIS TIME
-        </div>
+              </Box>
+            </Box>
+          </Box>
+        </Modal>
       </div>
-
-      {/* Column 3: Reserved for future features */}
-      <div className="w-0">
-        {/* This column is ready for future expansion */}
-      </div>
-
-      {/* Create Idea Modal */}
-      <Modal
-        open={createIdeaModalOpen}
-        onClose={handleCreateIdeaModalClose}
-        aria-labelledby="create-idea-modal-title"
-      >
-        <Box
-          sx={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            width: 500,
-            bgcolor: "background.paper",
-            borderRadius: 3,
-            overflow: "hidden",
-            boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
-          }}
-        >
-          {/* Header with same background as page header */}
-          <Box
-            sx={{
-              backgroundColor: "rgb(38, 52, 63)",
-              color: "white",
-              p: 2,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <Typography
-              id="create-idea-modal-title"
-              variant="h6"
-              component="h2"
-              sx={{
-                fontFamily: "'Rubik', sans-serif",
-                fontWeight: 600,
-                margin: 0,
-              }}
-            >
-              Create New Idea
-            </Typography>
-            <IconButton
-              onClick={handleCreateIdeaModalClose}
-              sx={{
-                color: "white",
-                "&:hover": {
-                  backgroundColor: "rgba(255, 255, 255, 0.1)",
-                },
-              }}
-            >
-              <CloseIcon />
-            </IconButton>
-          </Box>
-
-          {/* Modal content */}
-          <Box sx={{ p: 4 }}>
-            <TextField
-              fullWidth
-              label="Idea Title"
-              value={ideaTitle}
-              onChange={(e) => setIdeaTitle(e.target.value)}
-              variant="outlined"
-              sx={{ mb: 3 }}
-              autoFocus
-            />
-            <TextField
-              fullWidth
-              label="Notes (optional)"
-              value={ideaNotes}
-              onChange={(e) => setIdeaNotes(e.target.value)}
-              variant="outlined"
-              multiline
-              rows={4}
-              sx={{ mb: 4 }}
-            />
-            <Box
-              sx={{
-                display: "flex",
-                gap: 2,
-                justifyContent: "space-between",
-              }}
-            >
-              <Button
-                onClick={handleCreateIdeaModalClose}
-                variant="outlined"
-                sx={{
-                  flex: 1,
-                  boxShadow: "none",
-                  "&:hover": {
-                    boxShadow: "none",
-                  },
-                }}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleCreateIdea}
-                variant="contained"
-                disabled={!ideaTitle.trim()}
-                sx={{
-                  flex: 1,
-                  backgroundColor: "rgb(19, 135, 194)",
-                  textTransform: "none",
-                  fontFamily: "'Rubik', sans-serif",
-                  py: 1.5,
-                  boxShadow: "none",
-                  "&:hover": {
-                    backgroundColor: "rgb(15, 108, 155)",
-                    boxShadow: "none",
-                  },
-                  "&:disabled": {
-                    boxShadow: "none",
-                  },
-                }}
-              >
-                Create Idea
-              </Button>
-            </Box>
-          </Box>
-        </Box>
-      </Modal>
-
-      {/* Create Character Modal */}
-      <Modal
-        open={createCharacterModalOpen}
-        onClose={handleCreateCharacterModalClose}
-        aria-labelledby="create-character-modal-title"
-      >
-        <Box
-          sx={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            width: 600,
-            maxHeight: "80vh",
-            bgcolor: "background.paper",
-            borderRadius: 3,
-            overflow: "hidden",
-            boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
-          }}
-        >
-          {/* Header */}
-          <Box
-            sx={{
-              backgroundColor: "rgb(38, 52, 63)",
-              color: "white",
-              p: 2,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <Typography
-              id="create-character-modal-title"
-              variant="h6"
-              component="h2"
-              sx={{
-                fontFamily: "'Rubik', sans-serif",
-                fontWeight: 600,
-                margin: 0,
-              }}
-            >
-              Create New Character
-            </Typography>
-            <IconButton
-              onClick={handleCreateCharacterModalClose}
-              sx={{
-                color: "white",
-                "&:hover": {
-                  backgroundColor: "rgba(255, 255, 255, 0.1)",
-                },
-              }}
-            >
-              <CloseIcon />
-            </IconButton>
-          </Box>
-
-          {/* Modal content */}
-          <Box sx={{ p: 4, overflowY: "auto", maxHeight: "calc(80vh - 80px)" }}>
-            {/* Avatar Upload */}
-            <Box sx={{ mb: 3, display: "flex", alignItems: "center", gap: 2 }}>
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleAvatarUpload}
-                style={{ display: "none" }}
-                id="avatar-upload"
-              />
-              <label htmlFor="avatar-upload">
-                <IconButton component="span">
-                  {characterAvatar ? (
-                    <img
-                      src={characterAvatar}
-                      alt="Avatar Preview"
-                      style={{
-                        width: "40px",
-                        height: "40px",
-                        borderRadius: "50%",
-                        objectFit: "cover",
-                      }}
-                    />
-                  ) : (
-                    <FaceOutlinedIcon sx={{ fontSize: 40 }} />
-                  )}
-                </IconButton>
-              </label>
-            </Box>
-
-            <TextField
-              fullWidth
-              label="Name"
-              value={characterName}
-              onChange={(e) => setCharacterName(e.target.value)}
-              variant="outlined"
-              sx={{ mb: 3 }}
-              autoFocus
-            />
-            <TextField
-              fullWidth
-              label="Gender"
-              value={characterGender}
-              onChange={(e) => setCharacterGender(e.target.value)}
-              variant="outlined"
-              sx={{ mb: 3 }}
-            />
-            <TextField
-              fullWidth
-              label="Backstory"
-              value={characterBackstory}
-              onChange={(e) => setCharacterBackstory(e.target.value)}
-              variant="outlined"
-              multiline
-              rows={3}
-              sx={{ mb: 3 }}
-            />
-            <TextField
-              fullWidth
-              label="Characterization (Personality, Traits, motivations, etc)"
-              value={characterCharacterization}
-              onChange={(e) => setCharacterCharacterization(e.target.value)}
-              variant="outlined"
-              multiline
-              rows={3}
-              sx={{ mb: 3 }}
-            />
-            <TextField
-              fullWidth
-              label="Voice (Speech, vocab, sense of humor, etc)"
-              value={characterVoice}
-              onChange={(e) => setCharacterVoice(e.target.value)}
-              variant="outlined"
-              multiline
-              rows={3}
-              sx={{ mb: 3 }}
-            />
-            <TextField
-              fullWidth
-              label="Appearance (Height, weight, build, hair/eye color, etc)"
-              value={characterAppearance}
-              onChange={(e) => setCharacterAppearance(e.target.value)}
-              variant="outlined"
-              multiline
-              rows={3}
-              sx={{ mb: 3 }}
-            />
-            <TextField
-              fullWidth
-              label="Friends & Family (Relation to other characters)"
-              value={characterFriendsFamily}
-              onChange={(e) => setCharacterFriendsFamily(e.target.value)}
-              variant="outlined"
-              multiline
-              rows={3}
-              sx={{ mb: 3 }}
-            />
-            <TextField
-              fullWidth
-              label="Favorites (sport, food, animal, music, etc)"
-              value={characterFavorites}
-              onChange={(e) => setCharacterFavorites(e.target.value)}
-              variant="outlined"
-              multiline
-              rows={3}
-              sx={{ mb: 3 }}
-            />
-            <TextField
-              fullWidth
-              label="Misc (title, religion, etc)"
-              value={characterMisc}
-              onChange={(e) => setCharacterMisc(e.target.value)}
-              variant="outlined"
-              multiline
-              rows={3}
-              sx={{ mb: 3 }}
-            />
-            <Box
-              sx={{
-                display: "flex",
-                gap: 2,
-                justifyContent: "space-between",
-              }}
-            >
-              <Button
-                onClick={handleCreateCharacterModalClose}
-                variant="outlined"
-                sx={{
-                  flex: 1,
-                  boxShadow: "none",
-                  "&:hover": {
-                    boxShadow: "none",
-                  },
-                }}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleCreateCharacter}
-                variant="contained"
-                disabled={!characterName.trim()}
-                sx={{
-                  flex: 1,
-                  backgroundColor: "rgb(19, 135, 194)",
-                  textTransform: "none",
-                  fontFamily: "'Rubik', sans-serif",
-                  py: 1.5,
-                  boxShadow: "none",
-                  "&:hover": {
-                    backgroundColor: "rgb(15, 108, 155)",
-                    boxShadow: "none",
-                  },
-                  "&:disabled": {
-                    boxShadow: "none",
-                  },
-                }}
-              >
-                Create Character
-              </Button>
-            </Box>
-          </Box>
-        </Box>
-      </Modal>
-
-      {/* Create Part Modal */}
-      <Modal
-        open={createPartModalOpen}
-        onClose={handleCreatePartModalClose}
-        aria-labelledby="create-part-modal-title"
-      >
-        <Box
-          sx={{
-            position: "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            width: 500,
-            bgcolor: "background.paper",
-            borderRadius: 3,
-            overflow: "hidden",
-            boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
-          }}
-        >
-          {/* Header with same background as page header */}
-          <Box
-            sx={{
-              backgroundColor: "rgb(38, 52, 63)",
-              color: "white",
-              p: 2,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-            }}
-          >
-            <Typography
-              id="create-part-modal-title"
-              variant="h6"
-              component="h2"
-              sx={{
-                fontFamily: "'Rubik', sans-serif",
-                fontWeight: 600,
-                margin: 0,
-              }}
-            >
-              Create New Part
-            </Typography>
-            <IconButton
-              onClick={handleCreatePartModalClose}
-              sx={{
-                color: "white",
-                "&:hover": {
-                  backgroundColor: "rgba(255, 255, 255, 0.1)",
-                },
-              }}
-            >
-              <CloseIcon />
-            </IconButton>
-          </Box>
-
-          {/* Modal content */}
-          <Box sx={{ p: 4 }}>
-            <TextField
-              fullWidth
-              label="Part Title"
-              value={partTitle}
-              onChange={(e) => setPartTitle(e.target.value)}
-              variant="outlined"
-              sx={{ mb: 3 }}
-              autoFocus
-            />
-            <FormControl fullWidth sx={{ mb: 4 }}>
-              <InputLabel>Select Chapters</InputLabel>
-              <Select
-                multiple
-                value={selectedChapterIds}
-                onChange={(event) => {
-                  const value = event.target.value;
-                  setSelectedChapterIds(
-                    typeof value === "string" ? value.split(",") : value
-                  );
-                }}
-                renderValue={(selected) =>
-                  chapters
-                    .filter((chapter) => selected.includes(chapter.id))
-                    .map((chapter) => chapter.title)
-                    .join(", ")
-                }
-                label="Select Chapters"
-              >
-                {chapters
-                  .filter(
-                    (chapter) =>
-                      !parts.some((part) =>
-                        part.chapterIds.includes(chapter.id)
-                      )
-                  )
-                  .map((chapter) => (
-                    <MenuItem key={chapter.id} value={chapter.id}>
-                      <Checkbox
-                        checked={selectedChapterIds.includes(chapter.id)}
-                      />
-                      <ListItemText primary={chapter.title} />
-                    </MenuItem>
-                  ))}
-              </Select>
-            </FormControl>
-            <Box
-              sx={{
-                display: "flex",
-                gap: 2,
-                justifyContent: "space-between",
-              }}
-            >
-              <Button
-                onClick={handleCreatePartModalClose}
-                variant="outlined"
-                sx={{
-                  flex: 1,
-                  boxShadow: "none",
-                  "&:hover": {
-                    boxShadow: "none",
-                  },
-                }}
-              >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleCreatePart}
-                variant="contained"
-                disabled={!partTitle.trim() || selectedChapterIds.length === 0}
-                sx={{
-                  flex: 1,
-                  backgroundColor: "rgb(19, 135, 194)",
-                  textTransform: "none",
-                  fontFamily: "'Rubik', sans-serif",
-                  py: 1.5,
-                  boxShadow: "none",
-                  "&:hover": {
-                    backgroundColor: "rgb(15, 108, 155)",
-                    boxShadow: "none",
-                  },
-                  "&:disabled": {
-                    boxShadow: "none",
-                  },
-                }}
-              >
-                Create Part
-              </Button>
-            </Box>
-          </Box>
-        </Box>
-      </Modal>
     </div>
   );
 };
