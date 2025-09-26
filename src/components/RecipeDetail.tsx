@@ -144,7 +144,6 @@ const RecipeDetail = React.memo(function RecipeDetail({
   const [familyMembers, setFamilyMembers] = useState<
     Array<{ name: string; email: string; relationship?: string }>
   >([]);
-  const [hasFamilyMembers, setHasFamilyMembers] = useState(false);
   const [reviewModalOpen, setReviewModalOpen] = useState(false);
   const [rating, setRating] = useState<number | null>(0);
   const [reviewTitle, setReviewTitle] = useState("");
@@ -676,7 +675,6 @@ const RecipeDetail = React.memo(function RecipeDetail({
               parsedJson?.people &&
               Array.isArray(parsedJson.people) &&
               parsedJson.people.length > 0;
-            setHasFamilyMembers(hasPeople);
 
             // If user has family members, fetch the family members list
             if (hasPeople) {
@@ -693,11 +691,9 @@ const RecipeDetail = React.memo(function RecipeDetail({
           }
         } catch (error) {
           console.error("Error checking family members:", error);
-          setHasFamilyMembers(false);
           setFamilyMembers([]);
         }
       } else {
-        setHasFamilyMembers(false);
         setFamilyMembers([]);
       }
     }
@@ -895,13 +891,8 @@ const RecipeDetail = React.memo(function RecipeDetail({
         yPosition = 20;
       }
 
-      // Add padding above Instructions heading
+      // Set padding above Instructions heading
       yPosition += 5;
-
-      // pdf.setFontSize(16);
-      // pdf.setFont("helvetica", "bold");
-      // pdf.text("Steps", leftMargin, yPosition);
-      // yPosition += 9;
 
       pdf.setFontSize(10);
       pdf.setFont("helvetica", "normal");
@@ -2101,202 +2092,176 @@ const RecipeDetail = React.memo(function RecipeDetail({
             )}
           </div>
         </div>
-      </div>
 
-      {/* Make Mode Dialog */}
-      <Dialog
-        open={makeModeOpen}
-        onClose={() => setMakeModeOpen(false)}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogContent sx={{ p: 0, position: "relative" }}>
-          {/* Close button in top right */}
-          <IconButton
-            onClick={() => setMakeModeOpen(false)}
-            sx={{
-              position: "absolute",
-              top: 8,
-              right: 8,
-              zIndex: 1,
-              backgroundColor: "rgba(255,255,255,0.9)",
-              "&:hover": { backgroundColor: "white" },
-            }}
-            size="small"
-          >
-            <CloseIcon />
-          </IconButton>
+        {/* Make Mode Dialog */}
+        <Dialog
+          open={makeModeOpen}
+          onClose={() => setMakeModeOpen(false)}
+          maxWidth="md"
+          fullWidth
+        >
+          <DialogContent sx={{ p: 0, position: "relative" }}>
+            {/* Close button in top right */}
+            <IconButton
+              onClick={() => setMakeModeOpen(false)}
+              sx={{
+                position: "absolute",
+                top: 8,
+                right: 8,
+                zIndex: 1,
+                backgroundColor: "rgba(255,255,255,0.9)",
+                "&:hover": { backgroundColor: "white" },
+              }}
+              size="small"
+            >
+              <CloseIcon />
+            </IconButton>
 
-          {recipe && currentStep < (recipe?.steps?.length || 0) ? (
-            <div className="p-8 text-center flex flex-col justify-center min-h-[300px]">
-              <p className="text-2xl text-gray-700 mb-8 leading-relaxed">
-                {recipe?.steps[currentStep]?.step}
-              </p>
+            {recipe && currentStep < (recipe?.steps?.length || 0) ? (
+              <div className="p-8 text-center flex flex-col justify-center min-h-[300px]">
+                <p className="text-2xl text-gray-700 mb-8 leading-relaxed">
+                  {recipe?.steps[currentStep]?.step}
+                </p>
 
-              {/* Step Ingredients */}
-              {recipe?.steps[currentStep]?.stepIngredients &&
-                recipe?.steps[currentStep]?.stepIngredients.length > 0 && (
-                  <div className="mb-6">
-                    <h4 className="text-lg font-semibold text-gray-800 mb-3">
-                      INGREDIENTS
-                    </h4>
-                    <div className="flex flex-col items-center space-y-2">
-                      {recipe?.steps[currentStep]?.stepIngredients.map(
-                        (stepIngredient, ingredientIndex) => {
-                          let ingredient;
+                {/* Step Ingredients */}
+                {recipe?.steps[currentStep]?.stepIngredients &&
+                  recipe?.steps[currentStep]?.stepIngredients.length > 0 && (
+                    <div className="mb-6">
+                      <h4 className="text-lg font-semibold text-gray-800 mb-3">
+                        INGREDIENTS
+                      </h4>
+                      <div className="flex flex-col items-center space-y-2">
+                        {recipe?.steps[currentStep]?.stepIngredients.map(
+                          (stepIngredient, ingredientIndex) => {
+                            let ingredient;
 
-                          // First try to find by ingredientIndex (new format)
-                          if (
-                            typeof stepIngredient.ingredientIndex ===
-                              "number" &&
-                            stepIngredient.ingredientIndex >= 0 &&
-                            stepIngredient.ingredientIndex <
-                              recipe.ingredients.length
-                          ) {
-                            ingredient =
-                              recipe.ingredients[
-                                stepIngredient.ingredientIndex
-                              ];
-                          }
-
-                          // Fallback to ID matching (legacy format)
-                          if (!ingredient && stepIngredient.ingredientId) {
-                            ingredient = recipe.ingredients.find(
-                              (ing) => ing.id === stepIngredient.ingredientId
-                            );
-                          }
-
-                          // Fallback to index parsing from ingredientId
-                          if (!ingredient && stepIngredient.ingredientId) {
-                            const ingredientIdx = parseInt(
-                              stepIngredient.ingredientId
-                            );
+                            // First try to find by ingredientIndex (new format)
                             if (
-                              !isNaN(ingredientIdx) &&
-                              ingredientIdx >= 0 &&
-                              ingredientIdx < recipe.ingredients.length
+                              typeof stepIngredient.ingredientIndex ===
+                                "number" &&
+                              stepIngredient.ingredientIndex >= 0 &&
+                              stepIngredient.ingredientIndex <
+                                recipe.ingredients.length
                             ) {
-                              ingredient = recipe.ingredients[ingredientIdx];
+                              ingredient =
+                                recipe.ingredients[
+                                  stepIngredient.ingredientIndex
+                                ];
                             }
-                          }
 
-                          if (!ingredient) {
-                            return null;
-                          }
+                            // Fallback to ID matching (legacy format)
+                            if (!ingredient && stepIngredient.ingredientId) {
+                              ingredient = recipe.ingredients.find(
+                                (ing) => ing.id === stepIngredient.ingredientId
+                              );
+                            }
 
-                          return (
-                            <div
-                              key={`make-now-${currentStep}-${ingredientIndex}-${ingredient.name}`}
-                              className="text-lg font-medium text-gray-800 bg-gray-100 px-4 py-2 rounded-lg"
-                            >
-                              {ingredient.amount || ""}
-                              {ingredient.unit
-                                ? ` ${ingredient.unit}`
-                                : ""} |{" "}
-                              {ingredient.name || "Unknown ingredient"}
-                            </div>
-                          );
-                        }
+                            // Fallback to index parsing from ingredientId
+                            if (!ingredient && stepIngredient.ingredientId) {
+                              const ingredientIdx = parseInt(
+                                stepIngredient.ingredientId
+                              );
+                              if (
+                                !isNaN(ingredientIdx) &&
+                                ingredientIdx >= 0 &&
+                                ingredientIdx < recipe.ingredients.length
+                              ) {
+                                ingredient = recipe.ingredients[ingredientIdx];
+                              }
+                            }
+
+                            if (!ingredient) {
+                              return null;
+                            }
+
+                            return (
+                              <div
+                                key={`make-now-${currentStep}-${ingredientIndex}-${ingredient.name}`}
+                                className="text-lg font-medium text-gray-800 bg-gray-100 px-4 py-2 rounded-lg"
+                              >
+                                {ingredient.amount || ""}
+                                {ingredient.unit
+                                  ? ` ${ingredient.unit}`
+                                  : ""} |{" "}
+                                {ingredient.name || "Unknown ingredient"}
+                              </div>
+                            );
+                          }
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                {recipe?.steps[currentStep] &&
+                  (recipe?.steps[currentStep]?.temperature ||
+                    recipe?.steps[currentStep]?.time ||
+                    recipe?.steps[currentStep]?.superSmoke) && (
+                    <div className="flex justify-center gap-6 mb-6">
+                      {recipe?.steps[currentStep]?.temperature && (
+                        <div className="flex items-center gap-2">
+                          {recipe.type?.toLowerCase().trim() === "oven" ? (
+                            <MicrowaveIcon sx={{ color: "black" }} />
+                          ) : recipe.type?.toLowerCase().trim() ===
+                            "beverage" ? (
+                            <LocalBarIcon sx={{ color: "black" }} />
+                          ) : recipe.type?.toLowerCase().trim() ===
+                            "flat-top" ? (
+                            <GridOnIcon sx={{ color: "black" }} />
+                          ) : recipe.type?.toLowerCase().trim() === "grill" ? (
+                            <WhatshotIcon sx={{ color: "black" }} />
+                          ) : recipe.type?.toLowerCase().trim() === "smoker" ? (
+                            <OutdoorGrillIcon sx={{ color: "black" }} />
+                          ) : (
+                            <FlatwareIcon sx={{ color: "black" }} />
+                          )}
+                          <span>
+                            {recipe?.steps[currentStep]?.temperature}°F
+                          </span>
+                        </div>
+                      )}
+                      {recipe?.steps[currentStep]?.time && (
+                        <div className="flex items-center gap-2">
+                          <TimerIcon sx={{ color: "black" }} />
+                          <span>{recipe?.steps[currentStep]?.time}m</span>
+                        </div>
+                      )}
+                      {recipe?.steps[currentStep]?.superSmoke && (
+                        <div className="flex items-center gap-2">
+                          <WhatshotIcon sx={{ color: "black" }} />
+                          <span>Super Smoke</span>
+                        </div>
                       )}
                     </div>
-                  </div>
+                  )}
+              </div>
+            ) : (
+              <div className="p-8 text-center">
+                <div className="text-6xl mb-4">🍽️</div>
+                <h2 className="text-3xl font-bold text-gray-900 mb-4">
+                  Bon Appétit!
+                </h2>
+                <p className="text-lg text-gray-600 mb-6">
+                  Your recipe is complete. Enjoy your meal!
+                </p>
+                {session?.user?.email && (
+                  <button
+                    onClick={handleMakeModeToReview}
+                    className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 mx-auto"
+                  >
+                    <FactCheckIcon sx={{ fontSize: 24 }} />
+                    Rate This Recipe
+                  </button>
                 )}
-
-              {recipe?.steps[currentStep] &&
-                (recipe?.steps[currentStep]?.temperature ||
-                  recipe?.steps[currentStep]?.time ||
-                  recipe?.steps[currentStep]?.superSmoke) && (
-                  <div className="flex justify-center gap-6 mb-6">
-                    {recipe?.steps[currentStep]?.temperature && (
-                      <div className="flex items-center gap-2">
-                        {recipe.type?.toLowerCase().trim() === "oven" ? (
-                          <MicrowaveIcon sx={{ color: "black" }} />
-                        ) : recipe.type?.toLowerCase().trim() === "beverage" ? (
-                          <LocalBarIcon sx={{ color: "black" }} />
-                        ) : recipe.type?.toLowerCase().trim() === "flat-top" ? (
-                          <GridOnIcon sx={{ color: "black" }} />
-                        ) : recipe.type?.toLowerCase().trim() === "grill" ? (
-                          <WhatshotIcon sx={{ color: "black" }} />
-                        ) : recipe.type?.toLowerCase().trim() === "smoker" ? (
-                          <OutdoorGrillIcon sx={{ color: "black" }} />
-                        ) : (
-                          <FlatwareIcon sx={{ color: "black" }} />
-                        )}
-                        <span>{recipe?.steps[currentStep]?.temperature}°F</span>
-                      </div>
-                    )}
-                    {recipe?.steps[currentStep]?.time && (
-                      <div className="flex items-center gap-2">
-                        <TimerIcon sx={{ color: "black" }} />
-                        <span>{recipe?.steps[currentStep]?.time}m</span>
-                      </div>
-                    )}
-                    {recipe?.steps[currentStep]?.superSmoke && (
-                      <div className="flex items-center gap-2">
-                        <WhatshotIcon sx={{ color: "black" }} />
-                        <span>Super Smoke</span>
-                      </div>
-                    )}
-                  </div>
-                )}
-            </div>
-          ) : (
-            <div className="p-8 text-center">
-              <div className="text-6xl mb-4">🍽️</div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">
-                Bon Appétit!
-              </h2>
-              <p className="text-lg text-gray-600 mb-6">
-                Your recipe is complete. Enjoy your meal!
-              </p>
-              {session?.user?.email && (
-                <button
-                  onClick={handleMakeModeToReview}
-                  className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 mx-auto"
-                >
-                  <FactCheckIcon sx={{ fontSize: 24 }} />
-                  Rate This Recipe
-                </button>
-              )}
-            </div>
-          )}
-        </DialogContent>
-        <DialogActions sx={{ justifyContent: "center", p: 3, gap: 4 }}>
-          <IconButton
-            onClick={prevStep}
-            disabled={currentStep === 0}
-            sx={{
-              fontSize: 48,
-              color: currentStep === 0 ? "gray" : "primary.main",
-              "&:hover": {
-                backgroundColor: "primary.light",
-                color: "white",
-              },
-            }}
-            size="large"
-          >
-            <ArrowCircleLeftIcon sx={{ fontSize: 48 }} />
-          </IconButton>
-
-          <div className="text-center">
-            <div className="text-lg font-semibold text-gray-700">
-              {currentStep >= recipe?.steps?.length
-                ? "All Done!"
-                : `STEP ${currentStep + 1} of ${recipe?.steps?.length || 0}`}
-            </div>
-            <div className="text-sm text-gray-500 mt-1">
-              {recipe?.steps && currentStep < (recipe?.steps?.length || 0)
-                ? ""
-                : "Recipe complete!"}
-            </div>
-          </div>
-
-          {recipe?.steps && currentStep < (recipe?.steps?.length || 0) ? (
+              </div>
+            )}
+          </DialogContent>
+          <DialogActions sx={{ justifyContent: "center", p: 3, gap: 4 }}>
             <IconButton
-              onClick={nextStep}
+              onClick={prevStep}
+              disabled={currentStep === 0}
               sx={{
                 fontSize: 48,
-                color: "primary.main",
+                color: currentStep === 0 ? "gray" : "primary.main",
                 "&:hover": {
                   backgroundColor: "primary.light",
                   color: "white",
@@ -2304,102 +2269,132 @@ const RecipeDetail = React.memo(function RecipeDetail({
               }}
               size="large"
             >
-              <ArrowCircleRightIcon sx={{ fontSize: 48 }} />
+              <ArrowCircleLeftIcon sx={{ fontSize: 48 }} />
             </IconButton>
-          ) : (
-            <IconButton
-              onClick={() => setMakeModeOpen(false)}
-              sx={{
-                fontSize: 48,
-                color: "success.main",
-                "&:hover": {
-                  backgroundColor: "success.light",
-                  color: "white",
-                },
-              }}
-              size="large"
-            >
-              <CloseIcon sx={{ fontSize: 48 }} />
-            </IconButton>
-          )}
-        </DialogActions>
-      </Dialog>
 
-      {/* Review Modal Dialog */}
-      <Dialog
-        open={reviewModalOpen}
-        onClose={handleCloseReviewModal}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>
-          <Typography variant="h6" component="div" className="text-center">
-            Rate & Review This Recipe
-          </Typography>
-        </DialogTitle>
-        <DialogContent sx={{ p: 3 }}>
-          {/* Rating with Hearts */}
-          <div className="text-center mb-6">
-            <Rating
-              name="recipe-rating"
-              value={rating}
-              onChange={(event, newValue) => {
-                setRating(newValue);
-              }}
-              icon={<HeartIcon sx={{ color: "#e91e63", fontSize: 48 }} />}
-              emptyIcon={<HeartIcon sx={{ color: "#ccc", fontSize: 48 }} />}
-              size="large"
-              max={5}
-            />
-          </div>
-
-          {/* Review Title */}
-          <div className="mb-4">
-            <TextField
-              fullWidth
-              variant="outlined"
-              label="Review Title (Optional)"
-              value={reviewTitle}
-              onChange={handleReviewTitleChange}
-              placeholder="Give your review a catchy title"
-              sx={{ mb: 2 }}
-            />
-          </div>
-
-          {/* Review Textarea */}
-          <div>
-            <TextField
-              multiline
-              rows={4}
-              fullWidth
-              variant="outlined"
-              label="Your Review"
-              value={reviewText}
-              onChange={handleReviewTextChange}
-              placeholder="In 100 words share your thoughts about this recipe"
-              sx={{ mb: 1 }}
-            />
-            <div className="text-right text-sm text-gray-500">
-              {countWords(reviewText)}/100 words
+            <div className="text-center">
+              <div className="text-lg font-semibold text-gray-700">
+                {currentStep >= recipe?.steps?.length
+                  ? "All Done!"
+                  : `STEP ${currentStep + 1} of ${recipe?.steps?.length || 0}`}
+              </div>
+              <div className="text-sm text-gray-500 mt-1">
+                {recipe?.steps && currentStep < (recipe?.steps?.length || 0)
+                  ? ""
+                  : "Recipe complete!"}
+              </div>
             </div>
-          </div>
-        </DialogContent>
-        <DialogActions sx={{ justifyContent: "space-between", p: 3 }}>
-          <Button onClick={handleCloseReviewModal} color="inherit">
-            Cancel
-          </Button>
-          <Button
-            onClick={handleSubmitReview}
-            variant="contained"
-            disabled={!rating || reviewText.trim().length === 0}
-          >
-            Submit Review
-          </Button>
-        </DialogActions>
-      </Dialog>
 
-      {/* Footer */}
-      {renderFooter("integrated")}
+            {recipe?.steps && currentStep < (recipe?.steps?.length || 0) ? (
+              <IconButton
+                onClick={nextStep}
+                sx={{
+                  fontSize: 48,
+                  color: "primary.main",
+                  "&:hover": {
+                    backgroundColor: "primary.light",
+                    color: "white",
+                  },
+                }}
+                size="large"
+              >
+                <ArrowCircleRightIcon sx={{ fontSize: 48 }} />
+              </IconButton>
+            ) : (
+              <IconButton
+                onClick={() => setMakeModeOpen(false)}
+                sx={{
+                  fontSize: 48,
+                  color: "success.main",
+                  "&:hover": {
+                    backgroundColor: "success.light",
+                    color: "white",
+                  },
+                }}
+                size="large"
+              >
+                <CloseIcon sx={{ fontSize: 48 }} />
+              </IconButton>
+            )}
+          </DialogActions>
+        </Dialog>
+
+        {/* Review Modal Dialog */}
+        <Dialog
+          open={reviewModalOpen}
+          onClose={handleCloseReviewModal}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle>
+            <Typography variant="h6" component="div" className="text-center">
+              Rate & Review This Recipe
+            </Typography>
+          </DialogTitle>
+          <DialogContent sx={{ p: 3 }}>
+            {/* Rating with Hearts */}
+            <div className="text-center mb-6">
+              <Rating
+                name="recipe-rating"
+                value={rating}
+                onChange={(event, newValue) => {
+                  setRating(newValue);
+                }}
+                icon={<HeartIcon sx={{ color: "#e91e63", fontSize: 48 }} />}
+                emptyIcon={<HeartIcon sx={{ color: "#ccc", fontSize: 48 }} />}
+                size="large"
+                max={5}
+              />
+            </div>
+
+            {/* Review Title */}
+            <div className="mb-4">
+              <TextField
+                fullWidth
+                variant="outlined"
+                label="Review Title (Optional)"
+                value={reviewTitle}
+                onChange={handleReviewTitleChange}
+                placeholder="Give your review a catchy title"
+                sx={{ mb: 2 }}
+              />
+            </div>
+
+            {/* Review Textarea */}
+            <div>
+              <TextField
+                multiline
+                rows={4}
+                fullWidth
+                variant="outlined"
+                label="Your Review"
+                value={reviewText}
+                onChange={handleReviewTextChange}
+                placeholder="In 100 words share your thoughts about this recipe"
+                sx={{ mb: 1 }}
+              />
+              <div className="text-right text-sm text-gray-500">
+                {countWords(reviewText)}/100 words
+              </div>
+            </div>
+          </DialogContent>
+          <DialogActions sx={{ justifyContent: "space-between", p: 3 }}>
+            <Button onClick={handleCloseReviewModal} color="inherit">
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSubmitReview}
+              variant="contained"
+              disabled={!rating || reviewText.trim().length === 0}
+            >
+              Submit Review
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Footer */}
+        {renderFooter("integrated")}
+      </div>
     </div>
   );
 });

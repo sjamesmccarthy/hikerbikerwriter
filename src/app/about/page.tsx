@@ -541,6 +541,12 @@ export default function AboutPage() {
               </a>
             </h2>
 
+            <h3 className="font-semibold mt-4 mb-1">v2.0.1</h3>
+            <ul className="list-disc ml-6 mb-2">
+              <li>Added quill rich text editor to Creative writing</li>
+              <li>Added new component Twain Story Builder DEMO only</li>
+            </ul>
+
             <h3 className="font-semibold mt-4 mb-1">v2.0.0</h3>
             <ul className="list-disc ml-6 mb-2">
               <li>

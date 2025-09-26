@@ -78,6 +78,47 @@ const CreativeWriting: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  // Helper function to create text preview from HTML content
+  const createTextPreview = (
+    htmlContent: string,
+    maxLength: number = 200
+  ): string => {
+    // Check if we're in a browser environment
+    if (typeof window === "undefined") {
+      // Server-side: use a simple regex to strip HTML tags
+      const textContent = htmlContent
+        .replace(/<[^>]*>/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+      return textContent.length <= maxLength
+        ? textContent
+        : textContent.substring(0, maxLength) + "...";
+    }
+
+    // Client-side: use DOM parsing for better accuracy
+    try {
+      const tempDiv = document.createElement("div");
+      tempDiv.innerHTML = htmlContent;
+      const textContent = tempDiv.textContent || tempDiv.innerText || "";
+
+      // Trim and truncate if necessary
+      if (textContent.length <= maxLength) {
+        return textContent;
+      }
+
+      return textContent.substring(0, maxLength).trim() + "...";
+    } catch {
+      // Fallback to regex method if DOM parsing fails
+      const textContent = htmlContent
+        .replace(/<[^>]*>/g, "")
+        .replace(/\s+/g, " ")
+        .trim();
+      return textContent.length <= maxLength
+        ? textContent
+        : textContent.substring(0, maxLength) + "...";
+    }
+  };
+
   // Helper function to get mood emoji
   const getMoodEmoji = (mood: string | undefined): string => {
     if (!mood) return "";
@@ -1722,7 +1763,7 @@ const CreativeWriting: React.FC = () => {
                               </h3>
                             </Link>
                             <p className="text-gray-700 font-mono mb-4 line-clamp-3">
-                              {note.content}
+                              {createTextPreview(note.content, 200)}
                             </p>
 
                             {/* Image thumbnails */}

@@ -5,6 +5,9 @@ import {
   IBM_Plex_Sans,
   Spectral,
   JetBrains_Mono,
+  Rubik,
+  Alike,
+  Crimson_Text,
 } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
@@ -38,6 +41,24 @@ const jetBrainsMono = JetBrains_Mono({
   weight: ["400", "500", "600", "700"],
 });
 
+const rubik = Rubik({
+  variable: "--font-rubik",
+  subsets: ["latin"],
+  weight: ["300", "400", "500", "600", "700", "800", "900"],
+});
+
+const alike = Alike({
+  variable: "--font-alike",
+  subsets: ["latin"],
+  weight: ["400"],
+});
+
+const crimsonText = Crimson_Text({
+  variable: "--font-crimson-text",
+  subsets: ["latin"],
+  weight: ["400", "600", "700"],
+});
+
 export const metadata: Metadata = {
   title: "hikerbikerwriter",
   description:
@@ -57,7 +78,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${ibmPlexSans.variable} ${spectral.variable} ${jetBrainsMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${ibmPlexSans.variable} ${spectral.variable} ${jetBrainsMono.variable} ${rubik.variable} ${alike.variable} ${crimsonText.variable} antialiased`}
       >
         {/* <AppsMenu /> */}
         <Providers>{children}</Providers>

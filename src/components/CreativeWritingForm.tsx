@@ -14,10 +14,7 @@ import {
   ReplayOutlined as ReplayOutlinedIcon,
   HighlightOffOutlined as HighlightOffOutlinedIcon,
   MultipleStopOutlined as MultipleStopOutlinedIcon,
-  AutoStoriesOutlined as AutoStoriesOutlinedIcon,
   Close as CloseIcon,
-  FormatBold as FormatBoldIcon,
-  FormatItalic as FormatItalicIcon,
 } from "@mui/icons-material";
 import {
   TextField,
@@ -32,7 +29,6 @@ import {
   Switch,
   MenuItem,
   Modal,
-  Divider,
 } from "@mui/material";
 import { renderMoodMenuItems } from "./shared/moodHelpers";
 import promptsData from "@/data/prompts.json";
@@ -107,90 +103,75 @@ const CreativeWritingForm: React.FC<CreativeWritingFormProps> = ({
   // Ref for the content textarea
   const contentRef = useRef<HTMLTextAreaElement>(null);
 
-  // Format text functions
-  const insertFormatting = (prefix: string, suffix: string = "") => {
-    const textarea = contentRef.current;
-    if (!textarea) return;
+  // Quill editor refs and state
+  const quillRef = useRef<HTMLDivElement>(null);
+  const [quillInstance, setQuillInstance] = useState<unknown>(null);
 
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selectedText = content.substring(start, end);
-
-    let newText;
-    if (selectedText) {
-      // If text is selected, wrap it with formatting
-      newText =
-        content.substring(0, start) +
-        prefix +
-        selectedText +
-        suffix +
-        content.substring(end);
-    } else {
-      // If no text selected, insert formatting at cursor
-      newText =
-        content.substring(0, start) + prefix + suffix + content.substring(end);
-    }
-
-    setContent(newText);
-
-    // Restore cursor position
-    setTimeout(() => {
-      const newCursorPos = selectedText
-        ? start + prefix.length + selectedText.length + suffix.length
-        : start + prefix.length;
-      textarea.focus();
-      textarea.setSelectionRange(newCursorPos, newCursorPos);
-    }, 0);
-  };
-
-  const handleBoldToggle = () => {
-    insertFormatting("**", "**");
-    // Don't change the visual state - just insert the markdown
-  };
-
-  const handleItalicToggle = () => {
-    insertFormatting("*", "*");
-    // Don't change the visual state - just insert the markdown
-  };
-
-  const handleHeadlineChange = (level: string | null) => {
-    if (!level) {
-      return;
-    }
-
-    const textarea = contentRef.current;
-    if (!textarea) return;
-
-    const start = textarea.selectionStart;
-
-    // Find the start of the current line
-    const lines = content.split("\n");
-    let currentPos = 0;
-    let lineIndex = 0;
-
-    for (let i = 0; i < lines.length; i++) {
-      if (currentPos + lines[i].length >= start) {
-        lineIndex = i;
-        break;
+  // Initialize Quill editor for Short Story type
+  useEffect(() => {
+    if (
+      type === "ShortStory" &&
+      typeof window !== "undefined" &&
+      quillRef.current &&
+      !quillInstance
+    ) {
+      // Load Quill CSS first
+      const linkElement = document.createElement("link");
+      linkElement.rel = "stylesheet";
+      linkElement.href = "https://cdn.quilljs.com/1.3.6/quill.bubble.css";
+      if (!document.querySelector(`link[href="${linkElement.href}"]`)) {
+        document.head.appendChild(linkElement);
       }
-      currentPos += lines[i].length + 1; // +1 for \n
+
+      // Then load Quill
+      import("quill")
+        .then((Quill) => {
+          if (!quillRef.current) return;
+          const quill = new Quill.default(quillRef.current, {
+            theme: "bubble",
+            placeholder: "Write your short story here...",
+            modules: {
+              toolbar: [
+                [{ header: [1, 2, 3, false] }],
+                ["bold", "italic", "underline", "strike"],
+                [{ list: "ordered" }, { list: "bullet" }],
+                ["blockquote"],
+                ["clean"],
+              ],
+            },
+          });
+
+          // Set custom font for editor content
+          quill.root.style.fontFamily = "serif";
+          quill.root.style.fontSize = "16px";
+          quill.root.style.lineHeight = "1.6";
+          quill.root.style.padding = "20px";
+
+          // Set initial content if available
+          if (content) {
+            quill.root.innerHTML = content;
+          }
+
+          // Listen for content changes
+          quill.on("text-change", () => {
+            const htmlContent = quill.root.innerHTML;
+            setContent(htmlContent);
+          });
+
+          setQuillInstance(quill);
+        })
+        .catch((error) => {
+          console.error("Failed to load Quill:", error);
+        });
     }
+  }, [type, quillInstance, content]);
 
-    const prefix = level === "h1" ? "# " : level === "h2" ? "## " : "### ";
-    const newLines = [...lines];
-
-    // Remove existing heading if any
-    newLines[lineIndex] = newLines[lineIndex].replace(/^#{1,3}\s+/, "");
-    // Add new heading
-    newLines[lineIndex] = prefix + newLines[lineIndex];
-
-    setContent(newLines.join("\n"));
-
-    // Restore focus
-    setTimeout(() => {
-      textarea.focus();
-    }, 0);
-  };
+  // Clean up Quill instance when switching away from Short Story
+  useEffect(() => {
+    if (type !== "ShortStory" && quillInstance) {
+      setQuillInstance(null);
+    }
+  }, [type, quillInstance]);
 
   // Update form when initialData changes
   useEffect(() => {
@@ -230,9 +211,21 @@ const CreativeWritingForm: React.FC<CreativeWritingFormProps> = ({
     };
   }, [timerInterval]);
 
-  // Word counter
-  const wordCount =
-    content.trim() === "" ? 0 : content.trim().split(/\s+/).length;
+  // Word counter - handle both plain text and HTML content
+  const getWordCount = (text: string) => {
+    if (type === "ShortStory") {
+      // For Quill content, strip HTML tags and count words
+      const div = document.createElement("div");
+      div.innerHTML = text;
+      const plainText = div.textContent || div.innerText || "";
+      return plainText.trim() === "" ? 0 : plainText.trim().split(/\s+/).length;
+    } else {
+      // For plain text content
+      return text.trim() === "" ? 0 : text.trim().split(/\s+/).length;
+    }
+  };
+
+  const wordCount = getWordCount(content);
 
   // Timer functions
   const startTimer = () => {
@@ -458,207 +451,111 @@ const CreativeWritingForm: React.FC<CreativeWritingFormProps> = ({
             </div>
           </div>
 
-          {/* WYSIWYG Editor Toolbar - Only for Short Story */}
-          {type === "ShortStory" && (
-            <Box
-              sx={{
-                border: "1px solid #e0e0e0",
-                borderRadius: "4px 4px 0 0",
-                backgroundColor: "#f5f5f5",
-                p: 1,
-                display: "flex",
-                alignItems: "center",
-                gap: 1,
-                flexWrap: "wrap",
-              }}
-            >
-              {/* Headlines */}
-              <Box sx={{ display: "flex", gap: 0.5 }}>
-                <IconButton
-                  size="small"
-                  onClick={() => handleHeadlineChange("h1")}
-                  aria-label="heading 1"
-                  sx={{
-                    border: "1px solid #ccc",
-                    borderRadius: 1,
-                    fontSize: "0.75rem",
-                    minWidth: "32px",
-                    "&:hover": { backgroundColor: "#f0f0f0" },
-                  }}
-                >
-                  H1
-                </IconButton>
-                <IconButton
-                  size="small"
-                  onClick={() => handleHeadlineChange("h2")}
-                  aria-label="heading 2"
-                  sx={{
-                    border: "1px solid #ccc",
-                    borderRadius: 1,
-                    fontSize: "0.75rem",
-                    minWidth: "32px",
-                    "&:hover": { backgroundColor: "#f0f0f0" },
-                  }}
-                >
-                  H2
-                </IconButton>
-                <IconButton
-                  size="small"
-                  onClick={() => handleHeadlineChange("h3")}
-                  aria-label="heading 3"
-                  sx={{
-                    border: "1px solid #ccc",
-                    borderRadius: 1,
-                    fontSize: "0.75rem",
-                    minWidth: "32px",
-                    "&:hover": { backgroundColor: "#f0f0f0" },
-                  }}
-                >
-                  H3
-                </IconButton>
-              </Box>
-
-              {/* Bold and Italic */}
-              <Box sx={{ display: "flex", gap: 0.5 }}>
-                <IconButton
-                  size="small"
-                  onClick={handleBoldToggle}
-                  aria-label="bold"
-                  sx={{
-                    border: "1px solid #ccc",
-                    borderRadius: 1,
-                    "&:hover": { backgroundColor: "#f0f0f0" },
-                  }}
-                >
-                  <FormatBoldIcon fontSize="small" />
-                </IconButton>
-                <IconButton
-                  size="small"
-                  onClick={handleItalicToggle}
-                  aria-label="italic"
-                  sx={{
-                    border: "1px solid #ccc",
-                    borderRadius: 1,
-                    "&:hover": { backgroundColor: "#f0f0f0" },
-                  }}
-                >
-                  <FormatItalicIcon fontSize="small" />
-                </IconButton>
-              </Box>
-
-              {/* Fullscreen Button */}
-              <Box sx={{ ml: "auto" }}>
-                <IconButton
+          {/* Content Editor - Quill for Short Story, regular textarea for others */}
+          {type === "ShortStory" ? (
+            <Box sx={{ mb: 2 }}>
+              <div
+                ref={quillRef}
+                style={{
+                  minHeight: "60vh",
+                  backgroundColor: "white",
+                  border: "1px solid #e0e0e0",
+                  borderRadius: "4px",
+                }}
+              />
+              <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 1 }}>
+                <Button
+                  variant="outlined"
                   size="small"
                   onClick={() => setIsFullScreenModalOpen(true)}
-                  aria-label="fullscreen view"
-                  sx={{
-                    border: "1px solid #ccc",
-                    borderRadius: 1,
-                    "&:hover": { backgroundColor: "#f0f0f0" },
-                  }}
-                  title="Full screen view"
+                  sx={{ textTransform: "none" }}
                 >
-                  <AutoStoriesOutlinedIcon fontSize="small" />
-                </IconButton>
+                  Full Screen Preview
+                </Button>
               </Box>
             </Box>
-          )}
+          ) : (
+            <TextField
+              fullWidth
+              label="Content"
+              value={content}
+              inputRef={contentRef}
+              onChange={(e) => {
+                const newContent = e.target.value;
 
-          <TextField
-            fullWidth
-            label="Content"
-            value={content}
-            inputRef={contentRef}
-            onChange={(e) => {
-              const newContent = e.target.value;
+                // For Roll and Write with dice results, enforce word limit
+                if (type === "RollAndWrite" && diceResults && hasRolled) {
+                  const maxWords = parseInt(
+                    `${diceResults.red}${diceResults.blue}`
+                  );
+                  const newWordCount =
+                    newContent.trim() === ""
+                      ? 0
+                      : newContent.trim().split(/\s+/).length;
 
-              // For Roll and Write with dice results, enforce word limit
-              if (type === "RollAndWrite" && diceResults && hasRolled) {
-                const maxWords = parseInt(
-                  `${diceResults.red}${diceResults.blue}`
-                );
-                const newWordCount =
-                  newContent.trim() === ""
-                    ? 0
-                    : newContent.trim().split(/\s+/).length;
-
-                // Only update if under limit or if removing content
-                if (
-                  newWordCount <= maxWords ||
-                  newContent.length < content.length
-                ) {
-                  setContent(newContent);
-                }
-              } else {
-                setContent(newContent);
-              }
-            }}
-            onPaste={(e) => {
-              // For Roll and Write, handle paste specially to truncate if needed
-              if (type === "RollAndWrite" && diceResults && hasRolled) {
-                e.preventDefault();
-                const pastedText = e.clipboardData.getData("text");
-                const currentContent = content;
-                const maxWords = parseInt(
-                  `${diceResults.red}${diceResults.blue}`
-                );
-
-                // Get cursor position
-                const textarea = contentRef.current;
-                if (textarea) {
-                  const start = textarea.selectionStart;
-                  const end = textarea.selectionEnd;
-
-                  // Build new content with pasted text
-                  const beforeCursor = currentContent.slice(0, start);
-                  const afterCursor = currentContent.slice(end);
-                  const newContent = beforeCursor + pastedText + afterCursor;
-
-                  // Check word count and truncate if necessary
-                  const words = newContent.trim().split(/\s+/);
-                  if (words.length > maxWords && newContent.trim() !== "") {
-                    const truncatedWords = words.slice(0, maxWords);
-                    const truncatedContent = truncatedWords.join(" ");
-                    setContent(truncatedContent);
-                  } else {
+                  // Only update if under limit or if removing content
+                  if (
+                    newWordCount <= maxWords ||
+                    newContent.length < content.length
+                  ) {
                     setContent(newContent);
                   }
+                } else {
+                  setContent(newContent);
                 }
-              }
-              // For other types, let the default paste behavior work
-            }}
-            variant="outlined"
-            multiline
-            minRows={
-              type === "ShortStory" ? 12 : type === "RollAndWrite" ? 5 : 8 // FieldNote
-            }
-            maxRows={50}
-            required
-            placeholder="Write your creative content here..."
-            sx={{
-              mb: 2,
-              "& .MuiInputBase-root": {
-                border: "none",
-                minHeight:
-                  type === "ShortStory"
-                    ? "60vh"
-                    : type === "RollAndWrite"
-                    ? "17.5vh" // Reduced to half
-                    : "50vh", // FieldNote
-                maxHeight:
-                  type === "RollAndWrite"
-                    ? "25vh" // Small max height for Roll and Write
-                    : "80vh", // Default for other types
-                alignItems: "flex-start",
-                backgroundColor: "white",
-                ...(type === "ShortStory" && {
-                  borderTopLeftRadius: 0,
-                  borderTopRightRadius: 0,
-                }),
-              },
-            }}
-          />
+              }}
+              onPaste={(e) => {
+                // For Roll and Write, handle paste specially to truncate if needed
+                if (type === "RollAndWrite" && diceResults && hasRolled) {
+                  e.preventDefault();
+                  const pastedText = e.clipboardData.getData("text");
+                  const currentContent = content;
+                  const maxWords = parseInt(
+                    `${diceResults.red}${diceResults.blue}`
+                  );
+
+                  // Get cursor position
+                  const textarea = contentRef.current;
+                  if (textarea) {
+                    const start = textarea.selectionStart;
+                    const end = textarea.selectionEnd;
+
+                    // Build new content with pasted text
+                    const beforeCursor = currentContent.slice(0, start);
+                    const afterCursor = currentContent.slice(end);
+                    const newContent = beforeCursor + pastedText + afterCursor;
+
+                    // Check word count and truncate if necessary
+                    const words = newContent.trim().split(/\s+/);
+                    if (words.length > maxWords && newContent.trim() !== "") {
+                      const truncatedWords = words.slice(0, maxWords);
+                      const truncatedContent = truncatedWords.join(" ");
+                      setContent(truncatedContent);
+                    } else {
+                      setContent(newContent);
+                    }
+                  }
+                }
+                // For other types, let the default paste behavior work
+              }}
+              variant="outlined"
+              multiline
+              minRows={type === "RollAndWrite" ? 5 : 8} // FieldNote
+              maxRows={50}
+              required
+              placeholder="Write your creative content here..."
+              sx={{
+                mb: 2,
+                "& .MuiInputBase-root": {
+                  border: "none",
+                  minHeight: type === "RollAndWrite" ? "17.5vh" : "50vh", // FieldNote
+                  maxHeight: type === "RollAndWrite" ? "25vh" : "80vh", // Default for other types
+                  alignItems: "flex-start",
+                  backgroundColor: "white",
+                },
+              }}
+            />
+          )}
 
           {/* Dice Rolling Section - Only for Roll and Write */}
           {type === "RollAndWrite" && (
@@ -1137,9 +1034,17 @@ const CreativeWritingForm: React.FC<CreativeWritingFormProps> = ({
                 "& li": { marginBottom: "0.5rem" },
               }}
             >
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {content || "Start writing your story..."}
-              </ReactMarkdown>
+              {type === "ShortStory" ? (
+                <div
+                  dangerouslySetInnerHTML={{
+                    __html: content || "<p>Start writing your story...</p>",
+                  }}
+                />
+              ) : (
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {content || "Start writing your story..."}
+                </ReactMarkdown>
+              )}
             </Box>
           </Box>
         </Box>

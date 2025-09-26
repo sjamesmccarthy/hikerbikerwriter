@@ -33,7 +33,7 @@ const CreativeWritingBuilder: React.FC = () => {
         } else {
           setNameFromDB(session.user?.name ?? null);
         }
-      } catch (error) {
+      } catch {
         setNameFromDB(session.user?.name ?? null);
       }
     }
@@ -128,9 +128,11 @@ const CreativeWritingBuilder: React.FC = () => {
           <div className="sm:hidden px-3 py-2 border-b border-gray-200 flex justify-center">
             <div className="flex items-center space-x-2">
               {session.user?.image && (
-                <img
+                <Image
                   src={session.user.image}
                   alt="Profile"
+                  width={24}
+                  height={24}
                   className="w-6 h-6 rounded-full"
                 />
               )}

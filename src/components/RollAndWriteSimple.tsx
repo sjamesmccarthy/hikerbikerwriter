@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   ArrowBack as ArrowBackIcon,
@@ -27,7 +28,6 @@ import CancelIcon from "@mui/icons-material/Cancel";
 import { Button, TextField, FormControlLabel, Switch } from "@mui/material";
 import { renderFooter } from "./shared/footerHelpers";
 import { useSession, signIn, signOut } from "next-auth/react";
-import Image from "next/image";
 import promptsData from "../data/prompts.json";
 
 interface AppMenuItem {
@@ -488,9 +488,11 @@ const RollAndWrite: React.FC = () => {
             <div className="sm:hidden px-3 py-2 border-b border-gray-200 flex justify-center">
               <div className="flex items-center space-x-2">
                 {session.user?.image && (
-                  <img
+                  <Image
                     src={session.user.image}
                     alt="Profile"
+                    width={24}
+                    height={24}
                     className="w-6 h-6 rounded-full"
                   />
                 )}

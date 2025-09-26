@@ -1386,6 +1386,7 @@ const RecipeBuilder: React.FC = () => {
                   aspect={16 / 9}
                   circularCrop={false}
                 >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     ref={imgRef}
                     alt="Crop me"
@@ -1496,6 +1497,7 @@ const RecipeBuilder: React.FC = () => {
                   aspect={16 / 9}
                   circularCrop={false}
                 >
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     ref={familyImgRef}
                     alt="Crop family photo"
@@ -2185,7 +2187,6 @@ const RecipeBuilder: React.FC = () => {
                                   + Include Ingredient
                                 </button>
                               </div>
-
                               {/* Step Ingredients */}
                               {step.stepIngredients &&
                                 step.stepIngredients.length > 0 && (

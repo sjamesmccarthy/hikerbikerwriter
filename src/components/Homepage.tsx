@@ -17,6 +17,7 @@ import {
   TextFields as TextIcon,
   NetworkCheck as NetworkIcon,
   IntegrationInstructions as IntegrationInstructionsIcon,
+  HistoryEduOutlined as HistoryEduOutlinedIcon,
 } from "@mui/icons-material";
 import { renderFooter } from "./shared/footerHelpers";
 import WeatherWidget from "./WeatherWidget";
@@ -172,6 +173,12 @@ const Homepage: React.FC = () => {
       href: "/creativewriting",
       icon: <DrawOutlinedIcon sx={{ fontSize: 18 }} />,
       label: "Creative Writing",
+    },
+    {
+      type: "link" as const,
+      href: "/twain-story-builder",
+      icon: <HistoryEduOutlinedIcon sx={{ fontSize: 18 }} />,
+      label: "Twain Story Builder",
     },
     {
       type: "link" as const,

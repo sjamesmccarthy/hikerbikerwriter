@@ -4,8 +4,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
+import parse from "html-react-parser";
 import {
   ArrowBack as ArrowBackIcon,
   Edit as EditIcon,
@@ -80,7 +79,7 @@ const CreativeWritingDetail: React.FC<CreativeWritingDetailProps> = ({
         } else {
           setNameFromDB(session.user?.name ?? null);
         }
-      } catch (error) {
+      } catch {
         setNameFromDB(session.user?.name ?? null);
       }
     }
@@ -451,17 +450,9 @@ const CreativeWritingDetail: React.FC<CreativeWritingDetailProps> = ({
 
               {/* Content */}
               <div className="prose max-w-none">
-                {fieldNote.type === "ShortStory" ? (
-                  <div className="text-gray-800 leading-relaxed">
-                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                      {fieldNote.content}
-                    </ReactMarkdown>
-                  </div>
-                ) : (
-                  <div className="whitespace-pre-wrap text-gray-800 leading-relaxed">
-                    {fieldNote.content}
-                  </div>
-                )}
+                <div className="text-gray-800 leading-relaxed prose-content">
+                  {parse(fieldNote.content)}
+                </div>
               </div>
 
               {/* Images */}
