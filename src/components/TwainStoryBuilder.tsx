@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import { useSession, signIn, signOut } from "next-auth/react";
 import {
   Button,
@@ -12,6 +12,10 @@ import {
   Modal,
   Box,
   TextField,
+  Tooltip,
+  Select,
+  FormControl,
+  InputLabel,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -21,7 +25,9 @@ import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import DrawOutlinedIcon from "@mui/icons-material/DrawOutlined";
 import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
 import DeleteForeverOutlinedIcon from "@mui/icons-material/DeleteForeverOutlined";
+import CloudUploadOutlinedIcon from "@mui/icons-material/CloudUploadOutlined";
 import Image from "next/image";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import TwainStoryWriter from "./TwainStoryWriter";
 
 const TwainStoryBuilder: React.FC = () => {
@@ -38,6 +44,13 @@ const TwainStoryBuilder: React.FC = () => {
     wordCount: number;
   } | null>(null);
   const [managedBookTitle, setManagedBookTitle] = useState("");
+  const [managedBookAuthor, setManagedBookAuthor] = useState("");
+  const [managedBookSubtitle, setManagedBookSubtitle] = useState("");
+  const [managedBookEdition, setManagedBookEdition] = useState("First Edition");
+  const [managedBookCopyrightYear, setManagedBookCopyrightYear] = useState(
+    new Date().getFullYear().toString()
+  );
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Select a random Twain image (1-6)
   const randomImageNumber = Math.floor(Math.random() * 6) + 1;
@@ -107,6 +120,10 @@ const TwainStoryBuilder: React.FC = () => {
   }) => {
     setSelectedBook(book);
     setManagedBookTitle(book.title);
+    setManagedBookAuthor(""); // TODO: Load actual author from book data
+    setManagedBookSubtitle(""); // TODO: Load actual subtitle from book data
+    setManagedBookEdition("First Edition"); // TODO: Load actual edition from book data
+    setManagedBookCopyrightYear(new Date().getFullYear().toString()); // TODO: Load actual copyright year from book data
     setCurrentView("manage");
   };
 
@@ -114,13 +131,39 @@ const TwainStoryBuilder: React.FC = () => {
     setCurrentView("bookshelf");
     setSelectedBook(null);
     setManagedBookTitle("");
+    setManagedBookAuthor("");
+    setManagedBookSubtitle("");
+    setManagedBookEdition("First Edition");
+    setManagedBookCopyrightYear(new Date().getFullYear().toString());
   };
 
   const handleSaveBook = () => {
-    if (managedBookTitle.trim()) {
+    if (managedBookTitle.trim() && managedBookAuthor.trim()) {
       // TODO: Add logic to save the book
-      console.log("Saving book:", managedBookTitle);
+      console.log(
+        "Saving book:",
+        managedBookTitle,
+        managedBookSubtitle ? `(${managedBookSubtitle})` : "",
+        "by",
+        managedBookAuthor,
+        "-",
+        managedBookEdition,
+        "©",
+        managedBookCopyrightYear
+      );
       handleBackToBookshelf();
+    }
+  };
+
+  const handleCoverUpload = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      // TODO: Add logic to handle the uploaded file
+      console.log("Selected file:", file.name);
     }
   };
 
@@ -261,6 +304,133 @@ const TwainStoryBuilder: React.FC = () => {
             <div className="w-[90%] md:w-[60%] mx-auto">
               <div className="">
                 <div className="space-y-6">
+                  {/* Book Cover and Title Edit */}
+                  <div className="flex gap-8 items-start">
+                    {/* Book Card with Upload Icon */}
+                    <div
+                      className="bg-white border border-gray-200 flex flex-col rounded-md cursor-pointer"
+                      style={{
+                        width: "176px",
+                        height: "268px",
+                        borderLeft: "8px solid rgb(100, 114, 127)",
+                      }}
+                      onClick={handleCoverUpload}
+                    >
+                      <div className="flex-1 flex flex-col items-center justify-center">
+                        <CloudUploadOutlinedIcon
+                          sx={{
+                            fontSize: 64,
+                            color: "rgb(156, 163, 175)",
+                          }}
+                        />
+                        <span className="text-sm text-gray-600 mt-2">
+                          Upload Cover
+                        </span>
+                        {/* Info icon with tooltip */}
+                        <Tooltip
+                          title="For the best results, your book cover image should have a dimension ratio of 1:1.6, and measure at least 2500px on the longest side."
+                          placement="top"
+                          arrow
+                        >
+                          <InfoOutlinedIcon
+                            sx={{
+                              fontSize: 16,
+                              color: "rgb(156, 163, 175)",
+                              marginTop: "4px",
+                            }}
+                          />
+                        </Tooltip>
+                      </div>
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleFileChange}
+                        accept="image/*"
+                        style={{ display: "none" }}
+                      />
+                    </div>
+                    {/* Title TextField */}
+                    <div className="flex-1">
+                      <TextField
+                        fullWidth
+                        label="Book Title"
+                        value={managedBookTitle}
+                        onChange={(e) => setManagedBookTitle(e.target.value)}
+                        variant="outlined"
+                        sx={{ mb: 2 }}
+                      />
+                      <TextField
+                        fullWidth
+                        label="Sub Title (optional)"
+                        value={managedBookSubtitle}
+                        onChange={(e) => setManagedBookSubtitle(e.target.value)}
+                        variant="outlined"
+                        sx={{ mb: 2 }}
+                      />
+                      <TextField
+                        fullWidth
+                        label="Author Name or Pen Name"
+                        value={managedBookAuthor}
+                        onChange={(e) => setManagedBookAuthor(e.target.value)}
+                        variant="outlined"
+                        sx={{ mb: 2 }}
+                      />
+                      <div className="flex gap-4">
+                        <FormControl sx={{ flex: 1 }}>
+                          <InputLabel>Edition</InputLabel>
+                          <Select
+                            value={managedBookEdition}
+                            label="Edition"
+                            onChange={(e) =>
+                              setManagedBookEdition(e.target.value)
+                            }
+                          >
+                            <MenuItem value="First Edition">
+                              First Edition
+                            </MenuItem>
+                            <MenuItem value="Second Edition">
+                              Second Edition
+                            </MenuItem>
+                            <MenuItem value="Third Edition">
+                              Third Edition
+                            </MenuItem>
+                            <MenuItem value="Fourth Edition">
+                              Fourth Edition
+                            </MenuItem>
+                            <MenuItem value="Fifth Edition">
+                              Fifth Edition
+                            </MenuItem>
+                            <MenuItem value="Sixth Edition">
+                              Sixth Edition
+                            </MenuItem>
+                            <MenuItem value="Seventh Edition">
+                              Seventh Edition
+                            </MenuItem>
+                            <MenuItem value="Eighth Edition">
+                              Eighth Edition
+                            </MenuItem>
+                            <MenuItem value="Ninth Edition">
+                              Ninth Edition
+                            </MenuItem>
+                            <MenuItem value="Tenth Edition">
+                              Tenth Edition
+                            </MenuItem>
+                          </Select>
+                        </FormControl>
+                        <TextField
+                          sx={{ flex: 1 }}
+                          label="Copyright Year"
+                          value={managedBookCopyrightYear}
+                          onChange={(e) =>
+                            setManagedBookCopyrightYear(e.target.value)
+                          }
+                          variant="outlined"
+                          type="number"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
                   {/* Action Buttons */}
                   <div className="flex flex-col sm:flex-row gap-4 pt-6">
                     <Button
@@ -305,7 +475,9 @@ const TwainStoryBuilder: React.FC = () => {
                     <Button
                       onClick={handleSaveBook}
                       variant="contained"
-                      disabled={!managedBookTitle.trim()}
+                      disabled={
+                        !managedBookTitle.trim() || !managedBookAuthor.trim()
+                      }
                       sx={{
                         flex: 1,
                         backgroundColor: "rgb(19, 135, 194)",
@@ -644,6 +816,9 @@ const TwainStoryBuilder: React.FC = () => {
                   sx={{
                     flex: 1,
                     backgroundColor: "rgb(19, 135, 194)",
+                    textTransform: "none",
+                    fontFamily: "'Rubik', sans-serif",
+                    py: 1.5,
                     boxShadow: "none",
                     "&:hover": {
                       backgroundColor: "rgb(15, 108, 155)",
