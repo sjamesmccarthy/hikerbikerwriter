@@ -526,17 +526,275 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
           </Typography>
         </div>
 
-        {/* Editor Container */}
+        {/* Dashboard Container */}
         <div className="flex-1 relative p-4">
-          <div
-            ref={quillRef}
-            className="h-full bg-white rounded-lg"
-            style={{
-              fontFamily: "'Crimson Text', serif",
-              fontSize: "16px",
-              minHeight: "400px",
-            }}
-          />
+          <div className="h-full bg-white rounded-lg p-6">
+            <Typography
+              variant="h4"
+              sx={{
+                fontFamily: "'Rubik', sans-serif",
+                fontWeight: 600,
+                fontSize: "24px",
+                color: "#1f2937",
+                marginBottom: "24px",
+              }}
+            >
+              Story Dashboard
+            </Typography>
+
+            {/* Stats Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+              <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                <div className="flex items-center gap-3">
+                  <DescriptionOutlinedIcon
+                    sx={{
+                      fontSize: 32,
+                      color: "rgb(19, 135, 194)",
+                    }}
+                  />
+                  <div>
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        fontFamily: "'Rubik', sans-serif",
+                        fontWeight: 600,
+                        fontSize: "18px",
+                        color: "#1f2937",
+                      }}
+                    >
+                      {ideas.length}
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        fontFamily: "'Rubik', sans-serif",
+                        fontWeight: 400,
+                        fontSize: "14px",
+                        color: "rgb(107, 114, 128)",
+                      }}
+                    >
+                      Ideas
+                    </Typography>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                <div className="flex items-center gap-3">
+                  <FaceOutlinedIcon
+                    sx={{
+                      fontSize: 32,
+                      color: "rgb(19, 135, 194)",
+                    }}
+                  />
+                  <div>
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        fontFamily: "'Rubik', sans-serif",
+                        fontWeight: 600,
+                        fontSize: "18px",
+                        color: "#1f2937",
+                      }}
+                    >
+                      {characters.length}
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        fontFamily: "'Rubik', sans-serif",
+                        fontWeight: 400,
+                        fontSize: "14px",
+                        color: "rgb(107, 114, 128)",
+                      }}
+                    >
+                      Characters
+                    </Typography>
+                  </div>
+                </div>
+              </div>
+
+              <div className="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                <div className="flex items-center gap-3">
+                  <DescriptionOutlinedIcon
+                    sx={{
+                      fontSize: 32,
+                      color: "rgb(19, 135, 194)",
+                    }}
+                  />
+                  <div>
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        fontFamily: "'Rubik', sans-serif",
+                        fontWeight: 600,
+                        fontSize: "18px",
+                        color: "#1f2937",
+                      }}
+                    >
+                      {book?.wordCount || 0}
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        fontFamily: "'Rubik', sans-serif",
+                        fontWeight: 400,
+                        fontSize: "14px",
+                        color: "rgb(107, 114, 128)",
+                      }}
+                    >
+                      Words Written
+                    </Typography>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Recent Activity */}
+            <div className="mb-8">
+              <Typography
+                variant="h6"
+                sx={{
+                  fontFamily: "'Rubik', sans-serif",
+                  fontWeight: 600,
+                  fontSize: "18px",
+                  color: "#1f2937",
+                  marginBottom: "16px",
+                }}
+              >
+                Recent Activity
+              </Typography>
+              <div className="space-y-3">
+                {[...ideas, ...characters]
+                  .sort(
+                    (a, b) =>
+                      new Date(b.createdAt).getTime() -
+                      new Date(a.createdAt).getTime()
+                  )
+                  .slice(0, 5)
+                  .map((item) => (
+                    <div
+                      key={item.id}
+                      className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200"
+                    >
+                      {"title" in item ? (
+                        <DescriptionOutlinedIcon
+                          sx={{
+                            fontSize: 20,
+                            color: "rgb(107, 114, 128)",
+                          }}
+                        />
+                      ) : (
+                        <FaceOutlinedIcon
+                          sx={{
+                            fontSize: 20,
+                            color: "rgb(107, 114, 128)",
+                          }}
+                        />
+                      )}
+                      <div className="flex-1">
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontFamily: "'Rubik', sans-serif",
+                            fontWeight: 500,
+                            fontSize: "14px",
+                            color: "#1f2937",
+                          }}
+                        >
+                          {"title" in item
+                            ? `New idea: ${item.title}`
+                            : `New character: ${item.name}`}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontFamily: "'Rubik', sans-serif",
+                            fontWeight: 400,
+                            fontSize: "12px",
+                            color: "rgb(107, 114, 128)",
+                          }}
+                        >
+                          {new Date(item.createdAt).toLocaleDateString()}
+                        </Typography>
+                      </div>
+                    </div>
+                  ))}
+                {ideas.length === 0 && characters.length === 0 && (
+                  <div className="text-center py-8">
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        fontFamily: "'Rubik', sans-serif",
+                        fontWeight: 400,
+                        fontSize: "14px",
+                        color: "rgb(107, 114, 128)",
+                      }}
+                    >
+                      No recent activity. Start by creating your first idea or
+                      character!
+                    </Typography>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Quick Actions */}
+            <div>
+              <Typography
+                variant="h6"
+                sx={{
+                  fontFamily: "'Rubik', sans-serif",
+                  fontWeight: 600,
+                  fontSize: "18px",
+                  color: "#1f2937",
+                  marginBottom: "16px",
+                }}
+              >
+                Quick Actions
+              </Typography>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <Button
+                  variant="outlined"
+                  onClick={handleCreateIdeaClick}
+                  startIcon={<AddCircleOutlinedIcon />}
+                  sx={{
+                    justifyContent: "flex-start",
+                    padding: "12px 16px",
+                    borderColor: "rgb(19, 135, 194)",
+                    color: "rgb(19, 135, 194)",
+                    textTransform: "none",
+                    fontFamily: "'Rubik', sans-serif",
+                    "&:hover": {
+                      borderColor: "rgb(15, 108, 155)",
+                      backgroundColor: "rgba(19, 135, 194, 0.04)",
+                    },
+                  }}
+                >
+                  Add New Idea
+                </Button>
+                <Button
+                  variant="outlined"
+                  onClick={handleCreateCharacterClick}
+                  startIcon={<FaceOutlinedIcon />}
+                  sx={{
+                    justifyContent: "flex-start",
+                    padding: "12px 16px",
+                    borderColor: "rgb(19, 135, 194)",
+                    color: "rgb(19, 135, 194)",
+                    textTransform: "none",
+                    fontFamily: "'Rubik', sans-serif",
+                    "&:hover": {
+                      borderColor: "rgb(15, 108, 155)",
+                      backgroundColor: "rgba(19, 135, 194, 0.04)",
+                    },
+                  }}
+                >
+                  Create Character
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Demo Notice */}
