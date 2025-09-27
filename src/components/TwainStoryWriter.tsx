@@ -38,6 +38,7 @@ import KeyboardDoubleArrowDownIcon from "@mui/icons-material/KeyboardDoubleArrow
 import MenuOpenIcon from "@mui/icons-material/MenuOpen";
 import HistoryEduIcon from "@mui/icons-material/HistoryEdu";
 import AddIcon from "@mui/icons-material/Add";
+import TimerOutlinedIcon from "@mui/icons-material/TimerOutlined";
 
 // Define Quill types
 interface QuillInstance {
@@ -212,6 +213,15 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
     new Set()
   ); // Start with all collapsed
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  // Timer-related state
+  const [timerModalOpen, setTimerModalOpen] = useState(false);
+  const [selectedTimerMinutes, setSelectedTimerMinutes] = useState(10);
+  const [timerActive, setTimerActive] = useState(false);
+  const [timeRemaining, setTimeRemaining] = useState(0); // in seconds
+  const [timerInterval, setTimerInterval] = useState<NodeJS.Timeout | null>(
+    null
+  );
 
   const quillInitializedRef = useRef(false);
 
@@ -608,6 +618,62 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
     isEditingStory,
     isEditingOutline,
   ]);
+
+  // Timer functions
+  const handleTimerClick = () => {
+    setTimerModalOpen(true);
+  };
+
+  const handleTimerModalClose = () => {
+    setTimerModalOpen(false);
+  };
+
+  const handleStartTimer = () => {
+    const totalSeconds = selectedTimerMinutes * 60;
+    setTimeRemaining(totalSeconds);
+    setTimerActive(true);
+    setTimerModalOpen(false);
+
+    const interval = setInterval(() => {
+      setTimeRemaining((prev) => {
+        if (prev <= 1) {
+          setTimerActive(false);
+          clearInterval(interval);
+          setTimerInterval(null);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    setTimerInterval(interval);
+  };
+
+  const handleStopTimer = () => {
+    if (timerInterval) {
+      clearInterval(timerInterval);
+      setTimerInterval(null);
+    }
+    setTimerActive(false);
+    setTimeRemaining(0);
+  };
+
+  const formatTime = (seconds: number): string => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, "0")}:${secs
+      .toString()
+      .padStart(2, "0")}`;
+  };
+
+  // Cleanup timer on unmount
+  useEffect(() => {
+    return () => {
+      if (timerInterval) {
+        clearInterval(timerInterval);
+      }
+    };
+  }, [timerInterval]);
 
   const handleEditIdea = (idea: Idea) => {
     setEditingIdea(idea);
@@ -2007,6 +2073,40 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
           {isEditingChapter || isEditingStory || isEditingOutline ? (
             <>
               <div className="flex items-center gap-3">
+                {/* Timer countdown or timer icon */}
+                {timerActive ? (
+                  <div className="flex items-center gap-2">
+                    <div className="text-lg font-bold text-orange-600">
+                      {formatTime(timeRemaining)}
+                    </div>
+                    <IconButton
+                      onClick={handleStopTimer}
+                      size="small"
+                      sx={{
+                        color: "rgb(239, 68, 68)",
+                        "&:hover": {
+                          backgroundColor: "rgba(239, 68, 68, 0.1)",
+                        },
+                      }}
+                    >
+                      <CloseIcon fontSize="small" />
+                    </IconButton>
+                  </div>
+                ) : (
+                  <IconButton
+                    onClick={handleTimerClick}
+                    size="small"
+                    sx={{
+                      color: "rgb(107, 114, 128)",
+                      "&:hover": {
+                        backgroundColor: "rgba(107, 114, 128, 0.1)",
+                      },
+                    }}
+                  >
+                    <TimerOutlinedIcon fontSize="small" />
+                  </IconButton>
+                )}
+
                 <Typography
                   variant="body2"
                   sx={{
@@ -3420,6 +3520,123 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                   }}
                 >
                   {editingPart ? "Update Part" : "Create Part"}
+                </Button>
+              </Box>
+            </Box>
+          </Box>
+        </Modal>
+
+        {/* Timer Modal */}
+        <Modal
+          open={timerModalOpen}
+          onClose={handleTimerModalClose}
+          aria-labelledby="timer-modal-title"
+        >
+          <Box
+            sx={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              width: 400,
+              bgcolor: "background.paper",
+              borderRadius: 3,
+              overflow: "hidden",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
+            }}
+          >
+            {/* Header */}
+            <Box
+              sx={{
+                backgroundColor: "rgb(38, 52, 63)",
+                color: "white",
+                p: 2,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <Typography
+                id="timer-modal-title"
+                variant="h6"
+                component="h2"
+                sx={{
+                  fontFamily: "'Rubik', sans-serif",
+                  fontWeight: 600,
+                  margin: 0,
+                }}
+              >
+                Writing Timer
+              </Typography>
+              <IconButton
+                onClick={handleTimerModalClose}
+                sx={{
+                  color: "white",
+                  "&:hover": {
+                    backgroundColor: "rgba(255, 255, 255, 0.1)",
+                  },
+                }}
+              >
+                <CloseIcon />
+              </IconButton>
+            </Box>
+
+            {/* Modal content */}
+            <Box sx={{ p: 4 }}>
+              <FormControl fullWidth sx={{ mb: 4 }}>
+                <InputLabel>Timer Duration</InputLabel>
+                <Select
+                  value={selectedTimerMinutes}
+                  label="Timer Duration"
+                  onChange={(e) =>
+                    setSelectedTimerMinutes(Number(e.target.value))
+                  }
+                >
+                  <MenuItem value={10}>10 minutes</MenuItem>
+                  <MenuItem value={15}>15 minutes</MenuItem>
+                  <MenuItem value={20}>20 minutes</MenuItem>
+                  <MenuItem value={30}>30 minutes</MenuItem>
+                  <MenuItem value={45}>45 minutes</MenuItem>
+                  <MenuItem value={60}>60 minutes</MenuItem>
+                </Select>
+              </FormControl>
+              <Box
+                sx={{
+                  display: "flex",
+                  gap: 2,
+                  justifyContent: "space-between",
+                }}
+              >
+                <Button
+                  onClick={handleTimerModalClose}
+                  variant="outlined"
+                  sx={{
+                    flex: 1,
+                    boxShadow: "none",
+                    "&:hover": {
+                      boxShadow: "none",
+                    },
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleStartTimer}
+                  variant="contained"
+                  sx={{
+                    flex: 1,
+                    backgroundColor: "rgb(19, 135, 194)",
+                    textTransform: "none",
+                    fontFamily: "'Rubik', sans-serif",
+                    py: 1.5,
+                    boxShadow: "none",
+                    "&:hover": {
+                      backgroundColor: "rgb(15, 108, 155)",
+                      boxShadow: "none",
+                    },
+                  }}
+                >
+                  Start Timer
                 </Button>
               </Box>
             </Box>
