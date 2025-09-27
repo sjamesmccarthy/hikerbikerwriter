@@ -121,6 +121,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
   const [characterAvatar, setCharacterAvatar] = useState<string | null>(null);
   const [partTitle, setPartTitle] = useState("");
   const [selectedChapterIds, setSelectedChapterIds] = useState<string[]>([]);
+  const [lastSaveTime, setLastSaveTime] = useState<string | null>(null);
 
   const quillInitializedRef = useRef(false);
 
@@ -342,6 +343,14 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
             JSON.stringify(updatedOutlines)
           );
         }
+        // Update last save time
+        const now = new Date();
+        setLastSaveTime(
+          `${now.getHours().toString().padStart(2, "0")}:${now
+            .getMinutes()
+            .toString()
+            .padStart(2, "0")}:${now.getSeconds().toString().padStart(2, "0")}`
+        );
       }
     }
   }, [
@@ -548,6 +557,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
     // Clear outline editing state
     setIsEditingOutline(false);
     setCurrentOutline(null);
+    setLastSaveTime(null);
   };
 
   const handleEditOutline = (outline: Outline) => {
@@ -556,6 +566,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
     // Clear chapter editing state
     setIsEditingChapter(false);
     setCurrentChapter(null);
+    setLastSaveTime(null);
   };
 
   const accordionSections = [
@@ -974,51 +985,67 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
               : ""}
           </Typography>
           {isEditingChapter || isEditingOutline ? (
-            <IconButton
-              onClick={() => {
-                if (quillInstance && (currentChapter || currentOutline)) {
-                  const item = currentChapter || currentOutline;
-                  if (item) {
-                    const delta = quillInstance.getContents();
-                    const updatedItem = {
-                      ...item,
-                      content: JSON.stringify(delta),
-                    };
-                    if (currentChapter) {
-                      const updatedChapters = chapters.map((ch) =>
-                        ch.id === currentChapter.id ? updatedItem : ch
-                      );
-                      setChapters(updatedChapters);
-                      localStorage.setItem(
-                        `twain-chapters-${book.id}`,
-                        JSON.stringify(updatedChapters)
-                      );
-                    } else if (currentOutline) {
-                      const updatedOutlines = outlines.map((ol) =>
-                        ol.id === currentOutline.id ? updatedItem : ol
-                      );
-                      setOutlines(updatedOutlines);
-                      localStorage.setItem(
-                        `twain-outlines-${book.id}`,
-                        JSON.stringify(updatedOutlines)
-                      );
+            <div className="flex items-center gap-3">
+              {lastSaveTime && (
+                <Typography
+                  variant="body2"
+                  sx={{
+                    fontFamily: "'Rubik', sans-serif",
+                    fontWeight: 400,
+                    fontSize: "12px",
+                    color: "rgb(107, 114, 128)",
+                  }}
+                >
+                  Saved {lastSaveTime}
+                </Typography>
+              )}
+              <IconButton
+                onClick={() => {
+                  if (quillInstance && (currentChapter || currentOutline)) {
+                    const item = currentChapter || currentOutline;
+                    if (item) {
+                      const delta = quillInstance.getContents();
+                      const updatedItem = {
+                        ...item,
+                        content: JSON.stringify(delta),
+                      };
+                      if (currentChapter) {
+                        const updatedChapters = chapters.map((ch) =>
+                          ch.id === currentChapter.id ? updatedItem : ch
+                        );
+                        setChapters(updatedChapters);
+                        localStorage.setItem(
+                          `twain-chapters-${book.id}`,
+                          JSON.stringify(updatedChapters)
+                        );
+                      } else if (currentOutline) {
+                        const updatedOutlines = outlines.map((ol) =>
+                          ol.id === currentOutline.id ? updatedItem : ol
+                        );
+                        setOutlines(updatedOutlines);
+                        localStorage.setItem(
+                          `twain-outlines-${book.id}`,
+                          JSON.stringify(updatedOutlines)
+                        );
+                      }
                     }
                   }
-                }
-                setIsEditingChapter(false);
-                setCurrentChapter(null);
-                setIsEditingOutline(false);
-                setCurrentOutline(null);
-              }}
-              sx={{
-                color: "rgb(19, 135, 194)",
-                "&:hover": {
-                  backgroundColor: "rgba(19, 135, 194, 0.1)",
-                },
-              }}
-            >
-              <CancelIcon />
-            </IconButton>
+                  setIsEditingChapter(false);
+                  setCurrentChapter(null);
+                  setIsEditingOutline(false);
+                  setCurrentOutline(null);
+                  setLastSaveTime(null);
+                }}
+                sx={{
+                  color: "rgb(19, 135, 194)",
+                  "&:hover": {
+                    backgroundColor: "rgba(19, 135, 194, 0.1)",
+                  },
+                }}
+              >
+                <CancelIcon />
+              </IconButton>
+            </div>
           ) : null}
         </div>
 
