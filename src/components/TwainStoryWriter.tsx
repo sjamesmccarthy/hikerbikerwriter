@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { updateBookWordCount } from "./TwainStoryBuilder";
+import { Document, Packer, Paragraph, TextRun, HeadingLevel } from "docx";
 import {
   Typography,
   Accordion,
@@ -28,6 +29,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import FaceOutlinedIcon from "@mui/icons-material/FaceOutlined";
 import CancelIcon from "@mui/icons-material/Cancel";
 import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
+import BrowserUpdatedOutlinedIcon from "@mui/icons-material/BrowserUpdatedOutlined";
 import PetsIcon from "@mui/icons-material/Pets";
 import TransgenderIcon from "@mui/icons-material/Transgender";
 import BatchPredictionIcon from "@mui/icons-material/BatchPrediction";
@@ -1201,6 +1203,276 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
     );
   };
 
+  const handleDownloadStory = async (story: Story, event: React.MouseEvent) => {
+    event.stopPropagation(); // Prevent triggering the edit handler
+
+    try {
+      // Convert Quill delta to plain text
+      let storyText = "";
+      if (story.content) {
+        try {
+          const delta = JSON.parse(story.content);
+          if (delta && delta.ops) {
+            storyText = delta.ops
+              .map((op: { insert?: string }) =>
+                typeof op.insert === "string" ? op.insert : ""
+              )
+              .join("");
+          }
+        } catch {
+          // If parsing fails, treat as plain text
+          storyText = story.content;
+        }
+      }
+
+      // Split text into paragraphs
+      const paragraphs = storyText
+        .split("\n")
+        .filter((text) => text.trim() !== "");
+
+      // Create DOCX document
+      const doc = new Document({
+        sections: [
+          {
+            properties: {},
+            children: [
+              // Title
+              new Paragraph({
+                text: story.title,
+                heading: HeadingLevel.TITLE,
+                spacing: {
+                  after: 400,
+                },
+              }),
+              // Content paragraphs
+              ...paragraphs.map(
+                (text) =>
+                  new Paragraph({
+                    children: [
+                      new TextRun({
+                        text: text.trim(),
+                        font: "Times New Roman",
+                        size: 24, // 12pt in half-points
+                      }),
+                    ],
+                    spacing: {
+                      after: 240, // 12pt spacing
+                    },
+                  })
+              ),
+            ],
+          },
+        ],
+      });
+
+      // Generate and download the document
+      const buffer = await Packer.toBuffer(doc);
+      const blob = new Blob([new Uint8Array(buffer)], {
+        type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      });
+
+      // Create download link
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${story.title
+        .replace(/[^a-z0-9\s]/gi, "_")
+        .toLowerCase()}.docx`;
+
+      // Trigger download
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // Clean up
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Error downloading story:", error);
+    }
+  };
+
+  const handleDownloadChapter = async (
+    chapter: Chapter,
+    event: React.MouseEvent
+  ) => {
+    event.stopPropagation(); // Prevent triggering the edit handler
+
+    try {
+      // Convert Quill delta to plain text
+      let chapterText = "";
+      if (chapter.content) {
+        try {
+          const delta = JSON.parse(chapter.content);
+          if (delta && delta.ops) {
+            chapterText = delta.ops
+              .map((op: { insert?: string }) =>
+                typeof op.insert === "string" ? op.insert : ""
+              )
+              .join("");
+          }
+        } catch {
+          // If parsing fails, treat as plain text
+          chapterText = chapter.content;
+        }
+      }
+
+      // Split text into paragraphs
+      const paragraphs = chapterText
+        .split("\n")
+        .filter((text) => text.trim() !== "");
+
+      // Create DOCX document
+      const doc = new Document({
+        sections: [
+          {
+            properties: {},
+            children: [
+              // Title
+              new Paragraph({
+                text: chapter.title,
+                heading: HeadingLevel.TITLE,
+                spacing: {
+                  after: 400,
+                },
+              }),
+              // Content paragraphs
+              ...paragraphs.map(
+                (text) =>
+                  new Paragraph({
+                    children: [
+                      new TextRun({
+                        text: text.trim(),
+                        font: "Times New Roman",
+                        size: 24, // 12pt in half-points
+                      }),
+                    ],
+                    spacing: {
+                      after: 240, // 12pt spacing
+                    },
+                  })
+              ),
+            ],
+          },
+        ],
+      });
+
+      // Generate and download the document
+      const buffer = await Packer.toBuffer(doc);
+      const blob = new Blob([new Uint8Array(buffer)], {
+        type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      });
+
+      // Create download link
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${chapter.title
+        .replace(/[^a-z0-9\s]/gi, "_")
+        .toLowerCase()}.docx`;
+
+      // Trigger download
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // Clean up
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Error downloading chapter:", error);
+    }
+  };
+
+  const handleDownloadOutline = async (
+    outline: Outline,
+    event: React.MouseEvent
+  ) => {
+    event.stopPropagation(); // Prevent triggering the edit handler
+
+    try {
+      // Convert Quill delta to plain text
+      let outlineText = "";
+      if (outline.content) {
+        try {
+          const delta = JSON.parse(outline.content);
+          if (delta && delta.ops) {
+            outlineText = delta.ops
+              .map((op: { insert?: string }) =>
+                typeof op.insert === "string" ? op.insert : ""
+              )
+              .join("");
+          }
+        } catch {
+          // If parsing fails, treat as plain text
+          outlineText = outline.content;
+        }
+      }
+
+      // Split text into paragraphs
+      const paragraphs = outlineText
+        .split("\n")
+        .filter((text) => text.trim() !== "");
+
+      // Create DOCX document
+      const doc = new Document({
+        sections: [
+          {
+            properties: {},
+            children: [
+              // Title
+              new Paragraph({
+                text: outline.title,
+                heading: HeadingLevel.TITLE,
+                spacing: {
+                  after: 400,
+                },
+              }),
+              // Content paragraphs
+              ...paragraphs.map(
+                (text) =>
+                  new Paragraph({
+                    children: [
+                      new TextRun({
+                        text: text.trim(),
+                        font: "Times New Roman",
+                        size: 24, // 12pt in half-points
+                      }),
+                    ],
+                    spacing: {
+                      after: 240, // 12pt spacing
+                    },
+                  })
+              ),
+            ],
+          },
+        ],
+      });
+
+      // Generate and download the document
+      const buffer = await Packer.toBuffer(doc);
+      const blob = new Blob([new Uint8Array(buffer)], {
+        type: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+      });
+
+      // Create download link
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${outline.title
+        .replace(/[^a-z0-9\s]/gi, "_")
+        .toLowerCase()}.docx`;
+
+      // Trigger download
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // Clean up
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Error downloading outline:", error);
+    }
+  };
+
   const handleEditOutline = (outline: Outline) => {
     setCurrentOutline(outline);
     setIsEditingOutline(true);
@@ -1834,22 +2106,45 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                                   outline.createdAt
                                 ).toLocaleDateString()}
                               </Typography>
-                              <IconButton
-                                size="small"
-                                onClick={(e) =>
-                                  handleDeleteOutline(outline.id, e)
-                                }
-                                sx={{
-                                  color: "rgb(156, 163, 175)",
-                                  padding: "2px",
-                                  "&:hover": {
-                                    color: "rgb(239, 68, 68)",
-                                    backgroundColor: "rgba(239, 68, 68, 0.1)",
-                                  },
-                                }}
-                              >
-                                <DeleteOutlinedIcon sx={{ fontSize: "14px" }} />
-                              </IconButton>
+                              <div className="flex items-center gap-1">
+                                <IconButton
+                                  size="small"
+                                  onClick={(e) =>
+                                    handleDownloadOutline(outline, e)
+                                  }
+                                  sx={{
+                                    color: "rgb(156, 163, 175)",
+                                    padding: "2px",
+                                    "&:hover": {
+                                      color: "rgb(59, 130, 246)",
+                                      backgroundColor:
+                                        "rgba(59, 130, 246, 0.1)",
+                                    },
+                                  }}
+                                >
+                                  <BrowserUpdatedOutlinedIcon
+                                    sx={{ fontSize: "14px" }}
+                                  />
+                                </IconButton>
+                                <IconButton
+                                  size="small"
+                                  onClick={(e) =>
+                                    handleDeleteOutline(outline.id, e)
+                                  }
+                                  sx={{
+                                    color: "rgb(156, 163, 175)",
+                                    padding: "2px",
+                                    "&:hover": {
+                                      color: "rgb(239, 68, 68)",
+                                      backgroundColor: "rgba(239, 68, 68, 0.1)",
+                                    },
+                                  }}
+                                >
+                                  <DeleteOutlinedIcon
+                                    sx={{ fontSize: "14px" }}
+                                  />
+                                </IconButton>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -1897,20 +2192,41 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                                 Created:{" "}
                                 {new Date(story.createdAt).toLocaleDateString()}
                               </Typography>
-                              <IconButton
-                                size="small"
-                                onClick={(e) => handleDeleteStory(story.id, e)}
-                                sx={{
-                                  color: "rgb(156, 163, 175)",
-                                  padding: "2px",
-                                  "&:hover": {
-                                    color: "rgb(239, 68, 68)",
-                                    backgroundColor: "rgba(239, 68, 68, 0.1)",
-                                  },
-                                }}
-                              >
-                                <DeleteOutlinedIcon sx={{ fontSize: 16 }} />
-                              </IconButton>
+                              <div className="flex items-center gap-1">
+                                <IconButton
+                                  size="small"
+                                  onClick={(e) => handleDownloadStory(story, e)}
+                                  sx={{
+                                    color: "rgb(156, 163, 175)",
+                                    padding: "2px",
+                                    "&:hover": {
+                                      color: "rgb(59, 130, 246)",
+                                      backgroundColor:
+                                        "rgba(59, 130, 246, 0.1)",
+                                    },
+                                  }}
+                                >
+                                  <BrowserUpdatedOutlinedIcon
+                                    sx={{ fontSize: 16 }}
+                                  />
+                                </IconButton>
+                                <IconButton
+                                  size="small"
+                                  onClick={(e) =>
+                                    handleDeleteStory(story.id, e)
+                                  }
+                                  sx={{
+                                    color: "rgb(156, 163, 175)",
+                                    padding: "2px",
+                                    "&:hover": {
+                                      color: "rgb(239, 68, 68)",
+                                      backgroundColor: "rgba(239, 68, 68, 0.1)",
+                                    },
+                                  }}
+                                >
+                                  <DeleteOutlinedIcon sx={{ fontSize: 16 }} />
+                                </IconButton>
+                              </div>
                             </div>
                           </div>
                         </div>
@@ -1960,22 +2276,45 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                                   chapter.createdAt
                                 ).toLocaleDateString()}
                               </Typography>
-                              <IconButton
-                                size="small"
-                                onClick={(e) =>
-                                  handleDeleteChapter(chapter.id, e)
-                                }
-                                sx={{
-                                  color: "rgb(156, 163, 175)",
-                                  padding: "2px",
-                                  "&:hover": {
-                                    color: "rgb(239, 68, 68)",
-                                    backgroundColor: "rgba(239, 68, 68, 0.1)",
-                                  },
-                                }}
-                              >
-                                <DeleteOutlinedIcon sx={{ fontSize: "14px" }} />
-                              </IconButton>
+                              <div className="flex items-center gap-1">
+                                <IconButton
+                                  size="small"
+                                  onClick={(e) =>
+                                    handleDownloadChapter(chapter, e)
+                                  }
+                                  sx={{
+                                    color: "rgb(156, 163, 175)",
+                                    padding: "2px",
+                                    "&:hover": {
+                                      color: "rgb(59, 130, 246)",
+                                      backgroundColor:
+                                        "rgba(59, 130, 246, 0.1)",
+                                    },
+                                  }}
+                                >
+                                  <BrowserUpdatedOutlinedIcon
+                                    sx={{ fontSize: "14px" }}
+                                  />
+                                </IconButton>
+                                <IconButton
+                                  size="small"
+                                  onClick={(e) =>
+                                    handleDeleteChapter(chapter.id, e)
+                                  }
+                                  sx={{
+                                    color: "rgb(156, 163, 175)",
+                                    padding: "2px",
+                                    "&:hover": {
+                                      color: "rgb(239, 68, 68)",
+                                      backgroundColor: "rgba(239, 68, 68, 0.1)",
+                                    },
+                                  }}
+                                >
+                                  <DeleteOutlinedIcon
+                                    sx={{ fontSize: "14px" }}
+                                  />
+                                </IconButton>
+                              </div>
                             </div>
                           </div>
                         </div>
