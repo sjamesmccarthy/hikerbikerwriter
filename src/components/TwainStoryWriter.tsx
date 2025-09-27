@@ -133,6 +133,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
   const [currentOutline, setCurrentOutline] = useState<Outline | null>(null);
   const [parts, setParts] = useState<Part[]>([]);
   const [totalWordCount, setTotalWordCount] = useState(0);
+  const [currentEditorWordCount, setCurrentEditorWordCount] = useState(0);
   const [createIdeaModalOpen, setCreateIdeaModalOpen] = useState(false);
   const [createCharacterModalOpen, setCreateCharacterModalOpen] =
     useState(false);
@@ -193,6 +194,20 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
             const quill = new Quill.default(quillRef.current, {
               theme: "bubble",
               placeholder: "Start writing your story...",
+              modules: {
+                toolbar: [
+                  [{ header: [1, 2, 3, false] }],
+                  ["bold", "italic", "underline", "strike"],
+                  [
+                    {
+                      align: [],
+                    },
+                  ],
+                  [{ indent: "-1" }, { indent: "+1" }],
+                  ["blockquote"],
+                  ["clean"],
+                ],
+              },
             });
 
             // Set custom font for editor content
@@ -412,11 +427,16 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
         }
         // Update last save time
         const now = new Date();
+        const hours = now.getHours();
+        const minutes = now.getMinutes();
+        const seconds = now.getSeconds();
+        const ampm = hours >= 12 ? "PM" : "AM";
+        const displayHours = hours % 12 || 12; // Convert to 12-hour format, 0 becomes 12
+
         setLastSaveTime(
-          `${now.getHours().toString().padStart(2, "0")}:${now
-            .getMinutes()
+          `${displayHours}:${minutes.toString().padStart(2, "0")}:${seconds
             .toString()
-            .padStart(2, "0")}:${now.getSeconds().toString().padStart(2, "0")}`
+            .padStart(2, "0")} ${ampm}`
         );
       }
     }
@@ -456,6 +476,62 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
     isEditingStory,
     isEditingOutline,
     handleAutoSave,
+  ]);
+
+  // Update current editor word count when content changes or when switching items
+  useEffect(() => {
+    const updateWordCount = () => {
+      if (quillInstance && (currentChapter || currentStory || currentOutline)) {
+        try {
+          const delta = quillInstance.getContents() as {
+            ops: { insert?: unknown }[];
+          };
+          const allText = delta.ops
+            .map((op: { insert?: unknown }) =>
+              typeof op.insert === "string" ? op.insert : ""
+            )
+            .join("")
+            .trim();
+
+          const wordCount =
+            allText.length === 0
+              ? 0
+              : allText.split(/\s+/).filter((w: string) => w.length > 0).length;
+          setCurrentEditorWordCount(wordCount);
+        } catch {
+          setCurrentEditorWordCount(0);
+        }
+      } else {
+        setCurrentEditorWordCount(0);
+      }
+    };
+
+    // Update word count immediately when switching items
+    updateWordCount();
+
+    // Set up text-change listener for real-time updates
+    if (
+      quillInstance &&
+      (isEditingChapter || isEditingStory || isEditingOutline)
+    ) {
+      const handleTextChange = () => {
+        updateWordCount();
+      };
+
+      quillInstance.on("text-change", handleTextChange);
+
+      return () => {
+        quillInstance.off("text-change", handleTextChange);
+      };
+    }
+  }, [
+    quillInstance,
+    currentChapter,
+    currentStory,
+    currentOutline,
+    isEditingChapter,
+    isEditingStory,
+    isEditingOutline,
   ]);
 
   const handleEditIdea = (idea: Idea) => {
@@ -1812,13 +1888,12 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
       <div className="flex-1 flex flex-col">
         {/* Header with Title */}
         <div
-          className="p-4 border-b min-h-[67px] border-gray-200 bg-white flex items-center justify-between"
+          className="p-4  bg-white flex items-center justify-between"
           style={{ zIndex: 10 }}
         >
-          <div></div>
           {isEditingChapter || isEditingStory || isEditingOutline ? (
-            <div className="flex items-center gap-3">
-              {lastSaveTime && (
+            <>
+              <div className="flex items-center gap-3">
                 <Typography
                   variant="body2"
                   sx={{
@@ -1828,9 +1903,15 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                     color: "rgb(107, 114, 128)",
                   }}
                 >
-                  Saved {lastSaveTime}
+                  {currentChapter || currentStory || currentOutline
+                    ? `${currentEditorWordCount} Words${
+                        lastSaveTime ? ` | Saved at ${lastSaveTime}` : ""
+                      }`
+                    : lastSaveTime
+                    ? `Saved ${lastSaveTime}`
+                    : ""}
                 </Typography>
-              )}
+              </div>
               <IconButton
                 onClick={() => {
                   if (quillInstance && (currentChapter || currentOutline)) {
@@ -1879,7 +1960,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
               >
                 <CancelIcon />
               </IconButton>
-            </div>
+            </>
           ) : null}
         </div>
 

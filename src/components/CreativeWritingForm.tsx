@@ -134,6 +134,12 @@ const CreativeWritingForm: React.FC<CreativeWritingFormProps> = ({
               toolbar: [
                 [{ header: [1, 2, 3, false] }],
                 ["bold", "italic", "underline", "strike"],
+                [
+                  {
+                    align: [],
+                  },
+                ],
+                [{ indent: "-1" }, { indent: "+1" }],
                 [{ list: "ordered" }, { list: "bullet" }],
                 ["blockquote"],
                 ["clean"],
