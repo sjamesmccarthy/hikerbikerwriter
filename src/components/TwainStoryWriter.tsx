@@ -662,6 +662,24 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
     }
   };
 
+  const handleEditChapter = (chapter: Chapter) => {
+    setCurrentChapter(chapter);
+    setIsEditingChapter(true);
+    // Clear outline editing state
+    setIsEditingOutline(false);
+    setCurrentOutline(null);
+    setLastSaveTime(null);
+  };
+
+  const handleEditOutline = (outline: Outline) => {
+    setCurrentOutline(outline);
+    setIsEditingOutline(true);
+    // Clear chapter editing state
+    setIsEditingChapter(false);
+    setCurrentChapter(null);
+    setLastSaveTime(null);
+  };
+
   const accordionSections = [
     {
       title: "IDEAS",
