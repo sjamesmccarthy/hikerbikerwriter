@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import {
   Typography,
   Accordion,
@@ -122,9 +122,17 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
   const [partTitle, setPartTitle] = useState("");
   const [selectedChapterIds, setSelectedChapterIds] = useState<string[]>([]);
 
+  const quillInitializedRef = useRef(false);
+
   // Initialize Quill editor
   useEffect(() => {
-    if (typeof window !== "undefined" && quillRef.current && !quillInstance) {
+    if (
+      typeof window !== "undefined" &&
+      quillRef.current &&
+      !quillInitializedRef.current
+    ) {
+      quillInitializedRef.current = true;
+
       // Load Quill CSS first
       const linkElement = document.createElement("link");
       linkElement.rel = "stylesheet";
@@ -156,47 +164,12 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
             quill.root.style.fontSize = "18px";
             quill.root.style.lineHeight = "1.6";
 
-            // Add auto-save on text change
-            quill.on("text-change", () => {
-              if (
-                (isEditingChapter && currentChapter) ||
-                (isEditingOutline && currentOutline)
-              ) {
-                const item = currentChapter || currentOutline;
-                if (item) {
-                  const delta = quill.getContents();
-                  const updatedItem = {
-                    ...item,
-                    content: JSON.stringify(delta),
-                  };
-                  if (currentChapter) {
-                    const updatedChapters = chapters.map((ch) =>
-                      ch.id === currentChapter.id ? updatedItem : ch
-                    );
-                    setChapters(updatedChapters);
-                    localStorage.setItem(
-                      `twain-chapters-${book.id}`,
-                      JSON.stringify(updatedChapters)
-                    );
-                  } else if (currentOutline) {
-                    const updatedOutlines = outlines.map((ol) =>
-                      ol.id === currentOutline.id ? updatedItem : ol
-                    );
-                    setOutlines(updatedOutlines);
-                    localStorage.setItem(
-                      `twain-outlines-${book.id}`,
-                      JSON.stringify(updatedOutlines)
-                    );
-                  }
-                }
-              }
-            });
-
             setQuillInstance(quill);
           }
         })
         .catch((error) => {
           console.error("Failed to load Quill:", error);
+          quillInitializedRef.current = false; // Reset on error
         });
     }
   }, []);
@@ -336,6 +309,67 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
       }
     }
   }, [quillInstance, currentChapter, currentOutline]);
+
+  // Auto-save function
+  const handleAutoSave = useCallback(() => {
+    if (
+      (isEditingChapter && currentChapter) ||
+      (isEditingOutline && currentOutline)
+    ) {
+      const item = currentChapter || currentOutline;
+      if (item && quillInstance) {
+        const delta = quillInstance.getContents();
+        const updatedItem = {
+          ...item,
+          content: JSON.stringify(delta),
+        };
+        if (currentChapter) {
+          const updatedChapters = chapters.map((ch) =>
+            ch.id === currentChapter.id ? updatedItem : ch
+          );
+          setChapters(updatedChapters);
+          localStorage.setItem(
+            `twain-chapters-${book.id}`,
+            JSON.stringify(updatedChapters)
+          );
+        } else if (currentOutline) {
+          const updatedOutlines = outlines.map((ol) =>
+            ol.id === currentOutline.id ? updatedItem : ol
+          );
+          setOutlines(updatedOutlines);
+          localStorage.setItem(
+            `twain-outlines-${book.id}`,
+            JSON.stringify(updatedOutlines)
+          );
+        }
+      }
+    }
+  }, [
+    isEditingChapter,
+    currentChapter,
+    isEditingOutline,
+    currentOutline,
+    quillInstance,
+    chapters,
+    outlines,
+    book.id,
+  ]);
+
+  // Set up auto-save event listener when editing state changes
+  useEffect(() => {
+    if (quillInstance && (isEditingChapter || isEditingOutline)) {
+      const handleTextChange = () => {
+        handleAutoSave();
+      };
+
+      quillInstance.on("text-change", handleTextChange);
+
+      // Return cleanup function to remove the listener
+      return () => {
+        quillInstance.off("text-change", handleTextChange);
+      };
+    }
+  }, [quillInstance, isEditingChapter, isEditingOutline, handleAutoSave]);
 
   const handleCreateIdeaClick = () => {
     setCreateIdeaModalOpen(true);
@@ -511,11 +545,17 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
   const handleEditChapter = (chapter: Chapter) => {
     setCurrentChapter(chapter);
     setIsEditingChapter(true);
+    // Clear outline editing state
+    setIsEditingOutline(false);
+    setCurrentOutline(null);
   };
 
   const handleEditOutline = (outline: Outline) => {
     setCurrentOutline(outline);
     setIsEditingOutline(true);
+    // Clear chapter editing state
+    setIsEditingChapter(false);
+    setCurrentChapter(null);
   };
 
   const accordionSections = [
