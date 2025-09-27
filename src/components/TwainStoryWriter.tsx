@@ -508,6 +508,16 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
     }
   };
 
+  const handleEditChapter = (chapter: Chapter) => {
+    setCurrentChapter(chapter);
+    setIsEditingChapter(true);
+  };
+
+  const handleEditOutline = (outline: Outline) => {
+    setCurrentOutline(outline);
+    setIsEditingOutline(true);
+  };
+
   const accordionSections = [
     {
       title: "IDEAS",
@@ -746,7 +756,8 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                     {outlines.map((outline) => (
                       <div
                         key={outline.id}
-                        className="flex items-start gap-3 p-3 bg-white rounded-md border border-gray-200"
+                        className="flex items-start gap-3 p-3 bg-white rounded-md border border-gray-200 cursor-pointer hover:bg-gray-50"
+                        onClick={() => handleEditOutline(outline)}
                       >
                         <DescriptionOutlinedIcon
                           sx={{
@@ -791,7 +802,8 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                     {chapters.map((chapter) => (
                       <div
                         key={chapter.id}
-                        className="flex items-start gap-3 p-3 bg-white rounded-md border border-gray-200"
+                        className="flex items-start gap-3 p-3 bg-white rounded-md border border-gray-200 cursor-pointer hover:bg-gray-50"
+                        onClick={() => handleEditChapter(chapter)}
                       >
                         <DescriptionOutlinedIcon
                           sx={{
