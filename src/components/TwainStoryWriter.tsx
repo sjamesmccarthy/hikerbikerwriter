@@ -32,6 +32,7 @@ import BatchPredictionIcon from "@mui/icons-material/BatchPrediction";
 import ListAltIcon from "@mui/icons-material/ListAlt";
 import AutoStoriesIcon from "@mui/icons-material/AutoStories";
 import FolderCopyIcon from "@mui/icons-material/FolderCopy";
+import KeyboardDoubleArrowDownIcon from "@mui/icons-material/KeyboardDoubleArrowDown";
 
 // Define Quill types
 interface QuillInstance {
@@ -145,6 +146,10 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
     null
   );
   const [editingPart, setEditingPart] = useState<Part | null>(null);
+  const [allAccordionsExpanded, setAllAccordionsExpanded] = useState(false);
+  const [expandedAccordions, setExpandedAccordions] = useState<Set<string>>(
+    new Set()
+  ); // Start with all collapsed
 
   const quillInitializedRef = useRef(false);
 
@@ -910,6 +915,25 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
     }
   };
 
+  const handleToggleAllAccordions = () => {
+    if (allAccordionsExpanded) {
+      // Collapse all
+      setExpandedAccordions(new Set());
+      setAllAccordionsExpanded(false);
+    } else {
+      // Expand all
+      const allSections = new Set([
+        "IDEAS",
+        "CHARACTERS",
+        "OUTLINE",
+        "CHAPTERS",
+        "PARTS",
+      ]);
+      setExpandedAccordions(allSections);
+      setAllAccordionsExpanded(true);
+    }
+  };
+
   const getCharacterStyling = (gender: string) => {
     switch (gender.toLowerCase()) {
       case "male":
@@ -986,7 +1010,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
       <div className="w-[300px] bg-gray-50 border-r border-gray-200 flex flex-col">
         {/* Header with Back Button */}
         <div className="p-4 border-b border-gray-200 bg-white">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center justify-between">
             <IconButton
               onClick={onBackToBookshelf}
               size="small"
@@ -999,6 +1023,27 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
             >
               <ArrowBackIcon />
             </IconButton>
+            <IconButton
+              onClick={handleToggleAllAccordions}
+              size="small"
+              sx={{
+                color: "rgb(107, 114, 128)",
+                "&:hover": {
+                  backgroundColor: "rgba(107, 114, 128, 0.1)",
+                },
+                transform: allAccordionsExpanded
+                  ? "rotate(180deg)"
+                  : "rotate(0deg)",
+                transition: "transform 0.2s ease-in-out",
+              }}
+              title={
+                allAccordionsExpanded
+                  ? "Collapse All Sections"
+                  : "Expand All Sections"
+              }
+            >
+              <KeyboardDoubleArrowDownIcon />
+            </IconButton>
           </div>
         </div>
 
@@ -1009,6 +1054,19 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
               key={section.title}
               disableGutters
               elevation={0}
+              expanded={expandedAccordions.has(section.title)}
+              onChange={(_, isExpanded) => {
+                const newExpanded = new Set(expandedAccordions);
+                if (isExpanded) {
+                  newExpanded.add(section.title);
+                } else {
+                  newExpanded.delete(section.title);
+                }
+                setExpandedAccordions(newExpanded);
+                setAllAccordionsExpanded(
+                  newExpanded.size === accordionSections.length
+                );
+              }}
               sx={{
                 "&:before": {
                   display: "none",
@@ -1990,6 +2048,27 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                         />
                       ) : activity.type === "character" ? (
                         <FaceOutlinedIcon
+                          sx={{
+                            fontSize: 20,
+                            color: "rgb(107, 114, 128)",
+                          }}
+                        />
+                      ) : activity.type === "outline" ? (
+                        <ListAltIcon
+                          sx={{
+                            fontSize: 20,
+                            color: "rgb(107, 114, 128)",
+                          }}
+                        />
+                      ) : activity.type === "chapter" ? (
+                        <AutoStoriesIcon
+                          sx={{
+                            fontSize: 20,
+                            color: "rgb(107, 114, 128)",
+                          }}
+                        />
+                      ) : activity.type === "part" ? (
+                        <FolderCopyIcon
                           sx={{
                             fontSize: 20,
                             color: "rgb(107, 114, 128)",
