@@ -126,6 +126,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
   const [editingCharacter, setEditingCharacter] = useState<Character | null>(
     null
   );
+  const [editingPart, setEditingPart] = useState<Part | null>(null);
 
   const quillInitializedRef = useRef(false);
 
@@ -599,7 +600,15 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
     setIsEditingOutline(true);
   };
 
+  const handleEditPart = (part: Part) => {
+    setEditingPart(part);
+    setPartTitle(part.title);
+    setSelectedChapterIds(part.chapterIds);
+    setCreatePartModalOpen(true);
+  };
+
   const handleCreatePartClick = () => {
+    setEditingPart(null);
     setCreatePartModalOpen(true);
   };
 
@@ -607,46 +616,50 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
     setCreatePartModalOpen(false);
     setPartTitle("");
     setSelectedChapterIds([]);
+    setEditingPart(null);
   };
 
   const handleCreatePart = () => {
     if (partTitle.trim() && selectedChapterIds.length > 0) {
-      const newPart: Part = {
-        id: Date.now().toString(),
-        title: partTitle.trim(),
-        chapterIds: selectedChapterIds,
-        createdAt: new Date(),
-      };
+      if (editingPart) {
+        // Update existing part
+        const updatedPart: Part = {
+          ...editingPart,
+          title: partTitle.trim(),
+          chapterIds: selectedChapterIds,
+        };
 
-      const updatedParts = [...parts, newPart];
-      setParts(updatedParts);
+        const updatedParts = parts.map((part) =>
+          part.id === editingPart.id ? updatedPart : part
+        );
+        setParts(updatedParts);
 
-      // Store in localStorage
-      localStorage.setItem(
-        `twain-parts-${book.id}`,
-        JSON.stringify(updatedParts)
-      );
+        // Store in localStorage
+        localStorage.setItem(
+          `twain-parts-${book.id}`,
+          JSON.stringify(updatedParts)
+        );
+      } else {
+        // Create new part
+        const newPart: Part = {
+          id: Date.now().toString(),
+          title: partTitle.trim(),
+          chapterIds: selectedChapterIds,
+          createdAt: new Date(),
+        };
+
+        const updatedParts = [...parts, newPart];
+        setParts(updatedParts);
+
+        // Store in localStorage
+        localStorage.setItem(
+          `twain-parts-${book.id}`,
+          JSON.stringify(updatedParts)
+        );
+      }
 
       handleCreatePartModalClose();
     }
-  };
-
-  const handleEditChapter = (chapter: Chapter) => {
-    setCurrentChapter(chapter);
-    setIsEditingChapter(true);
-    // Clear outline editing state
-    setIsEditingOutline(false);
-    setCurrentOutline(null);
-    setLastSaveTime(null);
-  };
-
-  const handleEditOutline = (outline: Outline) => {
-    setCurrentOutline(outline);
-    setIsEditingOutline(true);
-    // Clear chapter editing state
-    setIsEditingChapter(false);
-    setCurrentChapter(null);
-    setLastSaveTime(null);
   };
 
   const accordionSections = [
@@ -981,7 +994,8 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                     {parts.map((part) => (
                       <div
                         key={part.id}
-                        className="flex items-start gap-3 p-3 bg-white rounded-md border border-gray-200"
+                        className="flex items-start gap-3 p-3 bg-white rounded-md border border-gray-200 cursor-pointer hover:bg-gray-50"
+                        onClick={() => handleEditPart(part)}
                       >
                         <DescriptionOutlinedIcon
                           sx={{
@@ -2005,7 +2019,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                   margin: 0,
                 }}
               >
-                Create New Part
+                {editingPart ? "Edit Part" : "Create New Part"}
               </Typography>
               <IconButton
                 onClick={handleCreatePartModalClose}
@@ -2053,8 +2067,10 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                   {chapters
                     .filter(
                       (chapter) =>
-                        !parts.some((part) =>
-                          part.chapterIds.includes(chapter.id)
+                        !parts.some(
+                          (part) =>
+                            part.id !== editingPart?.id &&
+                            part.chapterIds.includes(chapter.id)
                         )
                     )
                     .map((chapter) => (
@@ -2109,7 +2125,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                     },
                   }}
                 >
-                  Create Part
+                  {editingPart ? "Update Part" : "Create Part"}
                 </Button>
               </Box>
             </Box>
