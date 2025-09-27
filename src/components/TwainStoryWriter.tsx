@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import { useSession } from "next-auth/react";
+import { updateBookWordCount } from "./TwainStoryBuilder";
 import {
   Typography,
   Accordion,
@@ -126,10 +128,37 @@ interface TwainStoryWriterProps {
   onBackToBookshelf: () => void;
 }
 
+// Storage key helpers
+const getStorageKey = (
+  type: string,
+  bookId: number,
+  userEmail?: string
+): string => {
+  if (!userEmail) return `twain-${type}-${bookId}`;
+  return `twain-${type}-${bookId}-${userEmail}`;
+};
+
+// Storage utilities
+const saveToStorage = (
+  type: string,
+  data: unknown[],
+  bookId: number,
+  userEmail?: string
+): void => {
+  if (!userEmail) return;
+  try {
+    const storageKey = getStorageKey(type, bookId, userEmail);
+    localStorage.setItem(storageKey, JSON.stringify(data));
+  } catch (error) {
+    console.error(`Error saving ${type} to localStorage:`, error);
+  }
+};
+
 const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
   book,
   onBackToBookshelf,
 }) => {
+  const { data: session } = useSession();
   const quillRef = useRef<HTMLDivElement | null>(null);
   const [quillInstance, setQuillInstance] = useState<QuillInstance | null>(
     null
@@ -241,115 +270,135 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
 
   // Load ideas from localStorage on component mount
   useEffect(() => {
-    const storedIdeas = localStorage.getItem(`twain-ideas-${book.id}`);
-    if (storedIdeas) {
-      try {
-        const parsedIdeas = JSON.parse(storedIdeas).map(
-          (idea: Omit<Idea, "createdAt"> & { createdAt: string }) => ({
-            ...idea,
-            createdAt: new Date(idea.createdAt),
-          })
-        );
-        setIdeas(parsedIdeas);
-      } catch (error) {
-        console.error("Failed to parse stored ideas:", error);
+    if (session?.user?.email) {
+      const storageKey = getStorageKey("ideas", book.id, session.user.email);
+      const storedIdeas = localStorage.getItem(storageKey);
+      if (storedIdeas) {
+        try {
+          const parsedIdeas = JSON.parse(storedIdeas).map(
+            (idea: Omit<Idea, "createdAt"> & { createdAt: string }) => ({
+              ...idea,
+              createdAt: new Date(idea.createdAt),
+            })
+          );
+          setIdeas(parsedIdeas);
+        } catch (error) {
+          console.error("Failed to parse stored ideas:", error);
+        }
       }
     }
-  }, [book.id]);
+  }, [book.id, session?.user?.email]);
 
   // Load characters from localStorage on component mount
   useEffect(() => {
-    const storedCharacters = localStorage.getItem(
-      `twain-characters-${book.id}`
-    );
-    if (storedCharacters) {
-      try {
-        const parsedCharacters = JSON.parse(storedCharacters).map(
-          (
-            character: Omit<Character, "createdAt"> & { createdAt: string }
-          ) => ({
-            ...character,
-            createdAt: new Date(character.createdAt),
-          })
-        );
-        setCharacters(parsedCharacters);
-      } catch (error) {
-        console.error("Failed to parse stored characters:", error);
+    if (session?.user?.email) {
+      const storageKey = getStorageKey(
+        "characters",
+        book.id,
+        session.user.email
+      );
+      const storedCharacters = localStorage.getItem(storageKey);
+      if (storedCharacters) {
+        try {
+          const parsedCharacters = JSON.parse(storedCharacters).map(
+            (
+              character: Omit<Character, "createdAt"> & { createdAt: string }
+            ) => ({
+              ...character,
+              createdAt: new Date(character.createdAt),
+            })
+          );
+          setCharacters(parsedCharacters);
+        } catch (error) {
+          console.error("Failed to parse stored characters:", error);
+        }
       }
     }
-  }, [book.id]);
+  }, [book.id, session?.user?.email]);
 
   // Load chapters from localStorage on component mount
   useEffect(() => {
-    const storedChapters = localStorage.getItem(`twain-chapters-${book.id}`);
-    if (storedChapters) {
-      try {
-        const parsedChapters = JSON.parse(storedChapters).map(
-          (chapter: Omit<Chapter, "createdAt"> & { createdAt: string }) => ({
-            ...chapter,
-            createdAt: new Date(chapter.createdAt),
-          })
-        );
-        setChapters(parsedChapters);
-      } catch (error) {
-        console.error("Failed to parse stored chapters:", error);
+    if (session?.user?.email) {
+      const storageKey = getStorageKey("chapters", book.id, session.user.email);
+      const storedChapters = localStorage.getItem(storageKey);
+      if (storedChapters) {
+        try {
+          const parsedChapters = JSON.parse(storedChapters).map(
+            (chapter: Omit<Chapter, "createdAt"> & { createdAt: string }) => ({
+              ...chapter,
+              createdAt: new Date(chapter.createdAt),
+            })
+          );
+          setChapters(parsedChapters);
+        } catch (error) {
+          console.error("Failed to parse stored chapters:", error);
+        }
       }
     }
-  }, [book.id]);
+  }, [book.id, session?.user?.email]);
 
   // Load stories from localStorage on component mount
   useEffect(() => {
-    const storedStories = localStorage.getItem(`twain-stories-${book.id}`);
-    if (storedStories) {
-      try {
-        const parsedStories = JSON.parse(storedStories).map(
-          (story: Omit<Story, "createdAt"> & { createdAt: string }) => ({
-            ...story,
-            createdAt: new Date(story.createdAt),
-          })
-        );
-        setStories(parsedStories);
-      } catch (error) {
-        console.error("Failed to parse stored stories:", error);
+    if (session?.user?.email) {
+      const storageKey = getStorageKey("stories", book.id, session.user.email);
+      const storedStories = localStorage.getItem(storageKey);
+      if (storedStories) {
+        try {
+          const parsedStories = JSON.parse(storedStories).map(
+            (story: Omit<Story, "createdAt"> & { createdAt: string }) => ({
+              ...story,
+              createdAt: new Date(story.createdAt),
+            })
+          );
+          setStories(parsedStories);
+        } catch (error) {
+          console.error("Failed to parse stored stories:", error);
+        }
       }
     }
-  }, [book.id]);
+  }, [book.id, session?.user?.email]);
 
   // Load outlines from localStorage on component mount
   useEffect(() => {
-    const storedOutlines = localStorage.getItem(`twain-outlines-${book.id}`);
-    if (storedOutlines) {
-      try {
-        const parsedOutlines = JSON.parse(storedOutlines).map(
-          (outline: Omit<Outline, "createdAt"> & { createdAt: string }) => ({
-            ...outline,
-            createdAt: new Date(outline.createdAt),
-          })
-        );
-        setOutlines(parsedOutlines);
-      } catch (error) {
-        console.error("Failed to parse stored outlines:", error);
+    if (session?.user?.email) {
+      const storageKey = getStorageKey("outlines", book.id, session.user.email);
+      const storedOutlines = localStorage.getItem(storageKey);
+      if (storedOutlines) {
+        try {
+          const parsedOutlines = JSON.parse(storedOutlines).map(
+            (outline: Omit<Outline, "createdAt"> & { createdAt: string }) => ({
+              ...outline,
+              createdAt: new Date(outline.createdAt),
+            })
+          );
+          setOutlines(parsedOutlines);
+        } catch (error) {
+          console.error("Failed to parse stored outlines:", error);
+        }
       }
     }
-  }, [book.id]);
+  }, [book.id, session?.user?.email]);
 
   // Load parts from localStorage on component mount
   useEffect(() => {
-    const storedParts = localStorage.getItem(`twain-parts-${book.id}`);
-    if (storedParts) {
-      try {
-        const parsedParts = JSON.parse(storedParts).map(
-          (part: Omit<Part, "createdAt"> & { createdAt: string }) => ({
-            ...part,
-            createdAt: new Date(part.createdAt),
-          })
-        );
-        setParts(parsedParts);
-      } catch (error) {
-        console.error("Failed to parse stored parts:", error);
+    if (session?.user?.email) {
+      const storageKey = getStorageKey("parts", book.id, session.user.email);
+      const storedParts = localStorage.getItem(storageKey);
+      if (storedParts) {
+        try {
+          const parsedParts = JSON.parse(storedParts).map(
+            (part: Omit<Part, "createdAt"> & { createdAt: string }) => ({
+              ...part,
+              createdAt: new Date(part.createdAt),
+            })
+          );
+          setParts(parsedParts);
+        } catch (error) {
+          console.error("Failed to parse stored parts:", error);
+        }
       }
     }
-  }, [book.id]);
+  }, [book.id, session?.user?.email]);
 
   // Calculate total word count when chapters, stories, or outlines change
   useEffect(() => {
@@ -381,9 +430,14 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
         }
       });
       setTotalWordCount(total);
+
+      // Update the book's word count in localStorage
+      if (session?.user?.email) {
+        updateBookWordCount(book.id, total, session.user.email);
+      }
     };
     calculateWordCount();
-  }, [chapters, stories, outlines]);
+  }, [chapters, stories, outlines, book.id, session?.user?.email]);
 
   // Set Quill content when currentChapter, currentStory, or currentOutline changes
   useEffect(() => {
@@ -411,33 +465,39 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
           ...item,
           content: JSON.stringify(delta),
         };
-        if (currentChapter) {
+        if (currentChapter && session?.user?.email) {
           const updatedChapters = chapters.map((ch) =>
             ch.id === currentChapter.id ? updatedItem : ch
           );
           setChapters(updatedChapters);
-          localStorage.setItem(
-            `twain-chapters-${book.id}`,
-            JSON.stringify(updatedChapters)
+          const storageKey = getStorageKey(
+            "chapters",
+            book.id,
+            session.user.email
           );
-        } else if (currentStory) {
+          localStorage.setItem(storageKey, JSON.stringify(updatedChapters));
+        } else if (currentStory && session?.user?.email) {
           const updatedStories = stories.map((st) =>
             st.id === currentStory.id ? updatedItem : st
           );
           setStories(updatedStories);
-          localStorage.setItem(
-            `twain-stories-${book.id}`,
-            JSON.stringify(updatedStories)
+          const storageKey = getStorageKey(
+            "stories",
+            book.id,
+            session.user.email
           );
-        } else if (currentOutline) {
+          localStorage.setItem(storageKey, JSON.stringify(updatedStories));
+        } else if (currentOutline && session?.user?.email) {
           const updatedOutlines = outlines.map((ol) =>
             ol.id === currentOutline.id ? updatedItem : ol
           );
           setOutlines(updatedOutlines);
-          localStorage.setItem(
-            `twain-outlines-${book.id}`,
-            JSON.stringify(updatedOutlines)
+          const storageKey = getStorageKey(
+            "outlines",
+            book.id,
+            session.user.email
           );
+          localStorage.setItem(storageKey, JSON.stringify(updatedOutlines));
         }
         // Update last save time
         const now = new Date();
@@ -466,6 +526,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
     stories,
     outlines,
     book.id,
+    session?.user?.email,
   ]);
 
   // Set up auto-save event listener when editing state changes
@@ -583,10 +644,14 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
         setIdeas(updatedIdeas);
 
         // Store in localStorage
-        localStorage.setItem(
-          `twain-ideas-${book.id}`,
-          JSON.stringify(updatedIdeas)
-        );
+        if (session?.user?.email) {
+          const storageKey = getStorageKey(
+            "ideas",
+            book.id,
+            session.user.email
+          );
+          localStorage.setItem(storageKey, JSON.stringify(updatedIdeas));
+        }
       } else {
         // Create new idea
         const newIdea: Idea = {
@@ -600,10 +665,14 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
         setIdeas(updatedIdeas);
 
         // Store in localStorage
-        localStorage.setItem(
-          `twain-ideas-${book.id}`,
-          JSON.stringify(updatedIdeas)
-        );
+        if (session?.user?.email) {
+          const storageKey = getStorageKey(
+            "ideas",
+            book.id,
+            session.user.email
+          );
+          localStorage.setItem(storageKey, JSON.stringify(updatedIdeas));
+        }
 
         // Add to recent activity
         addToRecentActivity("idea", newIdea);
@@ -683,10 +752,14 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
         setCharacters(updatedCharacters);
 
         // Store in localStorage
-        localStorage.setItem(
-          `twain-characters-${book.id}`,
-          JSON.stringify(updatedCharacters)
-        );
+        if (session?.user?.email) {
+          saveToStorage(
+            "characters",
+            updatedCharacters,
+            book.id,
+            session.user.email
+          );
+        }
       } else {
         // Create new character
         const newCharacter: Character = {
@@ -1130,14 +1203,24 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
     // Add to front and limit to 24 items
     const updatedActivity = [newActivity, ...filteredActivity].slice(0, 24);
 
-    localStorage.setItem(
-      `twain-recent-activity-${book.id}`,
-      JSON.stringify(updatedActivity)
-    );
+    if (session?.user?.email) {
+      const storageKey = getStorageKey(
+        "recent-activity",
+        book.id,
+        session.user.email
+      );
+      localStorage.setItem(storageKey, JSON.stringify(updatedActivity));
+    }
   };
 
   const getRecentActivity = (): RecentActivity[] => {
-    const stored = localStorage.getItem(`twain-recent-activity-${book.id}`);
+    if (!session?.user?.email) return [];
+    const storageKey = getStorageKey(
+      "recent-activity",
+      book.id,
+      session.user.email
+    );
+    const stored = localStorage.getItem(storageKey);
     if (stored) {
       try {
         return JSON.parse(stored) as RecentActivity[];
@@ -1150,7 +1233,14 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
 
   const handleClearRecentActivity = () => {
     // Only clear recent activity, not the actual story data
-    localStorage.removeItem(`twain-recent-activity-${book.id}`);
+    if (session?.user?.email) {
+      const storageKey = getStorageKey(
+        "recent-activity",
+        book.id,
+        session.user.email
+      );
+      localStorage.removeItem(storageKey);
+    }
   };
 
   const handleRecentActivityClick = (activity: RecentActivity) => {

@@ -154,12 +154,15 @@ interface Book {
 }
 
 // Local storage utilities
-const BOOKS_STORAGE_KEY = "twain-story-builder-books";
+const getBooksStorageKey = (userEmail: string): string => {
+  return `twain-story-builder-books-${userEmail}`;
+};
 
-const loadBooksFromStorage = (): Book[] => {
-  if (typeof window === "undefined") return [];
+const loadBooksFromStorage = (userEmail?: string): Book[] => {
+  if (typeof window === "undefined" || !userEmail) return [];
   try {
-    const stored = localStorage.getItem(BOOKS_STORAGE_KEY);
+    const storageKey = getBooksStorageKey(userEmail);
+    const stored = localStorage.getItem(storageKey);
     return stored ? JSON.parse(stored) : [];
   } catch (error) {
     console.error("Error loading books from localStorage:", error);
@@ -167,10 +170,11 @@ const loadBooksFromStorage = (): Book[] => {
   }
 };
 
-const saveBooksToStorage = (books: Book[]): void => {
-  if (typeof window === "undefined") return;
+const saveBooksToStorage = (books: Book[], userEmail?: string): void => {
+  if (typeof window === "undefined" || !userEmail) return;
   try {
-    localStorage.setItem(BOOKS_STORAGE_KEY, JSON.stringify(books));
+    const storageKey = getBooksStorageKey(userEmail);
+    localStorage.setItem(storageKey, JSON.stringify(books));
   } catch (error) {
     console.error("Error saving books to localStorage:", error);
   }
@@ -182,16 +186,20 @@ const generateBookId = (existingBooks: Book[]): number => {
     : 1;
 };
 
-const updateBookWordCount = (bookId: number, wordCount: number): void => {
-  if (typeof window === "undefined") return;
+const updateBookWordCount = (
+  bookId: number,
+  wordCount: number,
+  userEmail?: string
+): void => {
+  if (typeof window === "undefined" || !userEmail) return;
   try {
-    const books = loadBooksFromStorage();
+    const books = loadBooksFromStorage(userEmail);
     const updatedBooks = books.map((book) =>
       book.id === bookId
         ? { ...book, wordCount, updatedAt: new Date().toISOString() }
         : book
     );
-    saveBooksToStorage(updatedBooks);
+    saveBooksToStorage(updatedBooks, userEmail);
   } catch (error) {
     console.error("Error updating word count:", error);
   }
@@ -237,9 +245,11 @@ const TwainStoryBuilder: React.FC = () => {
 
   // Load books from localStorage on component mount
   useEffect(() => {
-    const storedBooks = loadBooksFromStorage();
-    setBooks(storedBooks);
-  }, []);
+    if (session?.user?.email) {
+      const storedBooks = loadBooksFromStorage(session.user.email);
+      setBooks(storedBooks);
+    }
+  }, [session?.user?.email]);
 
   const handleSignIn = () => {
     signIn("google");
@@ -283,7 +293,9 @@ const TwainStoryBuilder: React.FC = () => {
 
       const updatedBooks = [...books, newBook];
       setBooks(updatedBooks);
-      saveBooksToStorage(updatedBooks);
+      if (session?.user?.email) {
+        saveBooksToStorage(updatedBooks, session.user.email);
+      }
 
       showNotification(`"${newBook.title}" has been created successfully!`);
       console.log("Book created successfully:", newBook.title);
@@ -309,6 +321,12 @@ const TwainStoryBuilder: React.FC = () => {
     setManagedBookSubtitle("");
     setManagedBookEdition("First Edition");
     setManagedBookCopyrightYear(new Date().getFullYear().toString());
+
+    // Reload books from localStorage to pick up any word count updates
+    if (session?.user?.email) {
+      const updatedBooks = loadBooksFromStorage(session.user.email);
+      setBooks(updatedBooks);
+    }
   };
 
   const handleSaveBook = () => {
@@ -328,7 +346,9 @@ const TwainStoryBuilder: React.FC = () => {
       );
 
       setBooks(updatedBooks);
-      saveBooksToStorage(updatedBooks);
+      if (session?.user?.email) {
+        saveBooksToStorage(updatedBooks, session.user.email);
+      }
 
       showNotification(`"${updatedBook.title}" has been saved successfully!`);
       console.log("Book saved successfully:", updatedBook.title);
@@ -367,7 +387,9 @@ const TwainStoryBuilder: React.FC = () => {
     ) {
       const updatedBooks = books.filter((book) => book.id !== selectedBook.id);
       setBooks(updatedBooks);
-      saveBooksToStorage(updatedBooks);
+      if (session?.user?.email) {
+        saveBooksToStorage(updatedBooks, session.user.email);
+      }
 
       showNotification(`"${selectedBook.title}" has been deleted.`);
       console.log("Book deleted successfully:", selectedBook.title);
@@ -1183,7 +1205,12 @@ const TwainStoryBuilder: React.FC = () => {
 };
 
 // Export utility functions for use by other components
-export { loadBooksFromStorage, saveBooksToStorage, updateBookWordCount };
+export {
+  loadBooksFromStorage,
+  saveBooksToStorage,
+  updateBookWordCount,
+  getBooksStorageKey,
+};
 export type { Book };
 
 export default TwainStoryBuilder;
