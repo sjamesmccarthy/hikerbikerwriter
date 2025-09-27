@@ -1212,6 +1212,15 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
     setSidebarCollapsed(!sidebarCollapsed);
   };
 
+  const getDaysSinceBookCreation = () => {
+    if (!book?.createdAt) return 0;
+    const createdDate = new Date(book.createdAt);
+    const today = new Date();
+    const diffTime = Math.abs(today.getTime() - createdDate.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
+
   const getCharacterStyling = (gender: string) => {
     switch (gender.toLowerCase()) {
       case "male":
@@ -2079,8 +2088,9 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                   color: "rgb(107, 114, 128)",
                 }}
               >
-                A Total of {totalWordCount.toLocaleString()} Words have Been
-                Written
+                A total {totalWordCount.toLocaleString()} words have been
+                written and you started this book {getDaysSinceBookCreation()}{" "}
+                days ago
               </Typography>
             </div>
 

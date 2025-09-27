@@ -863,17 +863,33 @@ const TwainStoryBuilder: React.FC = () => {
                       </Typography>
                     </div>
                     <div className="px-4 pb-4 flex items-end justify-center flex-1">
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          fontFamily: "'Rubik', sans-serif",
-                          fontSize: "14px",
-                          fontWeight: 400,
-                          textAlign: "center",
-                        }}
-                      >
-                        {bookData.wordCount} words
-                      </Typography>
+                      <div className="text-center">
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontFamily: "'Rubik', sans-serif",
+                            fontSize: "14px",
+                            fontWeight: 400,
+                            textAlign: "center",
+                          }}
+                        >
+                          {bookData.wordCount} words
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontFamily: "'Rubik', sans-serif",
+                            fontSize: "12px",
+                            fontWeight: 300,
+                            textAlign: "center",
+                            color: "text.secondary",
+                            mt: 0.5,
+                          }}
+                        >
+                          Started on{" "}
+                          {new Date(bookData.createdAt).toLocaleDateString()}
+                        </Typography>
+                      </div>
                     </div>
                   </div>
                 );
