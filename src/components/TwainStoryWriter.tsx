@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   Typography,
   Accordion,
@@ -25,6 +25,13 @@ import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
 import CloseIcon from "@mui/icons-material/Close";
 import FaceOutlinedIcon from "@mui/icons-material/FaceOutlined";
 import CancelIcon from "@mui/icons-material/Cancel";
+import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
+import PetsIcon from "@mui/icons-material/Pets";
+import TransgenderIcon from "@mui/icons-material/Transgender";
+import BatchPredictionIcon from "@mui/icons-material/BatchPrediction";
+import ListAltIcon from "@mui/icons-material/ListAlt";
+import AutoStoriesIcon from "@mui/icons-material/AutoStories";
+import FolderCopyIcon from "@mui/icons-material/FolderCopy";
 
 // Define Quill types
 interface QuillInstance {
@@ -79,6 +86,15 @@ interface Part {
   createdAt: Date;
 }
 
+interface RecentActivity {
+  id: string;
+  type: "idea" | "character" | "chapter" | "outline" | "part";
+  title: string;
+  createdAt: Date;
+}
+
+type StoryItem = Idea | Character | Chapter | Outline | Part;
+
 interface TwainStoryWriterProps {
   book: { id: number; title: string; wordCount: number };
   onBackToBookshelf: () => void;
@@ -105,9 +121,11 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
   const [createIdeaModalOpen, setCreateIdeaModalOpen] = useState(false);
   const [createCharacterModalOpen, setCreateCharacterModalOpen] =
     useState(false);
+  const [createChapterModalOpen, setCreateChapterModalOpen] = useState(false);
   const [createPartModalOpen, setCreatePartModalOpen] = useState(false);
   const [ideaTitle, setIdeaTitle] = useState("");
   const [ideaNotes, setIdeaNotes] = useState("");
+  const [chapterTitle, setChapterTitle] = useState("");
   const [characterName, setCharacterName] = useState("");
   const [characterGender, setCharacterGender] = useState("");
   const [characterBackstory, setCharacterBackstory] = useState("");
@@ -152,17 +170,6 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
             const quill = new Quill.default(quillRef.current, {
               theme: "bubble",
               placeholder: "Start writing your story...",
-              modules: {
-                toolbar: [
-                  [{ header: [1, 2, 3, false] }],
-                  ["bold", "italic", "underline", "strike"],
-                  [{ list: "ordered" }, { list: "bullet" }],
-                  [{ indent: "-1" }, { indent: "+1" }],
-                  [{ align: [] }],
-                  ["blockquote", "code-block"],
-                  ["clean"],
-                ],
-              },
             });
 
             // Set custom font for editor content
@@ -378,7 +385,6 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
 
       quillInstance.on("text-change", handleTextChange);
 
-      // Return
       return () => {
         quillInstance.off("text-change", handleTextChange);
       };
@@ -441,6 +447,9 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
           `twain-ideas-${book.id}`,
           JSON.stringify(updatedIdeas)
         );
+
+        // Add to recent activity
+        addToRecentActivity("idea", newIdea);
       }
 
       handleCreateIdeaModalClose();
@@ -546,18 +555,61 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
           `twain-characters-${book.id}`,
           JSON.stringify(updatedCharacters)
         );
+
+        // Add to recent activity
+        addToRecentActivity("character", newCharacter);
       }
 
       handleCreateCharacterModalClose();
     }
   };
 
-  const handleCreateChapterClick = () => {
+  const handleDeleteIdea = (ideaId: string, event: React.MouseEvent) => {
+    event.stopPropagation(); // Prevent triggering the edit handler
+
+    // Remove idea from state
+    const updatedIdeas = ideas.filter((idea) => idea.id !== ideaId);
+    setIdeas(updatedIdeas);
+
+    // Update localStorage
+    localStorage.setItem(
+      `twain-ideas-${book.id}`,
+      JSON.stringify(updatedIdeas)
+    );
+  };
+
+  const handleDeleteCharacter = (
+    characterId: string,
+    event: React.MouseEvent
+  ) => {
+    event.stopPropagation(); // Prevent triggering the edit handler
+
+    // Remove character from state
+    const updatedCharacters = characters.filter(
+      (character) => character.id !== characterId
+    );
+    setCharacters(updatedCharacters);
+
+    // Update localStorage
+    localStorage.setItem(
+      `twain-characters-${book.id}`,
+      JSON.stringify(updatedCharacters)
+    );
+  };
+
+  const handleCreateChapterModalClose = () => {
+    setCreateChapterModalOpen(false);
+    setChapterTitle("");
+  };
+
+  const handleCreateChapter = () => {
     const chapterNumber = chapters.length + 1;
-    const defaultDelta = { ops: [{ insert: `Chapter ${chapterNumber}\n` }] };
+    const title = chapterTitle.trim() || `Chapter ${chapterNumber}`;
+    const defaultDelta = {};
+
     const newChapter: Chapter = {
       id: Date.now().toString(),
-      title: `Chapter ${chapterNumber}`,
+      title: title,
       content: JSON.stringify(defaultDelta),
       createdAt: new Date(),
     };
@@ -571,14 +623,31 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
       JSON.stringify(updatedChapters)
     );
 
+    // Add to recent activity
+    addToRecentActivity("chapter", newChapter);
+
     // Set editing mode
     setCurrentChapter(newChapter);
     setIsEditingChapter(true);
+
+    // Update Quill placeholder after a short delay to ensure Quill is ready
+    setTimeout(() => {
+      if (quillInstance && quillInstance.root) {
+        const placeholderText = "Start writing ...";
+        quillInstance.root.setAttribute("data-placeholder", placeholderText);
+      }
+    }, 100);
+
+    handleCreateChapterModalClose();
+  };
+
+  const handleCreateChapterClick = () => {
+    setCreateChapterModalOpen(true);
   };
 
   const handleCreateOutlineClick = () => {
     const outlineNumber = outlines.length + 1;
-    const defaultDelta = { ops: [{ insert: `Outline ${outlineNumber}\n` }] };
+    const defaultDelta = {};
     const newOutline: Outline = {
       id: Date.now().toString(),
       title: `Outline ${outlineNumber}`,
@@ -594,6 +663,9 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
       `twain-outlines-${book.id}`,
       JSON.stringify(updatedOutlines)
     );
+
+    // Add to recent activity
+    addToRecentActivity("outline", newOutline);
 
     // Set editing mode
     setCurrentOutline(newOutline);
@@ -656,6 +728,9 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
           `twain-parts-${book.id}`,
           JSON.stringify(updatedParts)
         );
+
+        // Add to recent activity
+        addToRecentActivity("part", newPart);
       }
 
       handleCreatePartModalClose();
@@ -669,6 +744,51 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
     setIsEditingOutline(false);
     setCurrentOutline(null);
     setLastSaveTime(null);
+
+    // Update Quill placeholder for existing chapter
+    setTimeout(() => {
+      if (quillInstance && quillInstance.root) {
+        const placeholderText = `Continue writing ${chapter.title}...`;
+        quillInstance.root.setAttribute("data-placeholder", placeholderText);
+      }
+    }, 100);
+  };
+
+  const handleDeleteChapter = (chapterId: string, event: React.MouseEvent) => {
+    event.stopPropagation(); // Prevent triggering the edit handler
+
+    // If currently editing this chapter, exit editing mode
+    if (currentChapter && currentChapter.id === chapterId) {
+      setIsEditingChapter(false);
+      setCurrentChapter(null);
+      setLastSaveTime(null);
+    }
+
+    // Remove chapter from state
+    const updatedChapters = chapters.filter(
+      (chapter) => chapter.id !== chapterId
+    );
+    setChapters(updatedChapters);
+
+    // Update localStorage
+    localStorage.setItem(
+      `twain-chapters-${book.id}`,
+      JSON.stringify(updatedChapters)
+    );
+
+    // Remove chapter from any parts that contain it
+    const updatedParts = parts
+      .map((part) => ({
+        ...part,
+        chapterIds: part.chapterIds.filter((id) => id !== chapterId),
+      }))
+      .filter((part) => part.chapterIds.length > 0); // Remove parts with no chapters
+
+    setParts(updatedParts);
+    localStorage.setItem(
+      `twain-parts-${book.id}`,
+      JSON.stringify(updatedParts)
+    );
   };
 
   const handleEditOutline = (outline: Outline) => {
@@ -678,6 +798,162 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
     setIsEditingChapter(false);
     setCurrentChapter(null);
     setLastSaveTime(null);
+  };
+
+  const handleDeleteOutline = (outlineId: string, event: React.MouseEvent) => {
+    event.stopPropagation(); // Prevent triggering the edit handler
+
+    // If currently editing this outline, exit editing mode
+    if (currentOutline && currentOutline.id === outlineId) {
+      setIsEditingOutline(false);
+      setCurrentOutline(null);
+      setLastSaveTime(null);
+    }
+
+    // Remove outline from state
+    const updatedOutlines = outlines.filter(
+      (outline) => outline.id !== outlineId
+    );
+    setOutlines(updatedOutlines);
+
+    // Update localStorage
+    localStorage.setItem(
+      `twain-outlines-${book.id}`,
+      JSON.stringify(updatedOutlines)
+    );
+  };
+
+  const handleDeletePart = (partId: string, event: React.MouseEvent) => {
+    event.stopPropagation(); // Prevent triggering the edit handler
+
+    // Remove part from state
+    const updatedParts = parts.filter((part) => part.id !== partId);
+    setParts(updatedParts);
+
+    // Update localStorage
+    localStorage.setItem(
+      `twain-parts-${book.id}`,
+      JSON.stringify(updatedParts)
+    );
+  };
+
+  const addToRecentActivity = (
+    type: RecentActivity["type"],
+    item: StoryItem
+  ) => {
+    const recentActivity = getRecentActivity();
+    const newActivity: RecentActivity = {
+      id: item.id,
+      type,
+      title: "title" in item ? item.title : item.name,
+      createdAt: item.createdAt,
+    };
+
+    // Remove if already exists (to move to front)
+    const filteredActivity = recentActivity.filter(
+      (activity) => activity.id !== item.id
+    );
+
+    // Add to front and limit to 24 items
+    const updatedActivity = [newActivity, ...filteredActivity].slice(0, 24);
+
+    localStorage.setItem(
+      `twain-recent-activity-${book.id}`,
+      JSON.stringify(updatedActivity)
+    );
+  };
+
+  const getRecentActivity = (): RecentActivity[] => {
+    const stored = localStorage.getItem(`twain-recent-activity-${book.id}`);
+    if (stored) {
+      try {
+        return JSON.parse(stored) as RecentActivity[];
+      } catch (error) {
+        console.error("Failed to parse recent activity:", error);
+      }
+    }
+    return [];
+  };
+
+  const handleClearRecentActivity = () => {
+    // Only clear recent activity, not the actual story data
+    localStorage.removeItem(`twain-recent-activity-${book.id}`);
+  };
+
+  const handleRecentActivityClick = (activity: RecentActivity) => {
+    // Find the corresponding item and open it for editing
+    if (activity.type === "idea") {
+      const idea = ideas.find((i) => i.id === activity.id);
+      if (idea) {
+        handleEditIdea(idea);
+      }
+    } else if (activity.type === "character") {
+      const character = characters.find((c) => c.id === activity.id);
+      if (character) {
+        handleEditCharacter(character);
+      }
+    } else if (activity.type === "chapter") {
+      const chapter = chapters.find((ch) => ch.id === activity.id);
+      if (chapter) {
+        handleEditChapter(chapter);
+      }
+    } else if (activity.type === "outline") {
+      const outline = outlines.find((o) => o.id === activity.id);
+      if (outline) {
+        handleEditOutline(outline);
+      }
+    } else if (activity.type === "part") {
+      const part = parts.find((p) => p.id === activity.id);
+      if (part) {
+        handleEditPart(part);
+      }
+    }
+  };
+
+  const getCharacterStyling = (gender: string) => {
+    switch (gender.toLowerCase()) {
+      case "male":
+        return {
+          backgroundColor: "rgba(59, 130, 246, 0.1)", // Light blue
+          icon: (
+            <FaceOutlinedIcon
+              sx={{ fontSize: 40, color: "rgb(59, 130, 246)" }}
+            />
+          ),
+        };
+      case "female":
+        return {
+          backgroundColor: "rgba(236, 72, 153, 0.1)", // Light pink
+          icon: (
+            <FaceOutlinedIcon
+              sx={{ fontSize: 40, color: "rgb(236, 72, 153)" }}
+            />
+          ),
+        };
+      case "animal":
+        return {
+          backgroundColor: "rgba(133, 77, 14, 0.1)", // Light brown
+          icon: <PetsIcon sx={{ fontSize: 40, color: "rgb(133, 77, 14)" }} />,
+        };
+      case "other":
+        return {
+          backgroundColor: "rgba(107, 114, 128, 0.1)", // Light gray
+          icon: (
+            <TransgenderIcon
+              sx={{ fontSize: 40, color: "rgb(107, 114, 128)" }}
+            />
+          ),
+        };
+      default:
+        return {
+          backgroundColor: "rgb(249, 250, 251)", // Default background
+          icon: (
+            <FaceOutlinedIcon
+              sx={{ fontSize: 40, color: "rgb(107, 114, 128)" }}
+            />
+          ),
+        };
+    }
   };
 
   const accordionSections = [
@@ -813,11 +1089,10 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                         className="flex items-start gap-3 p-3 bg-white rounded-md border border-gray-200 cursor-pointer hover:bg-gray-50"
                         onClick={() => handleEditIdea(idea)}
                       >
-                        <DescriptionOutlinedIcon
+                        <BatchPredictionIcon
                           sx={{
-                            fontSize: 20,
+                            fontSize: 40,
                             color: "rgb(107, 114, 128)",
-                            marginTop: "2px",
                           }}
                         />
                         <div className="flex-1">
@@ -835,7 +1110,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                               ? `${idea.title.substring(0, 100)}...`
                               : idea.title}
                           </Typography>
-                          {idea.notes && (
+                          <div className="flex items-center justify-between">
                             <Typography
                               variant="body2"
                               sx={{
@@ -847,73 +1122,127 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                                 marginTop: "4px",
                               }}
                             >
-                              {idea.notes.length > 150
-                                ? `${idea.notes.substring(0, 150)}...`
-                                : idea.notes}
+                              Created:{" "}
+                              {new Date(idea.createdAt).toLocaleDateString()}
                             </Typography>
-                          )}
+                            <IconButton
+                              size="small"
+                              onClick={(e) => handleDeleteIdea(idea.id, e)}
+                              sx={{
+                                color: "rgb(156, 163, 175)",
+                                padding: "2px",
+                                "&:hover": {
+                                  color: "rgb(239, 68, 68)",
+                                  backgroundColor: "rgba(239, 68, 68, 0.1)",
+                                },
+                              }}
+                            >
+                              <DeleteOutlinedIcon sx={{ fontSize: "14px" }} />
+                            </IconButton>
+                          </div>
                         </div>
                       </div>
                     ))}
                   </div>
                 ) : section.title === "CHARACTERS" && characters.length > 0 ? (
                   <div className="space-y-3">
-                    {characters.map((character) => (
-                      <div
-                        key={character.id}
-                        className="flex items-start gap-3 p-3 bg-white rounded-md border border-gray-200 cursor-pointer hover:bg-gray-50"
-                        onClick={() => handleEditCharacter(character)}
-                      >
-                        {character.avatar ? (
-                          <img
-                            src={character.avatar}
-                            alt="Avatar"
-                            style={{
-                              width: "40px",
-                              height: "40px",
-                              borderRadius: "50%",
-                              objectFit: "cover",
-                            }}
-                          />
-                        ) : (
-                          <FaceOutlinedIcon
-                            sx={{
-                              fontSize: 40,
-                              color: "rgb(107, 114, 128)",
-                            }}
-                          />
-                        )}
-                        <div className="flex-1">
-                          <Typography
-                            variant="body2"
-                            sx={{
-                              fontFamily: "'Rubik', sans-serif",
-                              fontWeight: 500,
-                              fontSize: "14px",
-                              color: "#1f2937",
-                              lineHeight: 1.4,
-                            }}
-                          >
-                            {character.name}
-                          </Typography>
-                          {character.gender && (
+                    {characters.map((character) => {
+                      const styling = getCharacterStyling(character.gender);
+                      return (
+                        <div
+                          key={character.id}
+                          className="flex items-start gap-3 p-3 rounded-md border border-gray-200 cursor-pointer hover:opacity-80"
+                          style={{ backgroundColor: styling.backgroundColor }}
+                          onClick={() => handleEditCharacter(character)}
+                        >
+                          {character.avatar ? (
+                            <img
+                              src={character.avatar}
+                              alt="Avatar"
+                              style={{
+                                width: "40px",
+                                height: "40px",
+                                borderRadius: "50%",
+                                objectFit: "cover",
+                              }}
+                            />
+                          ) : (
+                            styling.icon
+                          )}
+                          <div className="flex-1">
                             <Typography
                               variant="body2"
                               sx={{
                                 fontFamily: "'Rubik', sans-serif",
-                                fontWeight: 400,
-                                fontSize: "12px",
-                                color: "rgb(107, 114, 128)",
+                                fontWeight: 500,
+                                fontSize: "14px",
+                                color: "#1f2937",
                                 lineHeight: 1.4,
-                                marginTop: "4px",
                               }}
                             >
-                              Gender: {character.gender}
+                              {character.name}
                             </Typography>
-                          )}
+                            {character.gender && (
+                              <div className="flex items-center justify-between">
+                                <Typography
+                                  variant="body2"
+                                  sx={{
+                                    fontFamily: "'Rubik', sans-serif",
+                                    fontWeight: 400,
+                                    fontSize: "12px",
+                                    color: "rgb(107, 114, 128)",
+                                    lineHeight: 1.4,
+                                    marginTop: "4px",
+                                  }}
+                                >
+                                  Gender: {character.gender}
+                                </Typography>
+                                <IconButton
+                                  size="small"
+                                  onClick={(e) =>
+                                    handleDeleteCharacter(character.id, e)
+                                  }
+                                  sx={{
+                                    color: "rgb(156, 163, 175)",
+                                    padding: "2px",
+                                    "&:hover": {
+                                      color: "rgb(239, 68, 68)",
+                                      backgroundColor: "rgba(239, 68, 68, 0.1)",
+                                    },
+                                  }}
+                                >
+                                  <DeleteOutlinedIcon
+                                    sx={{ fontSize: "14px" }}
+                                  />
+                                </IconButton>
+                              </div>
+                            )}
+                            {!character.gender && (
+                              <div className="flex items-center justify-end mt-1">
+                                <IconButton
+                                  size="small"
+                                  onClick={(e) =>
+                                    handleDeleteCharacter(character.id, e)
+                                  }
+                                  sx={{
+                                    color: "rgb(156, 163, 175)",
+                                    padding: "2px",
+                                    "&:hover": {
+                                      color: "rgb(239, 68, 68)",
+                                      backgroundColor: "rgba(239, 68, 68, 0.1)",
+                                    },
+                                  }}
+                                >
+                                  <DeleteOutlinedIcon
+                                    sx={{ fontSize: "14px" }}
+                                  />
+                                </IconButton>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                   </div>
                 ) : section.title === "OUTLINE" && outlines.length > 0 ? (
                   <div className="space-y-3">
@@ -923,11 +1252,10 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                         className="flex items-start gap-3 p-3 bg-white rounded-md border border-gray-200 cursor-pointer hover:bg-gray-50"
                         onClick={() => handleEditOutline(outline)}
                       >
-                        <DescriptionOutlinedIcon
+                        <ListAltIcon
                           sx={{
-                            fontSize: 20,
+                            fontSize: 40,
                             color: "rgb(107, 114, 128)",
-                            marginTop: "2px",
                           }}
                         />
                         <div className="flex-1">
@@ -943,20 +1271,38 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                           >
                             {outline.title}
                           </Typography>
-                          <Typography
-                            variant="body2"
-                            sx={{
-                              fontFamily: "'Rubik', sans-serif",
-                              fontWeight: 400,
-                              fontSize: "12px",
-                              color: "rgb(107, 114, 128)",
-                              lineHeight: 1.4,
-                              marginTop: "4px",
-                            }}
-                          >
-                            Created:{" "}
-                            {new Date(outline.createdAt).toLocaleDateString()}
-                          </Typography>
+                          <div className="flex items-center justify-between">
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                fontFamily: "'Rubik', sans-serif",
+                                fontWeight: 400,
+                                fontSize: "12px",
+                                color: "rgb(107, 114, 128)",
+                                lineHeight: 1.4,
+                                marginTop: "4px",
+                              }}
+                            >
+                              Created:{" "}
+                              {new Date(outline.createdAt).toLocaleDateString()}
+                            </Typography>
+                            <IconButton
+                              size="small"
+                              onClick={(e) =>
+                                handleDeleteOutline(outline.id, e)
+                              }
+                              sx={{
+                                color: "rgb(156, 163, 175)",
+                                padding: "2px",
+                                "&:hover": {
+                                  color: "rgb(239, 68, 68)",
+                                  backgroundColor: "rgba(239, 68, 68, 0.1)",
+                                },
+                              }}
+                            >
+                              <DeleteOutlinedIcon sx={{ fontSize: "14px" }} />
+                            </IconButton>
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -969,11 +1315,10 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                         className="flex items-start gap-3 p-3 bg-white rounded-md border border-gray-200 cursor-pointer hover:bg-gray-50"
                         onClick={() => handleEditChapter(chapter)}
                       >
-                        <DescriptionOutlinedIcon
+                        <AutoStoriesIcon
                           sx={{
-                            fontSize: 20,
+                            fontSize: 40,
                             color: "rgb(107, 114, 128)",
-                            marginTop: "2px",
                           }}
                         />
                         <div className="flex-1">
@@ -989,20 +1334,38 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                           >
                             {chapter.title}
                           </Typography>
-                          <Typography
-                            variant="body2"
-                            sx={{
-                              fontFamily: "'Rubik', sans-serif",
-                              fontWeight: 400,
-                              fontSize: "12px",
-                              color: "rgb(107, 114, 128)",
-                              lineHeight: 1.4,
-                              marginTop: "4px",
-                            }}
-                          >
-                            Created:{" "}
-                            {new Date(chapter.createdAt).toLocaleDateString()}
-                          </Typography>
+                          <div className="flex items-center justify-between">
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                fontFamily: "'Rubik', sans-serif",
+                                fontWeight: 400,
+                                fontSize: "12px",
+                                color: "rgb(107, 114, 128)",
+                                lineHeight: 1.4,
+                                marginTop: "4px",
+                              }}
+                            >
+                              Created:{" "}
+                              {new Date(chapter.createdAt).toLocaleDateString()}
+                            </Typography>
+                            <IconButton
+                              size="small"
+                              onClick={(e) =>
+                                handleDeleteChapter(chapter.id, e)
+                              }
+                              sx={{
+                                color: "rgb(156, 163, 175)",
+                                padding: "2px",
+                                "&:hover": {
+                                  color: "rgb(239, 68, 68)",
+                                  backgroundColor: "rgba(239, 68, 68, 0.1)",
+                                },
+                              }}
+                            >
+                              <DeleteOutlinedIcon sx={{ fontSize: "14px" }} />
+                            </IconButton>
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -1015,11 +1378,10 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                         className="flex items-start gap-3 p-3 bg-white rounded-md border border-gray-200 cursor-pointer hover:bg-gray-50"
                         onClick={() => handleEditPart(part)}
                       >
-                        <DescriptionOutlinedIcon
+                        <FolderCopyIcon
                           sx={{
-                            fontSize: 20,
+                            fontSize: 40,
                             color: "rgb(107, 114, 128)",
-                            marginTop: "2px",
                           }}
                         />
                         <div className="flex-1">
@@ -1035,20 +1397,35 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                           >
                             {part.title}
                           </Typography>
-                          <Typography
-                            variant="body2"
-                            sx={{
-                              fontFamily: "'Rubik', sans-serif",
-                              fontWeight: 400,
-                              fontSize: "12px",
-                              color: "rgb(107, 114, 128)",
-                              lineHeight: 1.4,
-                              marginTop: "4px",
-                            }}
-                          >
-                            Chapters: {part.chapterIds.length} | Created:{" "}
-                            {new Date(part.createdAt).toLocaleDateString()}
-                          </Typography>
+                          <div className="flex items-center justify-between">
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                fontFamily: "'Rubik', sans-serif",
+                                fontWeight: 400,
+                                fontSize: "12px",
+                                color: "rgb(107, 114, 128)",
+                                lineHeight: 1.4,
+                                marginTop: "4px",
+                              }}
+                            >
+                              Chapters In This Part: {part.chapterIds.length}
+                            </Typography>
+                            <IconButton
+                              size="small"
+                              onClick={(e) => handleDeletePart(part.id, e)}
+                              sx={{
+                                color: "rgb(156, 163, 175)",
+                                padding: "2px",
+                                "&:hover": {
+                                  color: "rgb(239, 68, 68)",
+                                  backgroundColor: "rgba(239, 68, 68, 0.1)",
+                                },
+                              }}
+                            >
+                              <DeleteOutlinedIcon sx={{ fontSize: "14px" }} />
+                            </IconButton>
+                          </div>
                         </div>
                       </div>
                     ))}
@@ -1091,12 +1468,12 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
             }}
           >
             {book?.title || "Untitled Book"}
-            {isEditingChapter && currentChapter
+            {/* {isEditingChapter && currentChapter
               ? ` : ${currentChapter.title}`
               : ""}
             {isEditingOutline && currentOutline
               ? ` : ${currentOutline.title}`
-              : ""}
+              : ""} */}
           </Typography>
           {isEditingChapter || isEditingOutline ? (
             <div className="flex items-center gap-3">
@@ -1166,17 +1543,63 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
         {/* Dashboard Container */}
         <div className="flex-1 relative p-4">
           <div
-            ref={quillRef}
-            className={`h-full ${
+            className={`h-full flex flex-col ${
               isEditingChapter || isEditingOutline ? "" : "hidden"
             }`}
-          ></div>
+          >
+            {/* Chapter/Outline Header */}
+            {isEditingChapter && currentChapter ? (
+              <div className="mb-3 mt-6 text-center">
+                <Typography
+                  variant="h1"
+                  sx={{
+                    fontFamily: "'Crimson Text', serif",
+                    fontWeight: 700,
+                    fontSize: "72px",
+                    color: "#1f2937",
+                    lineHeight: 1,
+                    marginBottom: "0",
+                  }}
+                >
+                  {chapters.findIndex((ch) => ch.id === currentChapter.id) + 1}
+                </Typography>
+                <Typography
+                  variant="h4"
+                  sx={{
+                    fontFamily: "'Crimson Text', serif",
+                    fontWeight: 600,
+                    fontSize: "32px",
+                    color: "#1f2937",
+                    marginBottom: "24px",
+                  }}
+                >
+                  {currentChapter.title}
+                </Typography>
+              </div>
+            ) : isEditingOutline && currentOutline ? (
+              <div className="mb-6 mt-6 text-center">
+                <Typography
+                  variant="h4"
+                  sx={{
+                    fontFamily: "'Crimson Text', serif",
+                    fontWeight: 600,
+                    fontSize: "32px",
+                    color: "#1f2937",
+                    marginBottom: "24px",
+                  }}
+                >
+                  {currentOutline.title}
+                </Typography>
+              </div>
+            ) : null}
+            <div ref={quillRef} className="flex-1"></div>
+          </div>
           <div
             className={`h-full bg-white rounded-lg p-6 ${
               isEditingChapter || isEditingOutline ? "hidden" : ""
             }`}
           >
-            <Typography
+            {/* <Typography
               variant="h4"
               sx={{
                 fontFamily: "'Rubik', sans-serif",
@@ -1187,7 +1610,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
               }}
             >
               Story Dashboard
-            </Typography>
+            </Typography> */}
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-6 gap-6 mb-8">
@@ -1523,47 +1946,50 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
 
             {/* Recent Activity */}
             <div className="mb-8 mt-8">
-              <Typography
-                variant="h6"
-                sx={{
-                  fontFamily: "'Rubik', sans-serif",
-                  fontWeight: 600,
-                  fontSize: "18px",
-                  color: "#1f2937",
-                  marginBottom: "16px",
-                }}
-              >
-                Recent Activity
-              </Typography>
+              <div className="flex items-center justify-between mb-4">
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontFamily: "'Rubik', sans-serif",
+                    fontWeight: 600,
+                    fontSize: "18px",
+                    color: "#1f2937",
+                  }}
+                >
+                  Recent Activity
+                </Typography>
+                <IconButton
+                  onClick={handleClearRecentActivity}
+                  size="small"
+                  sx={{
+                    color: "rgb(156, 163, 175)",
+                    "&:hover": {
+                      color: "rgb(239, 68, 68)",
+                      backgroundColor: "rgba(239, 68, 68, 0.1)",
+                    },
+                  }}
+                >
+                  <CancelIcon sx={{ fontSize: "20px" }} />
+                </IconButton>
+              </div>
               <div className="space-y-3">
-                {[...ideas, ...characters, ...chapters, ...outlines, ...parts]
-                  .sort(
-                    (a, b) =>
-                      new Date(b.createdAt).getTime() -
-                      new Date(a.createdAt).getTime()
-                  )
+                {getRecentActivity()
                   .slice(0, 5)
-                  .map((item) => (
+                  .map((activity: RecentActivity) => (
                     <div
-                      key={item.id}
-                      className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200"
+                      key={activity.id}
+                      className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-100"
+                      onClick={() => handleRecentActivityClick(activity)}
                     >
-                      {"notes" in item ? (
-                        <DescriptionOutlinedIcon
+                      {activity.type === "idea" ? (
+                        <BatchPredictionIcon
                           sx={{
                             fontSize: 20,
                             color: "rgb(107, 114, 128)",
                           }}
                         />
-                      ) : "gender" in item ? (
+                      ) : activity.type === "character" ? (
                         <FaceOutlinedIcon
-                          sx={{
-                            fontSize: 20,
-                            color: "rgb(107, 114, 128)",
-                          }}
-                        />
-                      ) : "content" in item && "title" in item ? (
-                        <DescriptionOutlinedIcon
                           sx={{
                             fontSize: 20,
                             color: "rgb(107, 114, 128)",
@@ -1587,19 +2013,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                             color: "#1f2937",
                           }}
                         >
-                          {"notes" in item
-                            ? `New idea: ${item.title}`
-                            : "gender" in item
-                            ? `New character: ${item.name}`
-                            : "content" in item && "title" in item
-                            ? `New ${
-                                chapters.some((c) => c.id === item.id)
-                                  ? "chapter"
-                                  : outlines.some((o) => o.id === item.id)
-                                  ? "outline"
-                                  : "part"
-                              }: ${item.title}`
-                            : `New item`}
+                          {`New ${activity.type}: ${activity.title}`}
                         </Typography>
                         <Typography
                           variant="body2"
@@ -1610,37 +2024,34 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                             color: "rgb(107, 114, 128)",
                           }}
                         >
-                          {new Date(item.createdAt).toLocaleDateString()}
+                          {new Date(activity.createdAt).toLocaleDateString()}
                         </Typography>
                       </div>
                     </div>
                   ))}
-                {ideas.length === 0 &&
-                  characters.length === 0 &&
-                  chapters.length === 0 &&
-                  outlines.length === 0 &&
-                  parts.length === 0 && (
-                    <div className="text-center py-8">
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          fontFamily: "'Rubik', sans-serif",
-                          fontWeight: 400,
-                          fontSize: "14px",
-                          color: "rgb(107, 114, 128)",
-                        }}
-                      >
-                        No recent activity. Start by creating your first idea or
-                        character!
-                      </Typography>
-                    </div>
-                  )}
+                {getRecentActivity().length === 0 && (
+                  <div className="text-center py-8">
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        fontFamily: "'Rubik', sans-serif",
+                        fontWeight: 400,
+                        fontSize: "14px",
+                        color: "rgb(107, 114, 128)",
+                      }}
+                    >
+                      No recent activity. Start by creating your first idea or
+                      character!
+                    </Typography>
+                  </div>
+                )}
               </div>
             </div>
 
             {/* Demo Notice */}
-            <div className="w-full bg-red-400 text-center py-4 text-white font-medium">
-              DEMO ONLY - NO FUNCTIONALITY AT THIS TIME
+            <div className="w-full bg-gray-200 text-center py-4 text-gray-500 font-small">
+              Caution: This is a demo version. Data may be periodically cleared
+              from local storage.
             </div>
           </div>
         </div>
@@ -1872,14 +2283,22 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                 sx={{ mb: 3 }}
                 autoFocus
               />
-              <TextField
-                fullWidth
-                label="Gender"
-                value={characterGender}
-                onChange={(e) => setCharacterGender(e.target.value)}
-                variant="outlined"
-                sx={{ mb: 3 }}
-              />
+              <FormControl fullWidth sx={{ mb: 3 }}>
+                <InputLabel>Gender</InputLabel>
+                <Select
+                  value={characterGender}
+                  onChange={(e) => setCharacterGender(e.target.value)}
+                  label="Gender"
+                >
+                  <MenuItem value="">
+                    <em>Select Gender</em>
+                  </MenuItem>
+                  <MenuItem value="Male">Male</MenuItem>
+                  <MenuItem value="Female">Female</MenuItem>
+                  <MenuItem value="Animal">Animal</MenuItem>
+                  <MenuItem value="Other">Other</MenuItem>
+                </Select>
+              </FormControl>
               <TextField
                 fullWidth
                 label="Backstory"
@@ -1997,6 +2416,118 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
           </Box>
         </Modal>
 
+        {/* Create Chapter Modal */}
+        <Modal
+          open={createChapterModalOpen}
+          onClose={handleCreateChapterModalClose}
+          aria-labelledby="create-chapter-modal-title"
+        >
+          <Box
+            sx={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              width: 500,
+              bgcolor: "background.paper",
+              borderRadius: 3,
+              overflow: "hidden",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
+            }}
+          >
+            {/* Header with same background as page header */}
+            <Box
+              sx={{
+                backgroundColor: "rgb(38, 52, 63)",
+                color: "white",
+                p: 2,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <Typography
+                id="create-chapter-modal-title"
+                variant="h6"
+                component="h2"
+                sx={{
+                  fontFamily: "'Rubik', sans-serif",
+                  fontWeight: 600,
+                  margin: 0,
+                }}
+              >
+                Create New Chapter
+              </Typography>
+              <IconButton
+                onClick={handleCreateChapterModalClose}
+                sx={{
+                  color: "white",
+                  "&:hover": {
+                    backgroundColor: "rgba(255, 255, 255, 0.1)",
+                  },
+                }}
+              >
+                <CloseIcon />
+              </IconButton>
+            </Box>
+
+            {/* Modal content */}
+            <Box sx={{ p: 4 }}>
+              <TextField
+                fullWidth
+                label="Chapter Name (optional)"
+                value={chapterTitle}
+                onChange={(e) => setChapterTitle(e.target.value)}
+                variant="outlined"
+                sx={{ mb: 4 }}
+                autoFocus
+              />
+              <Box
+                sx={{
+                  display: "flex",
+                  gap: 2,
+                  justifyContent: "space-between",
+                }}
+              >
+                <Button
+                  onClick={handleCreateChapterModalClose}
+                  variant="outlined"
+                  sx={{
+                    flex: 1,
+                    boxShadow: "none",
+                    "&:hover": {
+                      boxShadow: "none",
+                    },
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleCreateChapter}
+                  variant="contained"
+                  sx={{
+                    flex: 1,
+                    backgroundColor: "rgb(19, 135, 194)",
+                    textTransform: "none",
+                    fontFamily: "'Rubik', sans-serif",
+                    py: 1.5,
+                    boxShadow: "none",
+                    "&:hover": {
+                      backgroundColor: "rgb(15, 108, 155)",
+                      boxShadow: "none",
+                    },
+                    "&:disabled": {
+                      boxShadow: "none",
+                    },
+                  }}
+                >
+                  Create Chapter
+                </Button>
+              </Box>
+            </Box>
+          </Box>
+        </Modal>
+
         {/* Create Part Modal */}
         <Modal
           open={createPartModalOpen}
@@ -2077,7 +2608,11 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                   renderValue={(selected) =>
                     chapters
                       .filter((chapter) => selected.includes(chapter.id))
-                      .map((chapter) => chapter.title)
+                      .map((chapter) => {
+                        const chapterNumber =
+                          chapters.findIndex((ch) => ch.id === chapter.id) + 1;
+                        return `${chapter.title} (Chapter ${chapterNumber})`;
+                      })
                       .join(", ")
                   }
                   label="Select Chapters"
@@ -2091,14 +2626,20 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                             part.chapterIds.includes(chapter.id)
                         )
                     )
-                    .map((chapter) => (
-                      <MenuItem key={chapter.id} value={chapter.id}>
-                        <Checkbox
-                          checked={selectedChapterIds.includes(chapter.id)}
-                        />
-                        <ListItemText primary={chapter.title} />
-                      </MenuItem>
-                    ))}
+                    .map((chapter) => {
+                      const chapterNumber =
+                        chapters.findIndex((ch) => ch.id === chapter.id) + 1;
+                      return (
+                        <MenuItem key={chapter.id} value={chapter.id}>
+                          <Checkbox
+                            checked={selectedChapterIds.includes(chapter.id)}
+                          />
+                          <ListItemText
+                            primary={`${chapter.title} (Chapter ${chapterNumber})`}
+                          />
+                        </MenuItem>
+                      );
+                    })}
                 </Select>
               </FormControl>
               <Box
