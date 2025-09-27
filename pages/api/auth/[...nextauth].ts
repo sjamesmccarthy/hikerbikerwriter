@@ -37,10 +37,8 @@ export const authOptions: AuthOptions = {
       if (user.email && (await isUserAllowed(user.email))) {
         return true;
       }
-      // Redirect to custom error page with user email
-      return `/auth/access-denied?email=${encodeURIComponent(
-        user.email || ""
-      )}`;
+      // Redirect to signup page with user email
+      return `/auth/signup?email=${encodeURIComponent(user.email || "")}`;
     },
     async session({ session }) {
       // You can add additional user info to the session here if needed

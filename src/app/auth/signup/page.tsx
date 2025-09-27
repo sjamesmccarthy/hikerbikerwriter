@@ -4,11 +4,15 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { v4 as uuidv4 } from "uuid";
+import { useSearchParams } from "next/navigation";
 
 export default function SignUp() {
+  const searchParams = useSearchParams();
+  const emailFromParams = searchParams?.get("email") || "";
+
   const [formData, setFormData] = useState({
     name: "",
-    email: "",
+    email: emailFromParams,
     agreeToTerms: false,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
