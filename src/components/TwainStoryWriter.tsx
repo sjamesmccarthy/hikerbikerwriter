@@ -122,6 +122,10 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
   const [partTitle, setPartTitle] = useState("");
   const [selectedChapterIds, setSelectedChapterIds] = useState<string[]>([]);
   const [lastSaveTime, setLastSaveTime] = useState<string | null>(null);
+  const [editingIdea, setEditingIdea] = useState<Idea | null>(null);
+  const [editingCharacter, setEditingCharacter] = useState<Character | null>(
+    null
+  );
 
   const quillInitializedRef = useRef(false);
 
@@ -373,14 +377,22 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
 
       quillInstance.on("text-change", handleTextChange);
 
-      // Return cleanup function to remove the listener
+      // Return
       return () => {
         quillInstance.off("text-change", handleTextChange);
       };
     }
   }, [quillInstance, isEditingChapter, isEditingOutline, handleAutoSave]);
 
+  const handleEditIdea = (idea: Idea) => {
+    setEditingIdea(idea);
+    setIdeaTitle(idea.title);
+    setIdeaNotes(idea.notes);
+    setCreateIdeaModalOpen(true);
+  };
+
   const handleCreateIdeaClick = () => {
+    setEditingIdea(null);
     setCreateIdeaModalOpen(true);
   };
 
@@ -388,31 +400,69 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
     setCreateIdeaModalOpen(false);
     setIdeaTitle("");
     setIdeaNotes("");
+    setEditingIdea(null);
   };
 
   const handleCreateIdea = () => {
     if (ideaTitle.trim()) {
-      const newIdea: Idea = {
-        id: Date.now().toString(),
-        title: ideaTitle.trim(),
-        notes: ideaNotes.trim(),
-        createdAt: new Date(),
-      };
+      if (editingIdea) {
+        // Update existing idea
+        const updatedIdea: Idea = {
+          ...editingIdea,
+          title: ideaTitle.trim(),
+          notes: ideaNotes.trim(),
+        };
 
-      const updatedIdeas = [...ideas, newIdea];
-      setIdeas(updatedIdeas);
+        const updatedIdeas = ideas.map((idea) =>
+          idea.id === editingIdea.id ? updatedIdea : idea
+        );
+        setIdeas(updatedIdeas);
 
-      // Store in localStorage
-      localStorage.setItem(
-        `twain-ideas-${book.id}`,
-        JSON.stringify(updatedIdeas)
-      );
+        // Store in localStorage
+        localStorage.setItem(
+          `twain-ideas-${book.id}`,
+          JSON.stringify(updatedIdeas)
+        );
+      } else {
+        // Create new idea
+        const newIdea: Idea = {
+          id: Date.now().toString(),
+          title: ideaTitle.trim(),
+          notes: ideaNotes.trim(),
+          createdAt: new Date(),
+        };
+
+        const updatedIdeas = [...ideas, newIdea];
+        setIdeas(updatedIdeas);
+
+        // Store in localStorage
+        localStorage.setItem(
+          `twain-ideas-${book.id}`,
+          JSON.stringify(updatedIdeas)
+        );
+      }
 
       handleCreateIdeaModalClose();
     }
   };
 
+  const handleEditCharacter = (character: Character) => {
+    setEditingCharacter(character);
+    setCharacterName(character.name);
+    setCharacterGender(character.gender);
+    setCharacterBackstory(character.backstory);
+    setCharacterCharacterization(character.characterization);
+    setCharacterVoice(character.voice);
+    setCharacterAppearance(character.appearance);
+    setCharacterFriendsFamily(character.friendsFamily);
+    setCharacterFavorites(character.favorites);
+    setCharacterMisc(character.misc);
+    setCharacterAvatar(character.avatar || null);
+    setCreateCharacterModalOpen(true);
+  };
+
   const handleCreateCharacterClick = () => {
+    setEditingCharacter(null);
     setCreateCharacterModalOpen(true);
   };
 
@@ -428,6 +478,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
     setCharacterFavorites("");
     setCharacterMisc("");
     setCharacterAvatar(null);
+    setEditingCharacter(null);
   };
 
   const handleAvatarUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -443,29 +494,58 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
 
   const handleCreateCharacter = () => {
     if (characterName.trim()) {
-      const newCharacter: Character = {
-        id: Date.now().toString(),
-        avatar: characterAvatar || undefined,
-        name: characterName.trim(),
-        gender: characterGender.trim(),
-        backstory: characterBackstory.trim(),
-        characterization: characterCharacterization.trim(),
-        voice: characterVoice.trim(),
-        appearance: characterAppearance.trim(),
-        friendsFamily: characterFriendsFamily.trim(),
-        favorites: characterFavorites.trim(),
-        misc: characterMisc.trim(),
-        createdAt: new Date(),
-      };
+      if (editingCharacter) {
+        // Update existing character
+        const updatedCharacter: Character = {
+          ...editingCharacter,
+          avatar: characterAvatar || undefined,
+          name: characterName.trim(),
+          gender: characterGender.trim(),
+          backstory: characterBackstory.trim(),
+          characterization: characterCharacterization.trim(),
+          voice: characterVoice.trim(),
+          appearance: characterAppearance.trim(),
+          friendsFamily: characterFriendsFamily.trim(),
+          favorites: characterFavorites.trim(),
+          misc: characterMisc.trim(),
+        };
 
-      const updatedCharacters = [...characters, newCharacter];
-      setCharacters(updatedCharacters);
+        const updatedCharacters = characters.map((character) =>
+          character.id === editingCharacter.id ? updatedCharacter : character
+        );
+        setCharacters(updatedCharacters);
 
-      // Store in localStorage
-      localStorage.setItem(
-        `twain-characters-${book.id}`,
-        JSON.stringify(updatedCharacters)
-      );
+        // Store in localStorage
+        localStorage.setItem(
+          `twain-characters-${book.id}`,
+          JSON.stringify(updatedCharacters)
+        );
+      } else {
+        // Create new character
+        const newCharacter: Character = {
+          id: Date.now().toString(),
+          avatar: characterAvatar || undefined,
+          name: characterName.trim(),
+          gender: characterGender.trim(),
+          backstory: characterBackstory.trim(),
+          characterization: characterCharacterization.trim(),
+          voice: characterVoice.trim(),
+          appearance: characterAppearance.trim(),
+          friendsFamily: characterFriendsFamily.trim(),
+          favorites: characterFavorites.trim(),
+          misc: characterMisc.trim(),
+          createdAt: new Date(),
+        };
+
+        const updatedCharacters = [...characters, newCharacter];
+        setCharacters(updatedCharacters);
+
+        // Store in localStorage
+        localStorage.setItem(
+          `twain-characters-${book.id}`,
+          JSON.stringify(updatedCharacters)
+        );
+      }
 
       handleCreateCharacterModalClose();
     }
@@ -699,7 +779,8 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                     {ideas.map((idea) => (
                       <div
                         key={idea.id}
-                        className="flex items-start gap-3 p-3 bg-white rounded-md border border-gray-200"
+                        className="flex items-start gap-3 p-3 bg-white rounded-md border border-gray-200 cursor-pointer hover:bg-gray-50"
+                        onClick={() => handleEditIdea(idea)}
                       >
                         <DescriptionOutlinedIcon
                           sx={{
@@ -749,7 +830,8 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                     {characters.map((character) => (
                       <div
                         key={character.id}
-                        className="flex items-start gap-3 p-3 bg-white rounded-md border border-gray-200"
+                        className="flex items-start gap-3 p-3 bg-white rounded-md border border-gray-200 cursor-pointer hover:bg-gray-50"
+                        onClick={() => handleEditCharacter(character)}
                       >
                         {character.avatar ? (
                           <img
@@ -1576,7 +1658,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                   margin: 0,
                 }}
               >
-                Create New Idea
+                {editingIdea ? "Edit Idea" : "Create New Idea"}
               </Typography>
               <IconButton
                 onClick={handleCreateIdeaModalClose}
@@ -1652,7 +1734,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                     },
                   }}
                 >
-                  Create Idea
+                  {editingIdea ? "Update Idea" : "Create Idea"}
                 </Button>
               </Box>
             </Box>
@@ -1700,7 +1782,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                   margin: 0,
                 }}
               >
-                Create New Character
+                {editingCharacter ? "Edit Character" : "Create New Character"}
               </Typography>
               <IconButton
                 onClick={handleCreateCharacterModalClose}
@@ -1876,7 +1958,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                     },
                   }}
                 >
-                  Create Character
+                  {editingCharacter ? "Update Character" : "Create Character"}
                 </Button>
               </Box>
             </Box>
