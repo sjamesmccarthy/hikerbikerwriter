@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useSession, signIn, signOut } from "next-auth/react";
 import {
   Button,
@@ -30,6 +30,173 @@ import Image from "next/image";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import TwainStoryWriter from "./TwainStoryWriter";
 
+// Utility function to process Google profile image URL
+const processGoogleImageUrl = (url: string): string => {
+  // Remove size parameters and add our own
+  const baseUrl = url.split("=")[0];
+  return `${baseUrl}=s40-c`;
+};
+
+// Custom Avatar Component
+interface UserAvatarProps {
+  session: {
+    user?: {
+      name?: string | null;
+      email?: string | null;
+      image?: string | null;
+    };
+  } | null;
+  onError?: () => void;
+}
+
+const UserAvatar: React.FC<UserAvatarProps> = ({ session, onError }) => {
+  const [imageError, setImageError] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
+
+  // Fallback avatar component
+  const FallbackAvatar = () => (
+    <Avatar
+      sx={{
+        width: 40,
+        height: 40,
+        bgcolor: "rgb(19, 135, 194)",
+        color: "white",
+        fontSize: "16px",
+        fontWeight: 600,
+      }}
+    >
+      {session?.user?.name ? session.user.name.charAt(0).toUpperCase() : "?"}
+    </Avatar>
+  );
+
+  if (!session?.user?.image || imageError) {
+    return <FallbackAvatar />;
+  }
+
+  return (
+    <div
+      style={{
+        width: 40,
+        height: 40,
+        borderRadius: "50%",
+        overflow: "hidden",
+        position: "relative",
+        backgroundColor: imageLoaded ? "transparent" : "rgb(19, 135, 194)",
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+      }}
+    >
+      {!imageLoaded && (
+        <span
+          style={{
+            color: "white",
+            fontSize: "16px",
+            fontWeight: 600,
+            position: "absolute",
+            zIndex: 1,
+          }}
+        >
+          {session?.user?.name
+            ? session.user.name.charAt(0).toUpperCase()
+            : "?"}
+        </span>
+      )}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src={processGoogleImageUrl(session.user.image)}
+        alt={session?.user?.name || "User"}
+        style={{
+          width: "40px",
+          height: "40px",
+          borderRadius: "50%",
+          objectFit: "cover",
+          display: imageLoaded ? "block" : "none",
+        }}
+        onLoad={() => {
+          setImageLoaded(true);
+          console.log(
+            "Avatar image loaded successfully:",
+            session?.user?.image
+          );
+        }}
+        onError={() => {
+          const originalUrl = session?.user?.image;
+          const processedUrl = originalUrl
+            ? processGoogleImageUrl(originalUrl)
+            : "N/A";
+          console.error(
+            "Avatar image failed to load. Original URL:",
+            originalUrl
+          );
+          console.error("Processed URL:", processedUrl);
+          setImageError(true);
+          onError?.();
+        }}
+        referrerPolicy="no-referrer"
+      />
+    </div>
+  );
+};
+
+// Type definitions
+interface Book {
+  id: number;
+  title: string;
+  subtitle?: string;
+  author: string;
+  edition: string;
+  copyrightYear: string;
+  wordCount: number;
+  coverImage?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Local storage utilities
+const BOOKS_STORAGE_KEY = "twain-story-builder-books";
+
+const loadBooksFromStorage = (): Book[] => {
+  if (typeof window === "undefined") return [];
+  try {
+    const stored = localStorage.getItem(BOOKS_STORAGE_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch (error) {
+    console.error("Error loading books from localStorage:", error);
+    return [];
+  }
+};
+
+const saveBooksToStorage = (books: Book[]): void => {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(BOOKS_STORAGE_KEY, JSON.stringify(books));
+  } catch (error) {
+    console.error("Error saving books to localStorage:", error);
+  }
+};
+
+const generateBookId = (existingBooks: Book[]): number => {
+  return existingBooks.length > 0
+    ? Math.max(...existingBooks.map((book) => book.id)) + 1
+    : 1;
+};
+
+const updateBookWordCount = (bookId: number, wordCount: number): void => {
+  if (typeof window === "undefined") return;
+  try {
+    const books = loadBooksFromStorage();
+    const updatedBooks = books.map((book) =>
+      book.id === bookId
+        ? { ...book, wordCount, updatedAt: new Date().toISOString() }
+        : book
+    );
+    saveBooksToStorage(updatedBooks);
+  } catch (error) {
+    console.error("Error updating word count:", error);
+  }
+};
+
 const TwainStoryBuilder: React.FC = () => {
   const { data: session, status } = useSession();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -38,11 +205,8 @@ const TwainStoryBuilder: React.FC = () => {
   const [currentView, setCurrentView] = useState<
     "bookshelf" | "manage" | "write"
   >("bookshelf");
-  const [selectedBook, setSelectedBook] = useState<{
-    id: number;
-    title: string;
-    wordCount: number;
-  } | null>(null);
+  const [selectedBook, setSelectedBook] = useState<Book | null>(null);
+  const [books, setBooks] = useState<Book[]>([]);
   const [managedBookTitle, setManagedBookTitle] = useState("");
   const [managedBookAuthor, setManagedBookAuthor] = useState("");
   const [managedBookSubtitle, setManagedBookSubtitle] = useState("");
@@ -50,6 +214,7 @@ const TwainStoryBuilder: React.FC = () => {
   const [managedBookCopyrightYear, setManagedBookCopyrightYear] = useState(
     new Date().getFullYear().toString()
   );
+  const [notification, setNotification] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Select a random Twain image (1-6)
@@ -59,25 +224,22 @@ const TwainStoryBuilder: React.FC = () => {
   // Debug: Log which image is being used
   console.log("Loading Twain image:", backgroundImage);
 
-  // Generate stable random titles for each book (won't change on re-render)
-  const stableBookData = useState(() => {
-    const bookTitles = [
-      "Midnight River Dreams",
-      "Golden Mountain Trails",
-      "Silent Ocean Whispers",
-      "Dancing Forest Shadows",
-      "Ancient Stone Secrets",
-      "Burning Sky Adventures",
-      "Lost Valley Mysteries",
-      "Frozen Lake Tales",
-    ];
+  // Debug: Log session data
+  console.log("Session status:", status);
+  console.log("Session data:", session);
+  console.log("User image URL:", session?.user?.image);
 
-    return [1, 2, 3, 4].map((book) => ({
-      id: book,
-      title: bookTitles[Math.floor(Math.random() * bookTitles.length)],
-      wordCount: Math.floor(Math.random() * 346),
-    }));
-  })[0];
+  // Notification helper
+  const showNotification = (message: string) => {
+    setNotification(message);
+    setTimeout(() => setNotification(""), 3000);
+  };
+
+  // Load books from localStorage on component mount
+  useEffect(() => {
+    const storedBooks = loadBooksFromStorage();
+    setBooks(storedBooks);
+  }, []);
 
   const handleSignIn = () => {
     signIn("google");
@@ -107,23 +269,35 @@ const TwainStoryBuilder: React.FC = () => {
 
   const handleCreateBook = () => {
     if (bookTitle.trim()) {
-      // TODO: Add logic to create the book
-      console.log("Creating book:", bookTitle);
+      const newBook: Book = {
+        id: generateBookId(books),
+        title: bookTitle.trim(),
+        subtitle: "",
+        author: session?.user?.name || "Unknown Author",
+        edition: "First Edition",
+        copyrightYear: new Date().getFullYear().toString(),
+        wordCount: 0,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      const updatedBooks = [...books, newBook];
+      setBooks(updatedBooks);
+      saveBooksToStorage(updatedBooks);
+
+      showNotification(`"${newBook.title}" has been created successfully!`);
+      console.log("Book created successfully:", newBook.title);
       handleCreateBookModalClose();
     }
   };
 
-  const handleManageBook = (book: {
-    id: number;
-    title: string;
-    wordCount: number;
-  }) => {
+  const handleManageBook = (book: Book) => {
     setSelectedBook(book);
     setManagedBookTitle(book.title);
-    setManagedBookAuthor(""); // TODO: Load actual author from book data
-    setManagedBookSubtitle(""); // TODO: Load actual subtitle from book data
-    setManagedBookEdition("First Edition"); // TODO: Load actual edition from book data
-    setManagedBookCopyrightYear(new Date().getFullYear().toString()); // TODO: Load actual copyright year from book data
+    setManagedBookAuthor(book.author);
+    setManagedBookSubtitle(book.subtitle || "");
+    setManagedBookEdition(book.edition);
+    setManagedBookCopyrightYear(book.copyrightYear);
     setCurrentView("manage");
   };
 
@@ -138,19 +312,26 @@ const TwainStoryBuilder: React.FC = () => {
   };
 
   const handleSaveBook = () => {
-    if (managedBookTitle.trim() && managedBookAuthor.trim()) {
-      // TODO: Add logic to save the book
-      console.log(
-        "Saving book:",
-        managedBookTitle,
-        managedBookSubtitle ? `(${managedBookSubtitle})` : "",
-        "by",
-        managedBookAuthor,
-        "-",
-        managedBookEdition,
-        "©",
-        managedBookCopyrightYear
+    if (managedBookTitle.trim() && managedBookAuthor.trim() && selectedBook) {
+      const updatedBook: Book = {
+        ...selectedBook,
+        title: managedBookTitle.trim(),
+        subtitle: managedBookSubtitle.trim(),
+        author: managedBookAuthor.trim(),
+        edition: managedBookEdition,
+        copyrightYear: managedBookCopyrightYear,
+        updatedAt: new Date().toISOString(),
+      };
+
+      const updatedBooks = books.map((book) =>
+        book.id === selectedBook.id ? updatedBook : book
       );
+
+      setBooks(updatedBooks);
+      saveBooksToStorage(updatedBooks);
+
+      showNotification(`"${updatedBook.title}" has been saved successfully!`);
+      console.log("Book saved successfully:", updatedBook.title);
       handleBackToBookshelf();
     }
   };
@@ -169,8 +350,10 @@ const TwainStoryBuilder: React.FC = () => {
 
   const handleArchiveBook = () => {
     if (selectedBook) {
-      // TODO: Add logic to archive the book
+      // For now, we'll just mark it as archived by adding an archived flag
+      // In a real implementation, you might move it to a separate archived collection
       console.log("Archiving book:", selectedBook.title);
+      // TODO: Implement archiving logic when needed
       handleBackToBookshelf();
     }
   };
@@ -182,17 +365,17 @@ const TwainStoryBuilder: React.FC = () => {
         `Are you sure you want to permanently delete "${selectedBook.title}"?`
       )
     ) {
-      // TODO: Add logic to delete the book
-      console.log("Deleting book:", selectedBook.title);
+      const updatedBooks = books.filter((book) => book.id !== selectedBook.id);
+      setBooks(updatedBooks);
+      saveBooksToStorage(updatedBooks);
+
+      showNotification(`"${selectedBook.title}" has been deleted.`);
+      console.log("Book deleted successfully:", selectedBook.title);
       handleBackToBookshelf();
     }
   };
 
-  const handleWriteBook = (book: {
-    id: number;
-    title: string;
-    wordCount: number;
-  }) => {
+  const handleWriteBook = (book: Book) => {
     setSelectedBook(book);
     setCurrentView("write");
   };
@@ -230,11 +413,7 @@ const TwainStoryBuilder: React.FC = () => {
             {/* Profile Menu - Top Right */}
             <div className="absolute top-4 right-4">
               <IconButton onClick={handleMenuOpen}>
-                <Avatar
-                  src={session?.user?.image || undefined}
-                  alt={session?.user?.name || "User"}
-                  sx={{ width: 40, height: 40 }}
-                />
+                <UserAvatar session={session} />
               </IconButton>
               <Menu
                 anchorEl={anchorEl}
@@ -526,11 +705,7 @@ const TwainStoryBuilder: React.FC = () => {
           {/* Profile Menu - Top Right */}
           <div className="absolute top-4 right-4">
             <IconButton onClick={handleMenuOpen}>
-              <Avatar
-                src={session?.user?.image || undefined}
-                alt={session?.user?.name || "User"}
-                sx={{ width: 40, height: 40 }}
-              />
+              <UserAvatar session={session} />
             </IconButton>
             <Menu
               anchorEl={anchorEl}
@@ -561,7 +736,7 @@ const TwainStoryBuilder: React.FC = () => {
               marginBottom: 1,
             }}
           >
-            Welcome Back, James
+            Welcome Back, {session?.user?.name?.split(" ")[0] || "Writer"}
           </Typography>
           <Typography
             variant="body2"
@@ -627,8 +802,8 @@ const TwainStoryBuilder: React.FC = () => {
                 </div>
               </div>
 
-              {/* Placeholder book cards */}
-              {stableBookData.map((bookData) => {
+              {/* Book cards */}
+              {books.map((bookData: Book) => {
                 return (
                   <div
                     key={bookData.id}
@@ -836,6 +1011,28 @@ const TwainStoryBuilder: React.FC = () => {
             </Box>
           </Box>
         </Modal>
+
+        {/* Notification */}
+        {notification && (
+          <div
+            style={{
+              position: "fixed",
+              top: "20px",
+              right: "20px",
+              backgroundColor: "rgb(34, 197, 94)",
+              color: "white",
+              padding: "12px 20px",
+              borderRadius: "8px",
+              boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+              zIndex: 9999,
+              fontFamily: "'Rubik', sans-serif",
+              fontSize: "14px",
+              fontWeight: 500,
+            }}
+          >
+            {notification}
+          </div>
+        )}
       </div>
     );
   }
@@ -968,5 +1165,9 @@ const TwainStoryBuilder: React.FC = () => {
     </div>
   );
 };
+
+// Export utility functions for use by other components
+export { loadBooksFromStorage, saveBooksToStorage, updateBookWordCount };
+export type { Book };
 
 export default TwainStoryBuilder;

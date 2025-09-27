@@ -107,8 +107,22 @@ interface RecentActivity {
 
 type StoryItem = Idea | Character | Story | Chapter | Outline | Part;
 
+// Type definitions - should match the ones in TwainStoryBuilder
+interface Book {
+  id: number;
+  title: string;
+  subtitle?: string;
+  author: string;
+  edition: string;
+  copyrightYear: string;
+  wordCount: number;
+  coverImage?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
 interface TwainStoryWriterProps {
-  book: { id: number; title: string; wordCount: number };
+  book: Book;
   onBackToBookshelf: () => void;
 }
 
