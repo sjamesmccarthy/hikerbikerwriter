@@ -708,8 +708,9 @@ const TwainStoryBuilder: React.FC = () => {
         </main>
 
         {/* Demo Notice */}
-        <div className="w-full bg-red-400 text-center py-4 text-white font-medium">
-          DEMO ONLY - NO FUNCTIONALITY AT THIS TIME
+        <div className="w-full bg-gray-400 text-center py-4 text-gray-200 font-small">
+          Caution: This is a demo version. Data may be periodically cleared from
+          local storage.
         </div>
 
         {/* Footer - 100px tall */}
