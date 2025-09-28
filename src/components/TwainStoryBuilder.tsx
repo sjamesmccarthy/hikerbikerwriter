@@ -26,6 +26,7 @@ import DrawOutlinedIcon from "@mui/icons-material/DrawOutlined";
 import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
 import DeleteForeverOutlinedIcon from "@mui/icons-material/DeleteForeverOutlined";
 import CloudUploadOutlinedIcon from "@mui/icons-material/CloudUploadOutlined";
+import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 import Image from "next/image";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import TwainStoryWriter from "./TwainStoryWriter";
@@ -360,11 +361,75 @@ const TwainStoryBuilder: React.FC = () => {
     fileInputRef.current?.click();
   };
 
+  const handleRemoveCover = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent triggering the upload click
+    if (selectedBook) {
+      const updatedBook = {
+        ...selectedBook,
+        coverImage: undefined,
+        updatedAt: new Date().toISOString(),
+      };
+
+      setSelectedBook(updatedBook);
+
+      // Update the books array
+      const updatedBooks = books.map((book) =>
+        book.id === selectedBook.id ? updatedBook : book
+      );
+      setBooks(updatedBooks);
+
+      // Save to localStorage
+      if (session?.user?.email) {
+        saveBooksToStorage(updatedBooks, session.user.email);
+      }
+
+      showNotification("Cover image removed successfully!");
+    }
+  };
+
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
-      // TODO: Add logic to handle the uploaded file
-      console.log("Selected file:", file.name);
+      // Check if file is an image
+      if (!file.type.startsWith("image/")) {
+        showNotification("Please select an image file.");
+        return;
+      }
+
+      // Check file size (limit to 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        showNotification("Image file size must be less than 5MB.");
+        return;
+      }
+
+      // Convert to base64
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const base64String = e.target?.result as string;
+        if (selectedBook) {
+          const updatedBook = {
+            ...selectedBook,
+            coverImage: base64String,
+            updatedAt: new Date().toISOString(),
+          };
+
+          setSelectedBook(updatedBook);
+
+          // Update the books array
+          const updatedBooks = books.map((book) =>
+            book.id === selectedBook.id ? updatedBook : book
+          );
+          setBooks(updatedBooks);
+
+          // Save to localStorage
+          if (session?.user?.email) {
+            saveBooksToStorage(updatedBooks, session.user.email);
+          }
+
+          showNotification("Cover image uploaded successfully!");
+        }
+      };
+      reader.readAsDataURL(file);
     }
   };
 
@@ -501,54 +566,93 @@ const TwainStoryBuilder: React.FC = () => {
           </div>
 
           {/* Main content area - Book Management Form */}
-          <main className="flex-1 bg-gray-100 p-8">
-            <div className="w-[90%] md:w-[60%] mx-auto">
+          <main className="flex-1 bg-gray-100 p-4 lg:p-8">
+            <div className="w-[95%] lg:w-[60%] mx-auto">
               <div className="">
                 <div className="space-y-6">
                   {/* Book Cover and Title Edit */}
-                  <div className="flex gap-8 items-start">
+                  <div className="flex flex-col lg:flex-row gap-8 items-start lg:items-start">
                     {/* Book Card with Upload Icon */}
-                    <div
-                      className="bg-white border border-gray-200 flex flex-col rounded-md cursor-pointer"
-                      style={{
-                        width: "176px",
-                        height: "268px",
-                        borderLeft: "8px solid rgb(100, 114, 127)",
-                      }}
-                      onClick={handleCoverUpload}
-                    >
-                      <div className="flex-1 flex flex-col items-center justify-center">
-                        <CloudUploadOutlinedIcon
-                          sx={{
-                            fontSize: 64,
-                            color: "rgb(156, 163, 175)",
-                          }}
+                    <div className="flex flex-col items-center w-full lg:w-auto">
+                      <div
+                        className="bg-white shadow-sm flex flex-col rounded-r-md cursor-pointer relative overflow-hidden w-full lg:w-[176px]"
+                        style={{
+                          aspectRatio: "176/268",
+                          borderLeft: "8px solid rgb(100, 114, 127)",
+                          maxWidth: "100%",
+                          height: "auto",
+                        }}
+                        onClick={handleCoverUpload}
+                      >
+                        {selectedBook?.coverImage ? (
+                          <div className="w-full h-full relative">
+                            <Image
+                              src={selectedBook.coverImage}
+                              alt="Book cover preview"
+                              fill
+                              style={{ objectFit: "cover" }}
+                              className="rounded-r-sm"
+                            />
+                            {/* Upload overlay on hover */}
+                            <div className="absolute inset-0 bg-black bg-opacity-50 flex flex-col items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-200 rounded-r-sm">
+                              <CloudUploadOutlinedIcon
+                                sx={{
+                                  fontSize: 48,
+                                  color: "white",
+                                }}
+                              />
+                              <span className="text-sm text-white mt-2">
+                                Change Cover
+                              </span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex-1 flex flex-col items-center justify-center">
+                            <CloudUploadOutlinedIcon
+                              sx={{
+                                fontSize: 64,
+                                color: "rgb(156, 163, 175)",
+                              }}
+                            />
+                            <span className="text-sm text-gray-600 mt-2">
+                              Upload Cover
+                            </span>
+                            {/* Info icon with tooltip */}
+                            <Tooltip
+                              title="For the best results, your book cover image should have a dimension ratio of 1:1.6, and measure at least 2500px on the longest side."
+                              placement="top"
+                              arrow
+                            >
+                              <InfoOutlinedIcon
+                                sx={{
+                                  fontSize: 16,
+                                  color: "rgb(156, 163, 175)",
+                                  marginTop: "4px",
+                                }}
+                              />
+                            </Tooltip>
+                          </div>
+                        )}
+                        <input
+                          type="file"
+                          ref={fileInputRef}
+                          onChange={handleFileChange}
+                          accept="image/*"
+                          style={{ display: "none" }}
                         />
-                        <span className="text-sm text-gray-600 mt-2">
-                          Upload Cover
-                        </span>
-                        {/* Info icon with tooltip */}
-                        <Tooltip
-                          title="For the best results, your book cover image should have a dimension ratio of 1:1.6, and measure at least 2500px on the longest side."
-                          placement="top"
-                          arrow
-                        >
-                          <InfoOutlinedIcon
-                            sx={{
-                              fontSize: 16,
-                              color: "rgb(156, 163, 175)",
-                              marginTop: "4px",
-                            }}
-                          />
-                        </Tooltip>
                       </div>
-                      <input
-                        type="file"
-                        ref={fileInputRef}
-                        onChange={handleFileChange}
-                        accept="image/*"
-                        style={{ display: "none" }}
-                      />
+
+                      {/* Remove button - only show when cover exists */}
+                      {selectedBook?.coverImage && (
+                        <button
+                          onClick={handleRemoveCover}
+                          className="mt-2 text-gray-400 hover:text-gray-600 transition-colors duration-200 flex items-center justify-center cursor-pointer"
+                          title="Remove cover image"
+                        >
+                          <DeleteOutlinedIcon sx={{ fontSize: 14 }} />
+                          <span className="text-xs ml-1">Remove Cover</span>
+                        </button>
+                      )}
                     </div>
                     {/* Title TextField */}
                     <div className="flex-1">
@@ -758,7 +862,10 @@ const TwainStoryBuilder: React.FC = () => {
               marginBottom: 1,
             }}
           >
-            Welcome Back, {session?.user?.name?.split(" ")[0] || "Writer"}
+            <span className="block sm:hidden">Welcome Back</span>
+            <span className="hidden sm:block">
+              Welcome Back, {session?.user?.name?.split(" ")[0] || "Writer"}
+            </span>
           </Typography>
           <Typography
             variant="body2"
@@ -768,6 +875,7 @@ const TwainStoryBuilder: React.FC = () => {
               fontSize: "14px",
               textAlign: "center",
               maxWidth: "600px",
+              px: { xs: 3, sm: 0 },
             }}
           >
             This is your bookshelf, where you can write, plan, edit and typeset
@@ -776,35 +884,35 @@ const TwainStoryBuilder: React.FC = () => {
         </header>
 
         {/* Main content area - flexible height */}
-        <main className="flex-1 bg-gray-100 p-8">
-          <div className="w-[90%] md:w-[80%] mx-auto">
-            {/* Books grid container with custom spacing */}
+        <main className="flex-1 bg-gray-100 p-4 sm:p-8">
+          <div className="w-[95%] sm:w-[90%] md:w-[80%] mx-auto">
+            {/* Books flex container with custom spacing */}
             <div
               style={{
                 display: "grid",
                 width: "100%",
-                rowGap: "2.5rem",
-                gridTemplateColumns: "repeat(auto-fill,minmax(10rem,1fr))",
-                gridColumnGap: "1.25rem",
+                rowGap: "1rem",
+                gridTemplateColumns: "repeat(2, 1fr)",
+                gridColumnGap: "0.75rem",
                 justifyItems: "center",
-                paddingBottom: "2rem",
+                paddingBottom: "1rem",
                 WebkitTransition: "all .3s ease 0ms",
                 transition: "all .3s ease 0ms",
               }}
+              className="sm:!flex sm:flex-wrap sm:justify-start sm:gap-0 sm:!w-full"
             >
               {/* Create/Import book card - first card */}
               <div
-                className="hover:shadow-md transition-shadow cursor-pointer flex flex-col rounded-md"
+                className="hover:shadow-md transition-shadow cursor-pointer flex flex-col rounded-md w-full max-w-[176px] sm:w-[176px] sm:max-w-none"
                 style={{
-                  width: "176px",
-                  height: "268px",
+                  aspectRatio: "176/268",
                   backgroundColor: "rgb(227, 230, 230)",
                 }}
               >
-                <div className="flex-1 flex flex-col justify-center items-center p-4 space-y-4">
+                <div className="flex-1 flex flex-col justify-center items-center p-2 space-y-2">
                   {/* Create Book Button */}
                   <button
-                    className="w-full flex flex-col items-center space-y-2 p-3 rounded cursor-pointer"
+                    className="w-full flex flex-col items-center space-y-1 p-2 rounded cursor-pointer"
                     onClick={handleCreateBookClick}
                   >
                     <AddCircleOutlinedIcon
@@ -829,10 +937,9 @@ const TwainStoryBuilder: React.FC = () => {
                 return (
                   <div
                     key={bookData.id}
-                    className="bg-white hover:shadow-md cursor-pointer flex flex-col rounded-md relative group"
+                    className="bg-white hover:shadow-md cursor-pointer flex flex-col rounded-r-md relative group w-full max-w-[176px] sm:w-[176px] sm:max-w-none"
                     style={{
-                      width: "176px",
-                      height: "268px",
+                      aspectRatio: "176/268",
                       borderLeft: "8px solid rgb(100, 114, 127)",
                       transition: "transform 0.2s ease",
                     }}
@@ -844,75 +951,141 @@ const TwainStoryBuilder: React.FC = () => {
                     }}
                   >
                     {/* Hover overlay with icons - covers entire card */}
-                    <div className="absolute inset-0 bg-white bg-opacity-50 flex items-center justify-center space-x-4 opacity-0 group-hover:opacity-90 transition-opacity duration-200 rounded-md">
-                      <SettingsOutlinedIcon
-                        onClick={() => handleManageBook(bookData)}
-                        sx={{
-                          fontSize: 32,
-                          color: "rgb(19, 135, 194)",
-                          cursor: "pointer",
-                          transition: "transform 0.2s ease",
-                          "&:hover": {
-                            transform: "scale(1.1)",
-                          },
-                        }}
-                      />
-                      <DrawOutlinedIcon
-                        onClick={() => handleWriteBook(bookData)}
-                        sx={{
-                          fontSize: 32,
-                          color: "rgb(19, 135, 194)",
-                          cursor: "pointer",
-                          transition: "transform 0.2s ease",
-                          "&:hover": {
-                            transform: "scale(1.1)",
-                          },
-                        }}
-                      />
-                    </div>
+                    <div className="absolute inset-0 bg-black bg-opacity-60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-r-md z-10">
+                      {/* Book info - only show for cover images */}
+                      {bookData.coverImage && (
+                        <div className="text-center mb-4">
+                          <Typography
+                            variant="body1"
+                            sx={{
+                              fontFamily: "'Alike', serif",
+                              fontSize: "16px",
+                              fontWeight: "bold",
+                              color: "white",
+                              textShadow: "1px 1px 2px rgba(0,0,0,0.8)",
+                              mb: 1,
+                            }}
+                          >
+                            {bookData.title}
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontFamily: "'Rubik', sans-serif",
+                              fontSize: "13px",
+                              fontWeight: 400,
+                              color: "white",
+                              textShadow: "1px 1px 2px rgba(0,0,0,0.8)",
+                            }}
+                          >
+                            {bookData.wordCount} words
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontFamily: "'Rubik', sans-serif",
+                              fontSize: "12px",
+                              fontWeight: 300,
+                              color: "rgba(255,255,255,0.9)",
+                              textShadow: "1px 1px 2px rgba(0,0,0,0.8)",
+                              mt: 0.25,
+                            }}
+                          >
+                            Started on{" "}
+                            {new Date(bookData.createdAt).toLocaleDateString()}
+                          </Typography>
+                        </div>
+                      )}
 
-                    <div className="w-full h-48 bg-white flex items-start justify-start p-3">
-                      <Typography
-                        variant="body1"
-                        sx={{
-                          fontFamily: "'Alike', serif",
-                          fontSize: "18px",
-                          fontWeight: "bold",
-                          color: "text.secondary",
-                        }}
-                      >
-                        {bookData.title}
-                      </Typography>
-                    </div>
-                    <div className="px-4 pb-4 flex items-end justify-center flex-1">
-                      <div className="text-center">
-                        <Typography
-                          variant="body2"
+                      {/* Action icons */}
+                      <div className="flex items-center space-x-4">
+                        <SettingsOutlinedIcon
+                          onClick={() => handleManageBook(bookData)}
                           sx={{
-                            fontFamily: "'Rubik', sans-serif",
-                            fontSize: "14px",
-                            fontWeight: 400,
-                            textAlign: "center",
+                            fontSize: 32,
+                            color: "white",
+                            cursor: "pointer",
+                            transition: "transform 0.2s ease",
+                            "&:hover": {
+                              transform: "scale(1.1)",
+                            },
                           }}
-                        >
-                          {bookData.wordCount} words
-                        </Typography>
-                        <Typography
-                          variant="body2"
+                        />
+                        <DrawOutlinedIcon
+                          onClick={() => handleWriteBook(bookData)}
                           sx={{
-                            fontFamily: "'Rubik', sans-serif",
-                            fontSize: "12px",
-                            fontWeight: 300,
-                            textAlign: "center",
-                            color: "text.secondary",
-                            mt: 0.5,
+                            fontSize: 32,
+                            color: "white",
+                            cursor: "pointer",
+                            transition: "transform 0.2s ease",
+                            "&:hover": {
+                              transform: "scale(1.1)",
+                            },
                           }}
-                        >
-                          Started on{" "}
-                          {new Date(bookData.createdAt).toLocaleDateString()}
-                        </Typography>
+                        />
                       </div>
                     </div>
+
+                    {bookData.coverImage ? (
+                      // Cover image fills entire card - no text overlay
+                      <div className="w-full flex-1 relative z-0 overflow-hidden">
+                        <Image
+                          src={bookData.coverImage}
+                          alt={`${bookData.title} cover`}
+                          fill
+                          style={{ objectFit: "cover" }}
+                          className="rounded-r-sm"
+                        />
+                      </div>
+                    ) : (
+                      // No cover image - traditional layout
+                      <>
+                        <div className="w-full h-48 bg-white flex items-start justify-start p-2 relative overflow-hidden">
+                          <Typography
+                            variant="body1"
+                            sx={{
+                              fontFamily: "'Alike', serif",
+                              fontSize: "18px",
+                              fontWeight: "bold",
+                              color: "text.secondary",
+                            }}
+                          >
+                            {bookData.title}
+                          </Typography>
+                        </div>
+                        <div className="px-3 pb-3 flex items-end justify-center flex-1">
+                          <div className="text-center">
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                fontFamily: "'Rubik', sans-serif",
+                                fontSize: "14px",
+                                fontWeight: 400,
+                                textAlign: "center",
+                              }}
+                            >
+                              {bookData.wordCount} words
+                            </Typography>
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                fontFamily: "'Rubik', sans-serif",
+                                fontSize: "12px",
+                                fontWeight: 300,
+                                textAlign: "center",
+                                color: "text.secondary",
+                                mt: 0.5,
+                              }}
+                            >
+                              Started on{" "}
+                              {new Date(
+                                bookData.createdAt
+                              ).toLocaleDateString()}
+                            </Typography>
+                          </div>
+                        </div>
+                      </>
+                    )}
                   </div>
                 );
               })}

@@ -20,6 +20,7 @@ import {
   MenuItem,
   Checkbox,
   ListItemText,
+  Tooltip,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -214,7 +215,23 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
   const [expandedAccordions, setExpandedAccordions] = useState<Set<string>>(
     new Set()
   ); // Start with all collapsed
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
+  const [sidebarExpandedFromIcon, setSidebarExpandedFromIcon] = useState(false);
+
+  // Check for mobile screen size
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768); // sm breakpoint
+      if (window.innerWidth < 768) {
+        setSidebarCollapsed(true); // Auto-collapse on mobile
+      }
+    };
+
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
 
   // Timer-related state
   const [timerModalOpen, setTimerModalOpen] = useState(false);
@@ -248,7 +265,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
           if (quillRef.current) {
             const quill = new Quill.default(quillRef.current, {
               theme: "bubble",
-              placeholder: "Start writing your story...",
+              placeholder: "Begin Writing Here...",
               modules: {
                 toolbar: [
                   [{ header: [1, 2, 3, false] }],
@@ -269,6 +286,18 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
             quill.root.style.fontFamily = "'Crimson Text', serif";
             quill.root.style.fontSize = "18px";
             quill.root.style.lineHeight = "1.6";
+
+            // Add custom placeholder styling
+            const style = document.createElement("style");
+            style.textContent = `
+              .ql-editor.ql-blank::before {
+                font-style: normal !important;
+                font-size: 24px !important;
+                font-family: 'Crimson Text', serif !important;
+                color: rgba(107, 114, 128, 0.6) !important;
+              }
+            `;
+            document.head.appendChild(style);
 
             setQuillInstance(quill);
           }
@@ -931,7 +960,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
     // Update Quill placeholder after a short delay to ensure Quill is ready
     setTimeout(() => {
       if (quillInstance && quillInstance.root) {
-        const placeholderText = "Start writing ...";
+        const placeholderText = "Begin Writing Here...";
         quillInstance.root.setAttribute("data-placeholder", placeholderText);
       }
     }, 100);
@@ -983,7 +1012,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
     // Update Quill placeholder after a short delay to ensure Quill is ready
     setTimeout(() => {
       if (quillInstance && quillInstance.root) {
-        const placeholderText = "Start writing ...";
+        const placeholderText = "Begin Writing Here...";
         quillInstance.root.setAttribute("data-placeholder", placeholderText);
       }
     }, 100);
@@ -1638,6 +1667,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
 
   const handleToggleSidebar = () => {
     setSidebarCollapsed(!sidebarCollapsed);
+    setSidebarExpandedFromIcon(false); // Reset expanded from icon state
   };
 
   const getDaysSinceBookCreation = () => {
@@ -1699,37 +1729,70 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
     {
       title: "IDEAS",
       content: "Store your creative ideas and inspiration here...",
+      icon: (
+        <BatchPredictionIcon
+          sx={{ fontSize: 24, color: "rgb(107, 114, 128)" }}
+        />
+      ),
+      createHandler: handleCreateIdeaClick,
     },
     {
       title: "CHARACTERS",
       content:
         "Develop your characters, their backgrounds, motivations, and relationships...",
+      icon: (
+        <FaceOutlinedIcon sx={{ fontSize: 24, color: "rgb(107, 114, 128)" }} />
+      ),
+      createHandler: handleCreateCharacterClick,
     },
     {
       title: "OUTLINE",
       content: "Structure your story with chapter outlines and plot points...",
+      icon: <ListAltIcon sx={{ fontSize: 24, color: "rgb(107, 114, 128)" }} />,
+      createHandler: handleCreateOutlineClick,
     },
     {
       title: "STORIES",
       content: "Write and develop your complete stories...",
+      icon: (
+        <DescriptionOutlinedIcon
+          sx={{ fontSize: 24, color: "rgb(107, 114, 128)" }}
+        />
+      ),
+      createHandler: handleCreateStoryClick,
     },
     {
       title: "CHAPTERS",
       content: "Create and organize your story chapters...",
+      icon: (
+        <AutoStoriesIcon sx={{ fontSize: 24, color: "rgb(107, 114, 128)" }} />
+      ),
+      createHandler: handleCreateChapterClick,
     },
     {
       title: "PARTS",
       content:
         "Organize your story into parts. Parts are made up of chapters...",
+      icon: (
+        <FolderCopyIcon sx={{ fontSize: 24, color: "rgb(107, 114, 128)" }} />
+      ),
+      createHandler: handleCreatePartClick,
     },
   ];
   return (
-    <div className="h-screen flex">
-      {/* Column 1: Sidebar with Accordions - collapsible */}
+    <div className="h-screen flex relative">
+      {/* Column 1: Sidebar with Accordions - overlay */}
       <div
-        className={`${
-          sidebarCollapsed ? "w-[65px]" : "w-[300px]"
-        } bg-gray-50 border-r border-gray-200 flex flex-col transition-all duration-300 ease-in-out overflow-hidden`}
+        className="bg-gray-50 border-r border-gray-200 flex flex-col transition-all duration-300 ease-in-out overflow-hidden fixed left-0 top-0 h-screen z-20"
+        style={{
+          width: sidebarCollapsed
+            ? "65px"
+            : sidebarExpandedFromIcon
+            ? typeof window !== "undefined" && window.innerWidth < 768
+              ? "80vw"
+              : "30vw"
+            : "300px",
+        }}
       >
         {/* Header with Back Button */}
         <div className="p-4 border-b border-gray-200 bg-white">
@@ -1797,7 +1860,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
           </div>
         </div>
 
-        {/* Accordion Sections */}
+        {/* Accordion Sections - Full View */}
         {!sidebarCollapsed && (
           <div className="flex-1 overflow-y-auto">
             {accordionSections.map((section) => (
@@ -1853,19 +1916,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                       size="small"
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (section.title === "IDEAS") {
-                          handleCreateIdeaClick();
-                        } else if (section.title === "CHARACTERS") {
-                          handleCreateCharacterClick();
-                        } else if (section.title === "STORIES") {
-                          handleCreateStoryClick();
-                        } else if (section.title === "CHAPTERS") {
-                          handleCreateChapterClick();
-                        } else if (section.title === "OUTLINE") {
-                          handleCreateOutlineClick();
-                        } else if (section.title === "PARTS") {
-                          handleCreatePartClick();
-                        }
+                        section.createHandler();
                       }}
                       sx={{
                         color: "rgb(19, 135, 194)",
@@ -2400,10 +2451,137 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
             ))}
           </div>
         )}
+
+        {/* Collapsed Icon-Only View */}
+        {sidebarCollapsed && (
+          <div className="flex-1 flex flex-col items-center py-4">
+            {/* Back button - show on both mobile and desktop when collapsed */}
+            <div className="mb-2">
+              <Tooltip
+                title="Back to Bookshelf"
+                placement="right"
+                arrow
+                slotProps={{
+                  tooltip: {
+                    sx: {
+                      backgroundColor: "black !important",
+                      color: "white !important",
+                      fontSize: "16px !important",
+                      fontWeight: 200,
+                      fontFamily: "'Rubik', sans-serif",
+                      padding: "16px !important",
+                    },
+                  },
+                  arrow: {
+                    sx: {
+                      color: "black !important",
+                    },
+                  },
+                }}
+              >
+                <IconButton
+                  onClick={onBackToBookshelf}
+                  size="small"
+                  sx={{
+                    color: "rgb(19, 135, 194)",
+                    "&:hover": {
+                      backgroundColor: "rgba(19, 135, 194, 0.1)",
+                    },
+                  }}
+                >
+                  <ArrowBackIcon />
+                </IconButton>
+              </Tooltip>
+            </div>
+
+            {accordionSections.map((section) => {
+              // Define tooltip text for each section
+              const getTooltipText = (title: string) => {
+                switch (title) {
+                  case "IDEAS":
+                    return "Ideas - Store your creative inspiration and brainstorming notes";
+                  case "CHARACTERS":
+                    return "Characters - Develop character profiles, backgrounds, and personalities";
+                  case "OUTLINE":
+                    return "Outline - Create story structure with chapter outlines and plot points";
+                  case "STORIES":
+                    return "Stories - Write and develop your complete stories";
+                  case "CHAPTERS":
+                    return "Chapters - Create and organize individual story chapters";
+                  case "PARTS":
+                    return "Parts - Organize your story into larger sections made up of chapters";
+                  default:
+                    return `View ${title.toLowerCase()}`;
+                }
+              };
+
+              return (
+                <div key={section.title} className="mb-3">
+                  <Tooltip
+                    title={getTooltipText(section.title)}
+                    placement="right"
+                    arrow
+                    slotProps={{
+                      tooltip: {
+                        sx: {
+                          backgroundColor: "black !important",
+                          color: "white !important",
+                          fontSize: "16px !important",
+                          fontWeight: 200,
+                          fontFamily: "'Rubik', sans-serif",
+                          padding: "16px !important",
+                          maxWidth: "300px",
+                        },
+                      },
+                      arrow: {
+                        sx: {
+                          color: "black !important",
+                        },
+                      },
+                    }}
+                  >
+                    <IconButton
+                      onClick={() => {
+                        // Expand sidebar to 80% width and expand the clicked accordion
+                        setSidebarCollapsed(false);
+                        setSidebarExpandedFromIcon(true);
+                        const newExpanded = new Set([section.title]);
+                        setExpandedAccordions(newExpanded);
+                        setAllAccordionsExpanded(false);
+                      }}
+                      sx={{
+                        color: "rgb(107, 114, 128)",
+                        padding: "8px",
+                        borderRadius: "8px",
+                        "&:hover": {
+                          backgroundColor: "rgba(107, 114, 128, 0.1)",
+                          color: "rgb(19, 135, 194)",
+                        },
+                      }}
+                    >
+                      {section.icon}
+                    </IconButton>
+                  </Tooltip>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
-      {/* Column 2: Quill Editor - Flexible width */}
-      <div className="flex-1 flex flex-col">
+      {/* Column 2: Quill Editor - Full width */}
+      <div
+        className="w-full flex flex-col transition-all duration-300 ease-in-out"
+        style={{
+          marginLeft: sidebarCollapsed
+            ? "65px"
+            : sidebarExpandedFromIcon
+            ? typeof window !== "undefined" && window.innerWidth < 768
+              ? "80vw"
+              : "30vw"
+            : "300px",
+        }}
+      >
         {/* Header with Title */}
         <div
           className="p-4  bg-white flex items-center justify-between"
@@ -2625,314 +2803,626 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
 
             {/* Stats Grid */}
             <div className="grid grid-cols-1 md:grid-cols-6 gap-6 mb-8">
-              <div className="bg-gray-50 p-6 rounded-lg border border-gray-200 relative">
-                <IconButton
-                  onClick={handleCreateIdeaClick}
-                  sx={{
-                    position: "absolute",
-                    top: "8px",
-                    right: "8px",
-                    width: "24px",
-                    height: "24px",
-                    color: "rgb(19, 135, 194)",
-                    "&:hover": {
-                      backgroundColor: "rgba(19, 135, 194, 0.1)",
-                    },
-                  }}
-                >
-                  <AddIcon sx={{ fontSize: "16px" }} />
-                </IconButton>
-                <div className="flex flex-col items-center text-center">
-                  <BatchPredictionIcon
+              <div className="bg-gray-50 p-2 rounded-lg border border-gray-200 relative">
+                {/* Desktop layout: vertical with + button in corner */}
+                <div className="hidden md:block">
+                  <IconButton
+                    onClick={handleCreateIdeaClick}
                     sx={{
-                      fontSize: 32,
+                      position: "absolute",
+                      top: "8px",
+                      right: "8px",
+                      width: "24px",
+                      height: "24px",
                       color: "rgb(19, 135, 194)",
-                      marginBottom: "8px",
+                      "&:hover": {
+                        backgroundColor: "rgba(19, 135, 194, 0.1)",
+                      },
                     }}
-                  />
-                  <div>
-                    <Typography
-                      variant="h6"
+                  >
+                    <AddIcon sx={{ fontSize: "16px" }} />
+                  </IconButton>
+                  <div className="flex flex-col items-center text-center">
+                    <BatchPredictionIcon
                       sx={{
-                        fontFamily: "'Rubik', sans-serif",
-                        fontWeight: 600,
-                        fontSize: "18px",
-                        color: "#1f2937",
+                        fontSize: 32,
+                        color: "rgb(19, 135, 194)",
+                        marginBottom: "8px",
+                      }}
+                    />
+                    <div>
+                      <Typography
+                        variant="h6"
+                        sx={{
+                          fontFamily: "'Rubik', sans-serif",
+                          fontWeight: 600,
+                          fontSize: "18px",
+                          color: "#1f2937",
+                        }}
+                      >
+                        {ideas.length}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontFamily: "'Rubik', sans-serif",
+                          fontWeight: 400,
+                          fontSize: "14px",
+                          color: "rgb(107, 114, 128)",
+                        }}
+                      >
+                        Ideas
+                      </Typography>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Mobile layout: horizontal [icon] [number] [label] [+] */}
+                <div className="block md:hidden">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <BatchPredictionIcon
+                        sx={{
+                          fontSize: 24,
+                          color: "rgb(19, 135, 194)",
+                        }}
+                      />
+                      <Typography
+                        variant="h6"
+                        sx={{
+                          fontFamily: "'Rubik', sans-serif",
+                          fontWeight: 600,
+                          fontSize: "18px",
+                          color: "#1f2937",
+                        }}
+                      >
+                        {ideas.length}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontFamily: "'Rubik', sans-serif",
+                          fontWeight: 400,
+                          fontSize: "14px",
+                          color: "rgb(107, 114, 128)",
+                        }}
+                      >
+                        Ideas
+                      </Typography>
+                    </div>
+                    <IconButton
+                      onClick={handleCreateIdeaClick}
+                      sx={{
+                        width: "32px",
+                        height: "32px",
+                        color: "rgb(19, 135, 194)",
+                        "&:hover": {
+                          backgroundColor: "rgba(19, 135, 194, 0.1)",
+                        },
                       }}
                     >
-                      {ideas.length}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        fontFamily: "'Rubik', sans-serif",
-                        fontWeight: 400,
-                        fontSize: "14px",
-                        color: "rgb(107, 114, 128)",
-                      }}
-                    >
-                      Ideas
-                    </Typography>
+                      <AddIcon sx={{ fontSize: "20px" }} />
+                    </IconButton>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-gray-50 p-6 rounded-lg border border-gray-200 relative">
-                <IconButton
-                  onClick={handleCreateCharacterClick}
-                  sx={{
-                    position: "absolute",
-                    top: "8px",
-                    right: "8px",
-                    width: "24px",
-                    height: "24px",
-                    color: "rgb(19, 135, 194)",
-                    "&:hover": {
-                      backgroundColor: "rgba(19, 135, 194, 0.1)",
-                    },
-                  }}
-                >
-                  <AddIcon sx={{ fontSize: "16px" }} />
-                </IconButton>
-                <div className="flex flex-col items-center text-center">
-                  <FaceOutlinedIcon
+              <div className="bg-gray-50 p-2 rounded-lg border border-gray-200 relative">
+                {/* Desktop layout: vertical with + button in corner */}
+                <div className="hidden md:block">
+                  <IconButton
+                    onClick={handleCreateCharacterClick}
                     sx={{
-                      fontSize: 32,
+                      position: "absolute",
+                      top: "8px",
+                      right: "8px",
+                      width: "24px",
+                      height: "24px",
                       color: "rgb(19, 135, 194)",
-                      marginBottom: "8px",
+                      "&:hover": {
+                        backgroundColor: "rgba(19, 135, 194, 0.1)",
+                      },
                     }}
-                  />
-                  <div>
-                    <Typography
-                      variant="h6"
+                  >
+                    <AddIcon sx={{ fontSize: "16px" }} />
+                  </IconButton>
+                  <div className="flex flex-col items-center text-center">
+                    <FaceOutlinedIcon
                       sx={{
-                        fontFamily: "'Rubik', sans-serif",
-                        fontWeight: 600,
-                        fontSize: "18px",
-                        color: "#1f2937",
+                        fontSize: 32,
+                        color: "rgb(19, 135, 194)",
+                        marginBottom: "8px",
+                      }}
+                    />
+                    <div>
+                      <Typography
+                        variant="h6"
+                        sx={{
+                          fontFamily: "'Rubik', sans-serif",
+                          fontWeight: 600,
+                          fontSize: "18px",
+                          color: "#1f2937",
+                        }}
+                      >
+                        {characters.length}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontFamily: "'Rubik', sans-serif",
+                          fontWeight: 400,
+                          fontSize: "14px",
+                          color: "rgb(107, 114, 128)",
+                        }}
+                      >
+                        Characters
+                      </Typography>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Mobile layout: horizontal [icon] [number] [label] [+] */}
+                <div className="block md:hidden">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <FaceOutlinedIcon
+                        sx={{
+                          fontSize: 24,
+                          color: "rgb(19, 135, 194)",
+                        }}
+                      />
+                      <Typography
+                        variant="h6"
+                        sx={{
+                          fontFamily: "'Rubik', sans-serif",
+                          fontWeight: 600,
+                          fontSize: "18px",
+                          color: "#1f2937",
+                        }}
+                      >
+                        {characters.length}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontFamily: "'Rubik', sans-serif",
+                          fontWeight: 400,
+                          fontSize: "14px",
+                          color: "rgb(107, 114, 128)",
+                        }}
+                      >
+                        Characters
+                      </Typography>
+                    </div>
+                    <IconButton
+                      onClick={handleCreateCharacterClick}
+                      sx={{
+                        width: "32px",
+                        height: "32px",
+                        color: "rgb(19, 135, 194)",
+                        "&:hover": {
+                          backgroundColor: "rgba(19, 135, 194, 0.1)",
+                        },
                       }}
                     >
-                      {characters.length}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        fontFamily: "'Rubik', sans-serif",
-                        fontWeight: 400,
-                        fontSize: "14px",
-                        color: "rgb(107, 114, 128)",
-                      }}
-                    >
-                      Characters
-                    </Typography>
+                      <AddIcon sx={{ fontSize: "20px" }} />
+                    </IconButton>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-gray-50 p-6 rounded-lg border border-gray-200 relative">
-                <IconButton
-                  onClick={handleCreateChapterClick}
-                  sx={{
-                    position: "absolute",
-                    top: "8px",
-                    right: "8px",
-                    width: "24px",
-                    height: "24px",
-                    color: "rgb(19, 135, 194)",
-                    "&:hover": {
-                      backgroundColor: "rgba(19, 135, 194, 0.1)",
-                    },
-                  }}
-                >
-                  <AddIcon sx={{ fontSize: "16px" }} />
-                </IconButton>
-                <div className="flex flex-col items-center text-center">
-                  <AutoStoriesIcon
+              <div className="bg-gray-50 p-2 rounded-lg border border-gray-200 relative">
+                {/* Desktop layout: vertical with + button in corner */}
+                <div className="hidden md:block">
+                  <IconButton
+                    onClick={handleCreateChapterClick}
                     sx={{
-                      fontSize: 32,
+                      position: "absolute",
+                      top: "8px",
+                      right: "8px",
+                      width: "24px",
+                      height: "24px",
                       color: "rgb(19, 135, 194)",
-                      marginBottom: "8px",
+                      "&:hover": {
+                        backgroundColor: "rgba(19, 135, 194, 0.1)",
+                      },
                     }}
-                  />
-                  <div>
-                    <Typography
-                      variant="h6"
+                  >
+                    <AddIcon sx={{ fontSize: "16px" }} />
+                  </IconButton>
+                  <div className="flex flex-col items-center text-center">
+                    <AutoStoriesIcon
                       sx={{
-                        fontFamily: "'Rubik', sans-serif",
-                        fontWeight: 600,
-                        fontSize: "18px",
-                        color: "#1f2937",
+                        fontSize: 32,
+                        color: "rgb(19, 135, 194)",
+                        marginBottom: "8px",
+                      }}
+                    />
+                    <div>
+                      <Typography
+                        variant="h6"
+                        sx={{
+                          fontFamily: "'Rubik', sans-serif",
+                          fontWeight: 600,
+                          fontSize: "18px",
+                          color: "#1f2937",
+                        }}
+                      >
+                        {chapters.length}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontFamily: "'Rubik', sans-serif",
+                          fontWeight: 400,
+                          fontSize: "14px",
+                          color: "rgb(107, 114, 128)",
+                        }}
+                      >
+                        Chapters
+                      </Typography>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Mobile layout: horizontal [icon] [number] [label] [+] */}
+                <div className="block md:hidden">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <AutoStoriesIcon
+                        sx={{
+                          fontSize: 24,
+                          color: "rgb(19, 135, 194)",
+                        }}
+                      />
+                      <Typography
+                        variant="h6"
+                        sx={{
+                          fontFamily: "'Rubik', sans-serif",
+                          fontWeight: 600,
+                          fontSize: "18px",
+                          color: "#1f2937",
+                        }}
+                      >
+                        {chapters.length}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontFamily: "'Rubik', sans-serif",
+                          fontWeight: 400,
+                          fontSize: "14px",
+                          color: "rgb(107, 114, 128)",
+                        }}
+                      >
+                        Chapters
+                      </Typography>
+                    </div>
+                    <IconButton
+                      onClick={handleCreateChapterClick}
+                      sx={{
+                        width: "32px",
+                        height: "32px",
+                        color: "rgb(19, 135, 194)",
+                        "&:hover": {
+                          backgroundColor: "rgba(19, 135, 194, 0.1)",
+                        },
                       }}
                     >
-                      {chapters.length}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        fontFamily: "'Rubik', sans-serif",
-                        fontWeight: 400,
-                        fontSize: "14px",
-                        color: "rgb(107, 114, 128)",
-                      }}
-                    >
-                      Chapters
-                    </Typography>
+                      <AddIcon sx={{ fontSize: "20px" }} />
+                    </IconButton>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-gray-50 p-6 rounded-lg border border-gray-200 relative">
-                <IconButton
-                  onClick={handleCreateOutlineClick}
-                  sx={{
-                    position: "absolute",
-                    top: "8px",
-                    right: "8px",
-                    width: "24px",
-                    height: "24px",
-                    color: "rgb(19, 135, 194)",
-                    "&:hover": {
-                      backgroundColor: "rgba(19, 135, 194, 0.1)",
-                    },
-                  }}
-                >
-                  <AddIcon sx={{ fontSize: "16px" }} />
-                </IconButton>
-                <div className="flex flex-col items-center text-center">
-                  <ListAltIcon
+              <div className="bg-gray-50 p-2 rounded-lg border border-gray-200 relative">
+                {/* Desktop layout: vertical with + button in corner */}
+                <div className="hidden md:block">
+                  <IconButton
+                    onClick={handleCreateOutlineClick}
                     sx={{
-                      fontSize: 32,
+                      position: "absolute",
+                      top: "8px",
+                      right: "8px",
+                      width: "24px",
+                      height: "24px",
                       color: "rgb(19, 135, 194)",
-                      marginBottom: "8px",
+                      "&:hover": {
+                        backgroundColor: "rgba(19, 135, 194, 0.1)",
+                      },
                     }}
-                  />
-                  <div>
-                    <Typography
-                      variant="h6"
+                  >
+                    <AddIcon sx={{ fontSize: "16px" }} />
+                  </IconButton>
+                  <div className="flex flex-col items-center text-center">
+                    <ListAltIcon
                       sx={{
-                        fontFamily: "'Rubik', sans-serif",
-                        fontWeight: 600,
-                        fontSize: "18px",
-                        color: "#1f2937",
+                        fontSize: 32,
+                        color: "rgb(19, 135, 194)",
+                        marginBottom: "8px",
+                      }}
+                    />
+                    <div>
+                      <Typography
+                        variant="h6"
+                        sx={{
+                          fontFamily: "'Rubik', sans-serif",
+                          fontWeight: 600,
+                          fontSize: "18px",
+                          color: "#1f2937",
+                        }}
+                      >
+                        {outlines.length}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontFamily: "'Rubik', sans-serif",
+                          fontWeight: 400,
+                          fontSize: "14px",
+                          color: "rgb(107, 114, 128)",
+                        }}
+                      >
+                        Outlines
+                      </Typography>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Mobile layout: horizontal [icon] [number] [label] [+] */}
+                <div className="block md:hidden">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <ListAltIcon
+                        sx={{
+                          fontSize: 24,
+                          color: "rgb(19, 135, 194)",
+                        }}
+                      />
+                      <Typography
+                        variant="h6"
+                        sx={{
+                          fontFamily: "'Rubik', sans-serif",
+                          fontWeight: 600,
+                          fontSize: "18px",
+                          color: "#1f2937",
+                        }}
+                      >
+                        {outlines.length}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontFamily: "'Rubik', sans-serif",
+                          fontWeight: 400,
+                          fontSize: "14px",
+                          color: "rgb(107, 114, 128)",
+                        }}
+                      >
+                        Outlines
+                      </Typography>
+                    </div>
+                    <IconButton
+                      onClick={handleCreateOutlineClick}
+                      sx={{
+                        width: "32px",
+                        height: "32px",
+                        color: "rgb(19, 135, 194)",
+                        "&:hover": {
+                          backgroundColor: "rgba(19, 135, 194, 0.1)",
+                        },
                       }}
                     >
-                      {outlines.length}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        fontFamily: "'Rubik', sans-serif",
-                        fontWeight: 400,
-                        fontSize: "14px",
-                        color: "rgb(107, 114, 128)",
-                      }}
-                    >
-                      Outlines
-                    </Typography>
+                      <AddIcon sx={{ fontSize: "20px" }} />
+                    </IconButton>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-gray-50 p-6 rounded-lg border border-gray-200 relative">
-                <IconButton
-                  onClick={handleCreatePartClick}
-                  sx={{
-                    position: "absolute",
-                    top: "8px",
-                    right: "8px",
-                    width: "24px",
-                    height: "24px",
-                    color: "rgb(19, 135, 194)",
-                    "&:hover": {
-                      backgroundColor: "rgba(19, 135, 194, 0.1)",
-                    },
-                  }}
-                >
-                  <AddIcon sx={{ fontSize: "16px" }} />
-                </IconButton>
-                <div className="flex flex-col items-center text-center">
-                  <FolderCopyIcon
+              <div className="bg-gray-50 p-2 rounded-lg border border-gray-200 relative">
+                {/* Desktop layout: vertical with + button in corner */}
+                <div className="hidden md:block">
+                  <IconButton
+                    onClick={handleCreatePartClick}
                     sx={{
-                      fontSize: 32,
+                      position: "absolute",
+                      top: "8px",
+                      right: "8px",
+                      width: "24px",
+                      height: "24px",
                       color: "rgb(19, 135, 194)",
-                      marginBottom: "8px",
+                      "&:hover": {
+                        backgroundColor: "rgba(19, 135, 194, 0.1)",
+                      },
                     }}
-                  />
-                  <div>
-                    <Typography
-                      variant="h6"
+                  >
+                    <AddIcon sx={{ fontSize: "16px" }} />
+                  </IconButton>
+                  <div className="flex flex-col items-center text-center">
+                    <FolderCopyIcon
                       sx={{
-                        fontFamily: "'Rubik', sans-serif",
-                        fontWeight: 600,
-                        fontSize: "18px",
-                        color: "#1f2937",
+                        fontSize: 32,
+                        color: "rgb(19, 135, 194)",
+                        marginBottom: "8px",
+                      }}
+                    />
+                    <div>
+                      <Typography
+                        variant="h6"
+                        sx={{
+                          fontFamily: "'Rubik', sans-serif",
+                          fontWeight: 600,
+                          fontSize: "18px",
+                          color: "#1f2937",
+                        }}
+                      >
+                        {parts.length}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontFamily: "'Rubik', sans-serif",
+                          fontWeight: 400,
+                          fontSize: "14px",
+                          color: "rgb(107, 114, 128)",
+                        }}
+                      >
+                        Parts
+                      </Typography>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Mobile layout: horizontal [icon] [number] [label] [+] */}
+                <div className="block md:hidden">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <FolderCopyIcon
+                        sx={{
+                          fontSize: 24,
+                          color: "rgb(19, 135, 194)",
+                        }}
+                      />
+                      <Typography
+                        variant="h6"
+                        sx={{
+                          fontFamily: "'Rubik', sans-serif",
+                          fontWeight: 600,
+                          fontSize: "18px",
+                          color: "#1f2937",
+                        }}
+                      >
+                        {parts.length}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontFamily: "'Rubik', sans-serif",
+                          fontWeight: 400,
+                          fontSize: "14px",
+                          color: "rgb(107, 114, 128)",
+                        }}
+                      >
+                        Parts
+                      </Typography>
+                    </div>
+                    <IconButton
+                      onClick={handleCreatePartClick}
+                      sx={{
+                        width: "32px",
+                        height: "32px",
+                        color: "rgb(19, 135, 194)",
+                        "&:hover": {
+                          backgroundColor: "rgba(19, 135, 194, 0.1)",
+                        },
                       }}
                     >
-                      {parts.length}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        fontFamily: "'Rubik', sans-serif",
-                        fontWeight: 400,
-                        fontSize: "14px",
-                        color: "rgb(107, 114, 128)",
-                      }}
-                    >
-                      Parts
-                    </Typography>
+                      <AddIcon sx={{ fontSize: "20px" }} />
+                    </IconButton>
                   </div>
                 </div>
               </div>
 
-              <div className="bg-gray-50 p-6 rounded-lg border border-gray-200 relative">
-                <IconButton
-                  onClick={handleCreateStoryClick}
-                  sx={{
-                    position: "absolute",
-                    top: "8px",
-                    right: "8px",
-                    width: "24px",
-                    height: "24px",
-                    color: "rgb(19, 135, 194)",
-                    "&:hover": {
-                      backgroundColor: "rgba(19, 135, 194, 0.1)",
-                    },
-                  }}
-                >
-                  <AddIcon sx={{ fontSize: "16px" }} />
-                </IconButton>
-                <div className="flex flex-col items-center text-center">
-                  <HistoryEduIcon
+              <div className="bg-gray-50 p-2 rounded-lg border border-gray-200 relative">
+                {/* Desktop layout: vertical with + button in corner */}
+                <div className="hidden md:block">
+                  <IconButton
+                    onClick={handleCreateStoryClick}
                     sx={{
-                      fontSize: 32,
+                      position: "absolute",
+                      top: "8px",
+                      right: "8px",
+                      width: "24px",
+                      height: "24px",
                       color: "rgb(19, 135, 194)",
-                      marginBottom: "8px",
+                      "&:hover": {
+                        backgroundColor: "rgba(19, 135, 194, 0.1)",
+                      },
                     }}
-                  />
-                  <div>
-                    <Typography
-                      variant="h6"
+                  >
+                    <AddIcon sx={{ fontSize: "16px" }} />
+                  </IconButton>
+                  <div className="flex flex-col items-center text-center">
+                    <HistoryEduIcon
                       sx={{
-                        fontFamily: "'Rubik', sans-serif",
-                        fontWeight: 600,
-                        fontSize: "18px",
-                        color: "#1f2937",
+                        fontSize: 32,
+                        color: "rgb(19, 135, 194)",
+                        marginBottom: "8px",
+                      }}
+                    />
+                    <div>
+                      <Typography
+                        variant="h6"
+                        sx={{
+                          fontFamily: "'Rubik', sans-serif",
+                          fontWeight: 600,
+                          fontSize: "18px",
+                          color: "#1f2937",
+                        }}
+                      >
+                        {stories.length}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontFamily: "'Rubik', sans-serif",
+                          fontWeight: 400,
+                          fontSize: "14px",
+                          color: "rgb(107, 114, 128)",
+                        }}
+                      >
+                        Stories
+                      </Typography>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Mobile layout: horizontal [icon] [number] [label] [+] */}
+                <div className="block md:hidden">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <HistoryEduIcon
+                        sx={{
+                          fontSize: 24,
+                          color: "rgb(19, 135, 194)",
+                        }}
+                      />
+                      <Typography
+                        variant="h6"
+                        sx={{
+                          fontFamily: "'Rubik', sans-serif",
+                          fontWeight: 600,
+                          fontSize: "18px",
+                          color: "#1f2937",
+                        }}
+                      >
+                        {stories.length}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontFamily: "'Rubik', sans-serif",
+                          fontWeight: 400,
+                          fontSize: "14px",
+                          color: "rgb(107, 114, 128)",
+                        }}
+                      >
+                        Stories
+                      </Typography>
+                    </div>
+                    <IconButton
+                      onClick={handleCreateStoryClick}
+                      sx={{
+                        width: "32px",
+                        height: "32px",
+                        color: "rgb(19, 135, 194)",
+                        "&:hover": {
+                          backgroundColor: "rgba(19, 135, 194, 0.1)",
+                        },
                       }}
                     >
-                      {stories.length}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        fontFamily: "'Rubik', sans-serif",
-                        fontWeight: 400,
-                        fontSize: "14px",
-                        color: "rgb(107, 114, 128)",
-                      }}
-                    >
-                      Stories
-                    </Typography>
+                      <AddIcon sx={{ fontSize: "20px" }} />
+                    </IconButton>
                   </div>
                 </div>
               </div>
