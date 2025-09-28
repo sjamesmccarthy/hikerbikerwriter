@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
 import { updateBookWordCount } from "./TwainStoryBuilder";
 import { Document, Packer, Paragraph, TextRun, HeadingLevel } from "docx";
+import mammoth from "mammoth";
 import {
   Typography,
   Accordion,
@@ -42,6 +43,7 @@ import MenuOpenIcon from "@mui/icons-material/MenuOpen";
 import HistoryEduIcon from "@mui/icons-material/HistoryEdu";
 import AddIcon from "@mui/icons-material/Add";
 import TimerOutlinedIcon from "@mui/icons-material/TimerOutlined";
+import FileUploadOutlinedIcon from "@mui/icons-material/FileUploadOutlined";
 
 // Define Quill types
 interface QuillInstance {
@@ -241,6 +243,14 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
   const [timerInterval, setTimerInterval] = useState<NodeJS.Timeout | null>(
     null
   );
+
+  // Import file modal state
+  const [importFileModalOpen, setImportFileModalOpen] = useState(false);
+  const [importTitle, setImportTitle] = useState("");
+  const [importType, setImportType] = useState<"story" | "chapter" | "outline">(
+    "story"
+  );
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
   const quillInitializedRef = useRef(false);
 
@@ -1670,6 +1680,126 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
     setSidebarExpandedFromIcon(false); // Reset expanded from icon state
   };
 
+  // Import file handlers
+  const handleImportFileClick = () => {
+    setImportFileModalOpen(true);
+  };
+
+  const handleImportFileModalClose = () => {
+    setImportFileModalOpen(false);
+    setImportTitle("");
+    setImportType("story");
+    setSelectedFile(null);
+  };
+
+  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      // Auto-fill title from filename (without extension)
+      const fileName = file.name.replace(/\.[^/.]+$/, "");
+      setImportTitle(fileName);
+    }
+  };
+
+  const handleImportFile = async () => {
+    if (!selectedFile || !importTitle.trim()) return;
+
+    try {
+      let content = "";
+
+      if (selectedFile.type === "text/plain") {
+        // Handle text files
+        content = await selectedFile.text();
+      } else if (selectedFile.name.endsWith(".docx")) {
+        // Handle DOCX files using mammoth.js
+        try {
+          const arrayBuffer = await selectedFile.arrayBuffer();
+          const result = await mammoth.extractRawText({ arrayBuffer });
+          content = result.value;
+
+          if (!content || content.trim().length === 0) {
+            throw new Error("No text content found in DOCX file");
+          }
+
+          // Log any messages from mammoth (warnings, etc.)
+          if (result.messages && result.messages.length > 0) {
+            console.log("Mammoth messages:", result.messages);
+          }
+        } catch (error) {
+          console.error("DOCX parsing error:", error);
+          alert(
+            "Could not extract text from DOCX file. The file may be corrupted or password-protected. Please try saving it as a new DOCX file or convert to .txt format."
+          );
+          return;
+        }
+      } else {
+        alert("Please select a .txt or .docx file");
+        return;
+      }
+
+      // Convert plain text to Quill delta format
+      const delta = {
+        ops: [
+          {
+            insert: content + "\n",
+          },
+        ],
+      };
+
+      const newItem = {
+        id: Date.now().toString(),
+        title: importTitle.trim(),
+        content: JSON.stringify(delta),
+        createdAt: new Date(),
+      };
+
+      // Add to appropriate storage based on type
+      if (importType === "story") {
+        const updatedStories = [...stories, newItem as Story];
+        setStories(updatedStories);
+        if (session?.user?.email) {
+          const storageKey = getStorageKey(
+            "stories",
+            book.id,
+            session.user.email
+          );
+          localStorage.setItem(storageKey, JSON.stringify(updatedStories));
+        }
+        addToRecentActivity("story", newItem as Story);
+      } else if (importType === "chapter") {
+        const updatedChapters = [...chapters, newItem as Chapter];
+        setChapters(updatedChapters);
+        if (session?.user?.email) {
+          const storageKey = getStorageKey(
+            "chapters",
+            book.id,
+            session.user.email
+          );
+          localStorage.setItem(storageKey, JSON.stringify(updatedChapters));
+        }
+        addToRecentActivity("chapter", newItem as Chapter);
+      } else if (importType === "outline") {
+        const updatedOutlines = [...outlines, newItem as Outline];
+        setOutlines(updatedOutlines);
+        if (session?.user?.email) {
+          const storageKey = getStorageKey(
+            "outlines",
+            book.id,
+            session.user.email
+          );
+          localStorage.setItem(storageKey, JSON.stringify(updatedOutlines));
+        }
+        addToRecentActivity("outline", newItem as Outline);
+      }
+
+      handleImportFileModalClose();
+    } catch (error) {
+      console.error("Error importing file:", error);
+      alert("Error importing file. Please try again.");
+    }
+  };
+
   const getDaysSinceBookCreation = () => {
     if (!book?.createdAt) return 0;
     const createdDate = new Date(book.createdAt);
@@ -1862,180 +1992,106 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
 
         {/* Accordion Sections - Full View */}
         {!sidebarCollapsed && (
-          <div className="flex-1 overflow-y-auto">
-            {accordionSections.map((section) => (
-              <Accordion
-                key={section.title}
-                disableGutters
-                elevation={0}
-                expanded={expandedAccordions.has(section.title)}
-                onChange={(_, isExpanded) => {
-                  const newExpanded = new Set(expandedAccordions);
-                  if (isExpanded) {
-                    newExpanded.add(section.title);
-                  } else {
-                    newExpanded.delete(section.title);
-                  }
-                  setExpandedAccordions(newExpanded);
-                  setAllAccordionsExpanded(
-                    newExpanded.size === accordionSections.length
-                  );
-                }}
-                sx={{
-                  "&:before": {
-                    display: "none",
-                  },
-                  borderBottom: "1px solid rgb(229, 231, 235)",
-                }}
-              >
-                <AccordionSummary
-                  expandIcon={<ExpandMoreIcon />}
+          <div className="flex flex-col flex-1">
+            <div className="flex-1 overflow-y-auto">
+              {accordionSections.map((section) => (
+                <Accordion
+                  key={section.title}
+                  disableGutters
+                  elevation={0}
+                  expanded={expandedAccordions.has(section.title)}
+                  onChange={(_, isExpanded) => {
+                    const newExpanded = new Set(expandedAccordions);
+                    if (isExpanded) {
+                      newExpanded.add(section.title);
+                    } else {
+                      newExpanded.delete(section.title);
+                    }
+                    setExpandedAccordions(newExpanded);
+                    setAllAccordionsExpanded(
+                      newExpanded.size === accordionSections.length
+                    );
+                  }}
                   sx={{
-                    backgroundColor: "transparent",
-                    minHeight: "56px",
-                    "&.Mui-expanded": {
-                      minHeight: "56px",
+                    "&:before": {
+                      display: "none",
                     },
-                    "& .MuiAccordionSummary-content": {
-                      margin: "12px 0",
-                      "&.Mui-expanded": {
-                        margin: "12px 0",
-                      },
-                    },
+                    borderBottom: "1px solid rgb(229, 231, 235)",
                   }}
                 >
-                  <div
-                    style={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: "8px",
+                  <AccordionSummary
+                    expandIcon={<ExpandMoreIcon />}
+                    sx={{
+                      backgroundColor: "transparent",
+                      minHeight: "56px",
+                      "&.Mui-expanded": {
+                        minHeight: "56px",
+                      },
+                      "& .MuiAccordionSummary-content": {
+                        margin: "12px 0",
+                        "&.Mui-expanded": {
+                          margin: "12px 0",
+                        },
+                      },
                     }}
                   >
-                    <IconButton
-                      component="span"
-                      size="small"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        section.createHandler();
-                      }}
-                      sx={{
-                        color: "rgb(19, 135, 194)",
-                        padding: "2px",
-                        "&:hover": {
-                          backgroundColor: "rgba(19, 135, 194, 0.1)",
-                        },
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: "8px",
                       }}
                     >
-                      <AddCircleOutlinedIcon sx={{ fontSize: "18px" }} />
-                    </IconButton>
-                    <Typography
-                      sx={{
-                        fontFamily: "'Rubik', sans-serif",
-                        fontWeight: 500,
-                        fontSize: "18px",
-                        color: "#1f2937",
-                        letterSpacing: "0.5px",
-                      }}
-                    >
-                      {section.title}
-                    </Typography>
-                  </div>
-                </AccordionSummary>
-                <AccordionDetails
-                  sx={{
-                    padding: "16px 24px",
-                    backgroundColor: "rgb(249, 250, 251)",
-                  }}
-                >
-                  {section.title === "IDEAS" && ideas.length > 0 ? (
-                    <div className="space-y-3">
-                      {ideas.map((idea) => (
-                        <div
-                          key={idea.id}
-                          className="flex items-start gap-3 p-3 bg-white rounded-md border border-gray-200 cursor-pointer hover:bg-gray-50"
-                          onClick={() => handleEditIdea(idea)}
-                        >
-                          <BatchPredictionIcon
-                            sx={{
-                              fontSize: 40,
-                              color: "rgb(107, 114, 128)",
-                            }}
-                          />
-                          <div className="flex-1">
-                            <Typography
-                              variant="body2"
-                              sx={{
-                                fontFamily: "'Rubik', sans-serif",
-                                fontWeight: 500,
-                                fontSize: "14px",
-                                color: "#1f2937",
-                                lineHeight: 1.4,
-                              }}
-                            >
-                              {idea.title.length > 100
-                                ? `${idea.title.substring(0, 100)}...`
-                                : idea.title}
-                            </Typography>
-                            <div className="flex items-center justify-between">
-                              <Typography
-                                variant="body2"
-                                sx={{
-                                  fontFamily: "'Rubik', sans-serif",
-                                  fontWeight: 400,
-                                  fontSize: "12px",
-                                  color: "rgb(107, 114, 128)",
-                                  lineHeight: 1.4,
-                                  marginTop: "4px",
-                                }}
-                              >
-                                Created:{" "}
-                                {new Date(idea.createdAt).toLocaleDateString()}
-                              </Typography>
-                              <IconButton
-                                size="small"
-                                onClick={(e) => handleDeleteIdea(idea.id, e)}
-                                sx={{
-                                  color: "rgb(156, 163, 175)",
-                                  padding: "2px",
-                                  "&:hover": {
-                                    color: "rgb(239, 68, 68)",
-                                    backgroundColor: "rgba(239, 68, 68, 0.1)",
-                                  },
-                                }}
-                              >
-                                <DeleteOutlinedIcon sx={{ fontSize: "14px" }} />
-                              </IconButton>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
+                      <IconButton
+                        component="span"
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          section.createHandler();
+                        }}
+                        sx={{
+                          color: "rgb(19, 135, 194)",
+                          padding: "2px",
+                          "&:hover": {
+                            backgroundColor: "rgba(19, 135, 194, 0.1)",
+                          },
+                        }}
+                      >
+                        <AddCircleOutlinedIcon sx={{ fontSize: "18px" }} />
+                      </IconButton>
+                      <Typography
+                        sx={{
+                          fontFamily: "'Rubik', sans-serif",
+                          fontWeight: 500,
+                          fontSize: "18px",
+                          color: "#1f2937",
+                          letterSpacing: "0.5px",
+                        }}
+                      >
+                        {section.title}
+                      </Typography>
                     </div>
-                  ) : section.title === "CHARACTERS" &&
-                    characters.length > 0 ? (
-                    <div className="space-y-3">
-                      {characters.map((character) => {
-                        const styling = getCharacterStyling(character.gender);
-                        return (
+                  </AccordionSummary>
+                  <AccordionDetails
+                    sx={{
+                      padding: "16px 24px",
+                      backgroundColor: "rgb(249, 250, 251)",
+                    }}
+                  >
+                    {section.title === "IDEAS" && ideas.length > 0 ? (
+                      <div className="space-y-3">
+                        {ideas.map((idea) => (
                           <div
-                            key={character.id}
-                            className="flex items-start gap-3 p-3 rounded-md border border-gray-200 cursor-pointer hover:opacity-80"
-                            style={{ backgroundColor: styling.backgroundColor }}
-                            onClick={() => handleEditCharacter(character)}
+                            key={idea.id}
+                            className="flex items-start gap-3 p-3 bg-white rounded-md border border-gray-200 cursor-pointer hover:bg-gray-50"
+                            onClick={() => handleEditIdea(idea)}
                           >
-                            {character.avatar ? (
-                              <img
-                                src={character.avatar}
-                                alt="Avatar"
-                                style={{
-                                  width: "40px",
-                                  height: "40px",
-                                  borderRadius: "50%",
-                                  objectFit: "cover",
-                                }}
-                              />
-                            ) : (
-                              styling.icon
-                            )}
+                            <BatchPredictionIcon
+                              sx={{
+                                fontSize: 40,
+                                color: "rgb(107, 114, 128)",
+                              }}
+                            />
                             <div className="flex-1">
                               <Typography
                                 variant="body2"
@@ -2047,141 +2103,30 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                                   lineHeight: 1.4,
                                 }}
                               >
-                                {character.name}
+                                {idea.title.length > 100
+                                  ? `${idea.title.substring(0, 100)}...`
+                                  : idea.title}
                               </Typography>
-                              {character.gender && (
-                                <div className="flex items-center justify-between">
-                                  <Typography
-                                    variant="body2"
-                                    sx={{
-                                      fontFamily: "'Rubik', sans-serif",
-                                      fontWeight: 400,
-                                      fontSize: "12px",
-                                      color: "rgb(107, 114, 128)",
-                                      lineHeight: 1.4,
-                                      marginTop: "4px",
-                                    }}
-                                  >
-                                    Gender: {character.gender}
-                                  </Typography>
-                                  <IconButton
-                                    size="small"
-                                    onClick={(e) =>
-                                      handleDeleteCharacter(character.id, e)
-                                    }
-                                    sx={{
-                                      color: "rgb(156, 163, 175)",
-                                      padding: "2px",
-                                      "&:hover": {
-                                        color: "rgb(239, 68, 68)",
-                                        backgroundColor:
-                                          "rgba(239, 68, 68, 0.1)",
-                                      },
-                                    }}
-                                  >
-                                    <DeleteOutlinedIcon
-                                      sx={{ fontSize: "14px" }}
-                                    />
-                                  </IconButton>
-                                </div>
-                              )}
-                              {!character.gender && (
-                                <div className="flex items-center justify-end mt-1">
-                                  <IconButton
-                                    size="small"
-                                    onClick={(e) =>
-                                      handleDeleteCharacter(character.id, e)
-                                    }
-                                    sx={{
-                                      color: "rgb(156, 163, 175)",
-                                      padding: "2px",
-                                      "&:hover": {
-                                        color: "rgb(239, 68, 68)",
-                                        backgroundColor:
-                                          "rgba(239, 68, 68, 0.1)",
-                                      },
-                                    }}
-                                  >
-                                    <DeleteOutlinedIcon
-                                      sx={{ fontSize: "14px" }}
-                                    />
-                                  </IconButton>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  ) : section.title === "OUTLINE" && outlines.length > 0 ? (
-                    <div className="space-y-3">
-                      {outlines.map((outline) => (
-                        <div
-                          key={outline.id}
-                          className="flex items-start gap-3 p-3 bg-white rounded-md border border-gray-200 cursor-pointer hover:bg-gray-50"
-                          onClick={() => handleEditOutline(outline)}
-                        >
-                          <ListAltIcon
-                            sx={{
-                              fontSize: 40,
-                              color: "rgb(107, 114, 128)",
-                            }}
-                          />
-                          <div className="flex-1">
-                            <Typography
-                              variant="body2"
-                              sx={{
-                                fontFamily: "'Rubik', sans-serif",
-                                fontWeight: 500,
-                                fontSize: "14px",
-                                color: "#1f2937",
-                                lineHeight: 1.4,
-                              }}
-                            >
-                              {outline.title}
-                            </Typography>
-                            <div className="flex items-center justify-between">
-                              <Typography
-                                variant="body2"
-                                sx={{
-                                  fontFamily: "'Rubik', sans-serif",
-                                  fontWeight: 400,
-                                  fontSize: "12px",
-                                  color: "rgb(107, 114, 128)",
-                                  lineHeight: 1.4,
-                                  marginTop: "4px",
-                                }}
-                              >
-                                Created:{" "}
-                                {new Date(
-                                  outline.createdAt
-                                ).toLocaleDateString()}
-                              </Typography>
-                              <div className="flex items-center gap-1">
-                                <IconButton
-                                  size="small"
-                                  onClick={(e) =>
-                                    handleDownloadOutline(outline, e)
-                                  }
+                              <div className="flex items-center justify-between">
+                                <Typography
+                                  variant="body2"
                                   sx={{
-                                    color: "rgb(156, 163, 175)",
-                                    padding: "2px",
-                                    "&:hover": {
-                                      color: "rgb(59, 130, 246)",
-                                      backgroundColor:
-                                        "rgba(59, 130, 246, 0.1)",
-                                    },
+                                    fontFamily: "'Rubik', sans-serif",
+                                    fontWeight: 400,
+                                    fontSize: "12px",
+                                    color: "rgb(107, 114, 128)",
+                                    lineHeight: 1.4,
+                                    marginTop: "4px",
                                   }}
                                 >
-                                  <BrowserUpdatedOutlinedIcon
-                                    sx={{ fontSize: "14px" }}
-                                  />
-                                </IconButton>
+                                  Created:{" "}
+                                  {new Date(
+                                    idea.createdAt
+                                  ).toLocaleDateString()}
+                                </Typography>
                                 <IconButton
                                   size="small"
-                                  onClick={(e) =>
-                                    handleDeleteOutline(outline.id, e)
-                                  }
+                                  onClick={(e) => handleDeleteIdea(idea.id, e)}
                                   sx={{
                                     color: "rgb(156, 163, 175)",
                                     padding: "2px",
@@ -2198,160 +2143,423 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                               </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : section.title === "STORIES" && stories.length > 0 ? (
-                    <div className="space-y-3">
-                      {stories.map((story) => (
-                        <div
-                          key={story.id}
-                          className="flex items-start gap-3 p-3 bg-white rounded-md border border-gray-200 cursor-pointer hover:bg-gray-50"
-                          onClick={() => handleEditStory(story)}
-                        >
-                          <HistoryEduIcon
-                            sx={{
-                              fontSize: 40,
-                              color: "rgb(107, 114, 128)",
-                            }}
-                          />
-                          <div className="flex-1">
-                            <Typography
-                              variant="body2"
-                              sx={{
-                                fontFamily: "'Rubik', sans-serif",
-                                fontWeight: 500,
-                                fontSize: "14px",
-                                color: "#1f2937",
-                                lineHeight: 1.4,
+                        ))}
+                      </div>
+                    ) : section.title === "CHARACTERS" &&
+                      characters.length > 0 ? (
+                      <div className="space-y-3">
+                        {characters.map((character) => {
+                          const styling = getCharacterStyling(character.gender);
+                          return (
+                            <div
+                              key={character.id}
+                              className="flex items-start gap-3 p-3 rounded-md border border-gray-200 cursor-pointer hover:opacity-80"
+                              style={{
+                                backgroundColor: styling.backgroundColor,
                               }}
+                              onClick={() => handleEditCharacter(character)}
                             >
-                              {story.title}
-                            </Typography>
-                            <div className="flex items-center justify-between">
+                              {character.avatar ? (
+                                <img
+                                  src={character.avatar}
+                                  alt="Avatar"
+                                  style={{
+                                    width: "40px",
+                                    height: "40px",
+                                    borderRadius: "50%",
+                                    objectFit: "cover",
+                                  }}
+                                />
+                              ) : (
+                                styling.icon
+                              )}
+                              <div className="flex-1">
+                                <Typography
+                                  variant="body2"
+                                  sx={{
+                                    fontFamily: "'Rubik', sans-serif",
+                                    fontWeight: 500,
+                                    fontSize: "14px",
+                                    color: "#1f2937",
+                                    lineHeight: 1.4,
+                                  }}
+                                >
+                                  {character.name}
+                                </Typography>
+                                {character.gender && (
+                                  <div className="flex items-center justify-between">
+                                    <Typography
+                                      variant="body2"
+                                      sx={{
+                                        fontFamily: "'Rubik', sans-serif",
+                                        fontWeight: 400,
+                                        fontSize: "12px",
+                                        color: "rgb(107, 114, 128)",
+                                        lineHeight: 1.4,
+                                        marginTop: "4px",
+                                      }}
+                                    >
+                                      Gender: {character.gender}
+                                    </Typography>
+                                    <IconButton
+                                      size="small"
+                                      onClick={(e) =>
+                                        handleDeleteCharacter(character.id, e)
+                                      }
+                                      sx={{
+                                        color: "rgb(156, 163, 175)",
+                                        padding: "2px",
+                                        "&:hover": {
+                                          color: "rgb(239, 68, 68)",
+                                          backgroundColor:
+                                            "rgba(239, 68, 68, 0.1)",
+                                        },
+                                      }}
+                                    >
+                                      <DeleteOutlinedIcon
+                                        sx={{ fontSize: "14px" }}
+                                      />
+                                    </IconButton>
+                                  </div>
+                                )}
+                                {!character.gender && (
+                                  <div className="flex items-center justify-end mt-1">
+                                    <IconButton
+                                      size="small"
+                                      onClick={(e) =>
+                                        handleDeleteCharacter(character.id, e)
+                                      }
+                                      sx={{
+                                        color: "rgb(156, 163, 175)",
+                                        padding: "2px",
+                                        "&:hover": {
+                                          color: "rgb(239, 68, 68)",
+                                          backgroundColor:
+                                            "rgba(239, 68, 68, 0.1)",
+                                        },
+                                      }}
+                                    >
+                                      <DeleteOutlinedIcon
+                                        sx={{ fontSize: "14px" }}
+                                      />
+                                    </IconButton>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    ) : section.title === "OUTLINE" && outlines.length > 0 ? (
+                      <div className="space-y-3">
+                        {outlines.map((outline) => (
+                          <div
+                            key={outline.id}
+                            className="flex items-start gap-3 p-3 bg-white rounded-md border border-gray-200 cursor-pointer hover:bg-gray-50"
+                            onClick={() => handleEditOutline(outline)}
+                          >
+                            <ListAltIcon
+                              sx={{
+                                fontSize: 40,
+                                color: "rgb(107, 114, 128)",
+                              }}
+                            />
+                            <div className="flex-1">
                               <Typography
                                 variant="body2"
                                 sx={{
                                   fontFamily: "'Rubik', sans-serif",
-                                  fontWeight: 400,
-                                  fontSize: "12px",
-                                  color: "rgb(107, 114, 128)",
+                                  fontWeight: 500,
+                                  fontSize: "14px",
+                                  color: "#1f2937",
                                   lineHeight: 1.4,
-                                  marginTop: "4px",
                                 }}
                               >
-                                Created:{" "}
-                                {new Date(story.createdAt).toLocaleDateString()}
+                                {outline.title}
                               </Typography>
-                              <div className="flex items-center gap-1">
-                                <IconButton
-                                  size="small"
-                                  onClick={(e) => handleDownloadStory(story, e)}
+                              <div className="flex items-center justify-between">
+                                <Typography
+                                  variant="body2"
                                   sx={{
-                                    color: "rgb(156, 163, 175)",
-                                    padding: "2px",
-                                    "&:hover": {
-                                      color: "rgb(59, 130, 246)",
-                                      backgroundColor:
-                                        "rgba(59, 130, 246, 0.1)",
-                                    },
+                                    fontFamily: "'Rubik', sans-serif",
+                                    fontWeight: 400,
+                                    fontSize: "12px",
+                                    color: "rgb(107, 114, 128)",
+                                    lineHeight: 1.4,
+                                    marginTop: "4px",
                                   }}
                                 >
-                                  <BrowserUpdatedOutlinedIcon
-                                    sx={{ fontSize: 16 }}
-                                  />
-                                </IconButton>
-                                <IconButton
-                                  size="small"
-                                  onClick={(e) =>
-                                    handleDeleteStory(story.id, e)
-                                  }
-                                  sx={{
-                                    color: "rgb(156, 163, 175)",
-                                    padding: "2px",
-                                    "&:hover": {
-                                      color: "rgb(239, 68, 68)",
-                                      backgroundColor: "rgba(239, 68, 68, 0.1)",
-                                    },
-                                  }}
-                                >
-                                  <DeleteOutlinedIcon sx={{ fontSize: 16 }} />
-                                </IconButton>
+                                  Created:{" "}
+                                  {new Date(
+                                    outline.createdAt
+                                  ).toLocaleDateString()}
+                                </Typography>
+                                <div className="flex items-center gap-1">
+                                  <IconButton
+                                    size="small"
+                                    onClick={(e) =>
+                                      handleDownloadOutline(outline, e)
+                                    }
+                                    sx={{
+                                      color: "rgb(156, 163, 175)",
+                                      padding: "2px",
+                                      "&:hover": {
+                                        color: "rgb(59, 130, 246)",
+                                        backgroundColor:
+                                          "rgba(59, 130, 246, 0.1)",
+                                      },
+                                    }}
+                                  >
+                                    <BrowserUpdatedOutlinedIcon
+                                      sx={{ fontSize: "14px" }}
+                                    />
+                                  </IconButton>
+                                  <IconButton
+                                    size="small"
+                                    onClick={(e) =>
+                                      handleDeleteOutline(outline.id, e)
+                                    }
+                                    sx={{
+                                      color: "rgb(156, 163, 175)",
+                                      padding: "2px",
+                                      "&:hover": {
+                                        color: "rgb(239, 68, 68)",
+                                        backgroundColor:
+                                          "rgba(239, 68, 68, 0.1)",
+                                      },
+                                    }}
+                                  >
+                                    <DeleteOutlinedIcon
+                                      sx={{ fontSize: "14px" }}
+                                    />
+                                  </IconButton>
+                                </div>
                               </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : section.title === "CHAPTERS" && chapters.length > 0 ? (
-                    <div className="space-y-3">
-                      {chapters.map((chapter) => (
-                        <div
-                          key={chapter.id}
-                          className="flex items-start gap-3 p-3 bg-white rounded-md border border-gray-200 cursor-pointer hover:bg-gray-50"
-                          onClick={() => handleEditChapter(chapter)}
-                        >
-                          <AutoStoriesIcon
-                            sx={{
-                              fontSize: 40,
-                              color: "rgb(107, 114, 128)",
-                            }}
-                          />
-                          <div className="flex-1">
-                            <Typography
-                              variant="body2"
+                        ))}
+                      </div>
+                    ) : section.title === "STORIES" && stories.length > 0 ? (
+                      <div className="space-y-3">
+                        {stories.map((story) => (
+                          <div
+                            key={story.id}
+                            className="flex items-start gap-3 p-3 bg-white rounded-md border border-gray-200 cursor-pointer hover:bg-gray-50"
+                            onClick={() => handleEditStory(story)}
+                          >
+                            <HistoryEduIcon
                               sx={{
-                                fontFamily: "'Rubik', sans-serif",
-                                fontWeight: 500,
-                                fontSize: "14px",
-                                color: "#1f2937",
-                                lineHeight: 1.4,
+                                fontSize: 40,
+                                color: "rgb(107, 114, 128)",
                               }}
-                            >
-                              {chapter.title}
-                            </Typography>
-                            <div className="flex items-center justify-between">
+                            />
+                            <div className="flex-1">
                               <Typography
                                 variant="body2"
                                 sx={{
                                   fontFamily: "'Rubik', sans-serif",
-                                  fontWeight: 400,
-                                  fontSize: "12px",
-                                  color: "rgb(107, 114, 128)",
+                                  fontWeight: 500,
+                                  fontSize: "14px",
+                                  color: "#1f2937",
                                   lineHeight: 1.4,
-                                  marginTop: "4px",
                                 }}
                               >
-                                Created:{" "}
-                                {new Date(
-                                  chapter.createdAt
-                                ).toLocaleDateString()}
+                                {story.title}
                               </Typography>
-                              <div className="flex items-center gap-1">
-                                <IconButton
-                                  size="small"
-                                  onClick={(e) =>
-                                    handleDownloadChapter(chapter, e)
-                                  }
+                              <div className="flex items-center justify-between">
+                                <Typography
+                                  variant="body2"
                                   sx={{
-                                    color: "rgb(156, 163, 175)",
-                                    padding: "2px",
-                                    "&:hover": {
-                                      color: "rgb(59, 130, 246)",
-                                      backgroundColor:
-                                        "rgba(59, 130, 246, 0.1)",
-                                    },
+                                    fontFamily: "'Rubik', sans-serif",
+                                    fontWeight: 400,
+                                    fontSize: "12px",
+                                    color: "rgb(107, 114, 128)",
+                                    lineHeight: 1.4,
+                                    marginTop: "4px",
                                   }}
                                 >
-                                  <BrowserUpdatedOutlinedIcon
-                                    sx={{ fontSize: "14px" }}
-                                  />
-                                </IconButton>
+                                  Created:{" "}
+                                  {new Date(
+                                    story.createdAt
+                                  ).toLocaleDateString()}
+                                </Typography>
+                                <div className="flex items-center gap-1">
+                                  <IconButton
+                                    size="small"
+                                    onClick={(e) =>
+                                      handleDownloadStory(story, e)
+                                    }
+                                    sx={{
+                                      color: "rgb(156, 163, 175)",
+                                      padding: "2px",
+                                      "&:hover": {
+                                        color: "rgb(59, 130, 246)",
+                                        backgroundColor:
+                                          "rgba(59, 130, 246, 0.1)",
+                                      },
+                                    }}
+                                  >
+                                    <BrowserUpdatedOutlinedIcon
+                                      sx={{ fontSize: 16 }}
+                                    />
+                                  </IconButton>
+                                  <IconButton
+                                    size="small"
+                                    onClick={(e) =>
+                                      handleDeleteStory(story.id, e)
+                                    }
+                                    sx={{
+                                      color: "rgb(156, 163, 175)",
+                                      padding: "2px",
+                                      "&:hover": {
+                                        color: "rgb(239, 68, 68)",
+                                        backgroundColor:
+                                          "rgba(239, 68, 68, 0.1)",
+                                      },
+                                    }}
+                                  >
+                                    <DeleteOutlinedIcon sx={{ fontSize: 16 }} />
+                                  </IconButton>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : section.title === "CHAPTERS" && chapters.length > 0 ? (
+                      <div className="space-y-3">
+                        {chapters.map((chapter) => (
+                          <div
+                            key={chapter.id}
+                            className="flex items-start gap-3 p-3 bg-white rounded-md border border-gray-200 cursor-pointer hover:bg-gray-50"
+                            onClick={() => handleEditChapter(chapter)}
+                          >
+                            <AutoStoriesIcon
+                              sx={{
+                                fontSize: 40,
+                                color: "rgb(107, 114, 128)",
+                              }}
+                            />
+                            <div className="flex-1">
+                              <Typography
+                                variant="body2"
+                                sx={{
+                                  fontFamily: "'Rubik', sans-serif",
+                                  fontWeight: 500,
+                                  fontSize: "14px",
+                                  color: "#1f2937",
+                                  lineHeight: 1.4,
+                                }}
+                              >
+                                {chapter.title}
+                              </Typography>
+                              <div className="flex items-center justify-between">
+                                <Typography
+                                  variant="body2"
+                                  sx={{
+                                    fontFamily: "'Rubik', sans-serif",
+                                    fontWeight: 400,
+                                    fontSize: "12px",
+                                    color: "rgb(107, 114, 128)",
+                                    lineHeight: 1.4,
+                                    marginTop: "4px",
+                                  }}
+                                >
+                                  Created:{" "}
+                                  {new Date(
+                                    chapter.createdAt
+                                  ).toLocaleDateString()}
+                                </Typography>
+                                <div className="flex items-center gap-1">
+                                  <IconButton
+                                    size="small"
+                                    onClick={(e) =>
+                                      handleDownloadChapter(chapter, e)
+                                    }
+                                    sx={{
+                                      color: "rgb(156, 163, 175)",
+                                      padding: "2px",
+                                      "&:hover": {
+                                        color: "rgb(59, 130, 246)",
+                                        backgroundColor:
+                                          "rgba(59, 130, 246, 0.1)",
+                                      },
+                                    }}
+                                  >
+                                    <BrowserUpdatedOutlinedIcon
+                                      sx={{ fontSize: "14px" }}
+                                    />
+                                  </IconButton>
+                                  <IconButton
+                                    size="small"
+                                    onClick={(e) =>
+                                      handleDeleteChapter(chapter.id, e)
+                                    }
+                                    sx={{
+                                      color: "rgb(156, 163, 175)",
+                                      padding: "2px",
+                                      "&:hover": {
+                                        color: "rgb(239, 68, 68)",
+                                        backgroundColor:
+                                          "rgba(239, 68, 68, 0.1)",
+                                      },
+                                    }}
+                                  >
+                                    <DeleteOutlinedIcon
+                                      sx={{ fontSize: "14px" }}
+                                    />
+                                  </IconButton>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : section.title === "PARTS" && parts.length > 0 ? (
+                      <div className="space-y-3">
+                        {parts.map((part) => (
+                          <div
+                            key={part.id}
+                            className="flex items-start gap-3 p-3 bg-white rounded-md border border-gray-200 cursor-pointer hover:bg-gray-50"
+                            onClick={() => handleEditPart(part)}
+                          >
+                            <FolderCopyIcon
+                              sx={{
+                                fontSize: 40,
+                                color: "rgb(107, 114, 128)",
+                              }}
+                            />
+                            <div className="flex-1">
+                              <Typography
+                                variant="body2"
+                                sx={{
+                                  fontFamily: "'Rubik', sans-serif",
+                                  fontWeight: 500,
+                                  fontSize: "14px",
+                                  color: "#1f2937",
+                                  lineHeight: 1.4,
+                                }}
+                              >
+                                {part.title}
+                              </Typography>
+                              <div className="flex items-center justify-between">
+                                <Typography
+                                  variant="body2"
+                                  sx={{
+                                    fontFamily: "'Rubik', sans-serif",
+                                    fontWeight: 400,
+                                    fontSize: "12px",
+                                    color: "rgb(107, 114, 128)",
+                                    lineHeight: 1.4,
+                                    marginTop: "4px",
+                                  }}
+                                >
+                                  Chapters: {(part.chapterIds || []).length},
+                                  Stories: {(part.storyIds || []).length}
+                                </Typography>
                                 <IconButton
                                   size="small"
-                                  onClick={(e) =>
-                                    handleDeleteChapter(chapter.id, e)
-                                  }
+                                  onClick={(e) => handleDeletePart(part.id, e)}
                                   sx={{
                                     color: "rgb(156, 163, 175)",
                                     padding: "2px",
@@ -2368,87 +2576,53 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                               </div>
                             </div>
                           </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : section.title === "PARTS" && parts.length > 0 ? (
-                    <div className="space-y-3">
-                      {parts.map((part) => (
-                        <div
-                          key={part.id}
-                          className="flex items-start gap-3 p-3 bg-white rounded-md border border-gray-200 cursor-pointer hover:bg-gray-50"
-                          onClick={() => handleEditPart(part)}
-                        >
-                          <FolderCopyIcon
-                            sx={{
-                              fontSize: 40,
-                              color: "rgb(107, 114, 128)",
-                            }}
-                          />
-                          <div className="flex-1">
-                            <Typography
-                              variant="body2"
-                              sx={{
-                                fontFamily: "'Rubik', sans-serif",
-                                fontWeight: 500,
-                                fontSize: "14px",
-                                color: "#1f2937",
-                                lineHeight: 1.4,
-                              }}
-                            >
-                              {part.title}
-                            </Typography>
-                            <div className="flex items-center justify-between">
-                              <Typography
-                                variant="body2"
-                                sx={{
-                                  fontFamily: "'Rubik', sans-serif",
-                                  fontWeight: 400,
-                                  fontSize: "12px",
-                                  color: "rgb(107, 114, 128)",
-                                  lineHeight: 1.4,
-                                  marginTop: "4px",
-                                }}
-                              >
-                                Chapters: {(part.chapterIds || []).length},
-                                Stories: {(part.storyIds || []).length}
-                              </Typography>
-                              <IconButton
-                                size="small"
-                                onClick={(e) => handleDeletePart(part.id, e)}
-                                sx={{
-                                  color: "rgb(156, 163, 175)",
-                                  padding: "2px",
-                                  "&:hover": {
-                                    color: "rgb(239, 68, 68)",
-                                    backgroundColor: "rgba(239, 68, 68, 0.1)",
-                                  },
-                                }}
-                              >
-                                <DeleteOutlinedIcon sx={{ fontSize: "14px" }} />
-                              </IconButton>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        fontFamily: "'Rubik', sans-serif",
-                        fontWeight: 400,
-                        fontSize: "13px",
-                        color: "rgb(107, 114, 128)",
-                        lineHeight: 1.5,
-                      }}
-                    >
-                      {section.content}
-                    </Typography>
-                  )}
-                </AccordionDetails>
-              </Accordion>
-            ))}
+                        ))}
+                      </div>
+                    ) : (
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontFamily: "'Rubik', sans-serif",
+                          fontWeight: 400,
+                          fontSize: "13px",
+                          color: "rgb(107, 114, 128)",
+                          lineHeight: 1.5,
+                        }}
+                      >
+                        {section.content}
+                      </Typography>
+                    )}
+                  </AccordionDetails>
+                </Accordion>
+              ))}
+            </div>
+
+            {/* Import File Button - Fixed at Bottom */}
+            <div className="border-t border-gray-200 p-4">
+              <div
+                className="flex items-center gap-3 p-3 bg-white rounded-md border border-gray-200 cursor-pointer hover:bg-gray-50"
+                onClick={handleImportFileClick}
+              >
+                <FileUploadOutlinedIcon
+                  sx={{
+                    fontSize: 24,
+                    color: "rgb(19, 135, 194)",
+                  }}
+                />
+                <Typography
+                  variant="body2"
+                  sx={{
+                    fontFamily: "'Rubik', sans-serif",
+                    fontWeight: 500,
+                    fontSize: "14px",
+                    color: "#1f2937",
+                    lineHeight: 1.4,
+                  }}
+                >
+                  Import DOCX or TXT
+                </Typography>
+              </div>
+            </div>
           </div>
         )}
 
@@ -2565,6 +2739,48 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                 </div>
               );
             })}
+
+            {/* Import File Button - At the bottom */}
+            <div className="mt-auto mb-4">
+              <Tooltip
+                title="Import File - Upload DOCX or Text files to add to your project"
+                placement="right"
+                arrow
+                slotProps={{
+                  tooltip: {
+                    sx: {
+                      backgroundColor: "black !important",
+                      color: "white !important",
+                      fontSize: "16px !important",
+                      fontWeight: 200,
+                      fontFamily: "'Rubik', sans-serif",
+                      padding: "16px !important",
+                      maxWidth: "300px",
+                    },
+                  },
+                  arrow: {
+                    sx: {
+                      color: "black !important",
+                    },
+                  },
+                }}
+              >
+                <IconButton
+                  onClick={handleImportFileClick}
+                  sx={{
+                    color: "rgb(107, 114, 128)",
+                    padding: "8px",
+                    borderRadius: "8px",
+                    "&:hover": {
+                      backgroundColor: "rgba(107, 114, 128, 0.1)",
+                      color: "rgb(19, 135, 194)",
+                    },
+                  }}
+                >
+                  <FileUploadOutlinedIcon sx={{ fontSize: 24 }} />
+                </IconButton>
+              </Tooltip>
+            </div>
           </div>
         )}
       </div>
@@ -3582,12 +3798,13 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
           <Box
             sx={{
               position: "absolute",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%, -50%)",
-              width: 500,
+              top: { xs: 0, sm: "50%" },
+              left: { xs: 0, sm: "50%" },
+              transform: { xs: "none", sm: "translate(-50%, -50%)" },
+              width: { xs: "100%", sm: 500 },
+              height: { xs: "100vh", sm: "auto" },
               bgcolor: "background.paper",
-              borderRadius: 3,
+              borderRadius: { xs: 0, sm: 3 },
               overflow: "hidden",
               boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
             }}
@@ -3705,13 +3922,14 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
           <Box
             sx={{
               position: "absolute",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%, -50%)",
-              width: 600,
-              maxHeight: "80vh",
+              top: { xs: 0, sm: "50%" },
+              left: { xs: 0, sm: "50%" },
+              transform: { xs: "none", sm: "translate(-50%, -50%)" },
+              width: { xs: "100%", sm: 600 },
+              height: { xs: "100vh", sm: "auto" },
+              maxHeight: { xs: "100vh", sm: "80vh" },
               bgcolor: "background.paper",
-              borderRadius: 3,
+              borderRadius: { xs: 0, sm: 3 },
               overflow: "hidden",
               boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
             }}
@@ -3938,12 +4156,13 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
           <Box
             sx={{
               position: "absolute",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%, -50%)",
-              width: 500,
+              top: { xs: 0, sm: "50%" },
+              left: { xs: 0, sm: "50%" },
+              transform: { xs: "none", sm: "translate(-50%, -50%)" },
+              width: { xs: "100%", sm: 500 },
+              height: { xs: "100vh", sm: "auto" },
               bgcolor: "background.paper",
-              borderRadius: 3,
+              borderRadius: { xs: 0, sm: 3 },
               overflow: "hidden",
               boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
             }}
@@ -4050,12 +4269,13 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
           <Box
             sx={{
               position: "absolute",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%, -50%)",
-              width: 500,
+              top: { xs: 0, sm: "50%" },
+              left: { xs: 0, sm: "50%" },
+              transform: { xs: "none", sm: "translate(-50%, -50%)" },
+              width: { xs: "100%", sm: 500 },
+              height: { xs: "100vh", sm: "auto" },
               bgcolor: "background.paper",
-              borderRadius: 3,
+              borderRadius: { xs: 0, sm: 3 },
               overflow: "hidden",
               boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
             }}
@@ -4162,12 +4382,13 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
           <Box
             sx={{
               position: "absolute",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%, -50%)",
-              width: 500,
+              top: { xs: 0, sm: "50%" },
+              left: { xs: 0, sm: "50%" },
+              transform: { xs: "none", sm: "translate(-50%, -50%)" },
+              width: { xs: "100%", sm: 500 },
+              height: { xs: "100vh", sm: "auto" },
               bgcolor: "background.paper",
-              borderRadius: 3,
+              borderRadius: { xs: 0, sm: 3 },
               overflow: "hidden",
               boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
             }}
@@ -4467,6 +4688,202 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                   }}
                 >
                   Start Timer
+                </Button>
+              </Box>
+            </Box>
+          </Box>
+        </Modal>
+
+        {/* Import File Modal */}
+        <Modal
+          open={importFileModalOpen}
+          onClose={handleImportFileModalClose}
+          aria-labelledby="import-file-modal-title"
+        >
+          <Box
+            sx={{
+              position: "absolute",
+              top: { xs: 0, sm: "50%" },
+              left: { xs: 0, sm: "50%" },
+              transform: { xs: "none", sm: "translate(-50%, -50%)" },
+              width: { xs: "100%", sm: 500 },
+              height: { xs: "100vh", sm: "auto" },
+              bgcolor: "background.paper",
+              borderRadius: { xs: 0, sm: 3 },
+              overflow: "hidden",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
+            }}
+          >
+            {/* Modal header */}
+            <Box
+              sx={{
+                backgroundColor: "rgb(38, 52, 63)",
+                color: "white",
+                p: 2,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <Typography
+                id="import-file-modal-title"
+                variant="h6"
+                sx={{
+                  fontFamily: "'Rubik', sans-serif",
+                  fontWeight: 500,
+                }}
+              >
+                Import File
+              </Typography>
+              <IconButton
+                onClick={handleImportFileModalClose}
+                size="small"
+                sx={{ color: "white" }}
+              >
+                <CloseIcon />
+              </IconButton>
+            </Box>
+
+            {/* Modal content */}
+            <Box sx={{ p: 4 }}>
+              {/* Light green outlined container with centered icon and label */}
+              <Box
+                sx={{
+                  border: "2px solid #4ade80",
+                  borderRadius: 2,
+                  p: 4,
+                  mb: 3,
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  textAlign: "center",
+                  backgroundColor: "rgba(74, 222, 128, 0.05)",
+                }}
+              >
+                <FileUploadOutlinedIcon
+                  sx={{
+                    fontSize: 48,
+                    color: "#16a34a",
+                    mb: 2,
+                  }}
+                />
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontFamily: "'Rubik', sans-serif",
+                    fontWeight: 500,
+                    color: "#16a34a",
+                    mb: 2,
+                  }}
+                >
+                  Import File (DOCX or Text)
+                </Typography>
+
+                {/* Custom styled file input */}
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                  }}
+                >
+                  <Button
+                    component="label"
+                    variant="outlined"
+                    size="small"
+                    sx={{
+                      color: "#16a34a",
+                      borderColor: "#16a34a",
+                      fontSize: "12px",
+                      px: 2,
+                      py: 1,
+                      textTransform: "none",
+                      fontFamily: "'Rubik', sans-serif",
+                      "&:hover": {
+                        borderColor: "#15803d",
+                        backgroundColor: "rgba(74, 222, 128, 0.1)",
+                      },
+                    }}
+                  >
+                    {selectedFile ? selectedFile.name : "Choose File"}
+                    <input
+                      type="file"
+                      accept=".docx,.txt"
+                      onChange={handleFileUpload}
+                      style={{ display: "none" }}
+                    />
+                  </Button>
+                </Box>
+              </Box>
+
+              <TextField
+                fullWidth
+                label="Title"
+                value={importTitle}
+                onChange={(e) => setImportTitle(e.target.value)}
+                variant="outlined"
+                sx={{ mb: 3 }}
+              />
+
+              <FormControl fullWidth sx={{ mb: 4 }}>
+                <InputLabel>Add To</InputLabel>
+                <Select
+                  value={importType}
+                  label="Add To"
+                  onChange={(e) =>
+                    setImportType(
+                      e.target.value as "story" | "chapter" | "outline"
+                    )
+                  }
+                >
+                  <MenuItem value="story">Story</MenuItem>
+                  <MenuItem value="chapter">Chapter</MenuItem>
+                  <MenuItem value="outline">Outline</MenuItem>
+                </Select>
+              </FormControl>
+
+              <Box
+                sx={{
+                  display: "flex",
+                  gap: 2,
+                  justifyContent: "space-between",
+                }}
+              >
+                <Button
+                  onClick={handleImportFileModalClose}
+                  variant="outlined"
+                  sx={{
+                    flex: 1,
+                    boxShadow: "none",
+                    "&:hover": {
+                      boxShadow: "none",
+                    },
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleImportFile}
+                  variant="contained"
+                  disabled={!selectedFile || !importTitle.trim()}
+                  sx={{
+                    flex: 1,
+                    backgroundColor: "rgb(19, 135, 194)",
+                    textTransform: "none",
+                    fontFamily: "'Rubik', sans-serif",
+                    py: 1.5,
+                    boxShadow: "none",
+                    "&:hover": {
+                      backgroundColor: "rgb(15, 108, 155)",
+                      boxShadow: "none",
+                    },
+                    "&:disabled": {
+                      backgroundColor: "rgba(19, 135, 194, 0.5)",
+                    },
+                  }}
+                >
+                  Import
                 </Button>
               </Box>
             </Box>
