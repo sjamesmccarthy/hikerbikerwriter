@@ -368,9 +368,15 @@ const TwainStoryBuilder: React.FC = () => {
         saveBooksToStorage(updatedBooks, session.user.email);
       }
 
+      // Close modal first to prevent any rendering conflicts
+      handleCreateBookModalClose();
+
+      // Set the new book as selected and switch to write view
+      setIsQuickStoryMode(false);
+      setSelectedBook(newBook);
+      setCurrentView("write");
       showNotification(`"${newBook.title}" has been created successfully!`);
       console.log("Book created successfully:", newBook.title);
-      handleCreateBookModalClose();
     }
   };
 
@@ -1244,17 +1250,31 @@ const TwainStoryBuilder: React.FC = () => {
                         // No cover image - traditional layout
                         <>
                           <div className="w-full h-48 bg-white flex items-start justify-start p-2 relative overflow-hidden">
-                            <Typography
-                              variant="body1"
-                              sx={{
-                                fontFamily: "'Alike', serif",
-                                fontSize: "18px",
-                                fontWeight: "bold",
-                                color: "text.secondary",
-                              }}
-                            >
-                              {bookData.title}
-                            </Typography>
+                            <div className="flex flex-col">
+                              <Typography
+                                variant="body1"
+                                sx={{
+                                  fontFamily: "'Alike', serif",
+                                  fontSize: "18px",
+                                  fontWeight: "bold",
+                                  color: "text.secondary",
+                                }}
+                              >
+                                {bookData.title}
+                              </Typography>
+                              <Typography
+                                variant="body2"
+                                sx={{
+                                  fontFamily: "'Rubik', sans-serif",
+                                  fontSize: "12px",
+                                  fontWeight: 500,
+                                  color: "rgb(100, 114, 127)", // Blue-gray text to match book border
+                                  mt: 0.5,
+                                }}
+                              >
+                                BOOK
+                              </Typography>
+                            </div>
                           </div>
                           <div className="px-3 pb-3 flex items-end justify-center flex-1">
                             <div className="text-center">
@@ -1850,15 +1870,12 @@ const TwainStoryBuilder: React.FC = () => {
       {/* Column 1 - Login Panel (50%) */}
       <div className="w-1/2 bg-white flex flex-col">
         {/* Icon in top left */}
-        <div className="p-10">
+        <div className="pt-16 pl-16">
           <Image
             src="/images/twain-logo.png"
             alt="Twain Logo"
-            width={80}
-            height={80}
-            style={{
-              filter: "invert(1) brightness(100%)",
-            }}
+            width={160}
+            height={160}
           />
         </div>
 

@@ -143,10 +143,12 @@ interface TwainStoryWriterProps {
 const getStorageKey = (
   type: string,
   bookId: number,
-  userEmail?: string
+  userEmail?: string,
+  isQuickStoryMode?: boolean
 ): string => {
-  if (!userEmail) return `twain-${type}-${bookId}`;
-  return `twain-${type}-${bookId}-${userEmail}`;
+  const prefix = isQuickStoryMode ? "quickstory" : "book";
+  if (!userEmail) return `twain-${prefix}-${type}-${bookId}`;
+  return `twain-${prefix}-${type}-${bookId}-${userEmail}`;
 };
 
 // Storage utilities
@@ -154,11 +156,12 @@ const saveToStorage = (
   type: string,
   data: unknown[],
   bookId: number,
-  userEmail?: string
+  userEmail?: string,
+  isQuickStoryMode?: boolean
 ): void => {
   if (!userEmail) return;
   try {
-    const storageKey = getStorageKey(type, bookId, userEmail);
+    const storageKey = getStorageKey(type, bookId, userEmail, isQuickStoryMode);
     localStorage.setItem(storageKey, JSON.stringify(data));
   } catch (error) {
     console.error(`Error saving ${type} to localStorage:`, error);
@@ -329,7 +332,12 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
   // Load ideas from localStorage on component mount
   useEffect(() => {
     if (session?.user?.email) {
-      const storageKey = getStorageKey("ideas", book.id, session.user.email);
+      const storageKey = getStorageKey(
+        "ideas",
+        book.id,
+        session.user.email,
+        isQuickStoryMode
+      );
       const storedIdeas = localStorage.getItem(storageKey);
       if (storedIdeas) {
         try {
@@ -345,7 +353,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
         }
       }
     }
-  }, [book.id, session?.user?.email]);
+  }, [book.id, session?.user?.email, isQuickStoryMode]);
 
   // Load characters from localStorage on component mount
   useEffect(() => {
@@ -353,7 +361,8 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
       const storageKey = getStorageKey(
         "characters",
         book.id,
-        session.user.email
+        session.user.email,
+        isQuickStoryMode
       );
       const storedCharacters = localStorage.getItem(storageKey);
       if (storedCharacters) {
@@ -372,12 +381,17 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
         }
       }
     }
-  }, [book.id, session?.user?.email]);
+  }, [book.id, session?.user?.email, isQuickStoryMode]);
 
   // Load chapters from localStorage on component mount
   useEffect(() => {
     if (session?.user?.email) {
-      const storageKey = getStorageKey("chapters", book.id, session.user.email);
+      const storageKey = getStorageKey(
+        "chapters",
+        book.id,
+        session.user.email,
+        isQuickStoryMode
+      );
       const storedChapters = localStorage.getItem(storageKey);
       if (storedChapters) {
         try {
@@ -393,12 +407,17 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
         }
       }
     }
-  }, [book.id, session?.user?.email]);
+  }, [book.id, session?.user?.email, isQuickStoryMode]);
 
   // Load stories from localStorage on component mount
   useEffect(() => {
     if (session?.user?.email) {
-      const storageKey = getStorageKey("stories", book.id, session.user.email);
+      const storageKey = getStorageKey(
+        "stories",
+        book.id,
+        session.user.email,
+        isQuickStoryMode
+      );
       const storedStories = localStorage.getItem(storageKey);
       if (storedStories) {
         try {
@@ -414,12 +433,17 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
         }
       }
     }
-  }, [book.id, session?.user?.email]);
+  }, [book.id, session?.user?.email, isQuickStoryMode]);
 
   // Load outlines from localStorage on component mount
   useEffect(() => {
     if (session?.user?.email) {
-      const storageKey = getStorageKey("outlines", book.id, session.user.email);
+      const storageKey = getStorageKey(
+        "outlines",
+        book.id,
+        session.user.email,
+        isQuickStoryMode
+      );
       const storedOutlines = localStorage.getItem(storageKey);
       if (storedOutlines) {
         try {
@@ -435,12 +459,17 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
         }
       }
     }
-  }, [book.id, session?.user?.email]);
+  }, [book.id, session?.user?.email, isQuickStoryMode]);
 
   // Load parts from localStorage on component mount
   useEffect(() => {
     if (session?.user?.email) {
-      const storageKey = getStorageKey("parts", book.id, session.user.email);
+      const storageKey = getStorageKey(
+        "parts",
+        book.id,
+        session.user.email,
+        isQuickStoryMode
+      );
       const storedParts = localStorage.getItem(storageKey);
       if (storedParts) {
         try {
@@ -456,7 +485,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
         }
       }
     }
-  }, [book.id, session?.user?.email]);
+  }, [book.id, session?.user?.email, isQuickStoryMode]);
 
   // Calculate total word count when chapters, stories, or outlines change
   useEffect(() => {
@@ -540,7 +569,12 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
       setStories(updatedStories);
 
       // Store in localStorage
-      const storageKey = getStorageKey("stories", book.id, session.user.email);
+      const storageKey = getStorageKey(
+        "stories",
+        book.id,
+        session.user.email,
+        isQuickStoryMode
+      );
       localStorage.setItem(storageKey, JSON.stringify(updatedStories));
 
       // Set editing mode immediately
@@ -562,6 +596,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
     session?.user?.email,
     book.title,
     book.id,
+    isQuickStoryMode,
   ]);
 
   // Auto-save function
@@ -586,7 +621,8 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
           const storageKey = getStorageKey(
             "chapters",
             book.id,
-            session.user.email
+            session.user.email,
+            isQuickStoryMode
           );
           localStorage.setItem(storageKey, JSON.stringify(updatedChapters));
         } else if (currentStory && session?.user?.email) {
@@ -597,7 +633,8 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
           const storageKey = getStorageKey(
             "stories",
             book.id,
-            session.user.email
+            session.user.email,
+            isQuickStoryMode
           );
           localStorage.setItem(storageKey, JSON.stringify(updatedStories));
         } else if (currentOutline && session?.user?.email) {
@@ -608,7 +645,8 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
           const storageKey = getStorageKey(
             "outlines",
             book.id,
-            session.user.email
+            session.user.email,
+            isQuickStoryMode
           );
           localStorage.setItem(storageKey, JSON.stringify(updatedOutlines));
         }
@@ -640,6 +678,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
     outlines,
     book.id,
     session?.user?.email,
+    isQuickStoryMode,
   ]);
 
   // Set up auto-save event listener when editing state changes
@@ -817,7 +856,8 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
           const storageKey = getStorageKey(
             "ideas",
             book.id,
-            session.user.email
+            session.user.email,
+            isQuickStoryMode
           );
           localStorage.setItem(storageKey, JSON.stringify(updatedIdeas));
         }
@@ -838,7 +878,8 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
           const storageKey = getStorageKey(
             "ideas",
             book.id,
-            session.user.email
+            session.user.email,
+            isQuickStoryMode
           );
           localStorage.setItem(storageKey, JSON.stringify(updatedIdeas));
         }
@@ -926,7 +967,8 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
             "characters",
             updatedCharacters,
             book.id,
-            session.user.email
+            session.user.email,
+            isQuickStoryMode
           );
         }
       } else {
@@ -950,10 +992,15 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
         setCharacters(updatedCharacters);
 
         // Store in localStorage
-        localStorage.setItem(
-          `twain-characters-${book.id}`,
-          JSON.stringify(updatedCharacters)
-        );
+        if (session?.user?.email) {
+          const storageKey = getStorageKey(
+            "characters",
+            book.id,
+            session.user.email,
+            isQuickStoryMode
+          );
+          localStorage.setItem(storageKey, JSON.stringify(updatedCharacters));
+        }
 
         // Add to recent activity
         addToRecentActivity("character", newCharacter);
@@ -971,10 +1018,15 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
     setIdeas(updatedIdeas);
 
     // Update localStorage
-    localStorage.setItem(
-      `twain-ideas-${book.id}`,
-      JSON.stringify(updatedIdeas)
-    );
+    if (session?.user?.email) {
+      const storageKey = getStorageKey(
+        "ideas",
+        book.id,
+        session.user.email,
+        isQuickStoryMode
+      );
+      localStorage.setItem(storageKey, JSON.stringify(updatedIdeas));
+    }
   };
 
   const handleDeleteCharacter = (
@@ -990,10 +1042,15 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
     setCharacters(updatedCharacters);
 
     // Update localStorage
-    localStorage.setItem(
-      `twain-characters-${book.id}`,
-      JSON.stringify(updatedCharacters)
-    );
+    if (session?.user?.email) {
+      const storageKey = getStorageKey(
+        "characters",
+        book.id,
+        session.user.email,
+        isQuickStoryMode
+      );
+      localStorage.setItem(storageKey, JSON.stringify(updatedCharacters));
+    }
   };
 
   const handleCreateChapterModalClose = () => {
@@ -1017,10 +1074,15 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
     setChapters(updatedChapters);
 
     // Store in localStorage
-    localStorage.setItem(
-      `twain-chapters-${book.id}`,
-      JSON.stringify(updatedChapters)
-    );
+    if (session?.user?.email) {
+      const storageKey = getStorageKey(
+        "chapters",
+        book.id,
+        session.user.email,
+        isQuickStoryMode
+      );
+      localStorage.setItem(storageKey, JSON.stringify(updatedChapters));
+    }
 
     // Add to recent activity
     addToRecentActivity("chapter", newChapter);
@@ -1069,10 +1131,15 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
     setStories(updatedStories);
 
     // Store in localStorage
-    localStorage.setItem(
-      `twain-stories-${book.id}`,
-      JSON.stringify(updatedStories)
-    );
+    if (session?.user?.email) {
+      const storageKey = getStorageKey(
+        "stories",
+        book.id,
+        session.user.email,
+        isQuickStoryMode
+      );
+      localStorage.setItem(storageKey, JSON.stringify(updatedStories));
+    }
 
     // Add to recent activity
     addToRecentActivity("story", newStory);
@@ -1106,10 +1173,15 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
     setOutlines(updatedOutlines);
 
     // Store in localStorage
-    localStorage.setItem(
-      `twain-outlines-${book.id}`,
-      JSON.stringify(updatedOutlines)
-    );
+    if (session?.user?.email) {
+      const storageKey = getStorageKey(
+        "outlines",
+        book.id,
+        session.user.email,
+        isQuickStoryMode
+      );
+      localStorage.setItem(storageKey, JSON.stringify(updatedOutlines));
+    }
 
     // Add to recent activity
     addToRecentActivity("outline", newOutline);
@@ -1646,7 +1718,8 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
       const storageKey = getStorageKey(
         "recent-activity",
         book.id,
-        session.user.email
+        session.user.email,
+        isQuickStoryMode
       );
       localStorage.setItem(storageKey, JSON.stringify(updatedActivity));
     }
@@ -1657,7 +1730,8 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
     const storageKey = getStorageKey(
       "recent-activity",
       book.id,
-      session.user.email
+      session.user.email,
+      isQuickStoryMode
     );
     const stored = localStorage.getItem(storageKey);
     if (stored) {
@@ -1676,7 +1750,8 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
       const storageKey = getStorageKey(
         "recent-activity",
         book.id,
-        session.user.email
+        session.user.email,
+        isQuickStoryMode
       );
       localStorage.removeItem(storageKey);
     }
@@ -1824,7 +1899,8 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
           const storageKey = getStorageKey(
             "stories",
             book.id,
-            session.user.email
+            session.user.email,
+            isQuickStoryMode
           );
           localStorage.setItem(storageKey, JSON.stringify(updatedStories));
         }
@@ -1836,7 +1912,8 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
           const storageKey = getStorageKey(
             "chapters",
             book.id,
-            session.user.email
+            session.user.email,
+            isQuickStoryMode
           );
           localStorage.setItem(storageKey, JSON.stringify(updatedChapters));
         }
@@ -1848,7 +1925,8 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
           const storageKey = getStorageKey(
             "outlines",
             book.id,
-            session.user.email
+            session.user.email,
+            isQuickStoryMode
           );
           localStorage.setItem(storageKey, JSON.stringify(updatedOutlines));
         }
@@ -2986,6 +3064,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                   "&:hover": {
                     backgroundColor: "rgba(19, 135, 194, 0.1)",
                   },
+                  display: isQuickStoryMode ? "none" : "inline-flex",
                 }}
               >
                 <CancelIcon />
@@ -3101,632 +3180,634 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
               </Typography>
             </div>
 
-            {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-6 gap-6 mb-8">
-              <div className="bg-gray-50 p-2 rounded-lg border border-gray-200 relative">
-                {/* Desktop layout: vertical with + button in corner */}
-                <div className="hidden md:block">
-                  <IconButton
-                    onClick={handleCreateIdeaClick}
-                    sx={{
-                      position: "absolute",
-                      top: "8px",
-                      right: "8px",
-                      width: "24px",
-                      height: "24px",
-                      color: "rgb(19, 135, 194)",
-                      "&:hover": {
-                        backgroundColor: "rgba(19, 135, 194, 0.1)",
-                      },
-                    }}
-                  >
-                    <AddIcon sx={{ fontSize: "16px" }} />
-                  </IconButton>
-                  <div className="flex flex-col items-center text-center">
-                    <BatchPredictionIcon
-                      sx={{
-                        fontSize: 32,
-                        color: "rgb(19, 135, 194)",
-                        marginBottom: "8px",
-                      }}
-                    />
-                    <div>
-                      <Typography
-                        variant="h6"
-                        sx={{
-                          fontFamily: "'Rubik', sans-serif",
-                          fontWeight: 600,
-                          fontSize: "18px",
-                          color: "#1f2937",
-                        }}
-                      >
-                        {ideas.length}
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          fontFamily: "'Rubik', sans-serif",
-                          fontWeight: 400,
-                          fontSize: "14px",
-                          color: "rgb(107, 114, 128)",
-                        }}
-                      >
-                        Ideas
-                      </Typography>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Mobile layout: horizontal [icon] [number] [label] [+] */}
-                <div className="block md:hidden">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <BatchPredictionIcon
-                        sx={{
-                          fontSize: 24,
-                          color: "rgb(19, 135, 194)",
-                        }}
-                      />
-                      <Typography
-                        variant="h6"
-                        sx={{
-                          fontFamily: "'Rubik', sans-serif",
-                          fontWeight: 600,
-                          fontSize: "18px",
-                          color: "#1f2937",
-                        }}
-                      >
-                        {ideas.length}
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          fontFamily: "'Rubik', sans-serif",
-                          fontWeight: 400,
-                          fontSize: "14px",
-                          color: "rgb(107, 114, 128)",
-                        }}
-                      >
-                        Ideas
-                      </Typography>
-                    </div>
+            {/* Stats Grid - Hidden in quick story mode */}
+            {!isQuickStoryMode && (
+              <div className="grid grid-cols-1 md:grid-cols-6 gap-6 mb-8">
+                <div className="bg-gray-50 p-2 rounded-lg border border-gray-200 relative">
+                  {/* Desktop layout: vertical with + button in corner */}
+                  <div className="hidden md:block">
                     <IconButton
                       onClick={handleCreateIdeaClick}
                       sx={{
-                        width: "32px",
-                        height: "32px",
+                        position: "absolute",
+                        top: "8px",
+                        right: "8px",
+                        width: "24px",
+                        height: "24px",
                         color: "rgb(19, 135, 194)",
                         "&:hover": {
                           backgroundColor: "rgba(19, 135, 194, 0.1)",
                         },
                       }}
                     >
-                      <AddIcon sx={{ fontSize: "20px" }} />
+                      <AddIcon sx={{ fontSize: "16px" }} />
                     </IconButton>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-gray-50 p-2 rounded-lg border border-gray-200 relative">
-                {/* Desktop layout: vertical with + button in corner */}
-                <div className="hidden md:block">
-                  <IconButton
-                    onClick={handleCreateCharacterClick}
-                    sx={{
-                      position: "absolute",
-                      top: "8px",
-                      right: "8px",
-                      width: "24px",
-                      height: "24px",
-                      color: "rgb(19, 135, 194)",
-                      "&:hover": {
-                        backgroundColor: "rgba(19, 135, 194, 0.1)",
-                      },
-                    }}
-                  >
-                    <AddIcon sx={{ fontSize: "16px" }} />
-                  </IconButton>
-                  <div className="flex flex-col items-center text-center">
-                    <FaceOutlinedIcon
-                      sx={{
-                        fontSize: 32,
-                        color: "rgb(19, 135, 194)",
-                        marginBottom: "8px",
-                      }}
-                    />
-                    <div>
-                      <Typography
-                        variant="h6"
+                    <div className="flex flex-col items-center text-center">
+                      <BatchPredictionIcon
                         sx={{
-                          fontFamily: "'Rubik', sans-serif",
-                          fontWeight: 600,
-                          fontSize: "18px",
-                          color: "#1f2937",
-                        }}
-                      >
-                        {characters.length}
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          fontFamily: "'Rubik', sans-serif",
-                          fontWeight: 400,
-                          fontSize: "14px",
-                          color: "rgb(107, 114, 128)",
-                        }}
-                      >
-                        Characters
-                      </Typography>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Mobile layout: horizontal [icon] [number] [label] [+] */}
-                <div className="block md:hidden">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <FaceOutlinedIcon
-                        sx={{
-                          fontSize: 24,
+                          fontSize: 32,
                           color: "rgb(19, 135, 194)",
+                          marginBottom: "8px",
                         }}
                       />
-                      <Typography
-                        variant="h6"
-                        sx={{
-                          fontFamily: "'Rubik', sans-serif",
-                          fontWeight: 600,
-                          fontSize: "18px",
-                          color: "#1f2937",
-                        }}
-                      >
-                        {characters.length}
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          fontFamily: "'Rubik', sans-serif",
-                          fontWeight: 400,
-                          fontSize: "14px",
-                          color: "rgb(107, 114, 128)",
-                        }}
-                      >
-                        Characters
-                      </Typography>
+                      <div>
+                        <Typography
+                          variant="h6"
+                          sx={{
+                            fontFamily: "'Rubik', sans-serif",
+                            fontWeight: 600,
+                            fontSize: "18px",
+                            color: "#1f2937",
+                          }}
+                        >
+                          {ideas.length}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontFamily: "'Rubik', sans-serif",
+                            fontWeight: 400,
+                            fontSize: "14px",
+                            color: "rgb(107, 114, 128)",
+                          }}
+                        >
+                          Ideas
+                        </Typography>
+                      </div>
                     </div>
+                  </div>
+
+                  {/* Mobile layout: horizontal [icon] [number] [label] [+] */}
+                  <div className="block md:hidden">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <BatchPredictionIcon
+                          sx={{
+                            fontSize: 24,
+                            color: "rgb(19, 135, 194)",
+                          }}
+                        />
+                        <Typography
+                          variant="h6"
+                          sx={{
+                            fontFamily: "'Rubik', sans-serif",
+                            fontWeight: 600,
+                            fontSize: "18px",
+                            color: "#1f2937",
+                          }}
+                        >
+                          {ideas.length}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontFamily: "'Rubik', sans-serif",
+                            fontWeight: 400,
+                            fontSize: "14px",
+                            color: "rgb(107, 114, 128)",
+                          }}
+                        >
+                          Ideas
+                        </Typography>
+                      </div>
+                      <IconButton
+                        onClick={handleCreateIdeaClick}
+                        sx={{
+                          width: "32px",
+                          height: "32px",
+                          color: "rgb(19, 135, 194)",
+                          "&:hover": {
+                            backgroundColor: "rgba(19, 135, 194, 0.1)",
+                          },
+                        }}
+                      >
+                        <AddIcon sx={{ fontSize: "20px" }} />
+                      </IconButton>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 p-2 rounded-lg border border-gray-200 relative">
+                  {/* Desktop layout: vertical with + button in corner */}
+                  <div className="hidden md:block">
                     <IconButton
                       onClick={handleCreateCharacterClick}
                       sx={{
-                        width: "32px",
-                        height: "32px",
+                        position: "absolute",
+                        top: "8px",
+                        right: "8px",
+                        width: "24px",
+                        height: "24px",
                         color: "rgb(19, 135, 194)",
                         "&:hover": {
                           backgroundColor: "rgba(19, 135, 194, 0.1)",
                         },
                       }}
                     >
-                      <AddIcon sx={{ fontSize: "20px" }} />
+                      <AddIcon sx={{ fontSize: "16px" }} />
                     </IconButton>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-gray-50 p-2 rounded-lg border border-gray-200 relative">
-                {/* Desktop layout: vertical with + button in corner */}
-                <div className="hidden md:block">
-                  <IconButton
-                    onClick={handleCreateChapterClick}
-                    sx={{
-                      position: "absolute",
-                      top: "8px",
-                      right: "8px",
-                      width: "24px",
-                      height: "24px",
-                      color: "rgb(19, 135, 194)",
-                      "&:hover": {
-                        backgroundColor: "rgba(19, 135, 194, 0.1)",
-                      },
-                    }}
-                  >
-                    <AddIcon sx={{ fontSize: "16px" }} />
-                  </IconButton>
-                  <div className="flex flex-col items-center text-center">
-                    <AutoStoriesIcon
-                      sx={{
-                        fontSize: 32,
-                        color: "rgb(19, 135, 194)",
-                        marginBottom: "8px",
-                      }}
-                    />
-                    <div>
-                      <Typography
-                        variant="h6"
+                    <div className="flex flex-col items-center text-center">
+                      <FaceOutlinedIcon
                         sx={{
-                          fontFamily: "'Rubik', sans-serif",
-                          fontWeight: 600,
-                          fontSize: "18px",
-                          color: "#1f2937",
-                        }}
-                      >
-                        {chapters.length}
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          fontFamily: "'Rubik', sans-serif",
-                          fontWeight: 400,
-                          fontSize: "14px",
-                          color: "rgb(107, 114, 128)",
-                        }}
-                      >
-                        Chapters
-                      </Typography>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Mobile layout: horizontal [icon] [number] [label] [+] */}
-                <div className="block md:hidden">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <AutoStoriesIcon
-                        sx={{
-                          fontSize: 24,
+                          fontSize: 32,
                           color: "rgb(19, 135, 194)",
+                          marginBottom: "8px",
                         }}
                       />
-                      <Typography
-                        variant="h6"
-                        sx={{
-                          fontFamily: "'Rubik', sans-serif",
-                          fontWeight: 600,
-                          fontSize: "18px",
-                          color: "#1f2937",
-                        }}
-                      >
-                        {chapters.length}
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          fontFamily: "'Rubik', sans-serif",
-                          fontWeight: 400,
-                          fontSize: "14px",
-                          color: "rgb(107, 114, 128)",
-                        }}
-                      >
-                        Chapters
-                      </Typography>
+                      <div>
+                        <Typography
+                          variant="h6"
+                          sx={{
+                            fontFamily: "'Rubik', sans-serif",
+                            fontWeight: 600,
+                            fontSize: "18px",
+                            color: "#1f2937",
+                          }}
+                        >
+                          {characters.length}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontFamily: "'Rubik', sans-serif",
+                            fontWeight: 400,
+                            fontSize: "14px",
+                            color: "rgb(107, 114, 128)",
+                          }}
+                        >
+                          Characters
+                        </Typography>
+                      </div>
                     </div>
+                  </div>
+
+                  {/* Mobile layout: horizontal [icon] [number] [label] [+] */}
+                  <div className="block md:hidden">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <FaceOutlinedIcon
+                          sx={{
+                            fontSize: 24,
+                            color: "rgb(19, 135, 194)",
+                          }}
+                        />
+                        <Typography
+                          variant="h6"
+                          sx={{
+                            fontFamily: "'Rubik', sans-serif",
+                            fontWeight: 600,
+                            fontSize: "18px",
+                            color: "#1f2937",
+                          }}
+                        >
+                          {characters.length}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontFamily: "'Rubik', sans-serif",
+                            fontWeight: 400,
+                            fontSize: "14px",
+                            color: "rgb(107, 114, 128)",
+                          }}
+                        >
+                          Characters
+                        </Typography>
+                      </div>
+                      <IconButton
+                        onClick={handleCreateCharacterClick}
+                        sx={{
+                          width: "32px",
+                          height: "32px",
+                          color: "rgb(19, 135, 194)",
+                          "&:hover": {
+                            backgroundColor: "rgba(19, 135, 194, 0.1)",
+                          },
+                        }}
+                      >
+                        <AddIcon sx={{ fontSize: "20px" }} />
+                      </IconButton>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 p-2 rounded-lg border border-gray-200 relative">
+                  {/* Desktop layout: vertical with + button in corner */}
+                  <div className="hidden md:block">
                     <IconButton
                       onClick={handleCreateChapterClick}
                       sx={{
-                        width: "32px",
-                        height: "32px",
+                        position: "absolute",
+                        top: "8px",
+                        right: "8px",
+                        width: "24px",
+                        height: "24px",
                         color: "rgb(19, 135, 194)",
                         "&:hover": {
                           backgroundColor: "rgba(19, 135, 194, 0.1)",
                         },
                       }}
                     >
-                      <AddIcon sx={{ fontSize: "20px" }} />
+                      <AddIcon sx={{ fontSize: "16px" }} />
                     </IconButton>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-gray-50 p-2 rounded-lg border border-gray-200 relative">
-                {/* Desktop layout: vertical with + button in corner */}
-                <div className="hidden md:block">
-                  <IconButton
-                    onClick={handleCreateOutlineClick}
-                    sx={{
-                      position: "absolute",
-                      top: "8px",
-                      right: "8px",
-                      width: "24px",
-                      height: "24px",
-                      color: "rgb(19, 135, 194)",
-                      "&:hover": {
-                        backgroundColor: "rgba(19, 135, 194, 0.1)",
-                      },
-                    }}
-                  >
-                    <AddIcon sx={{ fontSize: "16px" }} />
-                  </IconButton>
-                  <div className="flex flex-col items-center text-center">
-                    <ListAltIcon
-                      sx={{
-                        fontSize: 32,
-                        color: "rgb(19, 135, 194)",
-                        marginBottom: "8px",
-                      }}
-                    />
-                    <div>
-                      <Typography
-                        variant="h6"
+                    <div className="flex flex-col items-center text-center">
+                      <AutoStoriesIcon
                         sx={{
-                          fontFamily: "'Rubik', sans-serif",
-                          fontWeight: 600,
-                          fontSize: "18px",
-                          color: "#1f2937",
-                        }}
-                      >
-                        {outlines.length}
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          fontFamily: "'Rubik', sans-serif",
-                          fontWeight: 400,
-                          fontSize: "14px",
-                          color: "rgb(107, 114, 128)",
-                        }}
-                      >
-                        Outlines
-                      </Typography>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Mobile layout: horizontal [icon] [number] [label] [+] */}
-                <div className="block md:hidden">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <ListAltIcon
-                        sx={{
-                          fontSize: 24,
+                          fontSize: 32,
                           color: "rgb(19, 135, 194)",
+                          marginBottom: "8px",
                         }}
                       />
-                      <Typography
-                        variant="h6"
-                        sx={{
-                          fontFamily: "'Rubik', sans-serif",
-                          fontWeight: 600,
-                          fontSize: "18px",
-                          color: "#1f2937",
-                        }}
-                      >
-                        {outlines.length}
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          fontFamily: "'Rubik', sans-serif",
-                          fontWeight: 400,
-                          fontSize: "14px",
-                          color: "rgb(107, 114, 128)",
-                        }}
-                      >
-                        Outlines
-                      </Typography>
+                      <div>
+                        <Typography
+                          variant="h6"
+                          sx={{
+                            fontFamily: "'Rubik', sans-serif",
+                            fontWeight: 600,
+                            fontSize: "18px",
+                            color: "#1f2937",
+                          }}
+                        >
+                          {chapters.length}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontFamily: "'Rubik', sans-serif",
+                            fontWeight: 400,
+                            fontSize: "14px",
+                            color: "rgb(107, 114, 128)",
+                          }}
+                        >
+                          Chapters
+                        </Typography>
+                      </div>
                     </div>
+                  </div>
+
+                  {/* Mobile layout: horizontal [icon] [number] [label] [+] */}
+                  <div className="block md:hidden">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <AutoStoriesIcon
+                          sx={{
+                            fontSize: 24,
+                            color: "rgb(19, 135, 194)",
+                          }}
+                        />
+                        <Typography
+                          variant="h6"
+                          sx={{
+                            fontFamily: "'Rubik', sans-serif",
+                            fontWeight: 600,
+                            fontSize: "18px",
+                            color: "#1f2937",
+                          }}
+                        >
+                          {chapters.length}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontFamily: "'Rubik', sans-serif",
+                            fontWeight: 400,
+                            fontSize: "14px",
+                            color: "rgb(107, 114, 128)",
+                          }}
+                        >
+                          Chapters
+                        </Typography>
+                      </div>
+                      <IconButton
+                        onClick={handleCreateChapterClick}
+                        sx={{
+                          width: "32px",
+                          height: "32px",
+                          color: "rgb(19, 135, 194)",
+                          "&:hover": {
+                            backgroundColor: "rgba(19, 135, 194, 0.1)",
+                          },
+                        }}
+                      >
+                        <AddIcon sx={{ fontSize: "20px" }} />
+                      </IconButton>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 p-2 rounded-lg border border-gray-200 relative">
+                  {/* Desktop layout: vertical with + button in corner */}
+                  <div className="hidden md:block">
                     <IconButton
                       onClick={handleCreateOutlineClick}
                       sx={{
-                        width: "32px",
-                        height: "32px",
+                        position: "absolute",
+                        top: "8px",
+                        right: "8px",
+                        width: "24px",
+                        height: "24px",
                         color: "rgb(19, 135, 194)",
                         "&:hover": {
                           backgroundColor: "rgba(19, 135, 194, 0.1)",
                         },
                       }}
                     >
-                      <AddIcon sx={{ fontSize: "20px" }} />
+                      <AddIcon sx={{ fontSize: "16px" }} />
                     </IconButton>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-gray-50 p-2 rounded-lg border border-gray-200 relative">
-                {/* Desktop layout: vertical with + button in corner */}
-                <div className="hidden md:block">
-                  <IconButton
-                    onClick={handleCreatePartClick}
-                    sx={{
-                      position: "absolute",
-                      top: "8px",
-                      right: "8px",
-                      width: "24px",
-                      height: "24px",
-                      color: "rgb(19, 135, 194)",
-                      "&:hover": {
-                        backgroundColor: "rgba(19, 135, 194, 0.1)",
-                      },
-                    }}
-                  >
-                    <AddIcon sx={{ fontSize: "16px" }} />
-                  </IconButton>
-                  <div className="flex flex-col items-center text-center">
-                    <FolderCopyIcon
-                      sx={{
-                        fontSize: 32,
-                        color: "rgb(19, 135, 194)",
-                        marginBottom: "8px",
-                      }}
-                    />
-                    <div>
-                      <Typography
-                        variant="h6"
+                    <div className="flex flex-col items-center text-center">
+                      <ListAltIcon
                         sx={{
-                          fontFamily: "'Rubik', sans-serif",
-                          fontWeight: 600,
-                          fontSize: "18px",
-                          color: "#1f2937",
-                        }}
-                      >
-                        {parts.length}
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          fontFamily: "'Rubik', sans-serif",
-                          fontWeight: 400,
-                          fontSize: "14px",
-                          color: "rgb(107, 114, 128)",
-                        }}
-                      >
-                        Parts
-                      </Typography>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Mobile layout: horizontal [icon] [number] [label] [+] */}
-                <div className="block md:hidden">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <FolderCopyIcon
-                        sx={{
-                          fontSize: 24,
+                          fontSize: 32,
                           color: "rgb(19, 135, 194)",
+                          marginBottom: "8px",
                         }}
                       />
-                      <Typography
-                        variant="h6"
-                        sx={{
-                          fontFamily: "'Rubik', sans-serif",
-                          fontWeight: 600,
-                          fontSize: "18px",
-                          color: "#1f2937",
-                        }}
-                      >
-                        {parts.length}
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          fontFamily: "'Rubik', sans-serif",
-                          fontWeight: 400,
-                          fontSize: "14px",
-                          color: "rgb(107, 114, 128)",
-                        }}
-                      >
-                        Parts
-                      </Typography>
+                      <div>
+                        <Typography
+                          variant="h6"
+                          sx={{
+                            fontFamily: "'Rubik', sans-serif",
+                            fontWeight: 600,
+                            fontSize: "18px",
+                            color: "#1f2937",
+                          }}
+                        >
+                          {outlines.length}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontFamily: "'Rubik', sans-serif",
+                            fontWeight: 400,
+                            fontSize: "14px",
+                            color: "rgb(107, 114, 128)",
+                          }}
+                        >
+                          Outlines
+                        </Typography>
+                      </div>
                     </div>
+                  </div>
+
+                  {/* Mobile layout: horizontal [icon] [number] [label] [+] */}
+                  <div className="block md:hidden">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <ListAltIcon
+                          sx={{
+                            fontSize: 24,
+                            color: "rgb(19, 135, 194)",
+                          }}
+                        />
+                        <Typography
+                          variant="h6"
+                          sx={{
+                            fontFamily: "'Rubik', sans-serif",
+                            fontWeight: 600,
+                            fontSize: "18px",
+                            color: "#1f2937",
+                          }}
+                        >
+                          {outlines.length}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontFamily: "'Rubik', sans-serif",
+                            fontWeight: 400,
+                            fontSize: "14px",
+                            color: "rgb(107, 114, 128)",
+                          }}
+                        >
+                          Outlines
+                        </Typography>
+                      </div>
+                      <IconButton
+                        onClick={handleCreateOutlineClick}
+                        sx={{
+                          width: "32px",
+                          height: "32px",
+                          color: "rgb(19, 135, 194)",
+                          "&:hover": {
+                            backgroundColor: "rgba(19, 135, 194, 0.1)",
+                          },
+                        }}
+                      >
+                        <AddIcon sx={{ fontSize: "20px" }} />
+                      </IconButton>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 p-2 rounded-lg border border-gray-200 relative">
+                  {/* Desktop layout: vertical with + button in corner */}
+                  <div className="hidden md:block">
                     <IconButton
                       onClick={handleCreatePartClick}
                       sx={{
-                        width: "32px",
-                        height: "32px",
+                        position: "absolute",
+                        top: "8px",
+                        right: "8px",
+                        width: "24px",
+                        height: "24px",
                         color: "rgb(19, 135, 194)",
                         "&:hover": {
                           backgroundColor: "rgba(19, 135, 194, 0.1)",
                         },
                       }}
                     >
-                      <AddIcon sx={{ fontSize: "20px" }} />
+                      <AddIcon sx={{ fontSize: "16px" }} />
                     </IconButton>
-                  </div>
-                </div>
-              </div>
-
-              <div className="bg-gray-50 p-2 rounded-lg border border-gray-200 relative">
-                {/* Desktop layout: vertical with + button in corner */}
-                <div className="hidden md:block">
-                  <IconButton
-                    onClick={handleCreateStoryClick}
-                    sx={{
-                      position: "absolute",
-                      top: "8px",
-                      right: "8px",
-                      width: "24px",
-                      height: "24px",
-                      color: "rgb(19, 135, 194)",
-                      "&:hover": {
-                        backgroundColor: "rgba(19, 135, 194, 0.1)",
-                      },
-                    }}
-                  >
-                    <AddIcon sx={{ fontSize: "16px" }} />
-                  </IconButton>
-                  <div className="flex flex-col items-center text-center">
-                    <HistoryEduIcon
-                      sx={{
-                        fontSize: 32,
-                        color: "rgb(19, 135, 194)",
-                        marginBottom: "8px",
-                      }}
-                    />
-                    <div>
-                      <Typography
-                        variant="h6"
+                    <div className="flex flex-col items-center text-center">
+                      <FolderCopyIcon
                         sx={{
-                          fontFamily: "'Rubik', sans-serif",
-                          fontWeight: 600,
-                          fontSize: "18px",
-                          color: "#1f2937",
-                        }}
-                      >
-                        {stories.length}
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          fontFamily: "'Rubik', sans-serif",
-                          fontWeight: 400,
-                          fontSize: "14px",
-                          color: "rgb(107, 114, 128)",
-                        }}
-                      >
-                        Stories
-                      </Typography>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Mobile layout: horizontal [icon] [number] [label] [+] */}
-                <div className="block md:hidden">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <HistoryEduIcon
-                        sx={{
-                          fontSize: 24,
+                          fontSize: 32,
                           color: "rgb(19, 135, 194)",
+                          marginBottom: "8px",
                         }}
                       />
-                      <Typography
-                        variant="h6"
-                        sx={{
-                          fontFamily: "'Rubik', sans-serif",
-                          fontWeight: 600,
-                          fontSize: "18px",
-                          color: "#1f2937",
-                        }}
-                      >
-                        {stories.length}
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          fontFamily: "'Rubik', sans-serif",
-                          fontWeight: 400,
-                          fontSize: "14px",
-                          color: "rgb(107, 114, 128)",
-                        }}
-                      >
-                        Stories
-                      </Typography>
+                      <div>
+                        <Typography
+                          variant="h6"
+                          sx={{
+                            fontFamily: "'Rubik', sans-serif",
+                            fontWeight: 600,
+                            fontSize: "18px",
+                            color: "#1f2937",
+                          }}
+                        >
+                          {parts.length}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontFamily: "'Rubik', sans-serif",
+                            fontWeight: 400,
+                            fontSize: "14px",
+                            color: "rgb(107, 114, 128)",
+                          }}
+                        >
+                          Parts
+                        </Typography>
+                      </div>
                     </div>
+                  </div>
+
+                  {/* Mobile layout: horizontal [icon] [number] [label] [+] */}
+                  <div className="block md:hidden">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <FolderCopyIcon
+                          sx={{
+                            fontSize: 24,
+                            color: "rgb(19, 135, 194)",
+                          }}
+                        />
+                        <Typography
+                          variant="h6"
+                          sx={{
+                            fontFamily: "'Rubik', sans-serif",
+                            fontWeight: 600,
+                            fontSize: "18px",
+                            color: "#1f2937",
+                          }}
+                        >
+                          {parts.length}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontFamily: "'Rubik', sans-serif",
+                            fontWeight: 400,
+                            fontSize: "14px",
+                            color: "rgb(107, 114, 128)",
+                          }}
+                        >
+                          Parts
+                        </Typography>
+                      </div>
+                      <IconButton
+                        onClick={handleCreatePartClick}
+                        sx={{
+                          width: "32px",
+                          height: "32px",
+                          color: "rgb(19, 135, 194)",
+                          "&:hover": {
+                            backgroundColor: "rgba(19, 135, 194, 0.1)",
+                          },
+                        }}
+                      >
+                        <AddIcon sx={{ fontSize: "20px" }} />
+                      </IconButton>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-gray-50 p-2 rounded-lg border border-gray-200 relative">
+                  {/* Desktop layout: vertical with + button in corner */}
+                  <div className="hidden md:block">
                     <IconButton
                       onClick={handleCreateStoryClick}
                       sx={{
-                        width: "32px",
-                        height: "32px",
+                        position: "absolute",
+                        top: "8px",
+                        right: "8px",
+                        width: "24px",
+                        height: "24px",
                         color: "rgb(19, 135, 194)",
                         "&:hover": {
                           backgroundColor: "rgba(19, 135, 194, 0.1)",
                         },
                       }}
                     >
-                      <AddIcon sx={{ fontSize: "20px" }} />
+                      <AddIcon sx={{ fontSize: "16px" }} />
                     </IconButton>
+                    <div className="flex flex-col items-center text-center">
+                      <HistoryEduIcon
+                        sx={{
+                          fontSize: 32,
+                          color: "rgb(19, 135, 194)",
+                          marginBottom: "8px",
+                        }}
+                      />
+                      <div>
+                        <Typography
+                          variant="h6"
+                          sx={{
+                            fontFamily: "'Rubik', sans-serif",
+                            fontWeight: 600,
+                            fontSize: "18px",
+                            color: "#1f2937",
+                          }}
+                        >
+                          {stories.length}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontFamily: "'Rubik', sans-serif",
+                            fontWeight: 400,
+                            fontSize: "14px",
+                            color: "rgb(107, 114, 128)",
+                          }}
+                        >
+                          Stories
+                        </Typography>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Mobile layout: horizontal [icon] [number] [label] [+] */}
+                  <div className="block md:hidden">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <HistoryEduIcon
+                          sx={{
+                            fontSize: 24,
+                            color: "rgb(19, 135, 194)",
+                          }}
+                        />
+                        <Typography
+                          variant="h6"
+                          sx={{
+                            fontFamily: "'Rubik', sans-serif",
+                            fontWeight: 600,
+                            fontSize: "18px",
+                            color: "#1f2937",
+                          }}
+                        >
+                          {stories.length}
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontFamily: "'Rubik', sans-serif",
+                            fontWeight: 400,
+                            fontSize: "14px",
+                            color: "rgb(107, 114, 128)",
+                          }}
+                        >
+                          Stories
+                        </Typography>
+                      </div>
+                      <IconButton
+                        onClick={handleCreateStoryClick}
+                        sx={{
+                          width: "32px",
+                          height: "32px",
+                          color: "rgb(19, 135, 194)",
+                          "&:hover": {
+                            backgroundColor: "rgba(19, 135, 194, 0.1)",
+                          },
+                        }}
+                      >
+                        <AddIcon sx={{ fontSize: "20px" }} />
+                      </IconButton>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
+            )}
 
             {/* Recent Activity */}
             <div className="mb-8 mt-8">
