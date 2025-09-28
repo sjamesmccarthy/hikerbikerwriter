@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { useSession, signIn, signOut } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import {
   Button,
   Typography,
@@ -17,6 +18,7 @@ import {
   FormControl,
   InputLabel,
   ButtonGroup,
+  Chip,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -27,9 +29,12 @@ import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
 import DeleteForeverOutlinedIcon from "@mui/icons-material/DeleteForeverOutlined";
 import CloudUploadOutlinedIcon from "@mui/icons-material/CloudUploadOutlined";
 import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
+import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
 import Image from "next/image";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import TwainStoryWriter from "./TwainStoryWriter";
+import TwainStoryPricingModal from "./TwainStoryPricingModal";
+import { useUserPreferences } from "../hooks/useUserPreferences";
 
 // Utility function to process Google profile image URL
 const processGoogleImageUrl = (url: string): string => {
@@ -261,15 +266,136 @@ const generateQuickStoryId = (existingStories: Book[]): number => {
     : 1;
 };
 
+// Plan utility functions
+const getPlanFeatures = (
+  planType: "free" | "basic" | "professional" | "enterprise"
+): string[] => {
+  const features: Record<string, string[]> = {
+    free: ["local-storage", "basic-writing", "export-txt", "up-to-3-books"],
+    basic: [
+      "cloud-storage",
+      "unlimited-books",
+      "advanced-writing",
+      "export-pdf",
+      "export-docx",
+      "basic-templates",
+      "email-support",
+    ],
+    professional: [
+      "cloud-storage",
+      "unlimited-books",
+      "advanced-writing",
+      "export-all-formats",
+      "premium-templates",
+      "collaboration",
+      "version-history",
+      "priority-support",
+      "custom-branding",
+    ],
+    enterprise: [
+      "cloud-storage",
+      "unlimited-books",
+      "advanced-writing",
+      "export-all-formats",
+      "premium-templates",
+      "team-collaboration",
+      "advanced-version-history",
+      "dedicated-support",
+      "custom-integrations",
+      "sso",
+      "admin-dashboard",
+    ],
+  };
+
+  return features[planType] || features.free;
+};
+
+const getPlanEndDate = (
+  planType: "free" | "basic" | "professional" | "enterprise"
+): string | undefined => {
+  if (planType === "free") {
+    return undefined; // Free plan doesn't expire
+  }
+
+  const endDate = new Date();
+  endDate.setFullYear(endDate.getFullYear() + 1); // Add 1 year
+  return endDate.toISOString();
+};
+
+// Helper function to get plan chip properties
+const getPlanChipProps = (
+  planType: "free" | "basic" | "professional" | "enterprise"
+) => {
+  switch (planType) {
+    case "free":
+      return {
+        label: "Free",
+        color: "default" as const,
+        sx: {
+          backgroundColor: "#9e9e9e",
+          color: "white",
+          fontSize: "14px",
+          fontWeight: "bold",
+          height: "32px",
+        },
+      };
+    case "professional":
+      return {
+        label: "Pro",
+        color: "error" as const,
+        sx: {
+          backgroundColor: "#f44336",
+          color: "white",
+          fontSize: "14px",
+          fontWeight: "bold",
+          height: "32px",
+        },
+      };
+    case "enterprise":
+      return {
+        label: "Enterprise",
+        color: "primary" as const,
+        sx: {
+          backgroundColor: "#2196f3",
+          color: "white",
+          fontSize: "14px",
+          fontWeight: "bold",
+          height: "32px",
+        },
+      };
+    default:
+      return {
+        label: "Free",
+        color: "default" as const,
+        sx: {
+          backgroundColor: "#9e9e9e",
+          color: "white",
+          fontSize: "14px",
+          fontWeight: "bold",
+          height: "32px",
+        },
+      };
+  }
+};
+
 const TwainStoryBuilder: React.FC = () => {
   const { data: session, status } = useSession();
+  const router = useRouter();
+  const {
+    preferences,
+    planType,
+    isActivePlan,
+    loginInfo,
+    updatePlan,
+    checkFeature,
+  } = useUserPreferences();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [createBookModalOpen, setCreateBookModalOpen] = useState(false);
   const [bookTitle, setBookTitle] = useState("");
   const [createStoryModalOpen, setCreateStoryModalOpen] = useState(false);
   const [storyTitle, setStoryTitle] = useState("");
   const [currentView, setCurrentView] = useState<
-    "bookshelf" | "manage" | "write"
+    "bookshelf" | "manage" | "write" | "account"
   >("bookshelf");
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const [books, setBooks] = useState<Book[]>([]);
@@ -284,6 +410,7 @@ const TwainStoryBuilder: React.FC = () => {
     new Date().getFullYear().toString()
   );
   const [notification, setNotification] = useState<string>("");
+  const [showPricing, setShowPricing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Select a random Twain image (1-6)
@@ -326,6 +453,18 @@ const TwainStoryBuilder: React.FC = () => {
     signIn("google");
   };
 
+  const handleRequestAccess = () => {
+    router.push("/auth/signup");
+  };
+
+  const handleShowPricing = () => {
+    setShowPricing(true);
+  };
+
+  const handleClosePricing = () => {
+    setShowPricing(false);
+  };
+
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
   };
@@ -337,6 +476,32 @@ const TwainStoryBuilder: React.FC = () => {
   const handleLogout = () => {
     handleMenuClose();
     signOut();
+  };
+
+  const handleAccountSettings = () => {
+    handleMenuClose();
+    setCurrentView("account");
+  };
+
+  const handleUpgradePlan = (
+    newPlanType: "basic" | "professional" | "enterprise"
+  ) => {
+    // This would typically integrate with a payment system
+    // For now, we'll just update the local preferences
+    updatePlan({
+      type: newPlanType,
+      status: "active",
+      startDate: new Date().toISOString(),
+      endDate: getPlanEndDate(newPlanType),
+      features: getPlanFeatures(newPlanType),
+    });
+
+    showNotification(
+      `Successfully upgraded to ${
+        newPlanType.charAt(0).toUpperCase() + newPlanType.slice(1)
+      } plan!`
+    );
+    setShowPricing(false);
   };
 
   const handleCreateBookClick = () => {
@@ -579,6 +744,23 @@ const TwainStoryBuilder: React.FC = () => {
     }
   };
 
+  const handleDeleteStory = (story: Book) => {
+    if (
+      window.confirm(
+        `Are you sure you want to permanently delete "${story.title}"?`
+      )
+    ) {
+      const updatedQuickStories = quickStories.filter((s) => s.id !== story.id);
+      setQuickStories(updatedQuickStories);
+      if (session?.user?.email) {
+        saveQuickStoriesToStorage(updatedQuickStories, session.user.email);
+      }
+
+      showNotification(`"${story.title}" story has been deleted.`);
+      console.log("Story deleted successfully:", story.title);
+    }
+  };
+
   const handleWriteBook = (book: Book) => {
     setSelectedBook(book);
     setCurrentView("write");
@@ -617,7 +799,7 @@ const TwainStoryBuilder: React.FC = () => {
             style={{ backgroundColor: "rgb(38, 52, 63)" }}
           >
             {/* Profile Menu - Top Right */}
-            <div className="absolute top-4 right-4">
+            <div className="absolute top-4 right-4 flex items-center gap-2">
               <IconButton onClick={handleMenuOpen}>
                 <UserAvatar session={session} />
               </IconButton>
@@ -634,7 +816,12 @@ const TwainStoryBuilder: React.FC = () => {
                   horizontal: "right",
                 }}
               >
-                <MenuItem onClick={handleMenuClose}>Account Settings</MenuItem>
+                <div className="ml-2 pb-1 pt-2">
+                  <Chip {...getPlanChipProps(planType)} />
+                </div>
+                <MenuItem onClick={handleAccountSettings}>
+                  Account Settings
+                </MenuItem>
                 <MenuItem onClick={handleLogout}>Log Out</MenuItem>
               </Menu>
             </div>
@@ -943,6 +1130,462 @@ const TwainStoryBuilder: React.FC = () => {
               © 2025 Twain Story Builder. All rights reserved.
             </Typography>
           </footer>
+
+          {/* Pricing Modal - Available for manage book view */}
+          <TwainStoryPricingModal
+            open={showPricing}
+            onClose={handleClosePricing}
+            onUpgrade={handleUpgradePlan}
+          />
+        </div>
+      );
+    }
+
+    if (currentView === "account") {
+      return (
+        <div className="min-h-screen flex flex-col">
+          {/* Header - 300px tall */}
+          <header
+            className="h-[300px] flex flex-col justify-center items-center text-white relative"
+            style={{ backgroundColor: "rgb(38, 52, 63)" }}
+          >
+            {/* Profile Menu - Top Right */}
+            <div className="absolute top-4 right-4 flex items-center gap-2">
+              <IconButton onClick={handleMenuOpen}>
+                <UserAvatar session={session} />
+              </IconButton>
+              <Menu
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={handleMenuClose}
+                anchorOrigin={{
+                  vertical: "bottom",
+                  horizontal: "right",
+                }}
+                transformOrigin={{
+                  vertical: "top",
+                  horizontal: "right",
+                }}
+              >
+                <div className="ml-2 pb-1 pt-2">
+                  <Chip {...getPlanChipProps(planType)} />
+                </div>
+                <MenuItem onClick={handleAccountSettings}>
+                  Account Settings
+                </MenuItem>
+                <MenuItem onClick={handleLogout}>Log Out</MenuItem>
+              </Menu>
+            </div>
+
+            <Image
+              src="/images/twain-logo.png"
+              alt="Twain Logo"
+              width={120}
+              height={120}
+              style={{
+                filter: "invert(1) brightness(100%)",
+                marginBottom: "16px",
+              }}
+            />
+            <Typography
+              variant="h4"
+              sx={{
+                fontFamily: "'Rubik', sans-serif",
+                fontWeight: 600,
+                marginBottom: 1,
+              }}
+            >
+              Account Settings
+            </Typography>
+            <Typography
+              variant="body2"
+              sx={{
+                fontFamily: "'Rubik', sans-serif",
+                fontWeight: 300,
+                fontSize: "14px",
+                textAlign: "center",
+                maxWidth: "600px",
+              }}
+            >
+              Manage your account preferences and settings
+            </Typography>
+          </header>
+
+          {/* Navigation Bar */}
+          <div className="bg-white border-b border-gray-200 px-8 py-4">
+            <div className="w-[90%] md:w-[80%] mx-auto flex items-center">
+              <IconButton
+                onClick={handleBackToBookshelf}
+                sx={{
+                  mr: 2,
+                  color: "rgb(19, 135, 194)",
+                  "&:hover": {
+                    backgroundColor: "rgba(19, 135, 194, 0.1)",
+                  },
+                }}
+              >
+                <ArrowBackIcon />
+              </IconButton>
+            </div>
+          </div>
+
+          {/* Main content area - Account Settings Form */}
+          <main className="flex-1 bg-gray-100 p-4 lg:p-8">
+            <div className="w-[95%] lg:w-[60%] mx-auto">
+              <div className="space-y-6">
+                {/* User Profile Section */}
+                <div className="bg-white rounded-lg p-6 shadow-sm">
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontFamily: "'Rubik', sans-serif",
+                      fontWeight: 600,
+                      marginBottom: 3,
+                      color: "rgb(31, 41, 55)",
+                    }}
+                  >
+                    Profile Information
+                  </Typography>
+
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <div className="flex items-center gap-2">
+                          <UserAvatar session={session} />
+                          {/* <Chip {...getPlanChipProps(planType)} /> */}
+                        </div>
+                        <div>
+                          <Typography
+                            variant="body1"
+                            sx={{
+                              fontFamily: "'Rubik', sans-serif",
+                              fontWeight: 500,
+                              color: "rgb(31, 41, 55)",
+                            }}
+                          >
+                            {session?.user?.name || "Unknown User"}
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontFamily: "'Rubik', sans-serif",
+                              color: "rgb(107, 114, 128)",
+                            }}
+                          >
+                            {session?.user?.email || "No email provided"}
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontFamily: "'Rubik', sans-serif",
+                              color: "rgb(107, 114, 128)",
+                              fontStyle: "italic",
+                            }}
+                          >
+                            A member since{" "}
+                            {new Date(
+                              preferences.accountCreatedAt
+                            ).toLocaleDateString()}
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontFamily: "'Rubik', sans-serif",
+                              color: "rgb(107, 114, 128)",
+                              fontSize: "12px",
+                            }}
+                          >
+                            {loginInfo.loginCount} logins • Last seen{" "}
+                            {new Date(loginInfo.lastLogin).toLocaleDateString()}
+                          </Typography>
+                        </div>
+                      </div>
+                      <Button
+                        onClick={handleLogout}
+                        variant="outlined"
+                        size="small"
+                        sx={{
+                          textTransform: "none",
+                          fontFamily: "'Rubik', sans-serif",
+                          borderColor: "rgb(209, 213, 219)",
+                          color: "rgb(107, 114, 128)",
+                          "&:hover": {
+                            borderColor: "rgb(239, 68, 68)",
+                            color: "rgb(239, 68, 68)",
+                            backgroundColor: "rgba(239, 68, 68, 0.04)",
+                          },
+                        }}
+                      >
+                        Sign Out
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Account Statistics */}
+                <div className="bg-white rounded-lg p-6 shadow-sm">
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontFamily: "'Rubik', sans-serif",
+                      fontWeight: 600,
+                      marginBottom: 3,
+                      color: "rgb(31, 41, 55)",
+                    }}
+                  >
+                    Your Writing Statistics
+                  </Typography>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="text-center p-4 bg-gray-50 rounded-lg">
+                      <Typography
+                        variant="h4"
+                        sx={{
+                          fontFamily: "'Rubik', sans-serif",
+                          fontWeight: 700,
+                          color: "rgb(19, 135, 194)",
+                        }}
+                      >
+                        {books.length}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontFamily: "'Rubik', sans-serif",
+                          color: "rgb(107, 114, 128)",
+                        }}
+                      >
+                        Books
+                      </Typography>
+                    </div>
+
+                    <div className="text-center p-4 bg-gray-50 rounded-lg">
+                      <Typography
+                        variant="h4"
+                        sx={{
+                          fontFamily: "'Rubik', sans-serif",
+                          fontWeight: 700,
+                          color: "rgb(19, 135, 194)",
+                        }}
+                      >
+                        {quickStories.length}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontFamily: "'Rubik', sans-serif",
+                          color: "rgb(107, 114, 128)",
+                        }}
+                      >
+                        Stories
+                      </Typography>
+                    </div>
+
+                    <div className="text-center p-4 bg-gray-50 rounded-lg">
+                      <Typography
+                        variant="h4"
+                        sx={{
+                          fontFamily: "'Rubik', sans-serif",
+                          fontWeight: 700,
+                          color: "rgb(19, 135, 194)",
+                        }}
+                      >
+                        {books.reduce(
+                          (total, book) => total + book.wordCount,
+                          0
+                        ) +
+                          quickStories.reduce(
+                            (total, story) => total + story.wordCount,
+                            0
+                          )}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontFamily: "'Rubik', sans-serif",
+                          color: "rgb(107, 114, 128)",
+                        }}
+                      >
+                        Total Words
+                      </Typography>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Plan & Features */}
+                <div className="bg-white rounded-lg p-6 shadow-sm">
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontFamily: "'Rubik', sans-serif",
+                      fontWeight: 600,
+                      marginBottom: 3,
+                      color: "rgb(31, 41, 55)",
+                    }}
+                  >
+                    Current Plan & Features
+                  </Typography>
+
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div>
+                        <Typography
+                          variant="body1"
+                          sx={{
+                            fontFamily: "'Rubik', sans-serif",
+                            fontWeight: 600,
+                            color: "rgb(31, 41, 55)",
+                          }}
+                        >
+                          {planType.charAt(0).toUpperCase() + planType.slice(1)}{" "}
+                          Plan
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontFamily: "'Rubik', sans-serif",
+                            color: "rgb(107, 114, 128)",
+                          }}
+                        >
+                          {isActivePlan ? "Active" : "Expired"} •{" "}
+                          {checkFeature("cloud-storage")
+                            ? "Cloud Storage"
+                            : "Local Storage Only"}
+                        </Typography>
+                      </div>
+                      {planType === "free" && (
+                        <Button
+                          onClick={handleShowPricing}
+                          variant="outlined"
+                          size="small"
+                          sx={{
+                            textTransform: "none",
+                            fontFamily: "'Rubik', sans-serif",
+                            borderColor: "rgb(19, 135, 194)",
+                            color: "rgb(19, 135, 194)",
+                            "&:hover": {
+                              backgroundColor: "rgba(19, 135, 194, 0.04)",
+                            },
+                          }}
+                        >
+                          Upgrade
+                        </Button>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      {[
+                        {
+                          feature: "unlimited-books",
+                          label: "Unlimited Books",
+                        },
+                        { feature: "cloud-storage", label: "Cloud Storage" },
+                        { feature: "export-pdf", label: "PDF Export" },
+                        { feature: "export-docx", label: "Word Export" },
+                        { feature: "collaboration", label: "Collaboration" },
+                        {
+                          feature: "version-history",
+                          label: "Version History",
+                        },
+                      ].map(({ feature, label }) => (
+                        <div key={feature} className="flex items-center">
+                          <span
+                            className={`mr-2 ${
+                              checkFeature(feature)
+                                ? "text-green-500"
+                                : "text-gray-400"
+                            }`}
+                          >
+                            {checkFeature(feature) ? "✓" : "✗"}
+                          </span>
+                          <span
+                            className={`${
+                              checkFeature(feature)
+                                ? "text-gray-700"
+                                : "text-gray-400"
+                            }`}
+                          >
+                            {label}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Account Actions */}
+                <div className="bg-white rounded-lg p-6 shadow-sm">
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontFamily: "'Rubik', sans-serif",
+                      fontWeight: 600,
+                      marginBottom: 3,
+                      color: "rgb(31, 41, 55)",
+                    }}
+                  >
+                    Account Actions
+                  </Typography>
+
+                  <div className="flex gap-4">
+                    <Button
+                      variant="outlined"
+                      sx={{
+                        flex: 1,
+                        textTransform: "none",
+                        fontFamily: "'Rubik', sans-serif",
+                        py: 1.5,
+                        borderColor: "rgb(209, 213, 219)",
+                        color: "rgb(107, 114, 128)",
+                        "&:hover": {
+                          borderColor: "rgb(19, 135, 194)",
+                          backgroundColor: "rgba(19, 135, 194, 0.04)",
+                        },
+                      }}
+                    >
+                      Export All Data
+                    </Button>
+
+                    <Button
+                      variant="outlined"
+                      sx={{
+                        flex: 1,
+                        textTransform: "none",
+                        fontFamily: "'Rubik', sans-serif",
+                        py: 1.5,
+                        borderColor: "rgb(239, 68, 68)",
+                        color: "rgb(239, 68, 68)",
+                        "&:hover": {
+                          borderColor: "rgb(220, 38, 38)",
+                          backgroundColor: "rgba(239, 68, 68, 0.04)",
+                        },
+                      }}
+                    >
+                      Permanently Delete Account
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </main>
+
+          {/* Footer - 100px tall */}
+          <footer className="h-[100px] flex items-center justify-center bg-gray-200">
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ fontFamily: "'Rubik', sans-serif" }}
+            >
+              © 2025 Twain Story Builder. All rights reserved.
+            </Typography>
+          </footer>
+
+          {/* Pricing Modal - Available for account settings */}
+          <TwainStoryPricingModal
+            open={showPricing}
+            onClose={handleClosePricing}
+            onUpgrade={handleUpgradePlan}
+          />
         </div>
       );
     }
@@ -955,10 +1598,12 @@ const TwainStoryBuilder: React.FC = () => {
           style={{ backgroundColor: "rgb(38, 52, 63)" }}
         >
           {/* Profile Menu - Top Right */}
-          <div className="absolute top-4 right-4">
-            <IconButton onClick={handleMenuOpen}>
-              <UserAvatar session={session} />
-            </IconButton>
+          <div className="absolute top-4 right-4 flex items-center">
+            <div className="relative">
+              <IconButton onClick={handleMenuOpen}>
+                <UserAvatar session={session} />
+              </IconButton>
+            </div>
             <Menu
               anchorEl={anchorEl}
               open={Boolean(anchorEl)}
@@ -972,7 +1617,12 @@ const TwainStoryBuilder: React.FC = () => {
                 horizontal: "right",
               }}
             >
-              <MenuItem onClick={handleMenuClose}>Account Settings</MenuItem>
+              <div className="ml-2 pb-1 pt-2">
+                <Chip {...getPlanChipProps(planType)} />
+              </div>
+              <MenuItem onClick={handleAccountSettings}>
+                Account Settings
+              </MenuItem>
               <MenuItem onClick={handleLogout}>Log Out</MenuItem>
             </Menu>
           </div>
@@ -1450,6 +2100,22 @@ const TwainStoryBuilder: React.FC = () => {
                               },
                             }}
                           />
+                          <DeleteOutlineOutlinedIcon
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteStory(storyData);
+                            }}
+                            sx={{
+                              fontSize: 32,
+                              color: "white",
+                              cursor: "pointer",
+                              transition: "transform 0.2s ease",
+                              "&:hover": {
+                                transform: "scale(1.1)",
+                                color: "#ff6b6b",
+                              },
+                            }}
+                          />
                         </div>
                       </div>
 
@@ -1568,10 +2234,37 @@ const TwainStoryBuilder: React.FC = () => {
           </div>
         </main>
 
-        {/* Demo Notice */}
-        <div className="w-full bg-gray-400 text-center py-4 text-gray-200 font-small">
-          Caution: This is a demo version. Data may be periodically cleared from
-          local storage.
+        {/* Plan Status Notice */}
+        <div
+          className="w-full text-center py-4 px-8 text-gray-200 text-xs"
+          style={{ backgroundColor: "rgb(38, 52, 63)" }}
+        >
+          You are subscribed to the{" "}
+          {planType.charAt(0).toUpperCase() + planType.slice(1)} plan.
+          <br />
+          {planType === "free" &&
+            "Data may be periodically cleared from local storage when you clear cache. Your content will also not be accessible across devices"}
+          {!isActivePlan && planType !== "free" && "Your plan has expired"}.
+          <br />
+          {(planType === "free" || !isActivePlan) && (
+            <>
+              <span
+                onClick={handleShowPricing}
+                className="underline cursor-pointer hover:text-white transition-colors duration-200"
+              >
+                {planType === "free"
+                  ? "Upgrade to a paid plan"
+                  : "Renew your subscription"}
+              </span>{" "}
+              to retain your data permanently and access it across all your
+              devices.
+            </>
+          )}
+          {isActivePlan && planType !== "free" && (
+            <span className="text-green-200">
+              Enjoy unlimited cloud storage and premium features!
+            </span>
+          )}
         </div>
 
         {/* Footer - 100px tall */}
@@ -1854,139 +2547,186 @@ const TwainStoryBuilder: React.FC = () => {
             {notification}
           </div>
         )}
+
+        {/* Pricing Modal - Available for logged-in users */}
+        <TwainStoryPricingModal
+          open={showPricing}
+          onClose={handleClosePricing}
+          onUpgrade={handleUpgradePlan}
+        />
       </div>
     );
   }
 
   // User is not logged in - show the login screen
   return (
-    <div
-      className="min-h-screen flex"
-      style={{
-        fontFamily: "'Crimson-Text', serif",
-        color: "rgb(136, 185, 84)",
-      }}
-    >
-      {/* Column 1 - Login Panel (50%) */}
-      <div className="w-1/2 bg-white flex flex-col">
-        {/* Icon in top left */}
-        <div className="pt-16 pl-16">
-          <Image
-            src="/images/twain-logo.png"
-            alt="Twain Logo"
-            width={160}
-            height={160}
-          />
-        </div>
+    <>
+      <div
+        className="h-screen flex flex-col md:flex-row"
+        style={{
+          fontFamily: "'Crimson-Text', serif",
+          color: "rgb(136, 185, 84)",
+        }}
+      >
+        {/* Mobile: Single container with background image, Desktop: Login Panel (50%) */}
+        <div
+          className="w-full md:w-1/2 bg-white flex flex-col relative md:bg-none"
+          style={{
+            backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.9)), url(${backgroundImage})`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+          }}
+        >
+          {/* Content layer */}
+          <div className="relative z-10 flex flex-col sm:h-full h-screen">
+            {/* Icon in top left */}
+            <div className="pt-32 pl-16 md:pt-32 md:pl-32">
+              <Image
+                src="/images/twain-logo.png"
+                alt="Twain Logo"
+                width={160}
+                height={160}
+              />
+            </div>
 
-        {/* Centered login content */}
-        <div className="flex-1 flex flex-col justify-center px-12">
-          <div className="space-y-6 pl-20 pr-8 py-12">
-            <Typography
-              variant="body1"
-              sx={{
-                color: "#1f2937",
-                fontFamily: "'Rubik', sans-serif",
-                fontWeight: 400,
-                letterSpacing: 0,
-                fontStretch: "100%",
-                marginBottom: "8px",
-              }}
-            >
-              Welcome Back Writer!
-            </Typography>
+            {/* Centered login content */}
+            <div className="flex-1 flex flex-col justify-center px-6 md:px-12">
+              <div className="space-y-6 pl-4 pr-4 py-8 md:pl-20 md:pr-8 md:py-12">
+                <Typography
+                  variant="body1"
+                  sx={{
+                    color: "#1f2937",
+                    fontFamily: "'Rubik', sans-serif",
+                    fontWeight: 400,
+                    letterSpacing: 0,
+                    fontStretch: "100%",
+                    marginBottom: "8px",
+                  }}
+                >
+                  Welcome Back Writer!
+                </Typography>
 
-            <Typography
-              variant="h5"
-              sx={{
-                color: "#1f2937",
-                fontFamily: "'Crimson-Text', serif",
-                fontWeight: 400,
-                letterSpacing: 0,
-                fontStretch: "100%",
-                lineHeight: 1.2,
-                marginBottom: "32px",
-              }}
-            >
-              Log in to Twain Story Builder
-            </Typography>
+                <Typography
+                  variant="h5"
+                  sx={{
+                    color: "#1f2937",
+                    fontFamily: "'Crimson-Text', serif",
+                    fontWeight: 400,
+                    letterSpacing: 0,
+                    fontStretch: "100%",
+                    lineHeight: 1.2,
+                    marginBottom: "32px",
+                  }}
+                >
+                  Log in to Twain Story Builder
+                </Typography>
 
-            <Button
-              variant="contained"
-              onClick={handleSignIn}
-              sx={{
-                backgroundColor: "#4285f4",
-                color: "white",
-                padding: "12px 24px",
-                fontSize: "16px",
-                textTransform: "none",
-                borderRadius: "8px",
-                boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-                "&:hover": {
-                  backgroundColor: "#3367d6",
-                },
-                "&:disabled": {
-                  backgroundColor: "#cccccc",
-                },
-              }}
-              startIcon={
-                <svg width="20" height="20" viewBox="0 0 24 24">
-                  <path
-                    fill="currentColor"
-                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                  />
-                  <path
-                    fill="currentColor"
-                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                  />
-                  <path
-                    fill="currentColor"
-                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53L2.18 16.93C3.99 20.53 7.7 23 12 23z"
-                  />
-                  <path
-                    fill="currentColor"
-                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07L2.18 7.07C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                  />
-                </svg>
-              }
-            >
-              Sign in with Google
-            </Button>
+                <Button
+                  variant="contained"
+                  onClick={handleSignIn}
+                  sx={{
+                    backgroundColor: "#4285f4",
+                    color: "white",
+                    padding: "12px 24px",
+                    fontSize: "16px",
+                    textTransform: "none",
+                    borderRadius: "8px",
+                    boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+                    "&:hover": {
+                      backgroundColor: "#3367d6",
+                    },
+                    "&:disabled": {
+                      backgroundColor: "#cccccc",
+                    },
+                  }}
+                  startIcon={
+                    <svg width="20" height="20" viewBox="0 0 24 24">
+                      <path
+                        fill="currentColor"
+                        d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
+                      />
+                      <path
+                        fill="currentColor"
+                        d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
+                      />
+                      <path
+                        fill="currentColor"
+                        d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53L2.18 16.93C3.99 20.53 7.7 23 12 23z"
+                      />
+                      <path
+                        fill="currentColor"
+                        d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07L2.18 7.07C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
+                      />
+                    </svg>
+                  }
+                >
+                  Sign in with Google
+                </Button>
+              </div>
+            </div>
+
+            {/* Request Access and Pricing - bottom aligned on mobile, normal position on desktop */}
+            <div className="mt-auto p-4 md:p-6 md:mt-0">
+              <div className="flex items-center justify-between">
+                <Typography
+                  variant="body2"
+                  onClick={handleRequestAccess}
+                  sx={{
+                    color: "rgb(136, 185, 84)",
+                    fontFamily: "'Crimson-Text', serif",
+                    fontStretch: "100%",
+                    letterSpacing: 0,
+                    cursor: "pointer",
+                    "&:hover": {
+                      color: "rgb(100, 140, 60)",
+                      textDecoration: "underline",
+                    },
+                  }}
+                >
+                  Request Access
+                </Typography>
+                <Typography
+                  variant="body2"
+                  onClick={handleShowPricing}
+                  sx={{
+                    color: "rgb(136, 185, 84)",
+                    fontFamily: "'Crimson-Text', serif",
+                    fontStretch: "100%",
+                    letterSpacing: 0,
+                    cursor: "pointer",
+                    "&:hover": {
+                      color: "rgb(100, 140, 60)",
+                      textDecoration: "underline",
+                    },
+                  }}
+                >
+                  Pricing
+                </Typography>
+              </div>
+            </div>
           </div>
         </div>
 
-        {/* Request Access in bottom left */}
-        <div className="p-6">
-          <Typography
-            variant="body2"
-            sx={{
-              color: "rgb(136, 185, 84)",
-              fontFamily: "'Crimson-Text', serif",
-              fontStretch: "100%",
-              letterSpacing: 0,
-              cursor: "pointer",
-              "&:hover": {
-                color: "rgb(100, 140, 60)",
-                textDecoration: "underline",
-              },
-            }}
-          >
-            Request Access
-          </Typography>
+        {/* Desktop: Image Column (hidden on mobile) */}
+        <div className="hidden md:flex md:w-1/2 relative overflow-hidden">
+          <Image
+            src={backgroundImage}
+            alt="Twain Story Builder"
+            fill
+            className="object-cover"
+            priority
+          />
         </div>
       </div>
 
-      {/* Column 2 - Image (50%) */}
-      <div className="w-1/2 relative min-h-screen">
-        <Image
-          src={backgroundImage}
-          alt="Twain Story Builder"
-          fill
-          className="object-cover"
-          priority
-        />
-      </div>
-    </div>
+      {/* Pricing Modal - Available globally for all views */}
+      <TwainStoryPricingModal
+        open={showPricing}
+        onClose={handleClosePricing}
+        onUpgrade={handleUpgradePlan}
+      />
+    </>
   );
 };
 

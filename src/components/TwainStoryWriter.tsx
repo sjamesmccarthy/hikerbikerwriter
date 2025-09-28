@@ -47,6 +47,8 @@ import HistoryEduIcon from "@mui/icons-material/HistoryEdu";
 import AddIcon from "@mui/icons-material/Add";
 import TimerOutlinedIcon from "@mui/icons-material/TimerOutlined";
 import FileUploadOutlinedIcon from "@mui/icons-material/FileUploadOutlined";
+import MenuBookOutlinedIcon from "@mui/icons-material/MenuBookOutlined";
+import HistoryEduOutlinedIcon from "@mui/icons-material/HistoryEduOutlined";
 
 // Define Quill types
 interface QuillInstance {
@@ -227,7 +229,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
   const [expandedAccordions, setExpandedAccordions] = useState<Set<string>>(
     new Set()
   ); // Start with all collapsed
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [sidebarExpandedFromIcon, setSidebarExpandedFromIcon] = useState(false);
 
@@ -2001,7 +2003,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
           title: "STORIES",
           content: "Write and develop your complete stories...",
           icon: (
-            <DescriptionOutlinedIcon
+            <HistoryEduOutlinedIcon
               sx={{ fontSize: 24, color: "rgb(107, 114, 128)" }}
             />
           ),
@@ -2043,7 +2045,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
           title: "STORIES",
           content: "Write and develop your complete stories...",
           icon: (
-            <DescriptionOutlinedIcon
+            <HistoryEduOutlinedIcon
               sx={{ fontSize: 24, color: "rgb(107, 114, 128)" }}
             />
           ),
@@ -3153,6 +3155,24 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
           >
             {/* Title and Word Count */}
             <div className="text-center mb-8">
+              {/* Icon - Book for books, Story for quick stories */}
+              <div className="mb-4">
+                {isQuickStoryMode ? (
+                  <HistoryEduOutlinedIcon
+                    sx={{
+                      fontSize: 64,
+                      color: "rgb(107, 114, 128)",
+                    }}
+                  />
+                ) : (
+                  <MenuBookOutlinedIcon
+                    sx={{
+                      fontSize: 64,
+                      color: "rgb(107, 114, 128)",
+                    }}
+                  />
+                )}
+              </div>
               <Typography
                 variant="h3"
                 sx={{
