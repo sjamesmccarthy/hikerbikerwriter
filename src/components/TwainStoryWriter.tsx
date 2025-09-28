@@ -2,7 +2,10 @@
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useSession } from "next-auth/react";
-import { updateBookWordCount } from "./TwainStoryBuilder";
+import {
+  updateBookWordCount,
+  updateQuickStoryWordCount,
+} from "./TwainStoryBuilder";
 import { Document, Packer, Paragraph, TextRun, HeadingLevel } from "docx";
 import mammoth from "mammoth";
 import {
@@ -132,6 +135,8 @@ interface Book {
 interface TwainStoryWriterProps {
   book: Book;
   onBackToBookshelf: () => void;
+  isQuickStoryMode?: boolean;
+  autoStartStory?: boolean;
 }
 
 // Storage key helpers
@@ -163,6 +168,8 @@ const saveToStorage = (
 const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
   book,
   onBackToBookshelf,
+  isQuickStoryMode = false,
+  autoStartStory = false,
 }) => {
   const { data: session } = useSession();
   const quillRef = useRef<HTMLDivElement | null>(null);
@@ -482,13 +489,24 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
       });
       setTotalWordCount(total);
 
-      // Update the book's word count in localStorage
+      // Update the book's or story's word count in localStorage
       if (session?.user?.email) {
-        updateBookWordCount(book.id, total, session.user.email);
+        if (isQuickStoryMode) {
+          updateQuickStoryWordCount(book.id, total, session.user.email);
+        } else {
+          updateBookWordCount(book.id, total, session.user.email);
+        }
       }
     };
     calculateWordCount();
-  }, [chapters, stories, outlines, book.id, session?.user?.email]);
+  }, [
+    chapters,
+    stories,
+    outlines,
+    book.id,
+    session?.user?.email,
+    isQuickStoryMode,
+  ]);
 
   // Set Quill content when currentChapter, currentStory, or currentOutline changes
   useEffect(() => {
@@ -501,6 +519,50 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
       }
     }
   }, [quillInstance, currentChapter, currentStory, currentOutline]);
+
+  // Auto-start story for quick story mode
+  useEffect(() => {
+    if (
+      autoStartStory &&
+      quillInstance &&
+      stories.length === 0 &&
+      session?.user?.email
+    ) {
+      // Create a new story automatically
+      const newStory: Story = {
+        id: Date.now().toString(),
+        title: book.title, // Use the book title as the story title
+        content: JSON.stringify({}), // Empty delta
+        createdAt: new Date(),
+      };
+
+      const updatedStories = [newStory];
+      setStories(updatedStories);
+
+      // Store in localStorage
+      const storageKey = getStorageKey("stories", book.id, session.user.email);
+      localStorage.setItem(storageKey, JSON.stringify(updatedStories));
+
+      // Set editing mode immediately
+      setCurrentStory(newStory);
+      setIsEditingStory(true);
+
+      // Update Quill placeholder
+      setTimeout(() => {
+        if (quillInstance && quillInstance.root) {
+          const placeholderText = `Begin writing "${book.title}"...`;
+          quillInstance.root.setAttribute("data-placeholder", placeholderText);
+        }
+      }, 100);
+    }
+  }, [
+    autoStartStory,
+    quillInstance,
+    stories.length,
+    session?.user?.email,
+    book.title,
+    book.id,
+  ]);
 
   // Auto-save function
   const handleAutoSave = useCallback(() => {
@@ -1855,60 +1917,82 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
     }
   };
 
-  const accordionSections = [
-    {
-      title: "IDEAS",
-      content: "Store your creative ideas and inspiration here...",
-      icon: (
-        <BatchPredictionIcon
-          sx={{ fontSize: 24, color: "rgb(107, 114, 128)" }}
-        />
-      ),
-      createHandler: handleCreateIdeaClick,
-    },
-    {
-      title: "CHARACTERS",
-      content:
-        "Develop your characters, their backgrounds, motivations, and relationships...",
-      icon: (
-        <FaceOutlinedIcon sx={{ fontSize: 24, color: "rgb(107, 114, 128)" }} />
-      ),
-      createHandler: handleCreateCharacterClick,
-    },
-    {
-      title: "OUTLINE",
-      content: "Structure your story with chapter outlines and plot points...",
-      icon: <ListAltIcon sx={{ fontSize: 24, color: "rgb(107, 114, 128)" }} />,
-      createHandler: handleCreateOutlineClick,
-    },
-    {
-      title: "STORIES",
-      content: "Write and develop your complete stories...",
-      icon: (
-        <DescriptionOutlinedIcon
-          sx={{ fontSize: 24, color: "rgb(107, 114, 128)" }}
-        />
-      ),
-      createHandler: handleCreateStoryClick,
-    },
-    {
-      title: "CHAPTERS",
-      content: "Create and organize your story chapters...",
-      icon: (
-        <AutoStoriesIcon sx={{ fontSize: 24, color: "rgb(107, 114, 128)" }} />
-      ),
-      createHandler: handleCreateChapterClick,
-    },
-    {
-      title: "PARTS",
-      content:
-        "Organize your story into parts. Parts are made up of chapters...",
-      icon: (
-        <FolderCopyIcon sx={{ fontSize: 24, color: "rgb(107, 114, 128)" }} />
-      ),
-      createHandler: handleCreatePartClick,
-    },
-  ];
+  const accordionSections = isQuickStoryMode
+    ? [
+        {
+          title: "STORIES",
+          content: "Write and develop your complete stories...",
+          icon: (
+            <DescriptionOutlinedIcon
+              sx={{ fontSize: 24, color: "rgb(107, 114, 128)" }}
+            />
+          ),
+          createHandler: handleCreateStoryClick,
+        },
+      ]
+    : [
+        {
+          title: "IDEAS",
+          content: "Store your creative ideas and inspiration here...",
+          icon: (
+            <BatchPredictionIcon
+              sx={{ fontSize: 24, color: "rgb(107, 114, 128)" }}
+            />
+          ),
+          createHandler: handleCreateIdeaClick,
+        },
+        {
+          title: "CHARACTERS",
+          content:
+            "Develop your characters, their backgrounds, motivations, and relationships...",
+          icon: (
+            <FaceOutlinedIcon
+              sx={{ fontSize: 24, color: "rgb(107, 114, 128)" }}
+            />
+          ),
+          createHandler: handleCreateCharacterClick,
+        },
+        {
+          title: "OUTLINE",
+          content:
+            "Structure your story with chapter outlines and plot points...",
+          icon: (
+            <ListAltIcon sx={{ fontSize: 24, color: "rgb(107, 114, 128)" }} />
+          ),
+          createHandler: handleCreateOutlineClick,
+        },
+        {
+          title: "STORIES",
+          content: "Write and develop your complete stories...",
+          icon: (
+            <DescriptionOutlinedIcon
+              sx={{ fontSize: 24, color: "rgb(107, 114, 128)" }}
+            />
+          ),
+          createHandler: handleCreateStoryClick,
+        },
+        {
+          title: "CHAPTERS",
+          content: "Create and organize your story chapters...",
+          icon: (
+            <AutoStoriesIcon
+              sx={{ fontSize: 24, color: "rgb(107, 114, 128)" }}
+            />
+          ),
+          createHandler: handleCreateChapterClick,
+        },
+        {
+          title: "PARTS",
+          content:
+            "Organize your story into parts. Parts are made up of chapters...",
+          icon: (
+            <FolderCopyIcon
+              sx={{ fontSize: 24, color: "rgb(107, 114, 128)" }}
+            />
+          ),
+          createHandler: handleCreatePartClick,
+        },
+      ];
   return (
     <div className="h-screen flex relative">
       {/* Column 1: Sidebar with Accordions - overlay */}

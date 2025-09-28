@@ -16,10 +16,10 @@ import {
   Select,
   FormControl,
   InputLabel,
+  ButtonGroup,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import { HistoryEduOutlined as HistoryEduOutlinedIcon } from "@mui/icons-material";
 import AddCircleOutlinedIcon from "@mui/icons-material/AddCircleOutlined";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import DrawOutlinedIcon from "@mui/icons-material/DrawOutlined";
@@ -206,16 +206,76 @@ const updateBookWordCount = (
   }
 };
 
+const updateQuickStoryWordCount = (
+  storyId: number,
+  wordCount: number,
+  userEmail?: string
+): void => {
+  if (typeof window === "undefined" || !userEmail) return;
+  try {
+    const quickStories = loadQuickStoriesFromStorage(userEmail);
+    const updatedQuickStories = quickStories.map((story) =>
+      story.id === storyId
+        ? { ...story, wordCount, updatedAt: new Date().toISOString() }
+        : story
+    );
+    saveQuickStoriesToStorage(updatedQuickStories, userEmail);
+  } catch (error) {
+    console.error("Error updating quick story word count:", error);
+  }
+};
+
+// Quick Stories localStorage utilities
+const getQuickStoriesStorageKey = (userEmail: string): string => {
+  return `twain-story-builder-quickstories-${userEmail}`;
+};
+
+const loadQuickStoriesFromStorage = (userEmail?: string): Book[] => {
+  if (typeof window === "undefined" || !userEmail) return [];
+  try {
+    const storageKey = getQuickStoriesStorageKey(userEmail);
+    const stored = localStorage.getItem(storageKey);
+    return stored ? JSON.parse(stored) : [];
+  } catch (error) {
+    console.error("Error loading quick stories from localStorage:", error);
+    return [];
+  }
+};
+
+const saveQuickStoriesToStorage = (
+  stories: Book[],
+  userEmail?: string
+): void => {
+  if (typeof window === "undefined" || !userEmail) return;
+  try {
+    const storageKey = getQuickStoriesStorageKey(userEmail);
+    localStorage.setItem(storageKey, JSON.stringify(stories));
+  } catch (error) {
+    console.error("Error saving quick stories to localStorage:", error);
+  }
+};
+
+const generateQuickStoryId = (existingStories: Book[]): number => {
+  return existingStories.length > 0
+    ? Math.max(...existingStories.map((story) => story.id)) + 1
+    : 1;
+};
+
 const TwainStoryBuilder: React.FC = () => {
   const { data: session, status } = useSession();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [createBookModalOpen, setCreateBookModalOpen] = useState(false);
   const [bookTitle, setBookTitle] = useState("");
+  const [createStoryModalOpen, setCreateStoryModalOpen] = useState(false);
+  const [storyTitle, setStoryTitle] = useState("");
   const [currentView, setCurrentView] = useState<
     "bookshelf" | "manage" | "write"
   >("bookshelf");
   const [selectedBook, setSelectedBook] = useState<Book | null>(null);
   const [books, setBooks] = useState<Book[]>([]);
+  const [quickStories, setQuickStories] = useState<Book[]>([]);
+  const [isQuickStoryMode, setIsQuickStoryMode] = useState(false);
+  const [filter, setFilter] = useState<"all" | "books" | "stories">("all");
   const [managedBookTitle, setManagedBookTitle] = useState("");
   const [managedBookAuthor, setManagedBookAuthor] = useState("");
   const [managedBookSubtitle, setManagedBookSubtitle] = useState("");
@@ -249,6 +309,16 @@ const TwainStoryBuilder: React.FC = () => {
     if (session?.user?.email) {
       const storedBooks = loadBooksFromStorage(session.user.email);
       setBooks(storedBooks);
+    }
+  }, [session?.user?.email]);
+
+  // Load quick stories from localStorage on component mount
+  useEffect(() => {
+    if (session?.user?.email) {
+      const storedQuickStories = loadQuickStoriesFromStorage(
+        session.user.email
+      );
+      setQuickStories(storedQuickStories);
     }
   }, [session?.user?.email]);
 
@@ -304,6 +374,46 @@ const TwainStoryBuilder: React.FC = () => {
     }
   };
 
+  const handleCreateStoryClick = () => {
+    setCreateStoryModalOpen(true);
+  };
+
+  const handleCreateStoryModalClose = () => {
+    setCreateStoryModalOpen(false);
+    setStoryTitle("");
+  };
+
+  const handleCreateStory = () => {
+    if (storyTitle.trim()) {
+      const quickStoryBook: Book = {
+        id: generateQuickStoryId(quickStories),
+        title: storyTitle.trim(),
+        subtitle: "",
+        author: session?.user?.name || "Unknown Author",
+        edition: "First Edition",
+        copyrightYear: new Date().getFullYear().toString(),
+        wordCount: 0,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+
+      const updatedQuickStories = [...quickStories, quickStoryBook];
+      setQuickStories(updatedQuickStories);
+      if (session?.user?.email) {
+        saveQuickStoriesToStorage(updatedQuickStories, session.user.email);
+      }
+
+      // Close modal first to prevent any rendering conflicts
+      handleCreateStoryModalClose();
+
+      // Set quick story mode and switch to write view
+      setIsQuickStoryMode(true);
+      setSelectedBook(quickStoryBook);
+      setCurrentView("write");
+      showNotification(`"${quickStoryBook.title}" story is ready to write!`);
+    }
+  };
+
   const handleManageBook = (book: Book) => {
     setSelectedBook(book);
     setManagedBookTitle(book.title);
@@ -317,6 +427,7 @@ const TwainStoryBuilder: React.FC = () => {
   const handleBackToBookshelf = () => {
     setCurrentView("bookshelf");
     setSelectedBook(null);
+    setIsQuickStoryMode(false);
     setManagedBookTitle("");
     setManagedBookAuthor("");
     setManagedBookSubtitle("");
@@ -485,6 +596,8 @@ const TwainStoryBuilder: React.FC = () => {
         <TwainStoryWriter
           book={selectedBook}
           onBackToBookshelf={handleBackToBookshelf}
+          isQuickStoryMode={isQuickStoryMode}
+          autoStartStory={isQuickStoryMode}
         />
       );
     }
@@ -520,8 +633,15 @@ const TwainStoryBuilder: React.FC = () => {
               </Menu>
             </div>
 
-            <HistoryEduOutlinedIcon
-              sx={{ fontSize: 120, color: "white", marginBottom: 2 }}
+            <Image
+              src="/images/twain-logo.png"
+              alt="Twain Logo"
+              width={120}
+              height={120}
+              style={{
+                filter: "invert(1) brightness(100%)",
+                marginBottom: "16px",
+              }}
             />
             <Typography
               variant="h4"
@@ -851,8 +971,15 @@ const TwainStoryBuilder: React.FC = () => {
             </Menu>
           </div>
 
-          <HistoryEduOutlinedIcon
-            sx={{ fontSize: 120, color: "white", marginBottom: 2 }}
+          <Image
+            src="/images/twain-logo.png"
+            alt="Twain Logo"
+            width={120}
+            height={120}
+            style={{
+              filter: "invert(1) brightness(100%)",
+              marginBottom: "32px",
+            }}
           />
           <Typography
             variant="h4"
@@ -886,6 +1013,58 @@ const TwainStoryBuilder: React.FC = () => {
         {/* Main content area - flexible height */}
         <main className="flex-1 bg-gray-100 p-4 sm:p-8">
           <div className="w-[95%] sm:w-[90%] md:w-[80%] mx-auto">
+            {/* Filter buttons */}
+            <div className="flex justify-center mb-6">
+              <ButtonGroup
+                variant="outlined"
+                aria-label="filter books and stories"
+                sx={{
+                  "& .MuiButton-root": {
+                    fontFamily: "'Rubik', sans-serif",
+                    textTransform: "none",
+                    fontSize: "14px",
+                    fontWeight: 500,
+                    px: 3,
+                    py: 1,
+                    borderColor: "rgb(209, 213, 219)",
+                    color: "rgb(107, 114, 128)",
+                    "&:hover": {
+                      borderColor: "rgb(19, 135, 194)",
+                      backgroundColor: "rgba(19, 135, 194, 0.04)",
+                    },
+                  },
+                  "& .MuiButton-root.Mui-selected": {
+                    backgroundColor: "rgb(19, 135, 194)",
+                    color: "white",
+                    borderColor: "rgb(19, 135, 194)",
+                    "&:hover": {
+                      backgroundColor: "rgb(15, 108, 155)",
+                      borderColor: "rgb(15, 108, 155)",
+                    },
+                  },
+                }}
+              >
+                <Button
+                  onClick={() => setFilter("all")}
+                  className={filter === "all" ? "Mui-selected" : ""}
+                >
+                  All ({books.length + quickStories.length})
+                </Button>
+                <Button
+                  onClick={() => setFilter("books")}
+                  className={filter === "books" ? "Mui-selected" : ""}
+                >
+                  Books ({books.length})
+                </Button>
+                <Button
+                  onClick={() => setFilter("stories")}
+                  className={filter === "stories" ? "Mui-selected" : ""}
+                >
+                  Stories ({quickStories.length})
+                </Button>
+              </ButtonGroup>
+            </div>
+
             {/* Books flex container with custom spacing */}
             <div
               style={{
@@ -901,59 +1080,84 @@ const TwainStoryBuilder: React.FC = () => {
               }}
               className="sm:!flex sm:flex-wrap sm:justify-start sm:gap-0 sm:!w-full"
             >
-              {/* Create/Import book card - first card */}
-              <div
-                className="hover:shadow-md transition-shadow cursor-pointer flex flex-col rounded-md w-full max-w-[176px] sm:w-[176px] sm:max-w-none"
-                style={{
-                  aspectRatio: "176/268",
-                  backgroundColor: "rgb(227, 230, 230)",
-                }}
-              >
-                <div className="flex-1 flex flex-col justify-center items-center p-2 space-y-2">
-                  {/* Create Book Button */}
-                  <button
-                    className="w-full flex flex-col items-center space-y-1 p-2 rounded cursor-pointer"
-                    onClick={handleCreateBookClick}
-                  >
-                    <AddCircleOutlinedIcon
-                      sx={{
-                        fontSize: 64,
-                        color: "rgb(19, 135, 194)",
-                        transition: "transform 0.2s ease",
-                        "&:hover": {
-                          transform: "scale(1.1)",
-                        },
-                      }}
-                    />
-                    <span className="text-sm font-medium text-gray-800">
-                      Create book
-                    </span>
-                  </button>
+              {/* Create/Import book card - first card - only show if there are existing books or stories */}
+              {(books.length > 0 || quickStories.length > 0) && (
+                <div
+                  className="hover:shadow-md transition-shadow cursor-pointer flex flex-col rounded-md w-full max-w-[176px] sm:w-[176px] sm:max-w-none"
+                  style={{
+                    aspectRatio: "176/268",
+                    backgroundColor: "rgb(227, 230, 230)",
+                  }}
+                >
+                  <div className="flex-1 flex flex-col justify-center items-center p-2 space-y-2">
+                    {/* Create Book Button */}
+                    <button
+                      className="w-full flex flex-col items-center space-y-1 p-2 rounded cursor-pointer"
+                      onClick={handleCreateBookClick}
+                    >
+                      <AddCircleOutlinedIcon
+                        sx={{
+                          fontSize: 64,
+                          color: "rgb(100, 114, 127)",
+                          transition: "transform 0.2s ease",
+                          "&:hover": {
+                            transform: "scale(1.1)",
+                          },
+                        }}
+                      />
+                      <span className="text-sm font-medium text-gray-800">
+                        Create book
+                      </span>
+                    </button>
+
+                    {/* Divider Line */}
+                    <div className="w-full border-b border-gray-300 my-2"></div>
+
+                    {/* Create Story Button */}
+                    <button
+                      className="w-full flex flex-col items-center space-y-1 p-2 rounded cursor-pointer"
+                      onClick={handleCreateStoryClick}
+                    >
+                      <AddCircleOutlinedIcon
+                        sx={{
+                          fontSize: 64,
+                          color: "rgb(34, 197, 94)",
+                          transition: "transform 0.2s ease",
+                          "&:hover": {
+                            transform: "scale(1.1)",
+                          },
+                        }}
+                      />
+                      <span className="text-sm font-medium text-gray-800">
+                        Create Story
+                      </span>
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Book cards */}
-              {books.map((bookData: Book) => {
-                return (
-                  <div
-                    key={bookData.id}
-                    className="bg-white hover:shadow-md cursor-pointer flex flex-col rounded-r-md relative group w-full max-w-[176px] sm:w-[176px] sm:max-w-none"
-                    style={{
-                      aspectRatio: "176/268",
-                      borderLeft: "8px solid rgb(100, 114, 127)",
-                      transition: "transform 0.2s ease",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = "scale(1.05)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = "scale(1)";
-                    }}
-                  >
-                    {/* Hover overlay with icons - covers entire card */}
-                    <div className="absolute inset-0 bg-black bg-opacity-60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-r-md z-10">
-                      {/* Book info - only show for cover images */}
-                      {bookData.coverImage && (
+              {(filter === "all" || filter === "books") &&
+                books.map((bookData: Book) => {
+                  return (
+                    <div
+                      key={bookData.id}
+                      className="bg-white hover:shadow-md cursor-pointer flex flex-col rounded-r-md relative group w-full max-w-[176px] sm:w-[176px] sm:max-w-none"
+                      style={{
+                        aspectRatio: "176/268",
+                        borderLeft: "8px solid rgb(100, 114, 127)",
+                        transition: "transform 0.2s ease",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = "scale(1.05)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = "scale(1)";
+                      }}
+                    >
+                      {/* Hover overlay with icons - covers entire card */}
+                      <div className="absolute inset-0 bg-black bg-opacity-60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-r-md z-10">
+                        {/* Book info - always show */}
                         <div className="text-center mb-4">
                           <Typography
                             variant="body1"
@@ -995,52 +1199,243 @@ const TwainStoryBuilder: React.FC = () => {
                             {new Date(bookData.createdAt).toLocaleDateString()}
                           </Typography>
                         </div>
+
+                        {/* Action icons */}
+                        <div className="flex items-center space-x-4">
+                          <SettingsOutlinedIcon
+                            onClick={() => handleManageBook(bookData)}
+                            sx={{
+                              fontSize: 32,
+                              color: "white",
+                              cursor: "pointer",
+                              transition: "transform 0.2s ease",
+                              "&:hover": {
+                                transform: "scale(1.1)",
+                              },
+                            }}
+                          />
+                          <DrawOutlinedIcon
+                            onClick={() => handleWriteBook(bookData)}
+                            sx={{
+                              fontSize: 32,
+                              color: "white",
+                              cursor: "pointer",
+                              transition: "transform 0.2s ease",
+                              "&:hover": {
+                                transform: "scale(1.1)",
+                              },
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      {bookData.coverImage ? (
+                        // Cover image fills entire card - no text overlay
+                        <div className="w-full flex-1 relative z-0 overflow-hidden">
+                          <Image
+                            src={bookData.coverImage}
+                            alt={`${bookData.title} cover`}
+                            fill
+                            style={{ objectFit: "cover" }}
+                            className="rounded-r-sm"
+                          />
+                        </div>
+                      ) : (
+                        // No cover image - traditional layout
+                        <>
+                          <div className="w-full h-48 bg-white flex items-start justify-start p-2 relative overflow-hidden">
+                            <Typography
+                              variant="body1"
+                              sx={{
+                                fontFamily: "'Alike', serif",
+                                fontSize: "18px",
+                                fontWeight: "bold",
+                                color: "text.secondary",
+                              }}
+                            >
+                              {bookData.title}
+                            </Typography>
+                          </div>
+                          <div className="px-3 pb-3 flex items-end justify-center flex-1">
+                            <div className="text-center">
+                              <Typography
+                                variant="body2"
+                                sx={{
+                                  fontFamily: "'Rubik', sans-serif",
+                                  fontSize: "14px",
+                                  fontWeight: 400,
+                                  textAlign: "center",
+                                }}
+                              >
+                                {bookData.wordCount} words
+                              </Typography>
+                              <Typography
+                                variant="body2"
+                                sx={{
+                                  fontFamily: "'Rubik', sans-serif",
+                                  fontSize: "12px",
+                                  fontWeight: 300,
+                                  textAlign: "center",
+                                  color: "text.secondary",
+                                  mt: 0.5,
+                                }}
+                              >
+                                Started on{" "}
+                                {new Date(
+                                  bookData.createdAt
+                                ).toLocaleDateString()}
+                              </Typography>
+                            </div>
+                          </div>
+                        </>
                       )}
-
-                      {/* Action icons */}
-                      <div className="flex items-center space-x-4">
-                        <SettingsOutlinedIcon
-                          onClick={() => handleManageBook(bookData)}
-                          sx={{
-                            fontSize: 32,
-                            color: "white",
-                            cursor: "pointer",
-                            transition: "transform 0.2s ease",
-                            "&:hover": {
-                              transform: "scale(1.1)",
-                            },
-                          }}
-                        />
-                        <DrawOutlinedIcon
-                          onClick={() => handleWriteBook(bookData)}
-                          sx={{
-                            fontSize: 32,
-                            color: "white",
-                            cursor: "pointer",
-                            transition: "transform 0.2s ease",
-                            "&:hover": {
-                              transform: "scale(1.1)",
-                            },
-                          }}
-                        />
-                      </div>
                     </div>
+                  );
+                })}
 
-                    {bookData.coverImage ? (
-                      // Cover image fills entire card - no text overlay
-                      <div className="w-full flex-1 relative z-0 overflow-hidden">
-                        <Image
-                          src={bookData.coverImage}
-                          alt={`${bookData.title} cover`}
-                          fill
-                          style={{ objectFit: "cover" }}
-                          className="rounded-r-sm"
-                        />
+              {/* Empty state message */}
+              {((filter === "books" && books.length === 0) ||
+                (filter === "all" &&
+                  books.length === 0 &&
+                  quickStories.length === 0)) && (
+                <div
+                  className="col-span-2 sm:col-span-full flex items-center justify-center w-full"
+                  style={{ minHeight: "120px" }}
+                >
+                  <div className="p-6 w-full text-center">
+                    <Typography
+                      variant="body1"
+                      sx={{
+                        fontFamily: "'Alike', serif",
+                        fontSize: "24px",
+                        fontWeight: 500,
+                        color: "rgb(75, 85, 99)",
+                        lineHeight: 1.5,
+                        mb: 2,
+                      }}
+                    >
+                      You haven&apos;t written anything,
+                      <br /> why not get going my scribe and create a story or
+                      book.
+                    </Typography>
+                    <div className="flex items-center justify-center space-x-4 pt-6">
+                      <button
+                        onClick={handleCreateBookClick}
+                        className="flex items-center space-x-2 text-white px-4 py-2 rounded-md transition-colors duration-200 cursor-pointer"
+                        style={{ backgroundColor: "rgb(100, 114, 127)" }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor =
+                            "rgb(80, 94, 107)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor =
+                            "rgb(100, 114, 127)";
+                        }}
+                      >
+                        <AddCircleOutlinedIcon sx={{ fontSize: 18 }} />
+                        <span className="font-medium">Create Book</span>
+                      </button>
+                      <span className="text-blue-400">|</span>
+                      <button
+                        onClick={handleCreateStoryClick}
+                        className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md transition-colors duration-200 cursor-pointer"
+                      >
+                        <AddCircleOutlinedIcon sx={{ fontSize: 18 }} />
+                        <span className="font-medium">Create Story</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Story cards */}
+              {(filter === "all" || filter === "stories") &&
+                quickStories.map((storyData: Book) => {
+                  return (
+                    <div
+                      key={`story-${storyData.id}`}
+                      className="bg-white hover:shadow-md cursor-pointer flex flex-col rounded-r-md relative group w-full max-w-[176px] sm:w-[176px] sm:max-w-none"
+                      style={{
+                        aspectRatio: "176/268",
+                        borderLeft: "8px solid rgb(34, 197, 94)", // Green border
+                        transition: "transform 0.2s ease",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = "scale(1.05)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = "scale(1)";
+                      }}
+                    >
+                      {/* Hover overlay with icons - covers entire card */}
+                      <div className="absolute inset-0 bg-black bg-opacity-60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-r-md z-10">
+                        {/* Story info */}
+                        <div className="text-center mb-4">
+                          <Typography
+                            variant="body1"
+                            sx={{
+                              fontFamily: "'Alike', serif",
+                              fontSize: "16px",
+                              fontWeight: "bold",
+                              color: "white",
+                              textShadow: "1px 1px 2px rgba(0,0,0,0.8)",
+                              mb: 1,
+                            }}
+                          >
+                            {storyData.title}
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontFamily: "'Rubik', sans-serif",
+                              fontSize: "13px",
+                              fontWeight: 400,
+                              color: "white",
+                              textShadow: "1px 1px 2px rgba(0,0,0,0.8)",
+                            }}
+                          >
+                            {storyData.wordCount} words
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontFamily: "'Rubik', sans-serif",
+                              fontSize: "12px",
+                              fontWeight: 300,
+                              color: "rgba(255,255,255,0.9)",
+                              textShadow: "1px 1px 2px rgba(0,0,0,0.8)",
+                              mt: 0.25,
+                            }}
+                          >
+                            Started on{" "}
+                            {new Date(storyData.createdAt).toLocaleDateString()}
+                          </Typography>
+                        </div>
+
+                        {/* Action icons */}
+                        <div className="flex items-center space-x-4">
+                          <DrawOutlinedIcon
+                            onClick={() => {
+                              setSelectedBook(storyData);
+                              setIsQuickStoryMode(true);
+                              setCurrentView("write");
+                            }}
+                            sx={{
+                              fontSize: 32,
+                              color: "white",
+                              cursor: "pointer",
+                              transition: "transform 0.2s ease",
+                              "&:hover": {
+                                transform: "scale(1.1)",
+                              },
+                            }}
+                          />
+                        </div>
                       </div>
-                    ) : (
-                      // No cover image - traditional layout
-                      <>
-                        <div className="w-full h-48 bg-white flex items-start justify-start p-2 relative overflow-hidden">
+
+                      {/* No cover image - traditional layout with green accent */}
+                      <div className="w-full h-48 bg-white flex items-start justify-start p-2 relative overflow-hidden">
+                        <div className="flex flex-col">
                           <Typography
                             variant="body1"
                             sx={{
@@ -1050,45 +1445,105 @@ const TwainStoryBuilder: React.FC = () => {
                               color: "text.secondary",
                             }}
                           >
-                            {bookData.title}
+                            {storyData.title}
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontFamily: "'Rubik', sans-serif",
+                              fontSize: "12px",
+                              fontWeight: 500,
+                              color: "rgb(34, 197, 94)", // Green text
+                              mt: 0.5,
+                            }}
+                          >
+                            STORY
                           </Typography>
                         </div>
-                        <div className="px-3 pb-3 flex items-end justify-center flex-1">
-                          <div className="text-center">
-                            <Typography
-                              variant="body2"
-                              sx={{
-                                fontFamily: "'Rubik', sans-serif",
-                                fontSize: "14px",
-                                fontWeight: 400,
-                                textAlign: "center",
-                              }}
-                            >
-                              {bookData.wordCount} words
-                            </Typography>
-                            <Typography
-                              variant="body2"
-                              sx={{
-                                fontFamily: "'Rubik', sans-serif",
-                                fontSize: "12px",
-                                fontWeight: 300,
-                                textAlign: "center",
-                                color: "text.secondary",
-                                mt: 0.5,
-                              }}
-                            >
-                              Started on{" "}
-                              {new Date(
-                                bookData.createdAt
-                              ).toLocaleDateString()}
-                            </Typography>
-                          </div>
+                      </div>
+                      <div className="px-3 pb-3 flex items-end justify-center flex-1">
+                        <div className="text-center">
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontFamily: "'Rubik', sans-serif",
+                              fontSize: "14px",
+                              fontWeight: 400,
+                              textAlign: "center",
+                            }}
+                          >
+                            {storyData.wordCount} words
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontFamily: "'Rubik', sans-serif",
+                              fontSize: "12px",
+                              fontWeight: 300,
+                              textAlign: "center",
+                              color: "text.secondary",
+                              mt: 0.5,
+                            }}
+                          >
+                            Started on{" "}
+                            {new Date(storyData.createdAt).toLocaleDateString()}
+                          </Typography>
                         </div>
-                      </>
-                    )}
+                      </div>
+                    </div>
+                  );
+                })}
+
+              {/* Empty state for stories */}
+              {filter === "stories" && quickStories.length === 0 && (
+                <div
+                  className="col-span-2 sm:col-span-full flex items-center justify-center w-full"
+                  style={{ minHeight: "120px" }}
+                >
+                  <div className="p-6 w-full text-center">
+                    <Typography
+                      variant="body1"
+                      sx={{
+                        fontFamily: "'Alike', serif",
+                        fontSize: "24px",
+                        fontWeight: 500,
+                        color: "rgb(75, 85, 99)",
+                        lineHeight: 1.5,
+                        mb: 2,
+                      }}
+                    >
+                      You haven&apos;t written anything, why not get going my
+                      scribe and create a story or book.
+                    </Typography>
+                    <div className="flex items-center justify-center space-x-4">
+                      <button
+                        onClick={handleCreateBookClick}
+                        className="flex items-center space-x-2 text-white px-4 py-2 rounded-md transition-colors duration-200 cursor-pointer"
+                        style={{ backgroundColor: "rgb(100, 114, 127)" }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor =
+                            "rgb(80, 94, 107)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor =
+                            "rgb(100, 114, 127)";
+                        }}
+                      >
+                        <AddCircleOutlinedIcon sx={{ fontSize: 18 }} />
+                        <span className="font-medium">Create Book</span>
+                      </button>
+                      <span className="text-blue-400">|</span>
+                      <button
+                        onClick={handleCreateStoryClick}
+                        className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md transition-colors duration-200 cursor-pointer"
+                      >
+                        <AddCircleOutlinedIcon sx={{ fontSize: 18 }} />
+                        <span className="font-medium">Create Story</span>
+                      </button>
+                    </div>
                   </div>
-                );
-              })}
+                </div>
+              )}
             </div>
           </div>
         </main>
@@ -1119,14 +1574,17 @@ const TwainStoryBuilder: React.FC = () => {
           <Box
             sx={{
               position: "absolute",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%, -50%)",
-              width: 450,
+              top: { xs: 0, sm: "50%" },
+              left: { xs: 0, sm: "50%" },
+              transform: { xs: "none", sm: "translate(-50%, -50%)" },
+              width: { xs: "100%", sm: 450 },
+              height: { xs: "100vh", sm: "auto" },
               bgcolor: "background.paper",
-              borderRadius: 3,
+              borderRadius: { xs: 0, sm: 3 },
               overflow: "hidden",
               boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
+              display: { xs: "flex", sm: "block" },
+              flexDirection: { xs: "column", sm: "row" },
             }}
           >
             {/* Header with same background as page header */}
@@ -1166,7 +1624,15 @@ const TwainStoryBuilder: React.FC = () => {
             </Box>
 
             {/* Modal content */}
-            <Box sx={{ p: 4 }}>
+            <Box
+              sx={{
+                p: { xs: 3, sm: 4 },
+                flex: { xs: 1, sm: "none" },
+                display: { xs: "flex", sm: "block" },
+                flexDirection: { xs: "column", sm: "row" },
+                justifyContent: { xs: "center", sm: "flex-start" },
+              }}
+            >
               <TextField
                 fullWidth
                 label="Book Title"
@@ -1223,6 +1689,130 @@ const TwainStoryBuilder: React.FC = () => {
           </Box>
         </Modal>
 
+        {/* Create Story Modal */}
+        <Modal
+          open={createStoryModalOpen}
+          onClose={handleCreateStoryModalClose}
+          aria-labelledby="create-story-modal-title"
+        >
+          <Box
+            sx={{
+              position: "absolute",
+              top: { xs: 0, sm: "50%" },
+              left: { xs: 0, sm: "50%" },
+              transform: { xs: "none", sm: "translate(-50%, -50%)" },
+              width: { xs: "100%", sm: 450 },
+              height: { xs: "100vh", sm: "auto" },
+              bgcolor: "background.paper",
+              borderRadius: { xs: 0, sm: 3 },
+              overflow: "hidden",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
+              display: { xs: "flex", sm: "block" },
+              flexDirection: { xs: "column", sm: "row" },
+            }}
+          >
+            {/* Header with same background as page header */}
+            <Box
+              sx={{
+                backgroundColor: "rgb(38, 52, 63)",
+                color: "white",
+                p: 2,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <Typography
+                id="create-story-modal-title"
+                variant="h6"
+                component="h2"
+                sx={{
+                  fontFamily: "'Rubik', sans-serif",
+                  fontWeight: 600,
+                  margin: 0,
+                }}
+              >
+                Create New Story
+              </Typography>
+              <IconButton
+                onClick={handleCreateStoryModalClose}
+                sx={{
+                  color: "white",
+                  "&:hover": {
+                    backgroundColor: "rgba(255, 255, 255, 0.1)",
+                  },
+                }}
+              >
+                <CloseIcon />
+              </IconButton>
+            </Box>
+
+            {/* Modal content */}
+            <Box
+              sx={{
+                p: { xs: 3, sm: 4 },
+                flex: { xs: 1, sm: "none" },
+                display: { xs: "flex", sm: "block" },
+                flexDirection: { xs: "column", sm: "row" },
+                justifyContent: { xs: "center", sm: "flex-start" },
+              }}
+            >
+              <TextField
+                fullWidth
+                label="Story Title"
+                value={storyTitle}
+                onChange={(e) => setStoryTitle(e.target.value)}
+                variant="outlined"
+                sx={{ mb: 4 }}
+                autoFocus
+              />
+              <Box
+                sx={{
+                  display: "flex",
+                  gap: 2,
+                  justifyContent: "space-between",
+                }}
+              >
+                <Button
+                  onClick={handleCreateStoryModalClose}
+                  variant="outlined"
+                  sx={{
+                    flex: 1,
+                    boxShadow: "none",
+                    "&:hover": {
+                      boxShadow: "none",
+                    },
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleCreateStory}
+                  variant="contained"
+                  disabled={!storyTitle.trim()}
+                  sx={{
+                    flex: 1,
+                    backgroundColor: "rgb(19, 135, 194)",
+                    textTransform: "none",
+                    fontFamily: "'Rubik', sans-serif",
+                    py: 1.5,
+                    boxShadow: "none",
+                    "&:hover": {
+                      backgroundColor: "rgb(15, 108, 155)",
+                      boxShadow: "none",
+                    },
+                    "&:disabled": {
+                      boxShadow: "none",
+                    },
+                  }}
+                >
+                  Create Story
+                </Button>
+              </Box>
+            </Box>
+          </Box>
+        </Modal>
+
         {/* Notification */}
         {notification && (
           <div
@@ -1261,8 +1851,14 @@ const TwainStoryBuilder: React.FC = () => {
       <div className="w-1/2 bg-white flex flex-col">
         {/* Icon in top left */}
         <div className="p-10">
-          <HistoryEduOutlinedIcon
-            sx={{ fontSize: 80, color: "rgb(136, 185, 84)" }}
+          <Image
+            src="/images/twain-logo.png"
+            alt="Twain Logo"
+            width={80}
+            height={80}
+            style={{
+              filter: "invert(1) brightness(100%)",
+            }}
           />
         </div>
 
@@ -1383,6 +1979,10 @@ export {
   saveBooksToStorage,
   updateBookWordCount,
   getBooksStorageKey,
+  loadQuickStoriesFromStorage,
+  saveQuickStoriesToStorage,
+  updateQuickStoryWordCount,
+  getQuickStoriesStorageKey,
 };
 export type { Book };
 
