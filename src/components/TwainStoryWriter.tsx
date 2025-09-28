@@ -3282,6 +3282,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                     {characterAvatar ? (
                       <img
                         src={characterAvatar}
+                        alt="Character Avatar"
                         style={{
                           width: "40px",
                           height: "40px",

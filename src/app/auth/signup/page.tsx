@@ -1,12 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { v4 as uuidv4 } from "uuid";
 import { useSearchParams } from "next/navigation";
 
-export default function SignUp() {
+function SignUpForm() {
   const searchParams = useSearchParams();
   const emailFromParams = searchParams?.get("email") || "";
 
@@ -283,5 +283,19 @@ export default function SignUp() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SignUp() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          Loading...
+        </div>
+      }
+    >
+      <SignUpForm />
+    </Suspense>
   );
 }
