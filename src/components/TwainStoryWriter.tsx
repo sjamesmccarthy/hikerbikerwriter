@@ -3943,28 +3943,24 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                     </div>
                   ))}
                 {getRecentActivity().length === 0 && (
-                  <div className="text-center py-8">
-                    <Typography
-                      variant="body2"
-                      sx={{
-                        fontFamily: "'Rubik', sans-serif",
-                        fontWeight: 400,
-                        fontSize: "14px",
-                        color: "rgb(107, 114, 128)",
-                      }}
-                    >
-                      No recent activity. Start by creating your first idea or
-                      character!
-                    </Typography>
+                  <div className="text-center">
+                    <div className="bg-gray-100 p-4 rounded-lg border border-gray-200">
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontFamily: "'Rubik', sans-serif",
+                          fontWeight: 400,
+                          fontSize: "14px",
+                          color: "rgb(107, 114, 128)",
+                        }}
+                      >
+                        No recent activity. Start by creating your first idea or
+                        character!
+                      </Typography>
+                    </div>
                   </div>
                 )}
               </div>
-            </div>
-
-            {/* Demo Notice */}
-            <div className="w-full bg-gray-200 text-center py-4 text-gray-500 font-small">
-              Caution: This is a demo version. Data may be periodically cleared
-              from local storage.
             </div>
           </div>
         </div>

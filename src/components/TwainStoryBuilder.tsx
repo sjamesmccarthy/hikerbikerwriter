@@ -387,6 +387,7 @@ const TwainStoryBuilder: React.FC = () => {
     isActivePlan,
     loginInfo,
     updatePlan,
+    recordLogin,
     checkFeature,
   } = useUserPreferences();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -449,6 +450,13 @@ const TwainStoryBuilder: React.FC = () => {
       setQuickStories(storedQuickStories);
     }
   }, [session?.user?.email]);
+
+  // Record login when session becomes available
+  useEffect(() => {
+    if (session?.user?.email && status === "authenticated") {
+      recordLogin();
+    }
+  }, [session?.user?.email, status, recordLogin]);
 
   const handleSignIn = () => {
     signIn("google");
@@ -2195,22 +2203,6 @@ const TwainStoryBuilder: React.FC = () => {
 
                         {/* Action icons */}
                         <div className="flex items-center space-x-4">
-                          <DrawOutlinedIcon
-                            onClick={() => {
-                              setSelectedBook(storyData);
-                              setIsQuickStoryMode(true);
-                              setCurrentView("write");
-                            }}
-                            sx={{
-                              fontSize: 32,
-                              color: "white",
-                              cursor: "pointer",
-                              transition: "transform 0.2s ease",
-                              "&:hover": {
-                                transform: "scale(1.1)",
-                              },
-                            }}
-                          />
                           <DeleteOutlineOutlinedIcon
                             onClick={(e) => {
                               e.stopPropagation();
@@ -2224,6 +2216,22 @@ const TwainStoryBuilder: React.FC = () => {
                               "&:hover": {
                                 transform: "scale(1.1)",
                                 color: "#ff6b6b",
+                              },
+                            }}
+                          />
+                          <DrawOutlinedIcon
+                            onClick={() => {
+                              setSelectedBook(storyData);
+                              setIsQuickStoryMode(true);
+                              setCurrentView("write");
+                            }}
+                            sx={{
+                              fontSize: 32,
+                              color: "white",
+                              cursor: "pointer",
+                              transition: "transform 0.2s ease",
+                              "&:hover": {
+                                transform: "scale(1.1)",
                               },
                             }}
                           />

@@ -128,18 +128,69 @@ export const loadUserPreferences = (userEmail?: string): UserPreferences => {
     const mergedPreferences = {
       ...DEFAULT_USER_PREFERENCES,
       ...preferences,
-      // Always update last login
-      lastLoginAt: new Date().toISOString(),
-      loginCount: (preferences.loginCount || 0) + 1,
     };
-
-    // Save the updated preferences back
-    saveUserPreferences(mergedPreferences, userEmail);
 
     return mergedPreferences;
   } catch (error) {
     console.error("Error loading user preferences:", error);
     return DEFAULT_USER_PREFERENCES;
+  }
+};
+
+/**
+ * Record a new login session - should only be called on actual authentication
+ */
+export const recordUserLogin = (userEmail?: string): void => {
+  if (typeof window === "undefined" || !userEmail) {
+    return;
+  }
+
+  try {
+    const storageKey = getUserPreferencesKey(userEmail);
+    const stored = localStorage.getItem(storageKey);
+
+    if (!stored) {
+      // This shouldn't happen if loadUserPreferences was called first
+      // but handle it just in case
+      const newPreferences = {
+        ...DEFAULT_USER_PREFERENCES,
+        accountCreatedAt: new Date().toISOString(),
+        lastLoginAt: new Date().toISOString(),
+        loginCount: 1,
+      };
+      saveUserPreferences(newPreferences, userEmail);
+      return;
+    }
+
+    const preferences = JSON.parse(stored) as UserPreferences;
+    const now = new Date().toISOString();
+
+    // Check if this is a new session (more than 30 minutes since last login)
+    const lastLogin = new Date(preferences.lastLoginAt);
+    const currentTime = new Date();
+    const timeDiff = currentTime.getTime() - lastLogin.getTime();
+    const thirtyMinutes = 30 * 60 * 1000; // 30 minutes in milliseconds
+
+    // Only increment if it's been more than 30 minutes since last recorded login
+    if (timeDiff > thirtyMinutes) {
+      const updatedPreferences = {
+        ...preferences,
+        lastLoginAt: now,
+        loginCount: (preferences.loginCount || 0) + 1,
+      };
+
+      saveUserPreferences(updatedPreferences, userEmail);
+    } else {
+      // Just update the last login time without incrementing count
+      const updatedPreferences = {
+        ...preferences,
+        lastLoginAt: now,
+      };
+
+      saveUserPreferences(updatedPreferences, userEmail);
+    }
+  } catch (error) {
+    console.error("Error recording user login:", error);
   }
 };
 

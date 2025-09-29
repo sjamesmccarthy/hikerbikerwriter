@@ -19,6 +19,7 @@ import {
   isPlanActive,
   addToRecentActivity,
   getLastLoginInfo,
+  recordUserLogin,
   DEFAULT_USER_PREFERENCES,
 } from "../lib/userPreferences";
 
@@ -39,6 +40,9 @@ export interface UseUserPreferencesReturn {
   ) => void;
   updatePlan: (planInfo: Partial<UserPlan>) => void;
   addToRecent: (type: "book" | "story", id: string) => void;
+
+  // Login tracking
+  recordLogin: () => void;
 
   // Feature checks
   checkFeature: (feature: string) => boolean;
@@ -167,6 +171,15 @@ export const useUserPreferences = (): UseUserPreferencesReturn => {
     saveUserPreferences(defaultPrefs, userEmail);
   }, [preferences, userEmail]);
 
+  // Record login function
+  const recordLogin = useCallback(() => {
+    if (userEmail) {
+      recordUserLogin(userEmail);
+      // Refresh preferences to get updated login info
+      refreshPreferences();
+    }
+  }, [userEmail, refreshPreferences]);
+
   // Derived values
   const planType = getUserPlanType(userEmail || undefined);
   const isActivePlan = isPlanActive(userEmail || undefined);
@@ -181,6 +194,7 @@ export const useUserPreferences = (): UseUserPreferencesReturn => {
     updatePreference,
     updatePlan,
     addToRecent,
+    recordLogin,
     checkFeature,
     refreshPreferences,
     resetToDefaults,
