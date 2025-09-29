@@ -1,11 +1,13 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useRef } from "react";
+import Image from "next/image";
 import { useSession } from "next-auth/react";
 import {
   updateBookWordCount,
   updateQuickStoryWordCount,
 } from "./TwainStoryBuilder";
+import { useUserPreferences } from "../hooks/useUserPreferences";
 import { Document, Packer, Paragraph, TextRun, HeadingLevel } from "docx";
 import mammoth from "mammoth";
 import {
@@ -25,6 +27,7 @@ import {
   Checkbox,
   ListItemText,
   Tooltip,
+  Chip,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -44,11 +47,12 @@ import FolderCopyIcon from "@mui/icons-material/FolderCopy";
 import KeyboardDoubleArrowDownIcon from "@mui/icons-material/KeyboardDoubleArrowDown";
 import MenuOpenIcon from "@mui/icons-material/MenuOpen";
 import HistoryEduIcon from "@mui/icons-material/HistoryEdu";
-import AddIcon from "@mui/icons-material/Add";
 import TimerOutlinedIcon from "@mui/icons-material/TimerOutlined";
 import FileUploadOutlinedIcon from "@mui/icons-material/FileUploadOutlined";
+import WorkspacePremiumOutlinedIcon from "@mui/icons-material/WorkspacePremiumOutlined";
 import MenuBookOutlinedIcon from "@mui/icons-material/MenuBookOutlined";
 import HistoryEduOutlinedIcon from "@mui/icons-material/HistoryEduOutlined";
+import TwainStoryPricingModal from "./TwainStoryPricingModal";
 
 // Define Quill types
 interface QuillInstance {
@@ -116,6 +120,10 @@ interface RecentActivity {
   type: "idea" | "character" | "story" | "chapter" | "outline" | "part";
   title: string;
   createdAt: Date;
+  action: "created" | "modified" | "deleted";
+  wordCount?: number;
+  timerDuration?: number; // in minutes
+  lastModified?: Date;
 }
 
 type StoryItem = Idea | Character | Story | Chapter | Outline | Part;
@@ -135,6 +143,18 @@ interface Book {
   isSeries?: boolean;
   seriesName?: string;
   seriesNumber?: number;
+}
+
+// Quill Delta types
+interface DeltaOperation {
+  insert?: string | object;
+  delete?: number;
+  retain?: number;
+  attributes?: object;
+}
+
+interface QuillDelta {
+  ops: DeltaOperation[];
 }
 
 interface TwainStoryWriterProps {
@@ -180,6 +200,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
   autoStartStory = false,
 }) => {
   const { data: session } = useSession();
+  const { planType } = useUserPreferences();
   const quillRef = useRef<HTMLDivElement | null>(null);
   const [quillInstance, setQuillInstance] = useState<QuillInstance | null>(
     null
@@ -256,6 +277,13 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
   const [timerInterval, setTimerInterval] = useState<NodeJS.Timeout | null>(
     null
   );
+  const [timerStartTime, setTimerStartTime] = useState<Date | null>(null);
+
+  // Track modification sessions
+  const [lastModificationTrackTime, setLastModificationTrackTime] =
+    useState<Date | null>(null);
+  const [modificationStartWordCount, setModificationStartWordCount] =
+    useState(0);
 
   // Import file modal state
   const [importFileModalOpen, setImportFileModalOpen] = useState(false);
@@ -263,7 +291,13 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
   const [importType, setImportType] = useState<"story" | "chapter" | "outline">(
     "story"
   );
+
+  // Recent activity refresh trigger
+  const [recentActivityRefresh, setRecentActivityRefresh] = useState(0);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+
+  // Pricing modal state
+  const [pricingModalOpen, setPricingModalOpen] = useState(false);
 
   const quillInitializedRef = useRef(false);
 
@@ -584,6 +618,9 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
       setCurrentStory(newStory);
       setIsEditingStory(true);
 
+      // Initialize word count tracking for new story
+      setModificationStartWordCount(0);
+
       // Update Quill placeholder
       setTimeout(() => {
         if (quillInstance && quillInstance.root) {
@@ -616,6 +653,117 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
           ...item,
           content: JSON.stringify(delta),
         };
+
+        // Calculate current word count for modification tracking
+        const currentWordCount =
+          (delta as QuillDelta).ops?.reduce(
+            (acc: number, op: DeltaOperation) => {
+              if (typeof op.insert === "string") {
+                const cleanText = op.insert.replace(/\n/g, " ").trim();
+                const words = cleanText
+                  .split(/\s+/)
+                  .filter((word: string) => word.length > 0);
+                return acc + words.length;
+              }
+              return acc;
+            },
+            0
+          ) || 0;
+
+        // Track modification for recent activity (debounced)
+        const modificationTime = new Date();
+        if (
+          !lastModificationTrackTime ||
+          modificationTime.getTime() - lastModificationTrackTime.getTime() >
+            30000
+        ) {
+          // 30 second debounce
+          const timerDuration = timerStartTime
+            ? Math.round(
+                (modificationTime.getTime() - timerStartTime.getTime()) / 60000
+              )
+            : undefined;
+          const wordCountChange = currentWordCount - modificationStartWordCount;
+
+          // Only track if there's a meaningful word count change (more than 0 words)
+          if (wordCountChange > 0) {
+            // Track recent activity directly
+            if (session?.user?.email) {
+              const storageKey = getStorageKey(
+                "recent-activity",
+                book.id,
+                session.user.email,
+                isQuickStoryMode
+              );
+              const stored = localStorage.getItem(storageKey);
+              let recentActivity: RecentActivity[] = [];
+              if (stored) {
+                try {
+                  recentActivity = JSON.parse(stored) as RecentActivity[];
+                } catch (error) {
+                  console.error("Failed to parse recent activity:", error);
+                }
+              }
+
+              let activityItem: StoryItem | null = null;
+              let activityType: RecentActivity["type"] | null = null;
+
+              if (currentChapter) {
+                activityItem = currentChapter;
+                activityType = "chapter";
+              } else if (currentStory) {
+                activityItem = currentStory;
+                activityType = "story";
+              } else if (currentOutline) {
+                activityItem = currentOutline;
+                activityType = "outline";
+              }
+
+              if (activityItem && activityType) {
+                // Check if this item already exists in recent activity as "created"
+                const existingActivity = recentActivity.find(
+                  (activity) => activity.id === activityItem!.id
+                );
+                const action =
+                  existingActivity?.action === "created"
+                    ? "created"
+                    : "modified";
+
+                const newActivity: RecentActivity = {
+                  id: activityItem.id,
+                  type: activityType,
+                  title: activityItem.title,
+                  createdAt: activityItem.createdAt,
+                  action,
+                  wordCount:
+                    action === "created" ? currentWordCount : wordCountChange,
+                  timerDuration,
+                  lastModified:
+                    action === "modified" ? modificationTime : undefined,
+                };
+
+                // Remove if already exists (to move to front)
+                const filteredActivity = recentActivity.filter(
+                  (activity) => activity.id !== activityItem!.id
+                );
+
+                // Add to front and limit to 24 items
+                const updatedActivity = [
+                  newActivity,
+                  ...filteredActivity,
+                ].slice(0, 24);
+                localStorage.setItem(
+                  storageKey,
+                  JSON.stringify(updatedActivity)
+                );
+              }
+            }
+
+            setLastModificationTrackTime(modificationTime);
+            setModificationStartWordCount(currentWordCount);
+          }
+        }
+
         if (currentChapter && session?.user?.email) {
           const updatedChapters = chapters.map((ch) =>
             ch.id === currentChapter.id ? updatedItem : ch
@@ -682,6 +830,9 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
     book.id,
     session?.user?.email,
     isQuickStoryMode,
+    lastModificationTrackTime,
+    modificationStartWordCount,
+    timerStartTime,
   ]);
 
   // Set up auto-save event listener when editing state changes
@@ -764,6 +915,54 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
     isEditingOutline,
   ]);
 
+  // Initialize word count tracking when editing begins
+  useEffect(() => {
+    if (
+      (isEditingChapter || isEditingStory || isEditingOutline) &&
+      quillInstance
+    ) {
+      const currentItem = currentChapter || currentStory || currentOutline;
+      if (currentItem) {
+        // Only initialize if we haven't started tracking yet or if we switched to a different item
+        const isNewItem = !lastModificationTrackTime;
+
+        if (isNewItem) {
+          try {
+            const delta = JSON.parse(currentItem.content);
+            const currentWordCount =
+              (delta as QuillDelta).ops?.reduce(
+                (acc: number, op: DeltaOperation) => {
+                  if (typeof op.insert === "string") {
+                    const cleanText = op.insert.replace(/\n/g, " ").trim();
+                    const words = cleanText
+                      .split(/\s+/)
+                      .filter((word: string) => word.length > 0);
+                    return acc + words.length;
+                  }
+                  return acc;
+                },
+                0
+              ) || 0;
+
+            setModificationStartWordCount(currentWordCount);
+            setLastModificationTrackTime(null); // Reset tracking time for new item
+          } catch {
+            setModificationStartWordCount(0);
+          }
+        }
+      }
+    }
+  }, [
+    isEditingChapter,
+    isEditingStory,
+    isEditingOutline,
+    currentChapter,
+    currentStory,
+    currentOutline,
+    quillInstance,
+    lastModificationTrackTime,
+  ]);
+
   // Timer functions
   const handleTimerClick = () => {
     setTimerModalOpen(true);
@@ -778,6 +977,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
     setTimeRemaining(totalSeconds);
     setTimerActive(true);
     setTimerModalOpen(false);
+    setTimerStartTime(new Date());
 
     const interval = setInterval(() => {
       setTimeRemaining((prev) => {
@@ -801,6 +1001,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
     }
     setTimerActive(false);
     setTimeRemaining(0);
+    setTimerStartTime(null);
   };
 
   const formatTime = (seconds: number): string => {
@@ -1016,6 +1217,9 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
   const handleDeleteIdea = (ideaId: string, event: React.MouseEvent) => {
     event.stopPropagation(); // Prevent triggering the edit handler
 
+    // Find the idea to get its title for activity tracking
+    const ideaToDelete = ideas.find((idea) => idea.id === ideaId);
+
     // Remove idea from state
     const updatedIdeas = ideas.filter((idea) => idea.id !== ideaId);
     setIdeas(updatedIdeas);
@@ -1030,6 +1234,11 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
       );
       localStorage.setItem(storageKey, JSON.stringify(updatedIdeas));
     }
+
+    // Add to recent activity if idea was found
+    if (ideaToDelete) {
+      addToRecentActivity("idea", ideaToDelete, "deleted");
+    }
   };
 
   const handleDeleteCharacter = (
@@ -1037,6 +1246,11 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
     event: React.MouseEvent
   ) => {
     event.stopPropagation(); // Prevent triggering the edit handler
+
+    // Find the character to get its name for activity tracking
+    const characterToDelete = characters.find(
+      (character) => character.id === characterId
+    );
 
     // Remove character from state
     const updatedCharacters = characters.filter(
@@ -1053,6 +1267,11 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
         isQuickStoryMode
       );
       localStorage.setItem(storageKey, JSON.stringify(updatedCharacters));
+    }
+
+    // Add to recent activity if character was found
+    if (characterToDelete) {
+      addToRecentActivity("character", characterToDelete, "deleted");
     }
   };
 
@@ -1093,6 +1312,9 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
     // Set editing mode
     setCurrentChapter(newChapter);
     setIsEditingChapter(true);
+
+    // Initialize word count tracking for new chapter
+    setModificationStartWordCount(0);
 
     // Update Quill placeholder after a short delay to ensure Quill is ready
     setTimeout(() => {
@@ -1151,6 +1373,9 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
     setCurrentStory(newStory);
     setIsEditingStory(true);
 
+    // Initialize word count tracking for new story
+    setModificationStartWordCount(0);
+
     // Update Quill placeholder after a short delay to ensure Quill is ready
     setTimeout(() => {
       if (quillInstance && quillInstance.root) {
@@ -1192,6 +1417,9 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
     // Set editing mode
     setCurrentOutline(newOutline);
     setIsEditingOutline(true);
+
+    // Initialize word count tracking for new outline
+    setModificationStartWordCount(0);
   };
 
   const handleEditPart = (part: Part) => {
@@ -1273,6 +1501,9 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
     setCurrentOutline(null);
     setLastSaveTime(null);
 
+    // Initialize word count tracking for this editing session
+    setModificationStartWordCount(0);
+
     // Update Quill placeholder for existing chapter
     setTimeout(() => {
       if (quillInstance && quillInstance.root) {
@@ -1284,6 +1515,11 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
 
   const handleDeleteChapter = (chapterId: string, event: React.MouseEvent) => {
     event.stopPropagation(); // Prevent triggering the edit handler
+
+    // Find the chapter to get its title for activity tracking
+    const chapterToDelete = chapters.find(
+      (chapter) => chapter.id === chapterId
+    );
 
     // If currently editing this chapter, exit editing mode
     if (currentChapter && currentChapter.id === chapterId) {
@@ -1320,6 +1556,11 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
       `twain-parts-${book.id}`,
       JSON.stringify(updatedParts)
     );
+
+    // Add to recent activity if chapter was found
+    if (chapterToDelete) {
+      addToRecentActivity("chapter", chapterToDelete, "deleted");
+    }
   };
 
   const handleEditStory = (story: Story) => {
@@ -1332,6 +1573,9 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
     setCurrentOutline(null);
     setLastSaveTime(null);
 
+    // Initialize word count tracking for this editing session
+    setModificationStartWordCount(0);
+
     // Update Quill placeholder for existing story
     setTimeout(() => {
       if (quillInstance && quillInstance.root) {
@@ -1343,6 +1587,9 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
 
   const handleDeleteStory = (storyId: string, event: React.MouseEvent) => {
     event.stopPropagation(); // Prevent triggering the edit handler
+
+    // Find the story to get its title for activity tracking
+    const storyToDelete = stories.find((story) => story.id === storyId);
 
     // If currently editing this story, exit editing mode
     if (currentStory && currentStory.id === storyId) {
@@ -1377,6 +1624,11 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
       `twain-parts-${book.id}`,
       JSON.stringify(updatedParts)
     );
+
+    // Add to recent activity if story was found
+    if (storyToDelete) {
+      addToRecentActivity("story", storyToDelete, "deleted");
+    }
   };
 
   const handleDownloadStory = async (story: Story, event: React.MouseEvent) => {
@@ -1658,10 +1910,18 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
     setIsEditingStory(false);
     setCurrentStory(null);
     setLastSaveTime(null);
+
+    // Initialize word count tracking for this editing session
+    setModificationStartWordCount(0);
   };
 
   const handleDeleteOutline = (outlineId: string, event: React.MouseEvent) => {
     event.stopPropagation(); // Prevent triggering the edit handler
+
+    // Find the outline to get its title for activity tracking
+    const outlineToDelete = outlines.find(
+      (outline) => outline.id === outlineId
+    );
 
     // If currently editing this outline, exit editing mode
     if (currentOutline && currentOutline.id === outlineId) {
@@ -1681,10 +1941,18 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
       `twain-outlines-${book.id}`,
       JSON.stringify(updatedOutlines)
     );
+
+    // Add to recent activity if outline was found
+    if (outlineToDelete) {
+      addToRecentActivity("outline", outlineToDelete, "deleted");
+    }
   };
 
   const handleDeletePart = (partId: string, event: React.MouseEvent) => {
     event.stopPropagation(); // Prevent triggering the edit handler
+
+    // Find the part to get its title for activity tracking
+    const partToDelete = parts.find((part) => part.id === partId);
 
     // Remove part from state
     const updatedParts = parts.filter((part) => part.id !== partId);
@@ -1695,40 +1963,14 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
       `twain-parts-${book.id}`,
       JSON.stringify(updatedParts)
     );
-  };
 
-  const addToRecentActivity = (
-    type: RecentActivity["type"],
-    item: StoryItem
-  ) => {
-    const recentActivity = getRecentActivity();
-    const newActivity: RecentActivity = {
-      id: item.id,
-      type,
-      title: "title" in item ? item.title : item.name,
-      createdAt: item.createdAt,
-    };
-
-    // Remove if already exists (to move to front)
-    const filteredActivity = recentActivity.filter(
-      (activity) => activity.id !== item.id
-    );
-
-    // Add to front and limit to 24 items
-    const updatedActivity = [newActivity, ...filteredActivity].slice(0, 24);
-
-    if (session?.user?.email) {
-      const storageKey = getStorageKey(
-        "recent-activity",
-        book.id,
-        session.user.email,
-        isQuickStoryMode
-      );
-      localStorage.setItem(storageKey, JSON.stringify(updatedActivity));
+    // Add to recent activity if part was found
+    if (partToDelete) {
+      addToRecentActivity("part", partToDelete, "deleted");
     }
   };
 
-  const getRecentActivity = (): RecentActivity[] => {
+  const getRecentActivity = useCallback((): RecentActivity[] => {
     if (!session?.user?.email) return [];
     const storageKey = getStorageKey(
       "recent-activity",
@@ -1745,10 +1987,58 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
       }
     }
     return [];
-  };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.user?.email, book.id, isQuickStoryMode, recentActivityRefresh]);
 
-  const handleClearRecentActivity = () => {
-    // Only clear recent activity, not the actual story data
+  const addToRecentActivity = useCallback(
+    (
+      type: RecentActivity["type"],
+      item: StoryItem,
+      action: "created" | "modified" | "deleted" = "created",
+      wordCount?: number,
+      timerDuration?: number
+    ) => {
+      const recentActivity = getRecentActivity();
+
+      const now = new Date();
+      const newActivity: RecentActivity = {
+        id: item.id,
+        type,
+        title: "title" in item ? item.title : item.name,
+        createdAt: item.createdAt,
+        action,
+        wordCount,
+        timerDuration,
+        lastModified: action === "modified" ? now : undefined,
+      };
+
+      // Remove if already exists (to move to front)
+      const filteredActivity = recentActivity.filter(
+        (activity) => activity.id !== item.id
+      );
+
+      // Add to front and limit to 24 items
+      const updatedActivity = [newActivity, ...filteredActivity].slice(0, 24);
+
+      if (session?.user?.email) {
+        const storageKey = getStorageKey(
+          "recent-activity",
+          book.id,
+          session.user.email,
+          isQuickStoryMode
+        );
+        localStorage.setItem(storageKey, JSON.stringify(updatedActivity));
+      }
+    },
+    [getRecentActivity, session?.user?.email, book.id, isQuickStoryMode]
+  );
+
+  const handleDeleteActivityEntry = (
+    activityId: string,
+    event: React.MouseEvent
+  ) => {
+    event.stopPropagation(); // Prevent triggering the activity click handler
+
     if (session?.user?.email) {
       const storageKey = getStorageKey(
         "recent-activity",
@@ -1756,7 +2046,21 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
         session.user.email,
         isQuickStoryMode
       );
-      localStorage.removeItem(storageKey);
+      const stored = localStorage.getItem(storageKey);
+      if (stored) {
+        try {
+          const activities = JSON.parse(stored) as RecentActivity[];
+          const updatedActivities = activities.filter(
+            (activity) => activity.id !== activityId
+          );
+          localStorage.setItem(storageKey, JSON.stringify(updatedActivities));
+
+          // Trigger re-render to update the activity list
+          setRecentActivityRefresh((prev) => prev + 1);
+        } catch (error) {
+          console.error("Failed to delete activity entry:", error);
+        }
+      }
     }
   };
 
@@ -1840,6 +2144,19 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
       const fileName = file.name.replace(/\.[^/.]+$/, "");
       setImportTitle(fileName);
     }
+  };
+
+  // Pricing modal handlers
+  const handlePricingModalClose = () => {
+    setPricingModalOpen(false);
+  };
+
+  const handleUpgrade = (planType: "professional") => {
+    // This would typically handle the upgrade process
+    // For now, we'll just close the modal
+    setPricingModalOpen(false);
+    // You could add actual upgrade logic here
+    console.log("Upgrade to:", planType);
   };
 
   const handleImportFile = async () => {
@@ -2014,7 +2331,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
     : [
         {
           title: "IDEAS",
-          content: "Store your creative ideas and inspiration here...",
+          content: "Store your creative ideas and inspiration here.",
           icon: (
             <BatchPredictionIcon
               sx={{ fontSize: 24, color: "rgb(107, 114, 128)" }}
@@ -2025,7 +2342,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
         {
           title: "CHARACTERS",
           content:
-            "Develop your characters, their backgrounds, motivations, and relationships...",
+            "Develop your characters, their backgrounds, motivations, and relationships.",
           icon: (
             <FaceOutlinedIcon
               sx={{ fontSize: 24, color: "rgb(107, 114, 128)" }}
@@ -2036,7 +2353,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
         {
           title: "OUTLINE",
           content:
-            "Structure your story with chapter outlines and plot points...",
+            "Structure your story with chapter outlines and plot points.",
           icon: (
             <ListAltIcon sx={{ fontSize: 24, color: "rgb(107, 114, 128)" }} />
           ),
@@ -2065,7 +2382,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
         {
           title: "PARTS",
           content:
-            "Organize your story into parts. Parts are made up of chapters...",
+            "Organize your story into parts. Parts are made up of chapters or multiple stories...",
           icon: (
             <FolderCopyIcon
               sx={{ fontSize: 24, color: "rgb(107, 114, 128)" }}
@@ -2212,7 +2529,34 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                         size="small"
                         onClick={(e) => {
                           e.stopPropagation();
-                          section.createHandler();
+                          if (
+                            (section.title === "IDEAS" ||
+                              section.title === "CHARACTERS" ||
+                              section.title === "PARTS") &&
+                            planType !== "professional"
+                          ) {
+                            setPricingModalOpen(true);
+                          } else if (
+                            section.title === "OUTLINE" &&
+                            planType !== "professional" &&
+                            outlines.length >= 1
+                          ) {
+                            setPricingModalOpen(true);
+                          } else if (
+                            section.title === "STORIES" &&
+                            planType !== "professional" &&
+                            stories.length >= 3
+                          ) {
+                            setPricingModalOpen(true);
+                          } else if (
+                            section.title === "CHAPTERS" &&
+                            planType !== "professional" &&
+                            chapters.length >= 3
+                          ) {
+                            setPricingModalOpen(true);
+                          } else {
+                            section.createHandler();
+                          }
                         }}
                         sx={{
                           color: "rgb(19, 135, 194)",
@@ -2234,6 +2578,32 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                         }}
                       >
                         {section.title}
+                        {(() => {
+                          let count = 0;
+                          switch (section.title) {
+                            case "IDEAS":
+                              count = ideas.length;
+                              break;
+                            case "CHARACTERS":
+                              count = characters.length;
+                              break;
+                            case "OUTLINE":
+                              count = outlines.length;
+                              break;
+                            case "STORIES":
+                              count = stories.length;
+                              break;
+                            case "CHAPTERS":
+                              count = chapters.length;
+                              break;
+                            case "PARTS":
+                              count = parts.length;
+                              break;
+                            default:
+                              count = 0;
+                          }
+                          return count > 0 ? ` / ${count}` : "";
+                        })()}
                       </Typography>
                     </div>
                   </AccordionSummary>
@@ -2325,12 +2695,12 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                               onClick={() => handleEditCharacter(character)}
                             >
                               {character.avatar ? (
-                                <img
+                                <Image
                                   src={character.avatar}
                                   alt="Avatar"
+                                  width={40}
+                                  height={40}
                                   style={{
-                                    width: "40px",
-                                    height: "40px",
                                     borderRadius: "50%",
                                     objectFit: "cover",
                                   }}
@@ -2744,18 +3114,150 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                         ))}
                       </div>
                     ) : (
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          fontFamily: "'Rubik', sans-serif",
-                          fontWeight: 400,
-                          fontSize: "13px",
-                          color: "rgb(107, 114, 128)",
-                          lineHeight: 1.5,
-                        }}
-                      >
-                        {section.content}
-                      </Typography>
+                      <div className="flex flex-col items-center justify-center py-4">
+                        {(section.title === "IDEAS" ||
+                          section.title === "CHARACTERS" ||
+                          section.title === "PARTS") &&
+                        planType !== "professional" ? (
+                          <Chip
+                            icon={<WorkspacePremiumOutlinedIcon />}
+                            label="Professional Feature"
+                            onClick={() => setPricingModalOpen(true)}
+                            sx={{
+                              backgroundColor: "#fbbf24",
+                              color: "white",
+                              fontSize: "12px",
+                              fontWeight: "bold",
+                              height: "28px",
+                              cursor: "pointer",
+                              "&:hover": {
+                                backgroundColor: "#f59e0b",
+                              },
+                              "& .MuiChip-icon": {
+                                color: "white",
+                                fontSize: "16px",
+                                marginRight: "4px",
+                              },
+                              "& .MuiChip-label": {
+                                paddingLeft: "0px",
+                                paddingRight: "8px",
+                              },
+                            }}
+                          />
+                        ) : section.title === "OUTLINE" ? (
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontFamily: "'Rubik', sans-serif",
+                              fontWeight: 400,
+                              fontSize: "13px",
+                              color: "rgb(107, 114, 128)",
+                              lineHeight: 1.5,
+                              textAlign: "center",
+                            }}
+                          >
+                            {planType === "professional"
+                              ? `Professional users can create unlimited Outlines. You currently have ${
+                                  outlines.length
+                                } outline${
+                                  outlines.length !== 1 ? "s" : ""
+                                }. This is where you will quickly describe your chapters. They can be as generic or specific as you wish.`
+                              : `Freelance users can create 1 Outline (${outlines.length}/1 used). This is where you will quickly describe your chapters. They can be as generic or specific as you wish.`}{" "}
+                            {planType !== "professional" && (
+                              <span
+                                onClick={() => setPricingModalOpen(true)}
+                                style={{
+                                  color: "rgb(19, 135, 194)",
+                                  cursor: "pointer",
+                                  textDecoration: "underline",
+                                }}
+                              >
+                                Professional plans can create unlimited
+                                outlines.
+                              </span>
+                            )}
+                          </Typography>
+                        ) : section.title === "STORIES" ? (
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontFamily: "'Rubik', sans-serif",
+                              fontWeight: 400,
+                              fontSize: "13px",
+                              color: "rgb(107, 114, 128)",
+                              lineHeight: 1.5,
+                              textAlign: "center",
+                            }}
+                          >
+                            {planType === "professional"
+                              ? `Professional users can create unlimited Stories. You currently have ${
+                                  stories.length
+                                } stor${
+                                  stories.length !== 1 ? "ies" : "y"
+                                }. Write and develop your complete stories here.`
+                              : `Freelance users can create 3 Stories (${stories.length}/3 used). Write and develop your complete stories here.`}{" "}
+                            {planType !== "professional" && (
+                              <span
+                                onClick={() => setPricingModalOpen(true)}
+                                style={{
+                                  color: "rgb(19, 135, 194)",
+                                  cursor: "pointer",
+                                  textDecoration: "underline",
+                                }}
+                              >
+                                Professional plans can create unlimited stories.
+                              </span>
+                            )}
+                          </Typography>
+                        ) : section.title === "CHAPTERS" ? (
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontFamily: "'Rubik', sans-serif",
+                              fontWeight: 400,
+                              fontSize: "13px",
+                              color: "rgb(107, 114, 128)",
+                              lineHeight: 1.5,
+                              textAlign: "center",
+                            }}
+                          >
+                            {planType === "professional"
+                              ? `Professional users can create unlimited Chapters. You currently have ${
+                                  chapters.length
+                                } chapter${
+                                  chapters.length !== 1 ? "s" : ""
+                                }. Create and organize your story chapters here.`
+                              : `Freelance users can create 3 Chapters (${chapters.length}/3 used). Create and organize your story chapters here.`}{" "}
+                            {planType !== "professional" && (
+                              <span
+                                onClick={() => setPricingModalOpen(true)}
+                                style={{
+                                  color: "rgb(19, 135, 194)",
+                                  cursor: "pointer",
+                                  textDecoration: "underline",
+                                }}
+                              >
+                                Professional plans can create unlimited
+                                chapters.
+                              </span>
+                            )}
+                          </Typography>
+                        ) : (
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontFamily: "'Rubik', sans-serif",
+                              fontWeight: 400,
+                              fontSize: "13px",
+                              color: "rgb(107, 114, 128)",
+                              lineHeight: 1.5,
+                              textAlign: "center",
+                            }}
+                          >
+                            {section.content}
+                          </Typography>
+                        )}
+                      </div>
                     )}
                   </AccordionDetails>
                 </Accordion>
@@ -2764,28 +3266,73 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
 
             {/* Import File Button - Fixed at Bottom */}
             <div className="border-t border-gray-200 p-4">
-              <div
-                className="flex items-center gap-3 p-3 bg-white rounded-md border border-gray-200 cursor-pointer hover:bg-gray-50"
-                onClick={handleImportFileClick}
-              >
-                <FileUploadOutlinedIcon
-                  sx={{
-                    fontSize: 24,
-                    color: "rgb(19, 135, 194)",
-                  }}
-                />
-                <Typography
-                  variant="body2"
-                  sx={{
-                    fontFamily: "'Rubik', sans-serif",
-                    fontWeight: 500,
-                    fontSize: "14px",
-                    color: "#1f2937",
-                    lineHeight: 1.4,
-                  }}
+              <div className="relative">
+                <div
+                  className={`flex items-center gap-3 p-3 bg-white rounded-md border border-gray-200 cursor-pointer hover:bg-gray-50 ${
+                    planType !== "professional"
+                      ? "opacity-50 cursor-not-allowed"
+                      : ""
+                  }`}
+                  onClick={
+                    planType === "professional"
+                      ? handleImportFileClick
+                      : undefined
+                  }
                 >
-                  Import DOCX or TXT
-                </Typography>
+                  <FileUploadOutlinedIcon
+                    sx={{
+                      fontSize: 24,
+                      color:
+                        planType === "professional"
+                          ? "rgb(19, 135, 194)"
+                          : "rgb(156, 163, 175)",
+                    }}
+                  />
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontFamily: "'Rubik', sans-serif",
+                      fontWeight: 500,
+                      fontSize: "14px",
+                      color:
+                        planType === "professional"
+                          ? "#1f2937"
+                          : "rgb(156, 163, 175)",
+                      lineHeight: 1.4,
+                    }}
+                  >
+                    Import DOCX or TXT
+                  </Typography>
+                </div>
+                {planType !== "professional" && (
+                  <div className="absolute right-2" style={{ top: "-8px" }}>
+                    <Chip
+                      icon={<WorkspacePremiumOutlinedIcon />}
+                      label="Professional Feature"
+                      onClick={() => setPricingModalOpen(true)}
+                      sx={{
+                        backgroundColor: "#fbbf24",
+                        color: "white",
+                        fontSize: "10px",
+                        fontWeight: "bold",
+                        height: "20px",
+                        cursor: "pointer",
+                        "&:hover": {
+                          backgroundColor: "#f59e0b",
+                        },
+                        "& .MuiChip-icon": {
+                          color: "white",
+                          fontSize: "14px",
+                          marginRight: "4px",
+                        },
+                        "& .MuiChip-label": {
+                          paddingLeft: "0px",
+                          paddingRight: "8px",
+                        },
+                      }}
+                    />
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -2836,22 +3383,45 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
             {accordionSections.map((section) => {
               // Define tooltip text for each section
               const getTooltipText = (title: string) => {
+                let count = 0;
+                let baseText = "";
+
                 switch (title) {
                   case "IDEAS":
-                    return "Ideas - Store your creative inspiration and brainstorming notes";
+                    count = ideas.length;
+                    baseText =
+                      "Ideas - Store your creative inspiration and brainstorming notes";
+                    break;
                   case "CHARACTERS":
-                    return "Characters - Develop character profiles, backgrounds, and personalities";
+                    count = characters.length;
+                    baseText =
+                      "Characters - Develop character profiles, backgrounds, and personalities";
+                    break;
                   case "OUTLINE":
-                    return "Outline - Create story structure with chapter outlines and plot points";
+                    count = outlines.length;
+                    baseText =
+                      "Outline - Create story structure with chapter outlines and plot points";
+                    break;
                   case "STORIES":
-                    return "Stories - Write and develop your complete stories";
+                    count = stories.length;
+                    baseText =
+                      "Stories - Write and develop your complete stories";
+                    break;
                   case "CHAPTERS":
-                    return "Chapters - Create and organize individual story chapters";
+                    count = chapters.length;
+                    baseText =
+                      "Chapters - Create and organize individual story chapters";
+                    break;
                   case "PARTS":
-                    return "Parts - Organize your story into larger sections made up of chapters";
+                    count = parts.length;
+                    baseText =
+                      "Parts - Organize your story into larger sections made up of chapters";
+                    break;
                   default:
                     return `View ${title.toLowerCase()}`;
                 }
+
+                return count > 0 ? `${baseText} (${count})` : baseText;
               };
 
               return (
@@ -3148,7 +3718,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
             <div ref={quillRef} className="flex-1"></div>
           </div>
           <div
-            className={`h-full bg-white rounded-lg p-6 ${
+            className={`h-full bg-white rounded-lg p-2 ${
               isEditingChapter || isEditingStory || isEditingOutline
                 ? "hidden"
                 : ""
@@ -3216,638 +3786,9 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
               </Typography>
             </div>
 
-            {/* Stats Grid - Hidden in quick story mode */}
-            {!isQuickStoryMode && (
-              <div className="grid grid-cols-1 md:grid-cols-6 gap-6 mb-8">
-                <div className="bg-gray-50 p-2 rounded-lg border border-gray-200 relative">
-                  {/* Desktop layout: vertical with + button in corner */}
-                  <div className="hidden md:block">
-                    <IconButton
-                      onClick={handleCreateIdeaClick}
-                      sx={{
-                        position: "absolute",
-                        top: "8px",
-                        right: "8px",
-                        width: "24px",
-                        height: "24px",
-                        color: "rgb(19, 135, 194)",
-                        "&:hover": {
-                          backgroundColor: "rgba(19, 135, 194, 0.1)",
-                        },
-                      }}
-                    >
-                      <AddIcon sx={{ fontSize: "16px" }} />
-                    </IconButton>
-                    <div className="flex flex-col items-center text-center">
-                      <BatchPredictionIcon
-                        sx={{
-                          fontSize: 32,
-                          color: "rgb(19, 135, 194)",
-                          marginBottom: "8px",
-                        }}
-                      />
-                      <div>
-                        <Typography
-                          variant="h6"
-                          sx={{
-                            fontFamily: "'Rubik', sans-serif",
-                            fontWeight: 600,
-                            fontSize: "18px",
-                            color: "#1f2937",
-                          }}
-                        >
-                          {ideas.length}
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            fontFamily: "'Rubik', sans-serif",
-                            fontWeight: 400,
-                            fontSize: "14px",
-                            color: "rgb(107, 114, 128)",
-                          }}
-                        >
-                          Ideas
-                        </Typography>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Mobile layout: horizontal [icon] [number] [label] [+] */}
-                  <div className="block md:hidden">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <BatchPredictionIcon
-                          sx={{
-                            fontSize: 24,
-                            color: "rgb(19, 135, 194)",
-                          }}
-                        />
-                        <Typography
-                          variant="h6"
-                          sx={{
-                            fontFamily: "'Rubik', sans-serif",
-                            fontWeight: 600,
-                            fontSize: "18px",
-                            color: "#1f2937",
-                          }}
-                        >
-                          {ideas.length}
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            fontFamily: "'Rubik', sans-serif",
-                            fontWeight: 400,
-                            fontSize: "14px",
-                            color: "rgb(107, 114, 128)",
-                          }}
-                        >
-                          Ideas
-                        </Typography>
-                      </div>
-                      <IconButton
-                        onClick={handleCreateIdeaClick}
-                        sx={{
-                          width: "32px",
-                          height: "32px",
-                          color: "rgb(19, 135, 194)",
-                          "&:hover": {
-                            backgroundColor: "rgba(19, 135, 194, 0.1)",
-                          },
-                        }}
-                      >
-                        <AddIcon sx={{ fontSize: "20px" }} />
-                      </IconButton>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-gray-50 p-2 rounded-lg border border-gray-200 relative">
-                  {/* Desktop layout: vertical with + button in corner */}
-                  <div className="hidden md:block">
-                    <IconButton
-                      onClick={handleCreateCharacterClick}
-                      sx={{
-                        position: "absolute",
-                        top: "8px",
-                        right: "8px",
-                        width: "24px",
-                        height: "24px",
-                        color: "rgb(19, 135, 194)",
-                        "&:hover": {
-                          backgroundColor: "rgba(19, 135, 194, 0.1)",
-                        },
-                      }}
-                    >
-                      <AddIcon sx={{ fontSize: "16px" }} />
-                    </IconButton>
-                    <div className="flex flex-col items-center text-center">
-                      <FaceOutlinedIcon
-                        sx={{
-                          fontSize: 32,
-                          color: "rgb(19, 135, 194)",
-                          marginBottom: "8px",
-                        }}
-                      />
-                      <div>
-                        <Typography
-                          variant="h6"
-                          sx={{
-                            fontFamily: "'Rubik', sans-serif",
-                            fontWeight: 600,
-                            fontSize: "18px",
-                            color: "#1f2937",
-                          }}
-                        >
-                          {characters.length}
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            fontFamily: "'Rubik', sans-serif",
-                            fontWeight: 400,
-                            fontSize: "14px",
-                            color: "rgb(107, 114, 128)",
-                          }}
-                        >
-                          Characters
-                        </Typography>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Mobile layout: horizontal [icon] [number] [label] [+] */}
-                  <div className="block md:hidden">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <FaceOutlinedIcon
-                          sx={{
-                            fontSize: 24,
-                            color: "rgb(19, 135, 194)",
-                          }}
-                        />
-                        <Typography
-                          variant="h6"
-                          sx={{
-                            fontFamily: "'Rubik', sans-serif",
-                            fontWeight: 600,
-                            fontSize: "18px",
-                            color: "#1f2937",
-                          }}
-                        >
-                          {characters.length}
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            fontFamily: "'Rubik', sans-serif",
-                            fontWeight: 400,
-                            fontSize: "14px",
-                            color: "rgb(107, 114, 128)",
-                          }}
-                        >
-                          Characters
-                        </Typography>
-                      </div>
-                      <IconButton
-                        onClick={handleCreateCharacterClick}
-                        sx={{
-                          width: "32px",
-                          height: "32px",
-                          color: "rgb(19, 135, 194)",
-                          "&:hover": {
-                            backgroundColor: "rgba(19, 135, 194, 0.1)",
-                          },
-                        }}
-                      >
-                        <AddIcon sx={{ fontSize: "20px" }} />
-                      </IconButton>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-gray-50 p-2 rounded-lg border border-gray-200 relative">
-                  {/* Desktop layout: vertical with + button in corner */}
-                  <div className="hidden md:block">
-                    <IconButton
-                      onClick={handleCreateChapterClick}
-                      sx={{
-                        position: "absolute",
-                        top: "8px",
-                        right: "8px",
-                        width: "24px",
-                        height: "24px",
-                        color: "rgb(19, 135, 194)",
-                        "&:hover": {
-                          backgroundColor: "rgba(19, 135, 194, 0.1)",
-                        },
-                      }}
-                    >
-                      <AddIcon sx={{ fontSize: "16px" }} />
-                    </IconButton>
-                    <div className="flex flex-col items-center text-center">
-                      <AutoStoriesIcon
-                        sx={{
-                          fontSize: 32,
-                          color: "rgb(19, 135, 194)",
-                          marginBottom: "8px",
-                        }}
-                      />
-                      <div>
-                        <Typography
-                          variant="h6"
-                          sx={{
-                            fontFamily: "'Rubik', sans-serif",
-                            fontWeight: 600,
-                            fontSize: "18px",
-                            color: "#1f2937",
-                          }}
-                        >
-                          {chapters.length}
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            fontFamily: "'Rubik', sans-serif",
-                            fontWeight: 400,
-                            fontSize: "14px",
-                            color: "rgb(107, 114, 128)",
-                          }}
-                        >
-                          Chapters
-                        </Typography>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Mobile layout: horizontal [icon] [number] [label] [+] */}
-                  <div className="block md:hidden">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <AutoStoriesIcon
-                          sx={{
-                            fontSize: 24,
-                            color: "rgb(19, 135, 194)",
-                          }}
-                        />
-                        <Typography
-                          variant="h6"
-                          sx={{
-                            fontFamily: "'Rubik', sans-serif",
-                            fontWeight: 600,
-                            fontSize: "18px",
-                            color: "#1f2937",
-                          }}
-                        >
-                          {chapters.length}
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            fontFamily: "'Rubik', sans-serif",
-                            fontWeight: 400,
-                            fontSize: "14px",
-                            color: "rgb(107, 114, 128)",
-                          }}
-                        >
-                          Chapters
-                        </Typography>
-                      </div>
-                      <IconButton
-                        onClick={handleCreateChapterClick}
-                        sx={{
-                          width: "32px",
-                          height: "32px",
-                          color: "rgb(19, 135, 194)",
-                          "&:hover": {
-                            backgroundColor: "rgba(19, 135, 194, 0.1)",
-                          },
-                        }}
-                      >
-                        <AddIcon sx={{ fontSize: "20px" }} />
-                      </IconButton>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-gray-50 p-2 rounded-lg border border-gray-200 relative">
-                  {/* Desktop layout: vertical with + button in corner */}
-                  <div className="hidden md:block">
-                    <IconButton
-                      onClick={handleCreateOutlineClick}
-                      sx={{
-                        position: "absolute",
-                        top: "8px",
-                        right: "8px",
-                        width: "24px",
-                        height: "24px",
-                        color: "rgb(19, 135, 194)",
-                        "&:hover": {
-                          backgroundColor: "rgba(19, 135, 194, 0.1)",
-                        },
-                      }}
-                    >
-                      <AddIcon sx={{ fontSize: "16px" }} />
-                    </IconButton>
-                    <div className="flex flex-col items-center text-center">
-                      <ListAltIcon
-                        sx={{
-                          fontSize: 32,
-                          color: "rgb(19, 135, 194)",
-                          marginBottom: "8px",
-                        }}
-                      />
-                      <div>
-                        <Typography
-                          variant="h6"
-                          sx={{
-                            fontFamily: "'Rubik', sans-serif",
-                            fontWeight: 600,
-                            fontSize: "18px",
-                            color: "#1f2937",
-                          }}
-                        >
-                          {outlines.length}
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            fontFamily: "'Rubik', sans-serif",
-                            fontWeight: 400,
-                            fontSize: "14px",
-                            color: "rgb(107, 114, 128)",
-                          }}
-                        >
-                          Outlines
-                        </Typography>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Mobile layout: horizontal [icon] [number] [label] [+] */}
-                  <div className="block md:hidden">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <ListAltIcon
-                          sx={{
-                            fontSize: 24,
-                            color: "rgb(19, 135, 194)",
-                          }}
-                        />
-                        <Typography
-                          variant="h6"
-                          sx={{
-                            fontFamily: "'Rubik', sans-serif",
-                            fontWeight: 600,
-                            fontSize: "18px",
-                            color: "#1f2937",
-                          }}
-                        >
-                          {outlines.length}
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            fontFamily: "'Rubik', sans-serif",
-                            fontWeight: 400,
-                            fontSize: "14px",
-                            color: "rgb(107, 114, 128)",
-                          }}
-                        >
-                          Outlines
-                        </Typography>
-                      </div>
-                      <IconButton
-                        onClick={handleCreateOutlineClick}
-                        sx={{
-                          width: "32px",
-                          height: "32px",
-                          color: "rgb(19, 135, 194)",
-                          "&:hover": {
-                            backgroundColor: "rgba(19, 135, 194, 0.1)",
-                          },
-                        }}
-                      >
-                        <AddIcon sx={{ fontSize: "20px" }} />
-                      </IconButton>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-gray-50 p-2 rounded-lg border border-gray-200 relative">
-                  {/* Desktop layout: vertical with + button in corner */}
-                  <div className="hidden md:block">
-                    <IconButton
-                      onClick={handleCreatePartClick}
-                      sx={{
-                        position: "absolute",
-                        top: "8px",
-                        right: "8px",
-                        width: "24px",
-                        height: "24px",
-                        color: "rgb(19, 135, 194)",
-                        "&:hover": {
-                          backgroundColor: "rgba(19, 135, 194, 0.1)",
-                        },
-                      }}
-                    >
-                      <AddIcon sx={{ fontSize: "16px" }} />
-                    </IconButton>
-                    <div className="flex flex-col items-center text-center">
-                      <FolderCopyIcon
-                        sx={{
-                          fontSize: 32,
-                          color: "rgb(19, 135, 194)",
-                          marginBottom: "8px",
-                        }}
-                      />
-                      <div>
-                        <Typography
-                          variant="h6"
-                          sx={{
-                            fontFamily: "'Rubik', sans-serif",
-                            fontWeight: 600,
-                            fontSize: "18px",
-                            color: "#1f2937",
-                          }}
-                        >
-                          {parts.length}
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            fontFamily: "'Rubik', sans-serif",
-                            fontWeight: 400,
-                            fontSize: "14px",
-                            color: "rgb(107, 114, 128)",
-                          }}
-                        >
-                          Parts
-                        </Typography>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Mobile layout: horizontal [icon] [number] [label] [+] */}
-                  <div className="block md:hidden">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <FolderCopyIcon
-                          sx={{
-                            fontSize: 24,
-                            color: "rgb(19, 135, 194)",
-                          }}
-                        />
-                        <Typography
-                          variant="h6"
-                          sx={{
-                            fontFamily: "'Rubik', sans-serif",
-                            fontWeight: 600,
-                            fontSize: "18px",
-                            color: "#1f2937",
-                          }}
-                        >
-                          {parts.length}
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            fontFamily: "'Rubik', sans-serif",
-                            fontWeight: 400,
-                            fontSize: "14px",
-                            color: "rgb(107, 114, 128)",
-                          }}
-                        >
-                          Parts
-                        </Typography>
-                      </div>
-                      <IconButton
-                        onClick={handleCreatePartClick}
-                        sx={{
-                          width: "32px",
-                          height: "32px",
-                          color: "rgb(19, 135, 194)",
-                          "&:hover": {
-                            backgroundColor: "rgba(19, 135, 194, 0.1)",
-                          },
-                        }}
-                      >
-                        <AddIcon sx={{ fontSize: "20px" }} />
-                      </IconButton>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="bg-gray-50 p-2 rounded-lg border border-gray-200 relative">
-                  {/* Desktop layout: vertical with + button in corner */}
-                  <div className="hidden md:block">
-                    <IconButton
-                      onClick={handleCreateStoryClick}
-                      sx={{
-                        position: "absolute",
-                        top: "8px",
-                        right: "8px",
-                        width: "24px",
-                        height: "24px",
-                        color: "rgb(19, 135, 194)",
-                        "&:hover": {
-                          backgroundColor: "rgba(19, 135, 194, 0.1)",
-                        },
-                      }}
-                    >
-                      <AddIcon sx={{ fontSize: "16px" }} />
-                    </IconButton>
-                    <div className="flex flex-col items-center text-center">
-                      <HistoryEduIcon
-                        sx={{
-                          fontSize: 32,
-                          color: "rgb(19, 135, 194)",
-                          marginBottom: "8px",
-                        }}
-                      />
-                      <div>
-                        <Typography
-                          variant="h6"
-                          sx={{
-                            fontFamily: "'Rubik', sans-serif",
-                            fontWeight: 600,
-                            fontSize: "18px",
-                            color: "#1f2937",
-                          }}
-                        >
-                          {stories.length}
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            fontFamily: "'Rubik', sans-serif",
-                            fontWeight: 400,
-                            fontSize: "14px",
-                            color: "rgb(107, 114, 128)",
-                          }}
-                        >
-                          Stories
-                        </Typography>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Mobile layout: horizontal [icon] [number] [label] [+] */}
-                  <div className="block md:hidden">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <HistoryEduIcon
-                          sx={{
-                            fontSize: 24,
-                            color: "rgb(19, 135, 194)",
-                          }}
-                        />
-                        <Typography
-                          variant="h6"
-                          sx={{
-                            fontFamily: "'Rubik', sans-serif",
-                            fontWeight: 600,
-                            fontSize: "18px",
-                            color: "#1f2937",
-                          }}
-                        >
-                          {stories.length}
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            fontFamily: "'Rubik', sans-serif",
-                            fontWeight: 400,
-                            fontSize: "14px",
-                            color: "rgb(107, 114, 128)",
-                          }}
-                        >
-                          Stories
-                        </Typography>
-                      </div>
-                      <IconButton
-                        onClick={handleCreateStoryClick}
-                        sx={{
-                          width: "32px",
-                          height: "32px",
-                          color: "rgb(19, 135, 194)",
-                          "&:hover": {
-                            backgroundColor: "rgba(19, 135, 194, 0.1)",
-                          },
-                        }}
-                      >
-                        <AddIcon sx={{ fontSize: "20px" }} />
-                      </IconButton>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
             {/* Recent Activity */}
             <div className="mb-8 mt-8">
-              <div className="flex items-center justify-between mb-4">
+              <div className="mb-4">
                 <Typography
                   variant="h6"
                   sx={{
@@ -3859,105 +3800,191 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                 >
                   Recent Activity
                 </Typography>
-                <IconButton
-                  onClick={handleClearRecentActivity}
-                  size="small"
-                  sx={{
-                    color: "rgb(156, 163, 175)",
-                    "&:hover": {
-                      color: "rgb(239, 68, 68)",
-                      backgroundColor: "rgba(239, 68, 68, 0.1)",
-                    },
-                  }}
-                >
-                  <CancelIcon sx={{ fontSize: "20px" }} />
-                </IconButton>
               </div>
               <div className="space-y-3">
                 {getRecentActivity()
                   .slice(0, 5)
-                  .map((activity: RecentActivity) => (
-                    <div
-                      key={activity.id}
-                      className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-100"
-                      onClick={() => handleRecentActivityClick(activity)}
-                    >
-                      {activity.type === "idea" ? (
-                        <BatchPredictionIcon
+                  .map((activity: RecentActivity) => {
+                    // Determine background color based on action
+                    const getBackgroundColor = () => {
+                      switch (activity.action) {
+                        case "created":
+                          return "bg-green-50 border-green-200 hover:bg-green-100";
+                        case "modified":
+                          return "bg-blue-50 border-blue-200 hover:bg-blue-100";
+                        case "deleted":
+                          return "bg-red-50 border-red-200 hover:bg-red-100";
+                        default:
+                          return "bg-gray-50 border-gray-200 hover:bg-gray-100";
+                      }
+                    };
+
+                    return (
+                      <div
+                        key={activity.id}
+                        className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer ${getBackgroundColor()}`}
+                        onClick={() => handleRecentActivityClick(activity)}
+                      >
+                        {activity.type === "idea" ? (
+                          <BatchPredictionIcon
+                            sx={{
+                              fontSize: 20,
+                              color: "rgb(107, 114, 128)",
+                            }}
+                          />
+                        ) : activity.type === "character" ? (
+                          <FaceOutlinedIcon
+                            sx={{
+                              fontSize: 20,
+                              color: "rgb(107, 114, 128)",
+                            }}
+                          />
+                        ) : activity.type === "outline" ? (
+                          <ListAltIcon
+                            sx={{
+                              fontSize: 20,
+                              color: "rgb(107, 114, 128)",
+                            }}
+                          />
+                        ) : activity.type === "story" ? (
+                          <HistoryEduIcon
+                            sx={{
+                              fontSize: 20,
+                              color: "rgb(107, 114, 128)",
+                            }}
+                          />
+                        ) : activity.type === "chapter" ? (
+                          <AutoStoriesIcon
+                            sx={{
+                              fontSize: 20,
+                              color: "rgb(107, 114, 128)",
+                            }}
+                          />
+                        ) : activity.type === "part" ? (
+                          <FolderCopyIcon
+                            sx={{
+                              fontSize: 20,
+                              color: "rgb(107, 114, 128)",
+                            }}
+                          />
+                        ) : (
+                          <DescriptionOutlinedIcon
+                            sx={{
+                              fontSize: 20,
+                              color: "rgb(107, 114, 128)",
+                            }}
+                          />
+                        )}
+                        <div className="flex-1">
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontFamily: "'Rubik', sans-serif",
+                              fontWeight: 500,
+                              fontSize: "14px",
+                              color: "#1f2937",
+                            }}
+                          >
+                            {activity.action === "created"
+                              ? `New ${activity.type}: ${activity.title}`
+                              : activity.action === "deleted"
+                              ? `Deleted ${activity.type}: ${activity.title}`
+                              : `Modified ${activity.type}: ${activity.title}`}
+                          </Typography>
+                          <div className="flex items-center gap-2 mt-1">
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                fontFamily: "'Rubik', sans-serif",
+                                fontWeight: 400,
+                                fontSize: "12px",
+                                color: "rgb(107, 114, 128)",
+                              }}
+                            >
+                              {activity.action === "created"
+                                ? new Date(
+                                    activity.createdAt
+                                  ).toLocaleDateString()
+                                : activity.action === "deleted"
+                                ? new Date().toLocaleDateString() // Deletion date is current date
+                                : activity.lastModified
+                                ? new Date(
+                                    activity.lastModified
+                                  ).toLocaleDateString()
+                                : new Date(
+                                    activity.createdAt
+                                  ).toLocaleDateString()}
+                            </Typography>
+                            {activity.wordCount &&
+                              activity.action !== "deleted" && (
+                                <>
+                                  <span
+                                    style={{
+                                      color: "rgb(156, 163, 175)",
+                                      fontSize: "12px",
+                                    }}
+                                  >
+                                    •
+                                  </span>
+                                  <Typography
+                                    variant="body2"
+                                    sx={{
+                                      fontFamily: "'Rubik', sans-serif",
+                                      fontWeight: 400,
+                                      fontSize: "12px",
+                                      color: "rgb(34, 197, 94)",
+                                    }}
+                                  >
+                                    +{activity.wordCount} words
+                                  </Typography>
+                                </>
+                              )}
+                            {activity.timerDuration &&
+                              activity.timerDuration > 0 &&
+                              activity.action !== "deleted" && (
+                                <>
+                                  <span
+                                    style={{
+                                      color: "rgb(156, 163, 175)",
+                                      fontSize: "12px",
+                                    }}
+                                  >
+                                    •
+                                  </span>
+                                  <Typography
+                                    variant="body2"
+                                    sx={{
+                                      fontFamily: "'Rubik', sans-serif",
+                                      fontWeight: 400,
+                                      fontSize: "12px",
+                                      color: "rgb(59, 130, 246)",
+                                    }}
+                                  >
+                                    {activity.timerDuration}m timer
+                                  </Typography>
+                                </>
+                              )}
+                          </div>
+                        </div>
+                        <IconButton
+                          onClick={(e) =>
+                            handleDeleteActivityEntry(activity.id, e)
+                          }
+                          size="small"
                           sx={{
-                            fontSize: 20,
-                            color: "rgb(107, 114, 128)",
-                          }}
-                        />
-                      ) : activity.type === "character" ? (
-                        <FaceOutlinedIcon
-                          sx={{
-                            fontSize: 20,
-                            color: "rgb(107, 114, 128)",
-                          }}
-                        />
-                      ) : activity.type === "outline" ? (
-                        <ListAltIcon
-                          sx={{
-                            fontSize: 20,
-                            color: "rgb(107, 114, 128)",
-                          }}
-                        />
-                      ) : activity.type === "story" ? (
-                        <HistoryEduIcon
-                          sx={{
-                            fontSize: 20,
-                            color: "rgb(107, 114, 128)",
-                          }}
-                        />
-                      ) : activity.type === "chapter" ? (
-                        <AutoStoriesIcon
-                          sx={{
-                            fontSize: 20,
-                            color: "rgb(107, 114, 128)",
-                          }}
-                        />
-                      ) : activity.type === "part" ? (
-                        <FolderCopyIcon
-                          sx={{
-                            fontSize: 20,
-                            color: "rgb(107, 114, 128)",
-                          }}
-                        />
-                      ) : (
-                        <DescriptionOutlinedIcon
-                          sx={{
-                            fontSize: 20,
-                            color: "rgb(107, 114, 128)",
-                          }}
-                        />
-                      )}
-                      <div className="flex-1">
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            fontFamily: "'Rubik', sans-serif",
-                            fontWeight: 500,
-                            fontSize: "14px",
-                            color: "#1f2937",
+                            color: "rgb(156, 163, 175)",
+                            padding: "4px",
+                            "&:hover": {
+                              color: "rgb(239, 68, 68)",
+                              backgroundColor: "rgba(239, 68, 68, 0.1)",
+                            },
                           }}
                         >
-                          {`New ${activity.type}: ${activity.title}`}
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            fontFamily: "'Rubik', sans-serif",
-                            fontWeight: 400,
-                            fontSize: "12px",
-                            color: "rgb(107, 114, 128)",
-                          }}
-                        >
-                          {new Date(activity.createdAt).toLocaleDateString()}
-                        </Typography>
+                          <DeleteOutlinedIcon sx={{ fontSize: "16px" }} />
+                        </IconButton>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 {getRecentActivity().length === 0 && (
                   <div className="text-center">
                     <div className="bg-gray-100 p-4 rounded-lg border border-gray-200">
@@ -4207,12 +4234,12 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                 <label htmlFor="avatar-upload">
                   <IconButton component="span">
                     {characterAvatar ? (
-                      <img
+                      <Image
                         src={characterAvatar}
                         alt="Character Avatar"
+                        width={40}
+                        height={40}
                         style={{
-                          width: "40px",
-                          height: "40px",
                           borderRadius: "50%",
                           objectFit: "cover",
                         }}
@@ -5135,6 +5162,13 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
             </Box>
           </Box>
         </Modal>
+
+        {/* Pricing Modal */}
+        <TwainStoryPricingModal
+          open={pricingModalOpen}
+          onClose={handlePricingModalClose}
+          onUpgrade={handleUpgrade}
+        />
       </div>
     </div>
   );

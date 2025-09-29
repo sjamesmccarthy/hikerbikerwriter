@@ -40,6 +40,7 @@ import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import Image from "next/image";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import WorkspacePremiumOutlinedIcon from "@mui/icons-material/WorkspacePremiumOutlined";
 import TwainStoryWriter from "./TwainStoryWriter";
 import TwainStoryPricingModal from "./TwainStoryPricingModal";
 import { useUserPreferences } from "../hooks/useUserPreferences";
@@ -1273,19 +1274,38 @@ const TwainStoryBuilder: React.FC = () => {
 
                       {/* Series Section */}
                       <div className="mt-4">
-                        <FormControlLabel
-                          control={
-                            <Switch
-                              checked={managedBookIsSeries}
-                              onChange={(e) =>
-                                setManagedBookIsSeries(e.target.checked)
-                              }
-                              color="primary"
+                        <div className="flex items-center justify-between mb-2">
+                          <FormControlLabel
+                            control={
+                              <Switch
+                                checked={managedBookIsSeries}
+                                onChange={(e) =>
+                                  setManagedBookIsSeries(e.target.checked)
+                                }
+                                color="primary"
+                                disabled={planType !== "professional"}
+                              />
+                            }
+                            label="This book is part of a series"
+                            sx={{ mb: 0 }}
+                          />
+                          {planType !== "professional" && (
+                            <Chip
+                              icon={<WorkspacePremiumOutlinedIcon />}
+                              label="Professional Feature"
+                              sx={{
+                                backgroundColor: "#fbbf24",
+                                color: "white",
+                                fontSize: "12px",
+                                fontWeight: "bold",
+                                height: "28px",
+                                "& .MuiChip-icon": {
+                                  color: "white",
+                                },
+                              }}
                             />
-                          }
-                          label="This book is part of a series"
-                          sx={{ mb: 2 }}
-                        />
+                          )}
+                        </div>
 
                         {managedBookIsSeries && (
                           <div className="space-y-4">
@@ -1320,6 +1340,7 @@ const TwainStoryBuilder: React.FC = () => {
                                       setManagedBookSeriesName(e.target.value);
                                     }
                                   }}
+                                  disabled={planType !== "professional"}
                                 >
                                   <MenuItem value="New Series">
                                     New Series
@@ -1357,6 +1378,7 @@ const TwainStoryBuilder: React.FC = () => {
                                       Number(e.target.value)
                                     )
                                   }
+                                  disabled={planType !== "professional"}
                                 >
                                   {Array.from(
                                     { length: 12 },
@@ -1393,204 +1415,12 @@ const TwainStoryBuilder: React.FC = () => {
                                 }
                                 variant="outlined"
                                 placeholder="Enter the name of your new series"
+                                disabled={planType !== "professional"}
                               />
                             )}
                           </div>
                         )}
                       </div>
-                    </div>
-                  </div>
-
-                  {/* Contributors Section */}
-                  <div className="mt-6">
-                    <div className="flex items-center justify-between mb-4">
-                      <div>
-                        <Typography
-                          variant="h6"
-                          sx={{
-                            fontFamily: "'Rubik', sans-serif",
-                            fontWeight: 600,
-                            color: "rgb(31, 41, 55)",
-                            mb: 0.5,
-                          }}
-                        >
-                          Contributors
-                        </Typography>
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            fontFamily: "'Rubik', sans-serif",
-                            color: "rgb(107, 114, 128)",
-                            fontSize: "14px",
-                          }}
-                        >
-                          Add up to 10 contributors. They&apos;ll display in the
-                          order you enter below.
-                        </Typography>
-                      </div>
-                      <Button
-                        onClick={handleAddContributor}
-                        variant="outlined"
-                        startIcon={<AddIcon />}
-                        disabled={managedBookContributors.length >= 10}
-                        sx={{
-                          textTransform: "none",
-                          fontFamily: "'Rubik', sans-serif",
-                          borderColor: "rgb(19, 135, 194)",
-                          color: "rgb(19, 135, 194)",
-                          "&:hover": {
-                            borderColor: "rgb(15, 108, 155)",
-                            backgroundColor: "rgba(19, 135, 194, 0.04)",
-                          },
-                          "&:disabled": {
-                            borderColor: "rgb(209, 213, 219)",
-                            color: "rgb(156, 163, 175)",
-                          },
-                        }}
-                      >
-                        Add Contributor
-                      </Button>
-                    </div>
-
-                    {/* Contributors List */}
-                    <div className="space-y-3">
-                      {managedBookContributors.map((contributor, index) => (
-                        <div
-                          key={contributor.id}
-                          className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
-                        >
-                          {/* Move Up/Down Buttons */}
-                          <div className="flex flex-col">
-                            <IconButton
-                              size="small"
-                              onClick={() => handleMoveContributor(index, "up")}
-                              disabled={index === 0}
-                              sx={{
-                                padding: "2px",
-                                color:
-                                  index === 0
-                                    ? "rgb(209, 213, 219)"
-                                    : "rgb(107, 114, 128)",
-                                "&:hover": {
-                                  backgroundColor:
-                                    index === 0
-                                      ? "transparent"
-                                      : "rgba(107, 114, 128, 0.1)",
-                                },
-                              }}
-                            >
-                              <KeyboardArrowUpIcon fontSize="small" />
-                            </IconButton>
-                            <IconButton
-                              size="small"
-                              onClick={() =>
-                                handleMoveContributor(index, "down")
-                              }
-                              disabled={
-                                index === managedBookContributors.length - 1
-                              }
-                              sx={{
-                                padding: "2px",
-                                color:
-                                  index === managedBookContributors.length - 1
-                                    ? "rgb(209, 213, 219)"
-                                    : "rgb(107, 114, 128)",
-                                "&:hover": {
-                                  backgroundColor:
-                                    index === managedBookContributors.length - 1
-                                      ? "transparent"
-                                      : "rgba(107, 114, 128, 0.1)",
-                                },
-                              }}
-                            >
-                              <KeyboardArrowDownIcon fontSize="small" />
-                            </IconButton>
-                          </div>
-
-                          {/* Role Select */}
-                          <FormControl sx={{ minWidth: 140 }}>
-                            <InputLabel size="small">Role</InputLabel>
-                            <Select
-                              size="small"
-                              value={contributor.role}
-                              label="Role"
-                              onChange={(e) =>
-                                handleUpdateContributor(
-                                  contributor.id,
-                                  "role",
-                                  e.target.value
-                                )
-                              }
-                            >
-                              <MenuItem value="Co-Author">Co-Author</MenuItem>
-                              <MenuItem value="Editor">Editor</MenuItem>
-                              <MenuItem value="Illustrator">
-                                Illustrator
-                              </MenuItem>
-                              <MenuItem value="Photographer">
-                                Photographer
-                              </MenuItem>
-                              <MenuItem value="Translator">Translator</MenuItem>
-                              <MenuItem value="Foreword">Foreword</MenuItem>
-                              <MenuItem value="Introduction">
-                                Introduction
-                              </MenuItem>
-                              <MenuItem value="Preface">Preface</MenuItem>
-                              <MenuItem value="Agent">Agent</MenuItem>
-                              <MenuItem value="Proof Reader">
-                                Proof Reader
-                              </MenuItem>
-                              <MenuItem value="Advisor">Advisor</MenuItem>
-                              <MenuItem value="Typesetter">Typesetter</MenuItem>
-                            </Select>
-                          </FormControl>
-
-                          {/* First Name */}
-                          <TextField
-                            size="small"
-                            label="First Name"
-                            value={contributor.firstName}
-                            onChange={(e) =>
-                              handleUpdateContributor(
-                                contributor.id,
-                                "firstName",
-                                e.target.value
-                              )
-                            }
-                            sx={{ flex: 1 }}
-                          />
-
-                          {/* Last Name */}
-                          <TextField
-                            size="small"
-                            label="Last Name"
-                            value={contributor.lastName}
-                            onChange={(e) =>
-                              handleUpdateContributor(
-                                contributor.id,
-                                "lastName",
-                                e.target.value
-                              )
-                            }
-                            sx={{ flex: 1 }}
-                          />
-
-                          {/* Delete Button */}
-                          <IconButton
-                            onClick={() =>
-                              handleDeleteContributor(contributor.id)
-                            }
-                            sx={{
-                              color: "rgb(248, 113, 113)",
-                              "&:hover": {
-                                backgroundColor: "rgba(248, 113, 113, 0.1)",
-                              },
-                            }}
-                          >
-                            <DeleteOutlinedIcon />
-                          </IconButton>
-                        </div>
-                      ))}
                     </div>
                   </div>
 
@@ -1723,11 +1553,271 @@ const TwainStoryBuilder: React.FC = () => {
                     </div>
                   </div>
 
+                  {/* Contributors Section */}
+                  <div className="mt-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <Typography
+                            variant="h6"
+                            sx={{
+                              fontFamily: "'Rubik', sans-serif",
+                              fontWeight: 600,
+                              color:
+                                planType !== "professional"
+                                  ? "rgb(156, 163, 175)"
+                                  : "rgb(31, 41, 55)",
+                            }}
+                          >
+                            Contributors
+                          </Typography>
+                          {planType !== "professional" && (
+                            <Chip
+                              icon={<WorkspacePremiumOutlinedIcon />}
+                              label="Professional Feature"
+                              sx={{
+                                backgroundColor: "#fbbf24",
+                                color: "white",
+                                fontSize: "12px",
+                                fontWeight: "bold",
+                                height: "28px",
+                                "& .MuiChip-icon": {
+                                  color: "white",
+                                },
+                              }}
+                            />
+                          )}
+                        </div>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontFamily: "'Rubik', sans-serif",
+                            color:
+                              planType !== "professional"
+                                ? "rgb(156, 163, 175)"
+                                : "rgb(107, 114, 128)",
+                            fontSize: "14px",
+                          }}
+                        >
+                          Add up to 10 contributors. They&apos;ll display in the
+                          order you enter below.
+                        </Typography>
+                      </div>
+                      <Button
+                        onClick={handleAddContributor}
+                        variant="outlined"
+                        startIcon={<AddIcon />}
+                        disabled={
+                          managedBookContributors.length >= 10 ||
+                          planType !== "professional"
+                        }
+                        sx={{
+                          textTransform: "none",
+                          fontFamily: "'Rubik', sans-serif",
+                          borderColor: "rgb(19, 135, 194)",
+                          color: "rgb(19, 135, 194)",
+                          "&:hover": {
+                            borderColor: "rgb(15, 108, 155)",
+                            backgroundColor: "rgba(19, 135, 194, 0.04)",
+                          },
+                          "&:disabled": {
+                            borderColor: "rgb(209, 213, 219)",
+                            color: "rgb(156, 163, 175)",
+                          },
+                        }}
+                      >
+                        Add Contributor
+                      </Button>
+                    </div>
+
+                    {/* Contributors List */}
+                    <div className="space-y-3">
+                      {managedBookContributors.map((contributor, index) => (
+                        <div
+                          key={contributor.id}
+                          className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
+                        >
+                          {/* Move Up/Down Buttons */}
+                          <div className="flex flex-col">
+                            <IconButton
+                              size="small"
+                              onClick={() => handleMoveContributor(index, "up")}
+                              disabled={
+                                index === 0 || planType !== "professional"
+                              }
+                              sx={{
+                                padding: "2px",
+                                color:
+                                  index === 0 || planType !== "professional"
+                                    ? "rgb(209, 213, 219)"
+                                    : "rgb(107, 114, 128)",
+                                "&:hover": {
+                                  backgroundColor:
+                                    index === 0 || planType !== "professional"
+                                      ? "transparent"
+                                      : "rgba(107, 114, 128, 0.1)",
+                                },
+                              }}
+                            >
+                              <KeyboardArrowUpIcon fontSize="small" />
+                            </IconButton>
+                            <IconButton
+                              size="small"
+                              onClick={() =>
+                                handleMoveContributor(index, "down")
+                              }
+                              disabled={
+                                index === managedBookContributors.length - 1 ||
+                                planType !== "professional"
+                              }
+                              sx={{
+                                padding: "2px",
+                                color:
+                                  index ===
+                                    managedBookContributors.length - 1 ||
+                                  planType !== "professional"
+                                    ? "rgb(209, 213, 219)"
+                                    : "rgb(107, 114, 128)",
+                                "&:hover": {
+                                  backgroundColor:
+                                    index ===
+                                      managedBookContributors.length - 1 ||
+                                    planType !== "professional"
+                                      ? "transparent"
+                                      : "rgba(107, 114, 128, 0.1)",
+                                },
+                              }}
+                            >
+                              <KeyboardArrowDownIcon fontSize="small" />
+                            </IconButton>
+                          </div>
+
+                          {/* Role Select */}
+                          <FormControl sx={{ minWidth: 140 }}>
+                            <InputLabel size="small">Role</InputLabel>
+                            <Select
+                              size="small"
+                              value={contributor.role}
+                              label="Role"
+                              onChange={(e) =>
+                                handleUpdateContributor(
+                                  contributor.id,
+                                  "role",
+                                  e.target.value
+                                )
+                              }
+                              disabled={planType !== "professional"}
+                            >
+                              <MenuItem value="Co-Author">Co-Author</MenuItem>
+                              <MenuItem value="Editor">Editor</MenuItem>
+                              <MenuItem value="Illustrator">
+                                Illustrator
+                              </MenuItem>
+                              <MenuItem value="Photographer">
+                                Photographer
+                              </MenuItem>
+                              <MenuItem value="Translator">Translator</MenuItem>
+                              <MenuItem value="Foreword">Foreword</MenuItem>
+                              <MenuItem value="Introduction">
+                                Introduction
+                              </MenuItem>
+                              <MenuItem value="Preface">Preface</MenuItem>
+                              <MenuItem value="Agent">Agent</MenuItem>
+                              <MenuItem value="Proof Reader">
+                                Proof Reader
+                              </MenuItem>
+                              <MenuItem value="Advisor">Advisor</MenuItem>
+                              <MenuItem value="Typesetter">Typesetter</MenuItem>
+                            </Select>
+                          </FormControl>
+
+                          {/* First Name */}
+                          <TextField
+                            size="small"
+                            label="First Name"
+                            value={contributor.firstName}
+                            onChange={(e) =>
+                              handleUpdateContributor(
+                                contributor.id,
+                                "firstName",
+                                e.target.value
+                              )
+                            }
+                            sx={{ flex: 1 }}
+                            disabled={planType !== "professional"}
+                          />
+
+                          {/* Last Name */}
+                          <TextField
+                            size="small"
+                            label="Last Name"
+                            value={contributor.lastName}
+                            onChange={(e) =>
+                              handleUpdateContributor(
+                                contributor.id,
+                                "lastName",
+                                e.target.value
+                              )
+                            }
+                            sx={{ flex: 1 }}
+                            disabled={planType !== "professional"}
+                          />
+
+                          {/* Delete Button */}
+                          <IconButton
+                            onClick={() =>
+                              handleDeleteContributor(contributor.id)
+                            }
+                            disabled={planType !== "professional"}
+                            sx={{
+                              color:
+                                planType !== "professional"
+                                  ? "rgb(209, 213, 219)"
+                                  : "rgb(248, 113, 113)",
+                              "&:hover": {
+                                backgroundColor:
+                                  planType !== "professional"
+                                    ? "transparent"
+                                    : "rgba(248, 113, 113, 0.1)",
+                              },
+                            }}
+                          >
+                            <DeleteOutlinedIcon />
+                          </IconButton>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
                   {/* Publisher Details */}
                   <div className="mt-8">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-4">
-                      Publisher Details
-                    </h3>
+                    <div className="flex items-center justify-between mb-4">
+                      <h3
+                        className={`text-lg font-semibold ${
+                          planType !== "professional"
+                            ? "text-gray-400"
+                            : "text-gray-800"
+                        }`}
+                      >
+                        Publisher Details
+                      </h3>
+                      {planType !== "professional" && (
+                        <Chip
+                          icon={<WorkspacePremiumOutlinedIcon />}
+                          label="Professional Feature"
+                          sx={{
+                            backgroundColor: "#fbbf24",
+                            color: "white",
+                            fontSize: "12px",
+                            fontWeight: "bold",
+                            height: "28px",
+                            "& .MuiChip-icon": {
+                              color: "white",
+                            },
+                          }}
+                        />
+                      )}
+                    </div>
 
                     {/* Publisher Name */}
                     <div className="mb-4">
@@ -1739,6 +1829,7 @@ const TwainStoryBuilder: React.FC = () => {
                           setManagedBookPublisherName(e.target.value)
                         }
                         variant="outlined"
+                        disabled={planType !== "professional"}
                         sx={{
                           "& .MuiOutlinedInput-root": {
                             fontFamily: "'Rubik', sans-serif",
@@ -1758,6 +1849,7 @@ const TwainStoryBuilder: React.FC = () => {
                         value={managedBookIsbnEpub}
                         onChange={(e) => setManagedBookIsbnEpub(e.target.value)}
                         variant="outlined"
+                        disabled={planType !== "professional"}
                         sx={{
                           "& .MuiOutlinedInput-root": {
                             fontFamily: "'Rubik', sans-serif",
@@ -1768,13 +1860,14 @@ const TwainStoryBuilder: React.FC = () => {
                         }}
                       />
                       <TextField
-                        label="ISBN - Kindle"
+                        label="AISN - Kindle"
                         placeholder="000-0-00-000000-0"
                         value={managedBookIsbnKindle}
                         onChange={(e) =>
                           setManagedBookIsbnKindle(e.target.value)
                         }
                         variant="outlined"
+                        disabled={planType !== "professional"}
                         sx={{
                           "& .MuiOutlinedInput-root": {
                             fontFamily: "'Rubik', sans-serif",
@@ -1792,6 +1885,7 @@ const TwainStoryBuilder: React.FC = () => {
                           setManagedBookIsbnPaperback(e.target.value)
                         }
                         variant="outlined"
+                        disabled={planType !== "professional"}
                         sx={{
                           "& .MuiOutlinedInput-root": {
                             fontFamily: "'Rubik', sans-serif",
@@ -1809,6 +1903,7 @@ const TwainStoryBuilder: React.FC = () => {
                           setManagedBookIsbnHardcover(e.target.value)
                         }
                         variant="outlined"
+                        disabled={planType !== "professional"}
                         sx={{
                           "& .MuiOutlinedInput-root": {
                             fontFamily: "'Rubik', sans-serif",
@@ -1824,6 +1919,7 @@ const TwainStoryBuilder: React.FC = () => {
                         value={managedBookIsbnPdf}
                         onChange={(e) => setManagedBookIsbnPdf(e.target.value)}
                         variant="outlined"
+                        disabled={planType !== "professional"}
                         sx={{
                           "& .MuiOutlinedInput-root": {
                             fontFamily: "'Rubik', sans-serif",
@@ -1838,10 +1934,40 @@ const TwainStoryBuilder: React.FC = () => {
 
                   {/* Clauses */}
                   <div className="mt-8">
-                    <h3 className="text-lg font-semibold text-gray-800 mb-2">
-                      Clauses
-                    </h3>
-                    <p className="text-sm text-gray-600 mb-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <h3
+                        className={`text-lg font-semibold ${
+                          planType !== "professional"
+                            ? "text-gray-400"
+                            : "text-gray-800"
+                        }`}
+                      >
+                        Clauses
+                      </h3>
+                      {planType !== "professional" && (
+                        <Chip
+                          icon={<WorkspacePremiumOutlinedIcon />}
+                          label="Professional Feature"
+                          sx={{
+                            backgroundColor: "#fbbf24",
+                            color: "white",
+                            fontSize: "12px",
+                            fontWeight: "bold",
+                            height: "28px",
+                            "& .MuiChip-icon": {
+                              color: "white",
+                            },
+                          }}
+                        />
+                      )}
+                    </div>
+                    <p
+                      className={`text-sm mb-4 ${
+                        planType !== "professional"
+                          ? "text-gray-400"
+                          : "text-gray-600"
+                      }`}
+                    >
                       These clauses help protect your rights and your book
                       rights. Check all that apply.
                     </p>
@@ -1856,6 +1982,7 @@ const TwainStoryBuilder: React.FC = () => {
                                 e.target.checked
                               )
                             }
+                            disabled={planType !== "professional"}
                             sx={{
                               color: "rgb(19, 135, 194)",
                               "&.Mui-checked": {
@@ -1867,10 +1994,22 @@ const TwainStoryBuilder: React.FC = () => {
                         }
                         label={
                           <div>
-                            <div className="font-medium text-gray-800 mb-1">
+                            <div
+                              className={`font-medium mb-1 ${
+                                planType !== "professional"
+                                  ? "text-gray-400"
+                                  : "text-gray-800"
+                              }`}
+                            >
                               All rights reserved
                             </div>
-                            <div className="text-sm text-gray-600">
+                            <div
+                              className={`text-sm ${
+                                planType !== "professional"
+                                  ? "text-gray-400"
+                                  : "text-gray-600"
+                              }`}
+                            >
                               All rights reserved. No part of this publication
                               may be reproduced, stored or transmitted in any
                               form or by any means, electronic, mechanical,
@@ -1898,6 +2037,7 @@ const TwainStoryBuilder: React.FC = () => {
                             onChange={(e) =>
                               setManagedBookClauseFiction(e.target.checked)
                             }
+                            disabled={planType !== "professional"}
                             sx={{
                               color: "rgb(19, 135, 194)",
                               "&.Mui-checked": {
@@ -1909,10 +2049,22 @@ const TwainStoryBuilder: React.FC = () => {
                         }
                         label={
                           <div>
-                            <div className="font-medium text-gray-800 mb-1">
+                            <div
+                              className={`font-medium mb-1 ${
+                                planType !== "professional"
+                                  ? "text-gray-400"
+                                  : "text-gray-800"
+                              }`}
+                            >
                               Fiction
                             </div>
-                            <div className="text-sm text-gray-600">
+                            <div
+                              className={`text-sm ${
+                                planType !== "professional"
+                                  ? "text-gray-400"
+                                  : "text-gray-600"
+                              }`}
+                            >
                               This novel is entirely a work of fiction. The
                               names, characters and incidents portrayed in it
                               are the work of the author&apos;s imagination. Any
@@ -1937,6 +2089,7 @@ const TwainStoryBuilder: React.FC = () => {
                             onChange={(e) =>
                               setManagedBookClauseMoralRights(e.target.checked)
                             }
+                            disabled={planType !== "professional"}
                             sx={{
                               color: "rgb(19, 135, 194)",
                               "&.Mui-checked": {
@@ -1948,10 +2101,22 @@ const TwainStoryBuilder: React.FC = () => {
                         }
                         label={
                           <div>
-                            <div className="font-medium text-gray-800 mb-1">
+                            <div
+                              className={`font-medium mb-1 ${
+                                planType !== "professional"
+                                  ? "text-gray-400"
+                                  : "text-gray-800"
+                              }`}
+                            >
                               Moral rights
                             </div>
-                            <div className="text-sm text-gray-600">
+                            <div
+                              className={`text-sm ${
+                                planType !== "professional"
+                                  ? "text-gray-400"
+                                  : "text-gray-600"
+                              }`}
+                            >
                               {session?.user?.name || "Author"} asserts the
                               moral right to be identified as the author of this
                               work.
@@ -2713,6 +2878,121 @@ const TwainStoryBuilder: React.FC = () => {
               )}
             </div>
 
+            {/* Limit Warning Messages */}
+            {planType !== "professional" && (
+              <>
+                {books.length >= 3 &&
+                  (filter === "all" || filter === "books") && (
+                    <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                          <div className="flex-shrink-0">
+                            <svg
+                              className="h-5 w-5 text-red-400"
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                          </div>
+                          <div className="ml-3">
+                            <p className="text-sm text-red-800">
+                              You&apos;ve reached your limit of{" "}
+                              <strong>3 books</strong>.
+                              <span className="ml-1">
+                                Upgrade to Professional to create unlimited
+                                books.
+                              </span>
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex-shrink-0">
+                          <Chip
+                            icon={<WorkspacePremiumOutlinedIcon />}
+                            label="Upgrade to Professional"
+                            clickable
+                            onClick={() => setShowPricing(true)}
+                            sx={{
+                              backgroundColor: "#fbbf24",
+                              color: "white",
+                              fontSize: "12px",
+                              fontWeight: "bold",
+                              height: "28px",
+                              cursor: "pointer",
+                              "&:hover": {
+                                backgroundColor: "#f59e0b",
+                              },
+                              "& .MuiChip-icon": {
+                                color: "white",
+                              },
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                {quickStories.length >= 3 &&
+                  (filter === "all" || filter === "stories") && (
+                    <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                          <div className="flex-shrink-0">
+                            <svg
+                              className="h-5 w-5 text-red-400"
+                              viewBox="0 0 20 20"
+                              fill="currentColor"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                          </div>
+                          <div className="ml-3">
+                            <p className="text-sm text-red-800">
+                              You&apos;ve reached your limit of{" "}
+                              <strong>3 story collections</strong>.
+                              <span className="ml-1">
+                                Upgrade to Professional to create unlimited
+                                story collections.
+                              </span>
+                            </p>
+                          </div>
+                        </div>
+                        <div className="flex-shrink-0">
+                          <Chip
+                            icon={<WorkspacePremiumOutlinedIcon />}
+                            label="Upgrade to Professional"
+                            clickable
+                            onClick={() => setShowPricing(true)}
+                            sx={{
+                              backgroundColor: "#fbbf24",
+                              color: "white",
+                              fontSize: "12px",
+                              fontWeight: "bold",
+                              height: "28px",
+                              cursor: "pointer",
+                              "&:hover": {
+                                backgroundColor: "#f59e0b",
+                              },
+                              "& .MuiChip-icon": {
+                                color: "white",
+                              },
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+              </>
+            )}
+
             {/* Books flex container with custom spacing */}
             <div
               style={{
@@ -2739,7 +3019,7 @@ const TwainStoryBuilder: React.FC = () => {
                 !(filter === "stories" && quickStories.length === 0) &&
                 !(filter === "books" && books.length === 0) && (
                   <div
-                    className="hover:shadow-md transition-shadow cursor-pointer flex flex-col rounded-md w-full max-w-[176px] sm:w-[176px] sm:max-w-none"
+                    className="hover:shadow-md transition-shadow cursor-pointer flex flex-col rounded-md w-full max-w-[176px] sm:w-[176px] sm:max-w-none relative"
                     style={{
                       aspectRatio: "176/268",
                       backgroundColor: "rgb(227, 230, 230)",
@@ -2747,47 +3027,143 @@ const TwainStoryBuilder: React.FC = () => {
                   >
                     <div className="flex-1 flex flex-col justify-center items-center p-2 space-y-2">
                       {/* Create Book Button */}
-                      <button
-                        className="w-full flex flex-col items-center space-y-1 p-2 rounded cursor-pointer"
-                        onClick={handleCreateBookClick}
-                      >
-                        <AddCircleOutlinedIcon
-                          sx={{
-                            fontSize: 64,
-                            color: "rgb(100, 114, 127)",
-                            transition: "transform 0.2s ease",
-                            "&:hover": {
-                              transform: "scale(1.1)",
-                            },
-                          }}
-                        />
-                        <span className="text-sm font-medium text-gray-800">
-                          Create book
-                        </span>
-                      </button>
+                      <div className="relative w-full">
+                        <button
+                          className={`w-full flex flex-col items-center space-y-1 p-2 rounded cursor-pointer ${
+                            planType !== "professional" && books.length >= 3
+                              ? "opacity-50 cursor-not-allowed"
+                              : ""
+                          }`}
+                          onClick={
+                            planType !== "professional" && books.length >= 3
+                              ? undefined
+                              : handleCreateBookClick
+                          }
+                          disabled={
+                            planType !== "professional" && books.length >= 3
+                          }
+                        >
+                          <AddCircleOutlinedIcon
+                            sx={{
+                              fontSize: 64,
+                              color:
+                                planType !== "professional" && books.length >= 3
+                                  ? "rgb(156, 163, 175)"
+                                  : "rgb(100, 114, 127)",
+                              transition: "transform 0.2s ease",
+                              "&:hover": {
+                                transform:
+                                  planType !== "professional" &&
+                                  books.length >= 3
+                                    ? "none"
+                                    : "scale(1.1)",
+                              },
+                            }}
+                          />
+                          <span
+                            className={`text-sm font-medium ${
+                              planType !== "professional" && books.length >= 3
+                                ? "text-gray-400"
+                                : "text-gray-800"
+                            }`}
+                          >
+                            Create book
+                          </span>
+                        </button>
+                        {planType !== "professional" && books.length >= 3 && (
+                          <div className="absolute top-1 right-1">
+                            <Chip
+                              icon={<WorkspacePremiumOutlinedIcon />}
+                              label="Pro"
+                              sx={{
+                                backgroundColor: "#fbbf24",
+                                color: "white",
+                                fontSize: "10px",
+                                fontWeight: "bold",
+                                height: "20px",
+                                "& .MuiChip-icon": {
+                                  color: "white",
+                                  fontSize: "12px",
+                                },
+                              }}
+                            />
+                          </div>
+                        )}
+                      </div>
 
                       {/* Divider Line */}
                       <div className="w-full border-b border-gray-300 my-2"></div>
 
                       {/* Create Story Button */}
-                      <button
-                        className="w-full flex flex-col items-center space-y-1 p-2 rounded cursor-pointer"
-                        onClick={handleCreateStoryClick}
-                      >
-                        <AddCircleOutlinedIcon
-                          sx={{
-                            fontSize: 64,
-                            color: "rgb(34, 197, 94)",
-                            transition: "transform 0.2s ease",
-                            "&:hover": {
-                              transform: "scale(1.1)",
-                            },
-                          }}
-                        />
-                        <span className="text-sm font-medium text-gray-800">
-                          Create Story
-                        </span>
-                      </button>
+                      <div className="relative w-full">
+                        <button
+                          className={`w-full flex flex-col items-center space-y-1 p-2 rounded cursor-pointer ${
+                            planType !== "professional" &&
+                            quickStories.length >= 3
+                              ? "opacity-50 cursor-not-allowed"
+                              : ""
+                          }`}
+                          onClick={
+                            planType !== "professional" &&
+                            quickStories.length >= 3
+                              ? undefined
+                              : handleCreateStoryClick
+                          }
+                          disabled={
+                            planType !== "professional" &&
+                            quickStories.length >= 3
+                          }
+                        >
+                          <AddCircleOutlinedIcon
+                            sx={{
+                              fontSize: 64,
+                              color:
+                                planType !== "professional" &&
+                                quickStories.length >= 3
+                                  ? "rgb(156, 163, 175)"
+                                  : "rgb(34, 197, 94)",
+                              transition: "transform 0.2s ease",
+                              "&:hover": {
+                                transform:
+                                  planType !== "professional" &&
+                                  quickStories.length >= 3
+                                    ? "none"
+                                    : "scale(1.1)",
+                              },
+                            }}
+                          />
+                          <span
+                            className={`text-sm font-medium ${
+                              planType !== "professional" &&
+                              quickStories.length >= 3
+                                ? "text-gray-400"
+                                : "text-gray-800"
+                            }`}
+                          >
+                            Create story
+                          </span>
+                        </button>
+                        {planType !== "professional" &&
+                          quickStories.length >= 3 && (
+                            <div className="absolute top-1 right-1">
+                              <Chip
+                                icon={<WorkspacePremiumOutlinedIcon />}
+                                label="Pro"
+                                sx={{
+                                  backgroundColor: "#fbbf24",
+                                  color: "white",
+                                  fontSize: "10px",
+                                  fontWeight: "bold",
+                                  height: "20px",
+                                  "& .MuiChip-icon": {
+                                    color: "white",
+                                    fontSize: "12px",
+                                  },
+                                }}
+                              />
+                            </div>
+                          )}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -3407,9 +3783,8 @@ const TwainStoryBuilder: React.FC = () => {
           </span>
           <br />
           {planType === "freelance" &&
-            "Your content is being stored in local storage and will not be accessible across devices"}
+            "Your content is being stored in local storage and will not be accessible across devices."}
           {!isActivePlan && planType !== "freelance" && "Your plan has expired"}
-          . Please{" "}
           {(planType === "freelance" || !isActivePlan) && (
             <>
               <span
@@ -3417,7 +3792,7 @@ const TwainStoryBuilder: React.FC = () => {
                 className="underline cursor-pointer hover:text-white transition-colors duration-200"
               >
                 {planType === "freelance"
-                  ? "upgrade to a paid plan"
+                  ? "Upgrade to a paid plan"
                   : "renew your subscription"}
               </span>{" "}
               to store your content in the cloud and access it everywhere.

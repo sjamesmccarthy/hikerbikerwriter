@@ -127,12 +127,14 @@ const TwainStoryPricingModal: React.FC<TwainStoryPricingModalProps> = ({
                   <div className="flex items-center">
                     <span className="text-green-500 mr-2">✓</span>
                     <span className="text-gray-700">
-                      Unlimited Ideas and Stories
+                      3 Outlines and 3 Stories
                     </span>
                   </div>
                   <div className="flex items-center">
                     <span className="text-green-500 mr-2">✓</span>
-                    <span className="text-gray-700">1 Outline and Book</span>
+                    <span className="text-gray-700">
+                      3 Books or 3 Story Collections{" "}
+                    </span>
                   </div>
                   <div className="flex items-center">
                     <span className="text-green-500 mr-2">✓</span>
@@ -218,7 +220,9 @@ const TwainStoryPricingModal: React.FC<TwainStoryPricingModalProps> = ({
                   </div>
                   <div className="flex items-center">
                     <span className="text-green-500 mr-2">✓</span>
-                    <span className="text-gray-700">Unlimited books</span>
+                    <span className="text-gray-700">
+                      Unlimited books and story collections
+                    </span>
                   </div>
                   <div className="flex items-center">
                     <span className="text-green-500 mr-2">✓</span>
