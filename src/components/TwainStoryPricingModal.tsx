@@ -7,7 +7,7 @@ import CloseIcon from "@mui/icons-material/Close";
 interface TwainStoryPricingModalProps {
   open: boolean;
   onClose: () => void;
-  onUpgrade: (planType: "freelance" | "professional") => void;
+  onUpgrade: (planType: "professional") => void;
 }
 
 const TwainStoryPricingModal: React.FC<TwainStoryPricingModalProps> = ({
@@ -85,7 +85,7 @@ const TwainStoryPricingModal: React.FC<TwainStoryPricingModalProps> = ({
             overflowY: "auto",
           }}
         >
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Free Plan */}
             <div className="border border-gray-200 rounded-lg p-6 bg-white flex flex-col h-full">
               <div className="flex-1">
@@ -99,7 +99,7 @@ const TwainStoryPricingModal: React.FC<TwainStoryPricingModalProps> = ({
                       mb: 2,
                     }}
                   >
-                    Free
+                    Freelance
                   </Typography>
                   <Typography
                     variant="h3"
@@ -127,12 +127,12 @@ const TwainStoryPricingModal: React.FC<TwainStoryPricingModalProps> = ({
                   <div className="flex items-center">
                     <span className="text-green-500 mr-2">✓</span>
                     <span className="text-gray-700">
-                      Unlimited Stories, Ideas, Characters
+                      Unlimited Ideas and Stories
                     </span>
                   </div>
                   <div className="flex items-center">
                     <span className="text-green-500 mr-2">✓</span>
-                    <span className="text-gray-700">1 book</span>
+                    <span className="text-gray-700">1 Outline and Book</span>
                   </div>
                   <div className="flex items-center">
                     <span className="text-green-500 mr-2">✓</span>
@@ -141,7 +141,7 @@ const TwainStoryPricingModal: React.FC<TwainStoryPricingModalProps> = ({
                   <div className="flex items-center">
                     <span className="text-green-500 mr-2">✓</span>
                     <span className="text-gray-700">
-                      Export Stories, Chapters to PDF
+                      Export to Word® as DOCx
                     </span>
                   </div>
                 </div>
@@ -165,7 +165,7 @@ const TwainStoryPricingModal: React.FC<TwainStoryPricingModalProps> = ({
               </Button>
             </div>
 
-            {/* freelance Plan */}
+            {/* Professional Plan */}
             <div className="border-2 border-blue-500 rounded-lg p-6 bg-white relative flex flex-col h-full">
               <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
                 <span className="bg-blue-500 text-white px-3 py-1 rounded-full text-sm font-medium">
@@ -173,87 +173,6 @@ const TwainStoryPricingModal: React.FC<TwainStoryPricingModalProps> = ({
                 </span>
               </div>
 
-              <div className="flex-1">
-                <div className="text-center mb-6">
-                  <Typography
-                    variant="h5"
-                    sx={{
-                      fontFamily: "'Rubik', sans-serif",
-                      fontWeight: 600,
-                      color: "rgb(31, 41, 55)",
-                      mb: 2,
-                    }}
-                  >
-                    freelance
-                  </Typography>
-                  <Typography
-                    variant="h3"
-                    sx={{
-                      fontFamily: "'Rubik', sans-serif",
-                      fontWeight: 700,
-                      color: "rgb(19, 135, 194)",
-                      mb: 1,
-                    }}
-                  >
-                    $2.99
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      fontFamily: "'Rubik', sans-serif",
-                      color: "rgb(107, 114, 128)",
-                    }}
-                  >
-                    per month or $30/year
-                  </Typography>
-                </div>
-
-                <div className="space-y-3 mb-6">
-                  <div className="flex items-center">
-                    <span className="text-green-500 mr-2">✓</span>
-                    <span className="text-gray-700">
-                      Unlimited Stories, Ideas, Characters
-                    </span>
-                  </div>
-                  <div className="flex items-center">
-                    <span className="text-green-500 mr-2">✓</span>
-                    <span className="text-gray-700">5 books</span>
-                  </div>
-                  <div className="flex items-center">
-                    <span className="text-green-500 mr-2">✓</span>
-                    <span className="text-gray-700">Cloud storage**</span>
-                  </div>
-                  <div className="flex items-center">
-                    <span className="text-green-500 mr-2">✓</span>
-                    <span className="text-gray-700">
-                      Export Stories, Chapters to PDF/DOCX
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <Button
-                fullWidth
-                variant="contained"
-                onClick={() => onUpgrade("freelance")}
-                sx={{
-                  py: 1.5,
-                  textTransform: "none",
-                  fontFamily: "'Rubik', sans-serif",
-                  backgroundColor: "rgb(19, 135, 194)",
-                  boxShadow: "none",
-                  "&:hover": {
-                    backgroundColor: "rgb(15, 108, 155)",
-                    boxShadow: "none",
-                  },
-                }}
-              >
-                Start freelance
-              </Button>
-            </div>
-
-            {/* professional Plan */}
-            <div className="border border-gray-200 rounded-lg p-6 bg-white flex flex-col h-full">
               <div className="flex-1">
                 <div className="text-center mb-6">
                   <Typography
@@ -276,7 +195,7 @@ const TwainStoryPricingModal: React.FC<TwainStoryPricingModalProps> = ({
                       mb: 1,
                     }}
                   >
-                    $6.99
+                    $45
                   </Typography>
                   <Typography
                     variant="body2"
@@ -285,7 +204,7 @@ const TwainStoryPricingModal: React.FC<TwainStoryPricingModalProps> = ({
                       color: "rgb(107, 114, 128)",
                     }}
                   >
-                    per month or $79/year
+                    per year
                   </Typography>
                 </div>
 
@@ -293,7 +212,8 @@ const TwainStoryPricingModal: React.FC<TwainStoryPricingModalProps> = ({
                   <div className="flex items-center">
                     <span className="text-green-500 mr-2">✓</span>
                     <span className="text-gray-700">
-                      Unlimited Stories, Ideas, Characters
+                      Unlimited Ideas, Characters, Outlines, Stories, Chapters
+                      and Parts
                     </span>
                   </div>
                   <div className="flex items-center">
@@ -302,7 +222,7 @@ const TwainStoryPricingModal: React.FC<TwainStoryPricingModalProps> = ({
                   </div>
                   <div className="flex items-center">
                     <span className="text-green-500 mr-2">✓</span>
-                    <span className="text-gray-700">Import DOCX files</span>
+                    <span className="text-gray-700">Unlimited book series</span>
                   </div>
                   <div className="flex items-center">
                     <span className="text-green-500 mr-2">✓</span>
@@ -311,13 +231,17 @@ const TwainStoryPricingModal: React.FC<TwainStoryPricingModalProps> = ({
                   <div className="flex items-center">
                     <span className="text-green-500 mr-2">✓</span>
                     <span className="text-gray-700">
-                      Export Stories, Chapters to PDF
+                      Export to Word® as DOCx
                     </span>
                   </div>
                   <div className="flex items-center">
                     <span className="text-green-500 mr-2">✓</span>
-                    <span className="text-gray-700">
-                      Publish Book to Amazon Kindle, ePub and PDF
+                    <span className="text-gray-700">Import Word® files</span>
+                  </div>
+                  <div className="flex items-center">
+                    <span className="text-green-500 mr-2">✓</span>
+                    <span className="text-gray-400 italic">
+                      Publish Book to Amazon Kindle***
                     </span>
                   </div>
                 </div>
@@ -325,16 +249,17 @@ const TwainStoryPricingModal: React.FC<TwainStoryPricingModalProps> = ({
 
               <Button
                 fullWidth
-                variant="outlined"
+                variant="contained"
                 onClick={() => onUpgrade("professional")}
                 sx={{
                   py: 1.5,
                   textTransform: "none",
                   fontFamily: "'Rubik', sans-serif",
-                  borderColor: "rgb(19, 135, 194)",
-                  color: "rgb(19, 135, 194)",
+                  backgroundColor: "rgb(19, 135, 194)",
+                  boxShadow: "none",
                   "&:hover": {
-                    backgroundColor: "rgba(19, 135, 194, 0.04)",
+                    backgroundColor: "rgb(15, 108, 155)",
+                    boxShadow: "none",
                   },
                 }}
               >
@@ -357,7 +282,8 @@ const TwainStoryPricingModal: React.FC<TwainStoryPricingModalProps> = ({
                 * Local storage is not available across devices. Your data is
                 stored in your web browsers cache and may be lost if you clear
                 your cache. ** Cloud storage is available across devices and
-                stored in a secure database.
+                stored in a secure database. *** Publishing to Amazon Kindle is
+                coming soon.
               </span>
             </Typography>
           </div>

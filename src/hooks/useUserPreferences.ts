@@ -254,15 +254,6 @@ export const useUserPlan = () => {
 const getPlanFeatures = (planType: Plan["type"]): string[] => {
   const features: Record<Plan["type"], string[]> = {
     free: ["local-storage", "basic-writing", "export-txt", "up-to-1-book"],
-    freelance: [
-      "cloud-storage",
-      "up-to-5-books",
-      "advanced-writing",
-      "export-pdf",
-      "export-docx",
-      "basic-templates",
-      "email-support",
-    ],
     professional: [
       "cloud-storage",
       "unlimited-books",

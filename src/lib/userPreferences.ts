@@ -6,7 +6,7 @@
  */
 
 export interface Plan {
-  type: "free" | "freelance" | "professional";
+  type: "free" | "professional";
   status: "active" | "expired" | "cancelled";
   startDate?: string;
   endDate?: string;

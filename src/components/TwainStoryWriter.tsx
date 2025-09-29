@@ -132,6 +132,9 @@ interface Book {
   coverImage?: string;
   createdAt: string;
   updatedAt: string;
+  isSeries?: boolean;
+  seriesName?: string;
+  seriesNumber?: number;
 }
 
 interface TwainStoryWriterProps {
@@ -3178,11 +3181,26 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                   fontWeight: 700,
                   fontSize: "36px",
                   color: "#1f2937",
-                  marginBottom: "8px",
+                  marginBottom:
+                    book?.isSeries && book?.seriesName ? "4px" : "8px",
                 }}
               >
                 {book?.title || "Untitled Book"}
               </Typography>
+              {!isQuickStoryMode && book?.isSeries && book?.seriesName && (
+                <Typography
+                  variant="body1"
+                  sx={{
+                    fontFamily: "'Crimson Text', serif",
+                    fontWeight: 500,
+                    fontSize: "18px",
+                    color: "rgb(75, 85, 99)",
+                    marginBottom: "8px",
+                  }}
+                >
+                  {book.seriesName} #{book.seriesNumber}
+                </Typography>
+              )}
               <Typography
                 variant="body1"
                 sx={{

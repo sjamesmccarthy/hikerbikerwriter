@@ -19,6 +19,10 @@ import {
   InputLabel,
   ButtonGroup,
   Chip,
+  FormControlLabel,
+  Switch,
+  Checkbox,
+  FormGroup,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -31,6 +35,9 @@ import CloudUploadOutlinedIcon from "@mui/icons-material/CloudUploadOutlined";
 import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
 import LogoutOutlinedIcon from "@mui/icons-material/LogoutOutlined";
+import AddIcon from "@mui/icons-material/Add";
+import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import Image from "next/image";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import TwainStoryWriter from "./TwainStoryWriter";
@@ -147,6 +154,25 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ session, onError }) => {
 };
 
 // Type definitions
+interface Contributor {
+  id: string;
+  role:
+    | "Co-Author"
+    | "Editor"
+    | "Illustrator"
+    | "Photographer"
+    | "Translator"
+    | "Foreword"
+    | "Introduction"
+    | "Preface"
+    | "Agent"
+    | "Proof Reader"
+    | "Advisor"
+    | "Typesetter";
+  firstName: string;
+  lastName: string;
+}
+
 interface Book {
   id: number;
   title: string;
@@ -158,6 +184,22 @@ interface Book {
   coverImage?: string;
   createdAt: string;
   updatedAt: string;
+  isSeries?: boolean;
+  seriesName?: string;
+  seriesNumber?: number;
+  contributors?: Contributor[];
+  description?: string;
+  genre?: string;
+  ageGroup?: "Adult" | "Teen" | "Child";
+  publisherName?: string;
+  isbnEpub?: string;
+  isbnKindle?: string;
+  isbnPaperback?: string;
+  isbnHardcover?: string;
+  isbnPdf?: string;
+  clauseAllRightsReserved?: boolean;
+  clauseFiction?: boolean;
+  clauseMoralRights?: boolean;
 }
 
 // Local storage utilities
@@ -268,20 +310,9 @@ const generateQuickStoryId = (existingStories: Book[]): number => {
 };
 
 // Plan utility functions
-const getPlanFeatures = (
-  planType: "free" | "freelance" | "professional"
-): string[] => {
+const getPlanFeatures = (planType: "free" | "professional"): string[] => {
   const features: Record<string, string[]> = {
     free: ["local-storage", "basic-writing", "export-txt", "up-to-1-book"],
-    freelance: [
-      "cloud-storage",
-      "up-to-5-books",
-      "advanced-writing",
-      "export-pdf",
-      "export-docx",
-      "basic-templates",
-      "email-support",
-    ],
     professional: [
       "cloud-storage",
       "unlimited-books",
@@ -301,7 +332,7 @@ const getPlanFeatures = (
 };
 
 const getPlanEndDate = (
-  planType: "free" | "freelance" | "professional"
+  planType: "free" | "professional"
 ): string | undefined => {
   if (planType === "free") {
     return undefined; // Free plan doesn't expire
@@ -313,7 +344,7 @@ const getPlanEndDate = (
 };
 
 // Helper function to get plan chip properties
-const getPlanChipProps = (planType: "free" | "freelance" | "professional") => {
+const getPlanChipProps = (planType: "free" | "professional") => {
   switch (planType) {
     case "free":
       return {
@@ -321,18 +352,6 @@ const getPlanChipProps = (planType: "free" | "freelance" | "professional") => {
         color: "default" as const,
         sx: {
           backgroundColor: "#9e9e9e",
-          color: "white",
-          fontSize: "14px",
-          fontWeight: "bold",
-          height: "32px",
-        },
-      };
-    case "freelance":
-      return {
-        label: "Freelance",
-        color: "primary" as const,
-        sx: {
-          backgroundColor: "#2196f3",
           color: "white",
           fontSize: "14px",
           fontWeight: "bold",
@@ -366,6 +385,16 @@ const getPlanChipProps = (planType: "free" | "freelance" | "professional") => {
   }
 };
 
+// Helper function to get unique series names from books
+const getUniqueSeriesNames = (books: Book[]): string[] => {
+  const seriesNames = books
+    .filter((book) => book.isSeries && book.seriesName)
+    .map((book) => book.seriesName!)
+    .filter((name, index, array) => array.indexOf(name) === index); // Remove duplicates
+
+  return seriesNames.sort(); // Sort alphabetically
+};
+
 const TwainStoryBuilder: React.FC = () => {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -391,6 +420,7 @@ const TwainStoryBuilder: React.FC = () => {
   const [quickStories, setQuickStories] = useState<Book[]>([]);
   const [isQuickStoryMode, setIsQuickStoryMode] = useState(false);
   const [filter, setFilter] = useState<"all" | "books" | "stories">("all");
+  const [seriesFilter, setSeriesFilter] = useState<string>("all");
   const [managedBookTitle, setManagedBookTitle] = useState("");
   const [managedBookAuthor, setManagedBookAuthor] = useState("");
   const [managedBookSubtitle, setManagedBookSubtitle] = useState("");
@@ -398,6 +428,31 @@ const TwainStoryBuilder: React.FC = () => {
   const [managedBookCopyrightYear, setManagedBookCopyrightYear] = useState(
     new Date().getFullYear().toString()
   );
+  const [managedBookIsSeries, setManagedBookIsSeries] = useState(false);
+  const [managedBookSeriesName, setManagedBookSeriesName] = useState("");
+  const [managedBookSeriesNumber, setManagedBookSeriesNumber] = useState(1);
+  const [managedBookContributors, setManagedBookContributors] = useState<
+    Contributor[]
+  >([]);
+  const [managedBookDescription, setManagedBookDescription] = useState("");
+  const [managedBookGenre, setManagedBookGenre] = useState("");
+  const [managedBookAgeGroup, setManagedBookAgeGroup] = useState<
+    "Adult" | "Teen" | "Child"
+  >("Adult");
+  const [managedBookPublisherName, setManagedBookPublisherName] = useState("");
+  const [managedBookIsbnEpub, setManagedBookIsbnEpub] = useState("");
+  const [managedBookIsbnKindle, setManagedBookIsbnKindle] = useState("");
+  const [managedBookIsbnPaperback, setManagedBookIsbnPaperback] = useState("");
+  const [managedBookIsbnHardcover, setManagedBookIsbnHardcover] = useState("");
+  const [managedBookIsbnPdf, setManagedBookIsbnPdf] = useState("");
+  const [
+    managedBookClauseAllRightsReserved,
+    setManagedBookClauseAllRightsReserved,
+  ] = useState(false);
+  const [managedBookClauseFiction, setManagedBookClauseFiction] =
+    useState(false);
+  const [managedBookClauseMoralRights, setManagedBookClauseMoralRights] =
+    useState(false);
   const [notification, setNotification] = useState<string>("");
   const [showPricing, setShowPricing] = useState(false);
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
@@ -414,6 +469,24 @@ const TwainStoryBuilder: React.FC = () => {
   console.log("Session status:", status);
   console.log("Session data:", session);
   console.log("User image URL:", session?.user?.image);
+
+  // Compute filtered books based on current filter settings
+  const filteredBooks = React.useMemo(() => {
+    if (filter === "all") {
+      return books; // Show all books when in "all" mode
+    } else if (filter === "books") {
+      if (seriesFilter === "all") {
+        return books; // Show all books
+      } else if (seriesFilter === "no-series") {
+        return books.filter((book) => !book.isSeries || !book.seriesName);
+      } else {
+        return books.filter(
+          (book) => book.isSeries && book.seriesName === seriesFilter
+        );
+      }
+    }
+    return books;
+  }, [books, filter, seriesFilter]);
 
   // Notification helper
   const showNotification = (message: string) => {
@@ -480,7 +553,7 @@ const TwainStoryBuilder: React.FC = () => {
     setCurrentView("account");
   };
 
-  const handleUpgradePlan = (newPlanType: "freelance" | "professional") => {
+  const handleUpgradePlan = (newPlanType: "professional") => {
     // This would typically integrate with a payment system
     // For now, we'll just update the local preferences
     updatePlan({
@@ -497,6 +570,18 @@ const TwainStoryBuilder: React.FC = () => {
       } plan!`
     );
     setShowPricing(false);
+  };
+
+  const handleFilterChange = (newFilter: "all" | "books" | "stories") => {
+    setFilter(newFilter);
+    // Reset series filter when changing main filter
+    if (newFilter !== "books") {
+      setSeriesFilter("all");
+    }
+  };
+
+  const handleSeriesFilterChange = (newSeriesFilter: string) => {
+    setSeriesFilter(newSeriesFilter);
   };
 
   const handleCreateBookClick = () => {
@@ -518,6 +603,22 @@ const TwainStoryBuilder: React.FC = () => {
         edition: "First Edition",
         copyrightYear: new Date().getFullYear().toString(),
         wordCount: 0,
+        isSeries: false,
+        seriesName: undefined,
+        seriesNumber: undefined,
+        contributors: undefined,
+        description: undefined,
+        genre: undefined,
+        ageGroup: "Adult",
+        publisherName: undefined,
+        isbnEpub: undefined,
+        isbnKindle: undefined,
+        isbnPaperback: undefined,
+        isbnHardcover: undefined,
+        isbnPdf: undefined,
+        clauseAllRightsReserved: undefined,
+        clauseFiction: undefined,
+        clauseMoralRights: undefined,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -559,6 +660,22 @@ const TwainStoryBuilder: React.FC = () => {
         edition: "First Edition",
         copyrightYear: new Date().getFullYear().toString(),
         wordCount: 0,
+        isSeries: false,
+        seriesName: undefined,
+        seriesNumber: undefined,
+        contributors: undefined,
+        description: undefined,
+        genre: undefined,
+        ageGroup: "Adult",
+        publisherName: undefined,
+        isbnEpub: undefined,
+        isbnKindle: undefined,
+        isbnPaperback: undefined,
+        isbnHardcover: undefined,
+        isbnPdf: undefined,
+        clauseAllRightsReserved: undefined,
+        clauseFiction: undefined,
+        clauseMoralRights: undefined,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -587,6 +704,24 @@ const TwainStoryBuilder: React.FC = () => {
     setManagedBookSubtitle(book.subtitle || "");
     setManagedBookEdition(book.edition);
     setManagedBookCopyrightYear(book.copyrightYear);
+    setManagedBookIsSeries(book.isSeries || false);
+    setManagedBookSeriesName(book.seriesName || "");
+    setManagedBookSeriesNumber(book.seriesNumber || 1);
+    setManagedBookContributors(book.contributors || []);
+    setManagedBookDescription(book.description || "");
+    setManagedBookGenre(book.genre || "");
+    setManagedBookAgeGroup(book.ageGroup || "Adult");
+    setManagedBookPublisherName(book.publisherName || "");
+    setManagedBookIsbnEpub(book.isbnEpub || "");
+    setManagedBookIsbnKindle(book.isbnKindle || "");
+    setManagedBookIsbnPaperback(book.isbnPaperback || "");
+    setManagedBookIsbnHardcover(book.isbnHardcover || "");
+    setManagedBookIsbnPdf(book.isbnPdf || "");
+    setManagedBookClauseAllRightsReserved(
+      book.clauseAllRightsReserved || false
+    );
+    setManagedBookClauseFiction(book.clauseFiction || false);
+    setManagedBookClauseMoralRights(book.clauseMoralRights || false);
     setCurrentView("manage");
   };
 
@@ -599,6 +734,22 @@ const TwainStoryBuilder: React.FC = () => {
     setManagedBookSubtitle("");
     setManagedBookEdition("First Edition");
     setManagedBookCopyrightYear(new Date().getFullYear().toString());
+    setManagedBookIsSeries(false);
+    setManagedBookSeriesName("");
+    setManagedBookSeriesNumber(1);
+    setManagedBookContributors([]);
+    setManagedBookDescription("");
+    setManagedBookGenre("");
+    setManagedBookAgeGroup("Adult");
+    setManagedBookPublisherName("");
+    setManagedBookIsbnEpub("");
+    setManagedBookIsbnKindle("");
+    setManagedBookIsbnPaperback("");
+    setManagedBookIsbnHardcover("");
+    setManagedBookIsbnPdf("");
+    setManagedBookClauseAllRightsReserved(false);
+    setManagedBookClauseFiction(false);
+    setManagedBookClauseMoralRights(false);
 
     // Reload books from localStorage to pick up any word count updates
     if (session?.user?.email) {
@@ -609,6 +760,14 @@ const TwainStoryBuilder: React.FC = () => {
 
   const handleSaveBook = () => {
     if (managedBookTitle.trim() && managedBookAuthor.trim() && selectedBook) {
+      // Validation for series
+      if (managedBookIsSeries && !managedBookSeriesName.trim()) {
+        showNotification(
+          "Please enter a series name or disable the series option."
+        );
+        return;
+      }
+
       const updatedBook: Book = {
         ...selectedBook,
         title: managedBookTitle.trim(),
@@ -616,6 +775,28 @@ const TwainStoryBuilder: React.FC = () => {
         author: managedBookAuthor.trim(),
         edition: managedBookEdition,
         copyrightYear: managedBookCopyrightYear,
+        isSeries: managedBookIsSeries,
+        seriesName: managedBookIsSeries
+          ? managedBookSeriesName.trim()
+          : undefined,
+        seriesNumber: managedBookIsSeries ? managedBookSeriesNumber : undefined,
+        contributors:
+          managedBookContributors.length > 0
+            ? managedBookContributors
+            : undefined,
+        description: managedBookDescription.trim() || undefined,
+        genre: managedBookGenre.trim() || undefined,
+        ageGroup: managedBookAgeGroup,
+        publisherName: managedBookPublisherName.trim() || undefined,
+        isbnEpub: managedBookIsbnEpub.trim() || undefined,
+        isbnKindle: managedBookIsbnKindle.trim() || undefined,
+        isbnPaperback: managedBookIsbnPaperback.trim() || undefined,
+        isbnHardcover: managedBookIsbnHardcover.trim() || undefined,
+        isbnPdf: managedBookIsbnPdf.trim() || undefined,
+        clauseAllRightsReserved:
+          managedBookClauseAllRightsReserved || undefined,
+        clauseFiction: managedBookClauseFiction || undefined,
+        clauseMoralRights: managedBookClauseMoralRights || undefined,
         updatedAt: new Date().toISOString(),
       };
 
@@ -632,6 +813,55 @@ const TwainStoryBuilder: React.FC = () => {
       console.log("Book saved successfully:", updatedBook.title);
       handleBackToBookshelf();
     }
+  };
+
+  // Contributor handler functions
+  const handleAddContributor = () => {
+    if (managedBookContributors.length >= 10) {
+      showNotification("Maximum of 10 contributors allowed.");
+      return;
+    }
+
+    const newContributor: Contributor = {
+      id: Date.now().toString(),
+      role: "Co-Author",
+      firstName: "",
+      lastName: "",
+    };
+
+    setManagedBookContributors([...managedBookContributors, newContributor]);
+  };
+
+  const handleUpdateContributor = (
+    id: string,
+    field: keyof Contributor,
+    value: string
+  ) => {
+    setManagedBookContributors((contributors) =>
+      contributors.map((contributor) =>
+        contributor.id === id ? { ...contributor, [field]: value } : contributor
+      )
+    );
+  };
+
+  const handleDeleteContributor = (id: string) => {
+    setManagedBookContributors((contributors) =>
+      contributors.filter((contributor) => contributor.id !== id)
+    );
+  };
+
+  const handleMoveContributor = (index: number, direction: "up" | "down") => {
+    const newContributors = [...managedBookContributors];
+    const targetIndex = direction === "up" ? index - 1 : index + 1;
+
+    if (targetIndex < 0 || targetIndex >= newContributors.length) return;
+
+    [newContributors[index], newContributors[targetIndex]] = [
+      newContributors[targetIndex],
+      newContributors[index],
+    ];
+
+    setManagedBookContributors(newContributors);
   };
 
   const handleCoverUpload = () => {
@@ -1041,7 +1271,703 @@ const TwainStoryBuilder: React.FC = () => {
                           type="number"
                         />
                       </div>
+
+                      {/* Series Section */}
+                      <div className="mt-4">
+                        <FormControlLabel
+                          control={
+                            <Switch
+                              checked={managedBookIsSeries}
+                              onChange={(e) =>
+                                setManagedBookIsSeries(e.target.checked)
+                              }
+                              color="primary"
+                            />
+                          }
+                          label="This book is part of a series"
+                          sx={{ mb: 2 }}
+                        />
+
+                        {managedBookIsSeries && (
+                          <div className="space-y-4">
+                            {/* Series Name Field */}
+                            <div className="flex gap-4">
+                              <FormControl sx={{ flex: 2 }}>
+                                <InputLabel>Series</InputLabel>
+                                <Select
+                                  value={
+                                    managedBookSeriesName === ""
+                                      ? "New Series"
+                                      : Array.from(
+                                          new Set(
+                                            books
+                                              .filter(
+                                                (book) =>
+                                                  book.isSeries &&
+                                                  book.seriesName &&
+                                                  book.id !== selectedBook?.id
+                                              )
+                                              .map((book) => book.seriesName)
+                                          )
+                                        ).includes(managedBookSeriesName)
+                                      ? managedBookSeriesName
+                                      : "New Series"
+                                  }
+                                  label="Series"
+                                  onChange={(e) => {
+                                    if (e.target.value === "New Series") {
+                                      setManagedBookSeriesName("");
+                                    } else {
+                                      setManagedBookSeriesName(e.target.value);
+                                    }
+                                  }}
+                                >
+                                  <MenuItem value="New Series">
+                                    New Series
+                                  </MenuItem>
+                                  {/* Get unique series names from existing books */}
+                                  {Array.from(
+                                    new Set(
+                                      books
+                                        .filter(
+                                          (book) =>
+                                            book.isSeries &&
+                                            book.seriesName &&
+                                            book.id !== selectedBook?.id
+                                        )
+                                        .map((book) => book.seriesName)
+                                    )
+                                  ).map((seriesName) => (
+                                    <MenuItem
+                                      key={seriesName}
+                                      value={seriesName}
+                                    >
+                                      {seriesName}
+                                    </MenuItem>
+                                  ))}
+                                </Select>
+                              </FormControl>
+
+                              <FormControl sx={{ flex: 1 }}>
+                                <InputLabel>Book Number</InputLabel>
+                                <Select
+                                  value={managedBookSeriesNumber}
+                                  label="Book Number"
+                                  onChange={(e) =>
+                                    setManagedBookSeriesNumber(
+                                      Number(e.target.value)
+                                    )
+                                  }
+                                >
+                                  {Array.from(
+                                    { length: 12 },
+                                    (_, i) => i + 1
+                                  ).map((num) => (
+                                    <MenuItem key={num} value={num}>
+                                      Book {num}
+                                    </MenuItem>
+                                  ))}
+                                </Select>
+                              </FormControl>
+                            </div>
+
+                            {/* New Series Name Field - show when "New Series" is selected */}
+                            {(managedBookSeriesName === "" ||
+                              !Array.from(
+                                new Set(
+                                  books
+                                    .filter(
+                                      (book) =>
+                                        book.isSeries &&
+                                        book.seriesName &&
+                                        book.id !== selectedBook?.id
+                                    )
+                                    .map((book) => book.seriesName)
+                                )
+                              ).includes(managedBookSeriesName)) && (
+                              <TextField
+                                fullWidth
+                                label="New Series Name"
+                                value={managedBookSeriesName}
+                                onChange={(e) =>
+                                  setManagedBookSeriesName(e.target.value)
+                                }
+                                variant="outlined"
+                                placeholder="Enter the name of your new series"
+                              />
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
+                  </div>
+
+                  {/* Contributors Section */}
+                  <div className="mt-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <div>
+                        <Typography
+                          variant="h6"
+                          sx={{
+                            fontFamily: "'Rubik', sans-serif",
+                            fontWeight: 600,
+                            color: "rgb(31, 41, 55)",
+                            mb: 0.5,
+                          }}
+                        >
+                          Contributors
+                        </Typography>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontFamily: "'Rubik', sans-serif",
+                            color: "rgb(107, 114, 128)",
+                            fontSize: "14px",
+                          }}
+                        >
+                          Add up to 10 contributors. They&apos;ll display in the
+                          order you enter below.
+                        </Typography>
+                      </div>
+                      <Button
+                        onClick={handleAddContributor}
+                        variant="outlined"
+                        startIcon={<AddIcon />}
+                        disabled={managedBookContributors.length >= 10}
+                        sx={{
+                          textTransform: "none",
+                          fontFamily: "'Rubik', sans-serif",
+                          borderColor: "rgb(19, 135, 194)",
+                          color: "rgb(19, 135, 194)",
+                          "&:hover": {
+                            borderColor: "rgb(15, 108, 155)",
+                            backgroundColor: "rgba(19, 135, 194, 0.04)",
+                          },
+                          "&:disabled": {
+                            borderColor: "rgb(209, 213, 219)",
+                            color: "rgb(156, 163, 175)",
+                          },
+                        }}
+                      >
+                        Add Contributor
+                      </Button>
+                    </div>
+
+                    {/* Contributors List */}
+                    <div className="space-y-3">
+                      {managedBookContributors.map((contributor, index) => (
+                        <div
+                          key={contributor.id}
+                          className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg"
+                        >
+                          {/* Move Up/Down Buttons */}
+                          <div className="flex flex-col">
+                            <IconButton
+                              size="small"
+                              onClick={() => handleMoveContributor(index, "up")}
+                              disabled={index === 0}
+                              sx={{
+                                padding: "2px",
+                                color:
+                                  index === 0
+                                    ? "rgb(209, 213, 219)"
+                                    : "rgb(107, 114, 128)",
+                                "&:hover": {
+                                  backgroundColor:
+                                    index === 0
+                                      ? "transparent"
+                                      : "rgba(107, 114, 128, 0.1)",
+                                },
+                              }}
+                            >
+                              <KeyboardArrowUpIcon fontSize="small" />
+                            </IconButton>
+                            <IconButton
+                              size="small"
+                              onClick={() =>
+                                handleMoveContributor(index, "down")
+                              }
+                              disabled={
+                                index === managedBookContributors.length - 1
+                              }
+                              sx={{
+                                padding: "2px",
+                                color:
+                                  index === managedBookContributors.length - 1
+                                    ? "rgb(209, 213, 219)"
+                                    : "rgb(107, 114, 128)",
+                                "&:hover": {
+                                  backgroundColor:
+                                    index === managedBookContributors.length - 1
+                                      ? "transparent"
+                                      : "rgba(107, 114, 128, 0.1)",
+                                },
+                              }}
+                            >
+                              <KeyboardArrowDownIcon fontSize="small" />
+                            </IconButton>
+                          </div>
+
+                          {/* Role Select */}
+                          <FormControl sx={{ minWidth: 140 }}>
+                            <InputLabel size="small">Role</InputLabel>
+                            <Select
+                              size="small"
+                              value={contributor.role}
+                              label="Role"
+                              onChange={(e) =>
+                                handleUpdateContributor(
+                                  contributor.id,
+                                  "role",
+                                  e.target.value
+                                )
+                              }
+                            >
+                              <MenuItem value="Co-Author">Co-Author</MenuItem>
+                              <MenuItem value="Editor">Editor</MenuItem>
+                              <MenuItem value="Illustrator">
+                                Illustrator
+                              </MenuItem>
+                              <MenuItem value="Photographer">
+                                Photographer
+                              </MenuItem>
+                              <MenuItem value="Translator">Translator</MenuItem>
+                              <MenuItem value="Foreword">Foreword</MenuItem>
+                              <MenuItem value="Introduction">
+                                Introduction
+                              </MenuItem>
+                              <MenuItem value="Preface">Preface</MenuItem>
+                              <MenuItem value="Agent">Agent</MenuItem>
+                              <MenuItem value="Proof Reader">
+                                Proof Reader
+                              </MenuItem>
+                              <MenuItem value="Advisor">Advisor</MenuItem>
+                              <MenuItem value="Typesetter">Typesetter</MenuItem>
+                            </Select>
+                          </FormControl>
+
+                          {/* First Name */}
+                          <TextField
+                            size="small"
+                            label="First Name"
+                            value={contributor.firstName}
+                            onChange={(e) =>
+                              handleUpdateContributor(
+                                contributor.id,
+                                "firstName",
+                                e.target.value
+                              )
+                            }
+                            sx={{ flex: 1 }}
+                          />
+
+                          {/* Last Name */}
+                          <TextField
+                            size="small"
+                            label="Last Name"
+                            value={contributor.lastName}
+                            onChange={(e) =>
+                              handleUpdateContributor(
+                                contributor.id,
+                                "lastName",
+                                e.target.value
+                              )
+                            }
+                            sx={{ flex: 1 }}
+                          />
+
+                          {/* Delete Button */}
+                          <IconButton
+                            onClick={() =>
+                              handleDeleteContributor(contributor.id)
+                            }
+                            sx={{
+                              color: "rgb(248, 113, 113)",
+                              "&:hover": {
+                                backgroundColor: "rgba(248, 113, 113, 0.1)",
+                              },
+                            }}
+                          >
+                            <DeleteOutlinedIcon />
+                          </IconButton>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Description Section */}
+                  <div className="mt-6">
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        fontFamily: "'Rubik', sans-serif",
+                        fontWeight: 600,
+                        color: "rgb(31, 41, 55)",
+                        mb: 2,
+                      }}
+                    >
+                      Description (Brief Synopsis)
+                    </Typography>
+
+                    <div className="relative">
+                      <TextField
+                        fullWidth
+                        multiline
+                        rows={6}
+                        value={managedBookDescription}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          // Allow pasting but truncate if it exceeds 4000 characters
+                          setManagedBookDescription(value.slice(0, 4000));
+                        }}
+                        variant="outlined"
+                        placeholder="Enter a brief synopsis or description of your book..."
+                        sx={{
+                          "& .MuiOutlinedInput-root": {
+                            fontFamily: "'Rubik', sans-serif",
+                          },
+                        }}
+                      />
+
+                      {/* Character Counter */}
+                      <div className="absolute bottom-3 right-3 text-sm text-gray-500 bg-white px-2 py-1 rounded">
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            fontFamily: "'Rubik', sans-serif",
+                            color:
+                              managedBookDescription.length > 3800
+                                ? "rgb(248, 113, 113)"
+                                : "rgb(107, 114, 128)",
+                          }}
+                        >
+                          {4000 - managedBookDescription.length} characters
+                          remaining
+                        </Typography>
+                      </div>
+                    </div>
+
+                    {/* Genre and Age Group */}
+                    <div className="flex gap-4 mt-4">
+                      <FormControl sx={{ flex: 2 }}>
+                        <InputLabel>Genre</InputLabel>
+                        <Select
+                          value={managedBookGenre}
+                          label="Genre"
+                          onChange={(e) => setManagedBookGenre(e.target.value)}
+                        >
+                          <MenuItem value="Fantasy">Fantasy</MenuItem>
+                          <MenuItem value="Science Fiction">
+                            Science Fiction
+                          </MenuItem>
+                          <MenuItem value="Romance">Romance</MenuItem>
+                          <MenuItem value="Mystery">Mystery</MenuItem>
+                          <MenuItem value="Thriller">Thriller</MenuItem>
+                          <MenuItem value="Horror">Horror</MenuItem>
+                          <MenuItem value="Historical Fiction">
+                            Historical Fiction
+                          </MenuItem>
+                          <MenuItem value="Contemporary Fiction">
+                            Contemporary Fiction
+                          </MenuItem>
+                          <MenuItem value="Literary Fiction">
+                            Literary Fiction
+                          </MenuItem>
+                          <MenuItem value="Young Adult">Young Adult</MenuItem>
+                          <MenuItem value="Children's">
+                            Children&apos;s
+                          </MenuItem>
+                          <MenuItem value="Biography">Biography</MenuItem>
+                          <MenuItem value="Memoir">Memoir</MenuItem>
+                          <MenuItem value="Self-Help">Self-Help</MenuItem>
+                          <MenuItem value="Business">Business</MenuItem>
+                          <MenuItem value="Health & Fitness">
+                            Health & Fitness
+                          </MenuItem>
+                          <MenuItem value="Travel">Travel</MenuItem>
+                          <MenuItem value="Cooking">Cooking</MenuItem>
+                          <MenuItem value="History">History</MenuItem>
+                          <MenuItem value="True Crime">True Crime</MenuItem>
+                          <MenuItem value="Religion & Spirituality">
+                            Religion & Spirituality
+                          </MenuItem>
+                          <MenuItem value="Poetry">Poetry</MenuItem>
+                          <MenuItem value="Drama">Drama</MenuItem>
+                          <MenuItem value="Comedy">Comedy</MenuItem>
+                          <MenuItem value="Adventure">Adventure</MenuItem>
+                          <MenuItem value="Western">Western</MenuItem>
+                          <MenuItem value="Dystopian">Dystopian</MenuItem>
+                          <MenuItem value="Paranormal">Paranormal</MenuItem>
+                          <MenuItem value="Urban Fantasy">
+                            Urban Fantasy
+                          </MenuItem>
+                          <MenuItem value="Crime">Crime</MenuItem>
+                        </Select>
+                      </FormControl>
+
+                      <FormControl sx={{ flex: 1 }}>
+                        <InputLabel>Age Group</InputLabel>
+                        <Select
+                          value={managedBookAgeGroup}
+                          label="Age Group"
+                          onChange={(e) =>
+                            setManagedBookAgeGroup(
+                              e.target.value as "Adult" | "Teen" | "Child"
+                            )
+                          }
+                        >
+                          <MenuItem value="Adult">Adult</MenuItem>
+                          <MenuItem value="Teen">Teen</MenuItem>
+                          <MenuItem value="Child">Child</MenuItem>
+                        </Select>
+                      </FormControl>
+                    </div>
+                  </div>
+
+                  {/* Publisher Details */}
+                  <div className="mt-8">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-4">
+                      Publisher Details
+                    </h3>
+
+                    {/* Publisher Name */}
+                    <div className="mb-4">
+                      <TextField
+                        fullWidth
+                        label="Publisher Name"
+                        value={managedBookPublisherName}
+                        onChange={(e) =>
+                          setManagedBookPublisherName(e.target.value)
+                        }
+                        variant="outlined"
+                        sx={{
+                          "& .MuiOutlinedInput-root": {
+                            fontFamily: "'Rubik', sans-serif",
+                          },
+                          "& .MuiInputLabel-root": {
+                            fontFamily: "'Rubik', sans-serif",
+                          },
+                        }}
+                      />
+                    </div>
+
+                    {/* ISBN Fields */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      <TextField
+                        label="ISBN - EPUB"
+                        placeholder="000-0-00-000000-0"
+                        value={managedBookIsbnEpub}
+                        onChange={(e) => setManagedBookIsbnEpub(e.target.value)}
+                        variant="outlined"
+                        sx={{
+                          "& .MuiOutlinedInput-root": {
+                            fontFamily: "'Rubik', sans-serif",
+                          },
+                          "& .MuiInputLabel-root": {
+                            fontFamily: "'Rubik', sans-serif",
+                          },
+                        }}
+                      />
+                      <TextField
+                        label="ISBN - Kindle"
+                        placeholder="000-0-00-000000-0"
+                        value={managedBookIsbnKindle}
+                        onChange={(e) =>
+                          setManagedBookIsbnKindle(e.target.value)
+                        }
+                        variant="outlined"
+                        sx={{
+                          "& .MuiOutlinedInput-root": {
+                            fontFamily: "'Rubik', sans-serif",
+                          },
+                          "& .MuiInputLabel-root": {
+                            fontFamily: "'Rubik', sans-serif",
+                          },
+                        }}
+                      />
+                      <TextField
+                        label="ISBN - Paperback"
+                        placeholder="000-0-00-000000-0"
+                        value={managedBookIsbnPaperback}
+                        onChange={(e) =>
+                          setManagedBookIsbnPaperback(e.target.value)
+                        }
+                        variant="outlined"
+                        sx={{
+                          "& .MuiOutlinedInput-root": {
+                            fontFamily: "'Rubik', sans-serif",
+                          },
+                          "& .MuiInputLabel-root": {
+                            fontFamily: "'Rubik', sans-serif",
+                          },
+                        }}
+                      />
+                      <TextField
+                        label="ISBN - Hardcover"
+                        placeholder="000-0-00-000000-0"
+                        value={managedBookIsbnHardcover}
+                        onChange={(e) =>
+                          setManagedBookIsbnHardcover(e.target.value)
+                        }
+                        variant="outlined"
+                        sx={{
+                          "& .MuiOutlinedInput-root": {
+                            fontFamily: "'Rubik', sans-serif",
+                          },
+                          "& .MuiInputLabel-root": {
+                            fontFamily: "'Rubik', sans-serif",
+                          },
+                        }}
+                      />
+                      <TextField
+                        label="ISBN - PDF"
+                        placeholder="000-0-00-000000-0"
+                        value={managedBookIsbnPdf}
+                        onChange={(e) => setManagedBookIsbnPdf(e.target.value)}
+                        variant="outlined"
+                        sx={{
+                          "& .MuiOutlinedInput-root": {
+                            fontFamily: "'Rubik', sans-serif",
+                          },
+                          "& .MuiInputLabel-root": {
+                            fontFamily: "'Rubik', sans-serif",
+                          },
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  {/* Clauses */}
+                  <div className="mt-8">
+                    <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                      Clauses
+                    </h3>
+                    <p className="text-sm text-gray-600 mb-4">
+                      These clauses help protect your rights and your book
+                      rights. Check all that apply.
+                    </p>
+
+                    <FormGroup>
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={managedBookClauseAllRightsReserved}
+                            onChange={(e) =>
+                              setManagedBookClauseAllRightsReserved(
+                                e.target.checked
+                              )
+                            }
+                            sx={{
+                              color: "rgb(19, 135, 194)",
+                              "&.Mui-checked": {
+                                color: "rgb(19, 135, 194)",
+                              },
+                              mt: "-8px",
+                            }}
+                          />
+                        }
+                        label={
+                          <div>
+                            <div className="font-medium text-gray-800 mb-1">
+                              All rights reserved
+                            </div>
+                            <div className="text-sm text-gray-600">
+                              All rights reserved. No part of this publication
+                              may be reproduced, stored or transmitted in any
+                              form or by any means, electronic, mechanical,
+                              photocopying, recording, scanning, or otherwise
+                              without written permission from the publisher. It
+                              is illegal to copy this book, post it to a
+                              website, or distribute it by any other means
+                              without permission.
+                            </div>
+                          </div>
+                        }
+                        sx={{
+                          alignItems: "flex-start",
+                          mb: 3,
+                          "& .MuiFormControlLabel-label": {
+                            fontFamily: "'Rubik', sans-serif",
+                          },
+                        }}
+                      />
+
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={managedBookClauseFiction}
+                            onChange={(e) =>
+                              setManagedBookClauseFiction(e.target.checked)
+                            }
+                            sx={{
+                              color: "rgb(19, 135, 194)",
+                              "&.Mui-checked": {
+                                color: "rgb(19, 135, 194)",
+                              },
+                              mt: "-8px",
+                            }}
+                          />
+                        }
+                        label={
+                          <div>
+                            <div className="font-medium text-gray-800 mb-1">
+                              Fiction
+                            </div>
+                            <div className="text-sm text-gray-600">
+                              This novel is entirely a work of fiction. The
+                              names, characters and incidents portrayed in it
+                              are the work of the author&apos;s imagination. Any
+                              resemblance to actual persons, living or dead,
+                              events or localities is entirely coincidental.
+                            </div>
+                          </div>
+                        }
+                        sx={{
+                          alignItems: "flex-start",
+                          mb: 3,
+                          "& .MuiFormControlLabel-label": {
+                            fontFamily: "'Rubik', sans-serif",
+                          },
+                        }}
+                      />
+
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={managedBookClauseMoralRights}
+                            onChange={(e) =>
+                              setManagedBookClauseMoralRights(e.target.checked)
+                            }
+                            sx={{
+                              color: "rgb(19, 135, 194)",
+                              "&.Mui-checked": {
+                                color: "rgb(19, 135, 194)",
+                              },
+                              mt: "-8px",
+                            }}
+                          />
+                        }
+                        label={
+                          <div>
+                            <div className="font-medium text-gray-800 mb-1">
+                              Moral rights
+                            </div>
+                            <div className="text-sm text-gray-600">
+                              {session?.user?.name || "Author"} asserts the
+                              moral right to be identified as the author of this
+                              work.
+                            </div>
+                          </div>
+                        }
+                        sx={{
+                          alignItems: "flex-start",
+                          mb: 3,
+                          "& .MuiFormControlLabel-label": {
+                            fontFamily: "'Rubik', sans-serif",
+                          },
+                        }}
+                      />
+                    </FormGroup>
                   </div>
 
                   {/* Action Buttons */}
@@ -1693,7 +2619,7 @@ const TwainStoryBuilder: React.FC = () => {
         <main className="flex-1 bg-gray-100 p-4 sm:p-8">
           <div className="w-[95%] sm:w-[90%] md:w-[80%] mx-auto">
             {/* Filter buttons */}
-            <div className="flex justify-center mb-6">
+            <div className="flex flex-col sm:flex-row items-center justify-center mb-6 gap-4">
               <ButtonGroup
                 variant="outlined"
                 aria-label="filter books and stories"
@@ -1724,24 +2650,57 @@ const TwainStoryBuilder: React.FC = () => {
                 }}
               >
                 <Button
-                  onClick={() => setFilter("all")}
+                  onClick={() => handleFilterChange("all")}
                   className={filter === "all" ? "Mui-selected" : ""}
                 >
                   All ({books.length + quickStories.length})
                 </Button>
                 <Button
-                  onClick={() => setFilter("books")}
+                  onClick={() => handleFilterChange("books")}
                   className={filter === "books" ? "Mui-selected" : ""}
                 >
                   Books ({books.length})
                 </Button>
                 <Button
-                  onClick={() => setFilter("stories")}
+                  onClick={() => handleFilterChange("stories")}
                   className={filter === "stories" ? "Mui-selected" : ""}
                 >
                   Stories ({quickStories.length})
                 </Button>
               </ButtonGroup>
+
+              {/* Series filter dropdown - only show when books filter is selected */}
+              {filter === "books" && (
+                <FormControl
+                  sx={{
+                    minWidth: 200,
+                    "& .MuiOutlinedInput-root": {
+                      fontFamily: "'Rubik', sans-serif",
+                      fontSize: "14px",
+                    },
+                    "& .MuiInputLabel-root": {
+                      fontFamily: "'Rubik', sans-serif",
+                      fontSize: "14px",
+                    },
+                  }}
+                  size="small"
+                >
+                  <InputLabel>Filter by Series</InputLabel>
+                  <Select
+                    value={seriesFilter}
+                    label="Filter by Series"
+                    onChange={(e) => handleSeriesFilterChange(e.target.value)}
+                  >
+                    <MenuItem value="all">All Series</MenuItem>
+                    {/* <MenuItem value="no-series">No Series</MenuItem> */}
+                    {getUniqueSeriesNames(books).map((seriesName) => (
+                      <MenuItem key={seriesName} value={seriesName}>
+                        {seriesName}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              )}
             </div>
 
             {/* Books flex container with custom spacing */}
@@ -1825,7 +2784,7 @@ const TwainStoryBuilder: React.FC = () => {
 
               {/* Book cards */}
               {(filter === "all" || filter === "books") &&
-                books.map((bookData: Book) => {
+                filteredBooks.map((bookData: Book) => {
                   const cardId = `book-${bookData.id}`;
                   const isActive = activeCardId === cardId;
 
@@ -1885,6 +2844,21 @@ const TwainStoryBuilder: React.FC = () => {
                           >
                             {bookData.title}
                           </Typography>
+                          {bookData.isSeries && bookData.seriesName && (
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                fontFamily: "'Rubik', sans-serif",
+                                fontSize: "12px",
+                                fontWeight: 500,
+                                color: "rgba(255,255,255,0.95)",
+                                textShadow: "1px 1px 2px rgba(0,0,0,0.8)",
+                                mb: 0.5,
+                              }}
+                            >
+                              {bookData.seriesName} #{bookData.seriesNumber}
+                            </Typography>
+                          )}
                           <Typography
                             variant="body2"
                             sx={{
@@ -1969,6 +2943,20 @@ const TwainStoryBuilder: React.FC = () => {
                               >
                                 {bookData.title}
                               </Typography>
+                              {bookData.isSeries && bookData.seriesName && (
+                                <Typography
+                                  variant="body2"
+                                  sx={{
+                                    fontFamily: "'Rubik', sans-serif",
+                                    fontSize: "11px",
+                                    fontWeight: 500,
+                                    color: "rgb(75, 85, 99)",
+                                    mt: 0.25,
+                                  }}
+                                >
+                                  {bookData.seriesName} #{bookData.seriesNumber}
+                                </Typography>
+                              )}
                               <Typography
                                 variant="body2"
                                 sx={{
@@ -2126,6 +3114,8 @@ const TwainStoryBuilder: React.FC = () => {
               )}
 
               {/* Story cards */}
+
+              {/* Story cards */}
               {(filter === "all" || filter === "stories") &&
                 quickStories.map((storyData: Book) => {
                   const cardId = `story-${storyData.id}`;
@@ -2187,6 +3177,21 @@ const TwainStoryBuilder: React.FC = () => {
                           >
                             {storyData.title}
                           </Typography>
+                          {storyData.isSeries && storyData.seriesName && (
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                fontFamily: "'Rubik', sans-serif",
+                                fontSize: "12px",
+                                fontWeight: 500,
+                                color: "rgba(255,255,255,0.95)",
+                                textShadow: "1px 1px 2px rgba(0,0,0,0.8)",
+                                mb: 0.5,
+                              }}
+                            >
+                              {storyData.seriesName} #{storyData.seriesNumber}
+                            </Typography>
+                          )}
                           <Typography
                             variant="body2"
                             sx={{
@@ -2266,6 +3271,20 @@ const TwainStoryBuilder: React.FC = () => {
                           >
                             {storyData.title}
                           </Typography>
+                          {storyData.isSeries && storyData.seriesName && (
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                fontFamily: "'Rubik', sans-serif",
+                                fontSize: "11px",
+                                fontWeight: 500,
+                                color: "rgb(75, 85, 99)",
+                                mt: 0.25,
+                              }}
+                            >
+                              {storyData.seriesName} #{storyData.seriesNumber}
+                            </Typography>
+                          )}
                           <Typography
                             variant="body2"
                             sx={{

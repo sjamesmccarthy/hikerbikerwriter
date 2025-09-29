@@ -16,7 +16,7 @@ React hook for easy integration with components, providing automatic re-renderin
 
 ### User Preferences Management
 
-- **Plan Status**: Track user's current plan (free, freelance, professional)
+- **Plan Status**: Track user's current plan (free, professional)
 - **Account Metadata**: Creation date, last login, login count
 - **UI Preferences**: Theme, sidebar state, default view
 - **Writing Preferences**: Auto-save settings, word count goals, font preferences
@@ -66,7 +66,7 @@ const MyComponent = () => {
 ### Plan Upgrade Handling
 
 ```tsx
-const handleUpgradePlan = (newPlanType: "freelance" | "professional") => {
+const handleUpgradePlan = (newPlanType: "professional") => {
   updatePlan({
     type: newPlanType,
     status: "active",
@@ -105,23 +105,17 @@ const canCollaborate = checkFeature("collaboration");
 
 - ✓ Local storage
 - ✓ Basic writing tools
+
+### Freelance Free Plan
+
 - ✓ Text export
 - ✓ Up to 1 book
 - ✗ Cloud storage
 - ✗ Advanced exports
 
-### Freelance Plan ($2.99/month)
+### Professional Plan ($45/year)
 
-- ✓ Cloud storage
-- ✓ Up to 5 books
-- ✓ Advanced writing tools
-- ✓ Export to PDF/DOCX
-- ✓ Basic templates
-- ✓ Email support
-
-### Professional Plan ($6.99/month)
-
-- ✓ All Freelance features
+- ✓ All Freelance Free features
 - ✓ Unlimited books
 - ✓ Import DOCX files
 - ✓ Premium templates and themes
