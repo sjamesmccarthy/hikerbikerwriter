@@ -116,17 +116,12 @@ interface Part {
 }
 
 interface RecentActivity {
-  id: string;
+  id: string; // Unique ID for the log entry, not linked to the actual item
   type: "idea" | "character" | "story" | "chapter" | "outline" | "part";
-  title: string;
-  createdAt: Date;
+  title: string; // Title of the item when the action occurred
   action: "created" | "modified" | "deleted";
-  wordCount?: number;
-  timerDuration?: number; // in minutes
-  lastModified?: Date;
+  timestamp: Date; // When this log entry was created
 }
-
-type StoryItem = Idea | Character | Story | Chapter | Outline | Part;
 
 // Type definitions - should match the ones in TwainStoryBuilder
 interface Book {
@@ -214,6 +209,21 @@ const getItemWordCount = (content: string): number => {
   }
 };
 
+// Helper function to format timestamp for recent activity
+const formatActivityTimestamp = (timestamp: Date): string => {
+  const options: Intl.DateTimeFormatOptions = {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+  };
+  return new Date(timestamp)
+    .toLocaleDateString("en-US", options)
+    .replace(",", " at");
+};
+
 const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
   book,
   onBackToBookshelf,
@@ -298,7 +308,6 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
   const [timerInterval, setTimerInterval] = useState<NodeJS.Timeout | null>(
     null
   );
-  const [timerStartTime, setTimerStartTime] = useState<Date | null>(null);
 
   // Track modification sessions
   const [lastModificationTrackTime, setLastModificationTrackTime] =
@@ -313,9 +322,11 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
     "story"
   );
 
-  // Recent activity refresh trigger
-  const [recentActivityRefresh, setRecentActivityRefresh] = useState(0);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [recentActivityRefresh, setRecentActivityRefresh] = useState(0);
+  const [recentActivityList, setRecentActivityList] = useState<
+    RecentActivity[]
+  >([]);
 
   // Pricing modal state
   const [pricingModalOpen, setPricingModalOpen] = useState(false);
@@ -660,6 +671,158 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
     isQuickStoryMode,
   ]);
 
+  // Update recent activity list when refresh counter changes
+  useEffect(() => {
+    const updateRecentActivity = () => {
+      if (!session?.user?.email) {
+        setRecentActivityList([]);
+        return;
+      }
+
+      const storageKey = getStorageKey(
+        "recent-activity",
+        book.id,
+        session.user.email,
+        isQuickStoryMode
+      );
+      const stored = localStorage.getItem(storageKey);
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored) as Array<{
+            id: string;
+            type: string;
+            title: string;
+            action: string;
+            timestamp?: string;
+            createdAt?: string;
+            lastModified?: string;
+          }>;
+          // Convert old format to new format or filter out invalid entries
+          const activities = parsed
+            .filter((item) => item.timestamp || item.createdAt) // Keep only items with timestamp
+            .map((item) => ({
+              id: item.id,
+              type: item.type as RecentActivity["type"],
+              title: item.title,
+              action: item.action as RecentActivity["action"],
+              timestamp: new Date(
+                item.timestamp ||
+                  item.lastModified ||
+                  item.createdAt ||
+                  Date.now()
+              ),
+            }))
+            .slice(0, 50); // Limit to 50 most recent
+          setRecentActivityList(activities);
+        } catch (error) {
+          console.error("Failed to parse recent activity:", error);
+          setRecentActivityList([]);
+        }
+      } else {
+        setRecentActivityList([]);
+      }
+    };
+
+    updateRecentActivity();
+  }, [session?.user?.email, book.id, isQuickStoryMode, recentActivityRefresh]);
+
+  // Function to get recent activity from localStorage
+  const getRecentActivity = useCallback((): RecentActivity[] => {
+    if (!session?.user?.email) return [];
+    const storageKey = getStorageKey(
+      "recent-activity",
+      book.id,
+      session.user.email,
+      isQuickStoryMode
+    );
+    const stored = localStorage.getItem(storageKey);
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored) as Array<{
+          id: string;
+          type: string;
+          title: string;
+          action: string;
+          timestamp?: string;
+          createdAt?: string;
+          lastModified?: string;
+        }>;
+        // Convert old format to new format or filter out invalid entries
+        return parsed
+          .filter((item) => item.timestamp || item.createdAt) // Keep only items with timestamp
+          .map((item) => ({
+            id: item.id,
+            type: item.type as RecentActivity["type"],
+            title: item.title,
+            action: item.action as RecentActivity["action"],
+            timestamp: new Date(
+              item.timestamp ||
+                item.lastModified ||
+                item.createdAt ||
+                Date.now()
+            ),
+          }))
+          .slice(0, 50); // Limit to 50 most recent
+      } catch (error) {
+        console.error("Failed to parse recent activity:", error);
+      }
+    }
+    return [];
+  }, [session?.user?.email, book.id, isQuickStoryMode]);
+
+  // Function to add items to recent activity
+  const addToRecentActivity = useCallback(
+    (
+      type: RecentActivity["type"],
+      title: string,
+      action: "created" | "modified" | "deleted" = "created"
+    ) => {
+      const recentActivity = getRecentActivity();
+
+      const now = new Date();
+
+      // Check for duplicate entries in the last 2 seconds to prevent spam
+      const recentDuplicate = recentActivity.find(
+        (activity) =>
+          activity.type === type &&
+          activity.title === title &&
+          activity.action === action &&
+          now.getTime() - activity.timestamp.getTime() < 2000 // 2 seconds
+      );
+
+      if (recentDuplicate) {
+        return; // Don't add duplicate entry
+      }
+
+      const newActivity: RecentActivity = {
+        id: `${Date.now()}_${Math.random()
+          .toString(36)
+          .substr(2, 12)}_${performance.now()}`, // More unique ID
+        type,
+        title,
+        action,
+        timestamp: now,
+      };
+
+      // Add to front and limit to 50 items
+      const updatedActivity = [newActivity, ...recentActivity].slice(0, 50);
+
+      if (session?.user?.email) {
+        const storageKey = getStorageKey(
+          "recent-activity",
+          book.id,
+          session.user.email,
+          isQuickStoryMode
+        );
+        localStorage.setItem(storageKey, JSON.stringify(updatedActivity));
+
+        // Trigger re-render to update the activity display
+        setRecentActivityRefresh((prev) => prev + 1);
+      }
+    },
+    [getRecentActivity, session?.user?.email, book.id, isQuickStoryMode]
+  );
+
   // Auto-save function
   const handleAutoSave = useCallback(() => {
     if (
@@ -691,110 +854,26 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
             0
           ) || 0;
 
-        // Track modification for recent activity (debounced)
+        // Track modification for recent activity (simple debounced logging)
         const modificationTime = new Date();
         if (
           !lastModificationTrackTime ||
           modificationTime.getTime() - lastModificationTrackTime.getTime() >
-            30000
+            30000 // 30 second debounce
         ) {
-          // 30 second debounce
-          const timerDuration = timerStartTime
-            ? Math.round(
-                (modificationTime.getTime() - timerStartTime.getTime()) / 60000
-              )
-            : undefined;
           const wordCountChange = currentWordCount - modificationStartWordCount;
 
-          // Only track if there's a meaningful word count change (any change, not just increases)
-          if (wordCountChange !== 0) {
-            // Track recent activity directly
-            if (session?.user?.email) {
-              const storageKey = getStorageKey(
-                "recent-activity",
-                book.id,
-                session.user.email,
-                isQuickStoryMode
-              );
-              const stored = localStorage.getItem(storageKey);
-              let recentActivity: RecentActivity[] = [];
-              if (stored) {
-                try {
-                  recentActivity = JSON.parse(stored) as RecentActivity[];
-                } catch (error) {
-                  console.error("Failed to parse recent activity:", error);
-                }
-              }
-
-              let activityItem: StoryItem | null = null;
-              let activityType: RecentActivity["type"] | null = null;
-
-              if (currentChapter) {
-                activityItem = currentChapter;
-                activityType = "chapter";
-              } else if (currentStory) {
-                activityItem = currentStory;
-                activityType = "story";
-              } else if (currentOutline) {
-                activityItem = currentOutline;
-                activityType = "outline";
-              }
-
-              if (activityItem && activityType) {
-                // Check if this item already exists in recent activity as "created"
-                const existingActivity = recentActivity.find(
-                  (activity) => activity.id === activityItem!.id
-                );
-                const action =
-                  existingActivity?.action === "created"
-                    ? "created"
-                    : "modified";
-
-                const newActivity: RecentActivity = {
-                  id:
-                    action === "modified"
-                      ? `${
-                          activityItem.id
-                        }_${modificationTime.getTime()}_${Math.random()
-                          .toString(36)
-                          .substr(2, 9)}`
-                      : activityItem.id,
-                  type: activityType,
-                  title: activityItem.title,
-                  createdAt: activityItem.createdAt,
-                  action,
-                  wordCount:
-                    action === "created" ? currentWordCount : wordCountChange,
-                  timerDuration,
-                  lastModified:
-                    action === "modified" ? modificationTime : undefined,
-                };
-
-                // For modifications, don't remove existing entries - just add new one
-                // For created items, remove existing created entries
-                let filteredActivity = recentActivity;
-                if (action === "created") {
-                  filteredActivity = recentActivity.filter(
-                    (activity) =>
-                      !(
-                        activity.id === activityItem!.id &&
-                        activity.action === "created"
-                      )
-                  );
-                }
-
-                // Add to front and limit to 24 items
-                const updatedActivity = [
-                  newActivity,
-                  ...filteredActivity,
-                ].slice(0, 24);
-                localStorage.setItem(
-                  storageKey,
-                  JSON.stringify(updatedActivity)
-                );
-              }
+          // Only track if there's a meaningful word count change
+          if (Math.abs(wordCountChange) > 5) {
+            // Only log if more than 5 words changed
+            // Add to recent activity based on the type of item being edited
+            if (currentChapter) {
+              addToRecentActivity("chapter", currentChapter.title, "modified");
+            } else if (currentStory) {
+              addToRecentActivity("story", currentStory.title, "modified");
+            } else if (currentOutline) {
+              addToRecentActivity("outline", currentOutline.title, "modified");
             }
-
             setLastModificationTrackTime(modificationTime);
             setModificationStartWordCount(currentWordCount);
           }
@@ -868,7 +947,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
     isQuickStoryMode,
     lastModificationTrackTime,
     modificationStartWordCount,
-    timerStartTime,
+    addToRecentActivity,
   ]);
 
   // Set up auto-save event listener when editing state changes
@@ -1013,7 +1092,6 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
     setTimeRemaining(totalSeconds);
     setTimerActive(true);
     setTimerModalOpen(false);
-    setTimerStartTime(new Date());
 
     const interval = setInterval(() => {
       setTimeRemaining((prev) => {
@@ -1037,7 +1115,6 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
     }
     setTimerActive(false);
     setTimeRemaining(0);
-    setTimerStartTime(null);
   };
 
   const formatTime = (seconds: number): string => {
@@ -1101,6 +1178,9 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
           );
           localStorage.setItem(storageKey, JSON.stringify(updatedIdeas));
         }
+
+        // Add to recent activity for idea modification
+        addToRecentActivity("idea", updatedIdea.title, "modified");
       } else {
         // Create new idea
         const newIdea: Idea = {
@@ -1125,7 +1205,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
         }
 
         // Add to recent activity
-        addToRecentActivity("idea", newIdea);
+        addToRecentActivity("idea", newIdea.title, "created");
       }
 
       handleCreateIdeaModalClose();
@@ -1211,6 +1291,9 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
             isQuickStoryMode
           );
         }
+
+        // Add to recent activity for character modification
+        addToRecentActivity("character", updatedCharacter.name, "modified");
       } else {
         // Create new character
         const newCharacter: Character = {
@@ -1243,7 +1326,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
         }
 
         // Add to recent activity
-        addToRecentActivity("character", newCharacter);
+        addToRecentActivity("character", newCharacter.name, "created");
       }
 
       handleCreateCharacterModalClose();
@@ -1273,7 +1356,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
 
     // Add to recent activity if idea was found
     if (ideaToDelete) {
-      addToRecentActivity("idea", ideaToDelete, "deleted");
+      addToRecentActivity("idea", ideaToDelete.title, "deleted");
     }
   };
 
@@ -1307,7 +1390,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
 
     // Add to recent activity if character was found
     if (characterToDelete) {
-      addToRecentActivity("character", characterToDelete, "deleted");
+      addToRecentActivity("character", characterToDelete.name, "deleted");
     }
   };
 
@@ -1343,7 +1426,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
     }
 
     // Add to recent activity
-    addToRecentActivity("chapter", newChapter);
+    addToRecentActivity("chapter", newChapter.title, "created");
 
     // Set editing mode
     setCurrentChapter(newChapter);
@@ -1403,7 +1486,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
     }
 
     // Add to recent activity
-    addToRecentActivity("story", newStory);
+    addToRecentActivity("story", newStory.title, "created");
 
     // Set editing mode
     setCurrentStory(newStory);
@@ -1448,7 +1531,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
     }
 
     // Add to recent activity
-    addToRecentActivity("outline", newOutline);
+    addToRecentActivity("outline", newOutline.title, "created");
 
     // Set editing mode
     setCurrentOutline(newOutline);
@@ -1500,6 +1583,9 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
           `twain-parts-${book.id}`,
           JSON.stringify(updatedParts)
         );
+
+        // Add to recent activity for part modification
+        addToRecentActivity("part", updatedPart.title, "modified");
       } else {
         // Create new part
         const newPart: Part = {
@@ -1520,7 +1606,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
         );
 
         // Add to recent activity
-        addToRecentActivity("part", newPart);
+        addToRecentActivity("part", newPart.title, "created");
       }
 
       handleCreatePartModalClose();
@@ -1595,7 +1681,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
 
     // Add to recent activity if chapter was found
     if (chapterToDelete) {
-      addToRecentActivity("chapter", chapterToDelete, "deleted");
+      addToRecentActivity("chapter", chapterToDelete.title, "deleted");
     }
   };
 
@@ -1663,7 +1749,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
 
     // Add to recent activity if story was found
     if (storyToDelete) {
-      addToRecentActivity("story", storyToDelete, "deleted");
+      addToRecentActivity("story", storyToDelete.title, "deleted");
     }
   };
 
@@ -1980,7 +2066,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
 
     // Add to recent activity if outline was found
     if (outlineToDelete) {
-      addToRecentActivity("outline", outlineToDelete, "deleted");
+      addToRecentActivity("outline", outlineToDelete.title, "deleted");
     }
   };
 
@@ -2002,72 +2088,9 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
 
     // Add to recent activity if part was found
     if (partToDelete) {
-      addToRecentActivity("part", partToDelete, "deleted");
+      addToRecentActivity("part", partToDelete.title, "deleted");
     }
   };
-
-  const getRecentActivity = useCallback((): RecentActivity[] => {
-    if (!session?.user?.email) return [];
-    const storageKey = getStorageKey(
-      "recent-activity",
-      book.id,
-      session.user.email,
-      isQuickStoryMode
-    );
-    const stored = localStorage.getItem(storageKey);
-    if (stored) {
-      try {
-        return JSON.parse(stored) as RecentActivity[];
-      } catch (error) {
-        console.error("Failed to parse recent activity:", error);
-      }
-    }
-    return [];
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session?.user?.email, book.id, isQuickStoryMode, recentActivityRefresh]);
-
-  const addToRecentActivity = useCallback(
-    (
-      type: RecentActivity["type"],
-      item: StoryItem,
-      action: "created" | "modified" | "deleted" = "created",
-      wordCount?: number,
-      timerDuration?: number
-    ) => {
-      const recentActivity = getRecentActivity();
-
-      const now = new Date();
-      const newActivity: RecentActivity = {
-        id: item.id,
-        type,
-        title: "title" in item ? item.title : item.name,
-        createdAt: item.createdAt,
-        action,
-        wordCount,
-        timerDuration,
-        lastModified: action === "modified" ? now : undefined,
-      };
-
-      // Remove if already exists (to move to front)
-      const filteredActivity = recentActivity.filter(
-        (activity) => activity.id !== item.id
-      );
-
-      // Add to front and limit to 24 items
-      const updatedActivity = [newActivity, ...filteredActivity].slice(0, 24);
-
-      if (session?.user?.email) {
-        const storageKey = getStorageKey(
-          "recent-activity",
-          book.id,
-          session.user.email,
-          isQuickStoryMode
-        );
-        localStorage.setItem(storageKey, JSON.stringify(updatedActivity));
-      }
-    },
-    [getRecentActivity, session?.user?.email, book.id, isQuickStoryMode]
-  );
 
   const handleDeleteActivityEntry = (
     activityId: string,
@@ -2091,46 +2114,11 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
           );
           localStorage.setItem(storageKey, JSON.stringify(updatedActivities));
 
-          // Trigger re-render to update the activity list
+          // Trigger re-render to update the activity display
           setRecentActivityRefresh((prev) => prev + 1);
         } catch (error) {
           console.error("Failed to delete activity entry:", error);
         }
-      }
-    }
-  };
-
-  const handleRecentActivityClick = (activity: RecentActivity) => {
-    // Find the corresponding item and open it for editing
-    if (activity.type === "idea") {
-      const idea = ideas.find((i) => i.id === activity.id);
-      if (idea) {
-        handleEditIdea(idea);
-      }
-    } else if (activity.type === "character") {
-      const character = characters.find((c) => c.id === activity.id);
-      if (character) {
-        handleEditCharacter(character);
-      }
-    } else if (activity.type === "story") {
-      const story = stories.find((s) => s.id === activity.id);
-      if (story) {
-        handleEditStory(story);
-      }
-    } else if (activity.type === "chapter") {
-      const chapter = chapters.find((ch) => ch.id === activity.id);
-      if (chapter) {
-        handleEditChapter(chapter);
-      }
-    } else if (activity.type === "outline") {
-      const outline = outlines.find((o) => o.id === activity.id);
-      if (outline) {
-        handleEditOutline(outline);
-      }
-    } else if (activity.type === "part") {
-      const part = parts.find((p) => p.id === activity.id);
-      if (part) {
-        handleEditPart(part);
       }
     }
   };
@@ -2260,7 +2248,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
           );
           localStorage.setItem(storageKey, JSON.stringify(updatedStories));
         }
-        addToRecentActivity("story", newItem as Story);
+        addToRecentActivity("story", newItem.title, "created");
       } else if (importType === "chapter") {
         const updatedChapters = [...chapters, newItem as Chapter];
         setChapters(updatedChapters);
@@ -2273,7 +2261,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
           );
           localStorage.setItem(storageKey, JSON.stringify(updatedChapters));
         }
-        addToRecentActivity("chapter", newItem as Chapter);
+        addToRecentActivity("chapter", newItem.title, "created");
       } else if (importType === "outline") {
         const updatedOutlines = [...outlines, newItem as Outline];
         setOutlines(updatedOutlines);
@@ -2286,7 +2274,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
           );
           localStorage.setItem(storageKey, JSON.stringify(updatedOutlines));
         }
-        addToRecentActivity("outline", newItem as Outline);
+        addToRecentActivity("outline", newItem.title, "created");
       }
 
       handleImportFileModalClose();
@@ -3829,8 +3817,8 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                 </Typography>
               </div>
               <div className="space-y-3">
-                {getRecentActivity()
-                  .slice(0, 5)
+                {recentActivityList
+                  .slice(0, 10)
                   .map((activity: RecentActivity) => {
                     // Determine background color based on action
                     const getBackgroundColor = () => {
@@ -3846,11 +3834,24 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                       }
                     };
 
+                    // Get action color for the action text
+                    const getActionColor = () => {
+                      switch (activity.action) {
+                        case "created":
+                          return "rgb(34, 197, 94)"; // green
+                        case "modified":
+                          return "rgb(59, 130, 246)"; // blue
+                        case "deleted":
+                          return "rgb(239, 68, 68)"; // red
+                        default:
+                          return "rgb(107, 114, 128)"; // gray
+                      }
+                    };
+
                     return (
                       <div
                         key={activity.id}
-                        className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer ${getBackgroundColor()}`}
-                        onClick={() => handleRecentActivityClick(activity)}
+                        className={`flex items-center gap-3 p-3 rounded-lg border ${getBackgroundColor()}`}
                       >
                         {activity.type === "idea" ? (
                           <BatchPredictionIcon
@@ -3903,99 +3904,43 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                           />
                         )}
                         <div className="flex-1">
-                          <Typography
-                            variant="body2"
-                            sx={{
-                              fontFamily: "'Rubik', sans-serif",
-                              fontWeight: 500,
-                              fontSize: "14px",
-                              color: "#1f2937",
-                            }}
-                          >
-                            {activity.action === "created"
-                              ? `New ${activity.type}: ${activity.title}`
-                              : activity.action === "deleted"
-                              ? `Deleted ${activity.type}: ${activity.title}`
-                              : `Modified ${activity.type}: ${activity.title}`}
-                          </Typography>
-                          <div className="flex items-center gap-2 mt-1">
+                          <div className="flex items-center gap-2">
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                fontFamily: "'Rubik', sans-serif",
+                                fontWeight: 500,
+                                fontSize: "14px",
+                                color: getActionColor(),
+                                textTransform: "capitalize",
+                              }}
+                            >
+                              {activity.action}
+                            </Typography>
                             <Typography
                               variant="body2"
                               sx={{
                                 fontFamily: "'Rubik', sans-serif",
                                 fontWeight: 400,
-                                fontSize: "12px",
-                                color: "rgb(107, 114, 128)",
+                                fontSize: "14px",
+                                color: "#1f2937",
                               }}
                             >
-                              {activity.action === "created"
-                                ? new Date(
-                                    activity.createdAt
-                                  ).toLocaleDateString()
-                                : activity.action === "deleted"
-                                ? new Date().toLocaleDateString() // Deletion date is current date
-                                : activity.lastModified
-                                ? new Date(
-                                    activity.lastModified
-                                  ).toLocaleDateString()
-                                : new Date(
-                                    activity.createdAt
-                                  ).toLocaleDateString()}
+                              {activity.type}: {activity.title}
                             </Typography>
-                            {activity.wordCount !== undefined &&
-                              activity.action !== "deleted" && (
-                                <>
-                                  <span
-                                    style={{
-                                      color: "rgb(156, 163, 175)",
-                                      fontSize: "12px",
-                                    }}
-                                  >
-                                    •
-                                  </span>
-                                  <Typography
-                                    variant="body2"
-                                    sx={{
-                                      fontFamily: "'Rubik', sans-serif",
-                                      fontWeight: 400,
-                                      fontSize: "12px",
-                                      color:
-                                        activity.wordCount >= 0
-                                          ? "rgb(34, 197, 94)"
-                                          : "rgb(239, 68, 68)",
-                                    }}
-                                  >
-                                    {activity.wordCount > 0 ? "+" : ""}
-                                    {activity.wordCount} words
-                                  </Typography>
-                                </>
-                              )}
-                            {activity.timerDuration &&
-                              activity.timerDuration > 0 &&
-                              activity.action !== "deleted" && (
-                                <>
-                                  <span
-                                    style={{
-                                      color: "rgb(156, 163, 175)",
-                                      fontSize: "12px",
-                                    }}
-                                  >
-                                    •
-                                  </span>
-                                  <Typography
-                                    variant="body2"
-                                    sx={{
-                                      fontFamily: "'Rubik', sans-serif",
-                                      fontWeight: 400,
-                                      fontSize: "12px",
-                                      color: "rgb(59, 130, 246)",
-                                    }}
-                                  >
-                                    {activity.timerDuration}m timer
-                                  </Typography>
-                                </>
-                              )}
                           </div>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontFamily: "'Rubik', sans-serif",
+                              fontWeight: 400,
+                              fontSize: "12px",
+                              color: "rgb(107, 114, 128)",
+                              marginTop: "2px",
+                            }}
+                          >
+                            {formatActivityTimestamp(activity.timestamp)}
+                          </Typography>
                         </div>
                         <IconButton
                           onClick={(e) =>
@@ -4016,7 +3961,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                       </div>
                     );
                   })}
-                {getRecentActivity().length === 0 && (
+                {recentActivityList.length === 0 && (
                   <div className="text-center">
                     <div className="bg-gray-100 p-4 rounded-lg border border-gray-200">
                       <Typography

@@ -367,7 +367,7 @@ const getPlanChipProps = (planType: "freelance" | "professional") => {
       };
     case "professional":
       return {
-        label: "Pro",
+        label: "Professional",
         color: "error" as const,
         sx: {
           backgroundColor: "#f44336",
@@ -3110,7 +3110,7 @@ const TwainStoryBuilder: React.FC = () => {
                           <div className="absolute top-1 right-1">
                             <Chip
                               icon={<WorkspacePremiumOutlinedIcon />}
-                              label="Pro"
+                              label="Professional"
                               sx={{
                                 backgroundColor: "#fbbf24",
                                 color: "white",
@@ -3184,7 +3184,7 @@ const TwainStoryBuilder: React.FC = () => {
                             <div className="absolute top-1 right-1">
                               <Chip
                                 icon={<WorkspacePremiumOutlinedIcon />}
-                                label="Pro"
+                                label="Professional"
                                 sx={{
                                   backgroundColor: "#fbbf24",
                                   color: "white",
