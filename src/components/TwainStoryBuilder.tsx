@@ -29,7 +29,7 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import AddCircleOutlinedIcon from "@mui/icons-material/AddCircleOutlined";
 import SettingsOutlinedIcon from "@mui/icons-material/SettingsOutlined";
 import DrawOutlinedIcon from "@mui/icons-material/DrawOutlined";
-import Inventory2OutlinedIcon from "@mui/icons-material/Inventory2Outlined";
+import SimCardDownloadOutlinedIcon from "@mui/icons-material/SimCardDownloadOutlined";
 import DeleteForeverOutlinedIcon from "@mui/icons-material/DeleteForeverOutlined";
 import CloudUploadOutlinedIcon from "@mui/icons-material/CloudUploadOutlined";
 import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
@@ -38,6 +38,9 @@ import LogoutOutlinedIcon from "@mui/icons-material/LogoutOutlined";
 import AddIcon from "@mui/icons-material/Add";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import PictureAsPdfOutlinedIcon from "@mui/icons-material/PictureAsPdfOutlined";
+import FileCopyOutlinedIcon from "@mui/icons-material/FileCopyOutlined";
+import TabletAndroidOutlinedIcon from "@mui/icons-material/TabletAndroidOutlined";
 import Image from "next/image";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import WorkspacePremiumOutlinedIcon from "@mui/icons-material/WorkspacePremiumOutlined";
@@ -428,6 +431,7 @@ const TwainStoryBuilder: React.FC = () => {
   const [isQuickStoryMode, setIsQuickStoryMode] = useState(false);
   const [filter, setFilter] = useState<"all" | "books" | "stories">("all");
   const [seriesFilter, setSeriesFilter] = useState<string>("all");
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
   const [managedBookTitle, setManagedBookTitle] = useState("");
   const [managedBookAuthor, setManagedBookAuthor] = useState("");
   const [managedBookSubtitle, setManagedBookSubtitle] = useState("");
@@ -462,6 +466,7 @@ const TwainStoryBuilder: React.FC = () => {
     useState(false);
   const [notification, setNotification] = useState<string>("");
   const [showPricing, setShowPricing] = useState(false);
+  const [showExportModal, setShowExportModal] = useState(false);
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -505,8 +510,12 @@ const TwainStoryBuilder: React.FC = () => {
     if (session?.user?.email) {
       const storedBooks = loadBooksFromStorage(session.user.email);
       setBooks(storedBooks);
+      setIsDataLoaded(true);
+    } else if (session === null) {
+      // Session is null (not loading), so we can consider data loaded even if no user
+      setIsDataLoaded(true);
     }
-  }, [session?.user?.email]);
+  }, [session?.user?.email, session]);
 
   // Load quick stories from localStorage on component mount
   useEffect(() => {
@@ -569,6 +578,10 @@ const TwainStoryBuilder: React.FC = () => {
 
   const handleClosePricing = () => {
     setShowPricing(false);
+  };
+
+  const handleCloseExportModal = () => {
+    setShowExportModal(false);
   };
 
   const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
@@ -976,13 +989,9 @@ const TwainStoryBuilder: React.FC = () => {
     }
   };
 
-  const handleArchiveBook = () => {
+  const handleExportBook = () => {
     if (selectedBook) {
-      // For now, we'll just mark it as archived by adding an archived flag
-      // In a real implementation, you might move it to a separate archived collection
-      console.log("Archiving book:", selectedBook.title);
-      // TODO: Implement archiving logic when needed
-      handleBackToBookshelf();
+      setShowExportModal(true);
     }
   };
 
@@ -2173,9 +2182,9 @@ const TwainStoryBuilder: React.FC = () => {
                   {/* Action Buttons */}
                   <div className="flex flex-col sm:flex-row gap-4 pt-6">
                     <Button
-                      onClick={handleArchiveBook}
+                      onClick={handleExportBook}
                       variant="outlined"
-                      startIcon={<Inventory2OutlinedIcon />}
+                      startIcon={<SimCardDownloadOutlinedIcon />}
                       sx={{
                         flex: 1,
                         textTransform: "none",
@@ -2189,7 +2198,7 @@ const TwainStoryBuilder: React.FC = () => {
                         },
                       }}
                     >
-                      Archive Book
+                      Export Book
                     </Button>
                     <Button
                       onClick={handleDeleteBook}
@@ -2251,6 +2260,331 @@ const TwainStoryBuilder: React.FC = () => {
               © 2025 Twain Story Builder. All rights reserved.
             </Typography>
           </footer>
+
+          {/* Export Modal */}
+          <Modal
+            open={showExportModal}
+            onClose={handleCloseExportModal}
+            aria-labelledby="export-modal-title"
+          >
+            <Box
+              sx={{
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                width: { xs: "90vw", sm: 600 },
+                bgcolor: "background.paper",
+                borderRadius: 3,
+                overflow: "hidden",
+                boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
+              }}
+            >
+              {/* Header */}
+              <Box
+                sx={{
+                  backgroundColor: "rgb(38, 52, 63)",
+                  color: "white",
+                  p: 2,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                }}
+              >
+                <Typography
+                  id="export-modal-title"
+                  variant="h6"
+                  component="h2"
+                  sx={{
+                    fontFamily: "'Rubik', sans-serif",
+                    fontWeight: 600,
+                    margin: 0,
+                  }}
+                >
+                  Export Book
+                </Typography>
+                <IconButton
+                  onClick={handleCloseExportModal}
+                  sx={{
+                    color: "white",
+                    "&:hover": {
+                      backgroundColor: "rgba(255, 255, 255, 0.1)",
+                    },
+                  }}
+                >
+                  <CloseIcon />
+                </IconButton>
+              </Box>
+
+              {/* Content */}
+              <Box sx={{ p: 4 }}>
+                {/* Book Title Section */}
+                <Box sx={{ textAlign: "center", mb: 4 }}>
+                  <Typography
+                    variant="h5"
+                    sx={{
+                      fontFamily: "'Rubik', sans-serif",
+                      fontWeight: 600,
+                      color: "rgb(31, 41, 55)",
+                      mb: 1,
+                    }}
+                  >
+                    {selectedBook?.title}
+                  </Typography>
+                  {selectedBook?.subtitle && (
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        fontFamily: "'Rubik', sans-serif",
+                        fontWeight: 400,
+                        color: "rgb(107, 114, 128)",
+                        mb: 1,
+                      }}
+                    >
+                      {selectedBook.subtitle}
+                    </Typography>
+                  )}
+                  {selectedBook?.isSeries && selectedBook?.seriesName && (
+                    <Typography
+                      variant="body1"
+                      sx={{
+                        fontFamily: "'Rubik', sans-serif",
+                        color: "rgb(107, 114, 128)",
+                      }}
+                    >
+                      {selectedBook.seriesName} - Book{" "}
+                      {selectedBook.seriesNumber}
+                    </Typography>
+                  )}
+                </Box>
+
+                {/* Export Format Options */}
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+                    gap: 3,
+                    mb: 4,
+                  }}
+                >
+                  {/* PDF Export */}
+                  <Box
+                    sx={{
+                      border: "2px solid rgb(229, 231, 235)",
+                      borderRadius: 2,
+                      p: 3,
+                      textAlign: "center",
+                      cursor:
+                        planType === "professional" ? "pointer" : "not-allowed",
+                      opacity: planType === "professional" ? 1 : 0.5,
+                      "&:hover": {
+                        borderColor:
+                          planType === "professional"
+                            ? "rgb(19, 135, 194)"
+                            : "rgb(229, 231, 235)",
+                        backgroundColor:
+                          planType === "professional"
+                            ? "rgba(19, 135, 194, 0.02)"
+                            : "transparent",
+                      },
+                      transition: "all 0.2s ease-in-out",
+                    }}
+                    onClick={() => {
+                      if (planType === "professional") {
+                        console.log("Exporting as PDF");
+                        handleCloseExportModal();
+                      }
+                    }}
+                  >
+                    <PictureAsPdfOutlinedIcon
+                      sx={{
+                        fontSize: 48,
+                        color:
+                          planType === "professional"
+                            ? "rgb(220, 38, 38)"
+                            : "rgb(156, 163, 175)",
+                        mb: 2,
+                      }}
+                    />
+                    <Typography
+                      variant="body1"
+                      sx={{
+                        fontFamily: "'Rubik', sans-serif",
+                        fontWeight: 500,
+                        color:
+                          planType === "professional"
+                            ? "rgb(31, 41, 55)"
+                            : "rgb(156, 163, 175)",
+                      }}
+                    >
+                      Format as PDF
+                    </Typography>
+                    {planType !== "professional" && (
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          fontFamily: "'Rubik', sans-serif",
+                          color: "rgb(156, 163, 175)",
+                          display: "block",
+                          mt: 1,
+                        }}
+                      >
+                        (Professional)
+                      </Typography>
+                    )}
+                  </Box>
+
+                  {/* Word Export */}
+                  <Box
+                    sx={{
+                      border: "2px solid rgb(229, 231, 235)",
+                      borderRadius: 2,
+                      p: 3,
+                      textAlign: "center",
+                      cursor:
+                        planType === "professional" ? "pointer" : "not-allowed",
+                      opacity: planType === "professional" ? 1 : 0.5,
+                      "&:hover": {
+                        borderColor:
+                          planType === "professional"
+                            ? "rgb(19, 135, 194)"
+                            : "rgb(229, 231, 235)",
+                        backgroundColor:
+                          planType === "professional"
+                            ? "rgba(19, 135, 194, 0.02)"
+                            : "transparent",
+                      },
+                      transition: "all 0.2s ease-in-out",
+                    }}
+                    onClick={() => {
+                      if (planType === "professional") {
+                        console.log("Exporting as Word");
+                        handleCloseExportModal();
+                      }
+                    }}
+                  >
+                    <FileCopyOutlinedIcon
+                      sx={{
+                        fontSize: 48,
+                        color:
+                          planType === "professional"
+                            ? "rgb(37, 99, 235)"
+                            : "rgb(156, 163, 175)",
+                        mb: 2,
+                      }}
+                    />
+                    <Typography
+                      variant="body1"
+                      sx={{
+                        fontFamily: "'Rubik', sans-serif",
+                        fontWeight: 500,
+                        color:
+                          planType === "professional"
+                            ? "rgb(31, 41, 55)"
+                            : "rgb(156, 163, 175)",
+                      }}
+                    >
+                      Format as Word®
+                    </Typography>
+                    {planType !== "professional" && (
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          fontFamily: "'Rubik', sans-serif",
+                          color: "rgb(156, 163, 175)",
+                          display: "block",
+                          mt: 1,
+                        }}
+                      >
+                        (Professional)
+                      </Typography>
+                    )}
+                  </Box>
+
+                  {/* ePub Export */}
+                  <Box
+                    sx={{
+                      border: "2px solid rgb(229, 231, 235)",
+                      borderRadius: 2,
+                      p: 3,
+                      textAlign: "center",
+                      cursor:
+                        planType === "professional" ? "pointer" : "not-allowed",
+                      opacity: planType === "professional" ? 1 : 0.5,
+                      "&:hover": {
+                        borderColor:
+                          planType === "professional"
+                            ? "rgb(19, 135, 194)"
+                            : "rgb(229, 231, 235)",
+                        backgroundColor:
+                          planType === "professional"
+                            ? "rgba(19, 135, 194, 0.02)"
+                            : "transparent",
+                      },
+                      transition: "all 0.2s ease-in-out",
+                    }}
+                    onClick={() => {
+                      if (planType === "professional") {
+                        console.log("Exporting as ePub");
+                        handleCloseExportModal();
+                      }
+                    }}
+                  >
+                    <TabletAndroidOutlinedIcon
+                      sx={{
+                        fontSize: 48,
+                        color:
+                          planType === "professional"
+                            ? "rgb(34, 197, 94)"
+                            : "rgb(156, 163, 175)",
+                        mb: 2,
+                      }}
+                    />
+                    <Typography
+                      variant="body1"
+                      sx={{
+                        fontFamily: "'Rubik', sans-serif",
+                        fontWeight: 500,
+                        color:
+                          planType === "professional"
+                            ? "rgb(31, 41, 55)"
+                            : "rgb(156, 163, 175)",
+                      }}
+                    >
+                      Format as ePub
+                    </Typography>
+                    {planType !== "professional" && (
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          fontFamily: "'Rubik', sans-serif",
+                          color: "rgb(156, 163, 175)",
+                          display: "block",
+                          mt: 1,
+                        }}
+                      >
+                        (Professional)
+                      </Typography>
+                    )}
+                  </Box>
+                </Box>
+
+                {/* Amazon Kindle Note */}
+                <Box sx={{ textAlign: "center" }}>
+                  <Typography
+                    variant="body2"
+                    sx={{
+                      fontFamily: "'Rubik', sans-serif",
+                      color: "rgb(107, 114, 128)",
+                      fontStyle: "italic",
+                    }}
+                  >
+                    ***Amazon Kindle Direct Publishing coming soon
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
+          </Modal>
 
           {/* Pricing Modal - Available for manage book view */}
           <TwainStoryPricingModal
@@ -2829,93 +3163,98 @@ const TwainStoryBuilder: React.FC = () => {
         {/* Main content area - flexible height */}
         <main className="flex-1 bg-gray-100 p-4 sm:p-8">
           <div className="w-[95%] sm:w-[90%] md:w-[80%] mx-auto">
-            {/* Filter buttons */}
-            <div className="flex flex-col sm:flex-row items-center justify-center mb-6 gap-4">
-              <ButtonGroup
-                variant="outlined"
-                aria-label="filter books and stories"
-                sx={{
-                  "& .MuiButton-root": {
-                    fontFamily: "'Rubik', sans-serif",
-                    textTransform: "none",
-                    fontSize: "14px",
-                    fontWeight: 500,
-                    px: 3,
-                    py: 1,
-                    borderColor: "rgb(209, 213, 219)",
-                    color: "rgb(107, 114, 128)",
-                    "&:hover": {
-                      borderColor: "rgb(19, 135, 194)",
-                      backgroundColor: "rgba(19, 135, 194, 0.04)",
-                    },
-                  },
-                  "& .MuiButton-root.Mui-selected": {
-                    backgroundColor: "rgb(19, 135, 194)",
-                    color: "white",
-                    borderColor: "rgb(19, 135, 194)",
-                    "&:hover": {
-                      backgroundColor: "rgb(15, 108, 155)",
-                      borderColor: "rgb(15, 108, 155)",
-                    },
-                  },
-                }}
-              >
-                <Button
-                  onClick={() => handleFilterChange("all")}
-                  className={filter === "all" ? "Mui-selected" : ""}
-                >
-                  All ({books.length + quickStories.length})
-                </Button>
-                <Button
-                  onClick={() => handleFilterChange("books")}
-                  className={filter === "books" ? "Mui-selected" : ""}
-                >
-                  Books ({books.length})
-                </Button>
-                <Button
-                  onClick={() => handleFilterChange("stories")}
-                  className={filter === "stories" ? "Mui-selected" : ""}
-                >
-                  Stories ({quickStories.length})
-                </Button>
-              </ButtonGroup>
-
-              {/* Series filter dropdown - only show when books filter is selected and there are series */}
-              {filter === "books" && getUniqueSeriesNames(books).length > 0 && (
-                <FormControl
+            {/* Filter buttons - only show when data is loaded */}
+            {isDataLoaded && (
+              <div className="flex flex-col sm:flex-row items-center justify-center mb-6 gap-4">
+                <ButtonGroup
+                  variant="outlined"
+                  aria-label="filter books and stories"
                   sx={{
-                    minWidth: 200,
-                    "& .MuiOutlinedInput-root": {
+                    "& .MuiButton-root": {
                       fontFamily: "'Rubik', sans-serif",
+                      textTransform: "none",
                       fontSize: "14px",
+                      fontWeight: 500,
+                      px: 3,
+                      py: 1,
+                      borderColor: "rgb(209, 213, 219)",
+                      color: "rgb(107, 114, 128)",
+                      "&:hover": {
+                        borderColor: "rgb(19, 135, 194)",
+                        backgroundColor: "rgba(19, 135, 194, 0.04)",
+                      },
                     },
-                    "& .MuiInputLabel-root": {
-                      fontFamily: "'Rubik', sans-serif",
-                      fontSize: "14px",
+                    "& .MuiButton-root.Mui-selected": {
+                      backgroundColor: "rgb(19, 135, 194)",
+                      color: "white",
+                      borderColor: "rgb(19, 135, 194)",
+                      "&:hover": {
+                        backgroundColor: "rgb(15, 108, 155)",
+                        borderColor: "rgb(15, 108, 155)",
+                      },
                     },
                   }}
-                  size="small"
                 >
-                  <InputLabel>Filter by Series</InputLabel>
-                  <Select
-                    value={seriesFilter}
-                    label="Filter by Series"
-                    onChange={(e) => handleSeriesFilterChange(e.target.value)}
+                  <Button
+                    onClick={() => handleFilterChange("all")}
+                    className={filter === "all" ? "Mui-selected" : ""}
                   >
-                    <MenuItem value="all">All Books & Series</MenuItem>
-                    <MenuItem value="no-series">No Series</MenuItem>
-                    {getUniqueSeriesNames(books).map((seriesName) => (
-                      <MenuItem key={seriesName} value={seriesName}>
-                        {seriesName}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              )}
-            </div>
+                    All ({books.length + quickStories.length})
+                  </Button>
+                  <Button
+                    onClick={() => handleFilterChange("books")}
+                    className={filter === "books" ? "Mui-selected" : ""}
+                  >
+                    Books ({books.length})
+                  </Button>
+                  <Button
+                    onClick={() => handleFilterChange("stories")}
+                    className={filter === "stories" ? "Mui-selected" : ""}
+                  >
+                    Stories ({quickStories.length})
+                  </Button>
+                </ButtonGroup>
 
-            {/* Limit Warning Messages */}
-            {planType !== "professional" && (
+                {/* Series filter dropdown - only show when books filter is selected and there are series */}
+                {filter === "books" &&
+                  getUniqueSeriesNames(books).length > 0 && (
+                    <FormControl
+                      sx={{
+                        minWidth: 200,
+                        "& .MuiOutlinedInput-root": {
+                          fontFamily: "'Rubik', sans-serif",
+                          fontSize: "14px",
+                        },
+                        "& .MuiInputLabel-root": {
+                          fontFamily: "'Rubik', sans-serif",
+                          fontSize: "14px",
+                        },
+                      }}
+                      size="small"
+                    >
+                      <InputLabel>Filter by Series</InputLabel>
+                      <Select
+                        value={seriesFilter}
+                        label="Filter by Series"
+                        onChange={(e) =>
+                          handleSeriesFilterChange(e.target.value)
+                        }
+                      >
+                        <MenuItem value="all">All Books & Series</MenuItem>
+                        <MenuItem value="no-series">No Series</MenuItem>
+                        {getUniqueSeriesNames(books).map((seriesName) => (
+                          <MenuItem key={seriesName} value={seriesName}>
+                            {seriesName}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </FormControl>
+                  )}
+              </div>
+            )}
+
+            {/* Limit Warning Messages - only show when data is loaded */}
+            {isDataLoaded && planType !== "professional" && (
               <>
                 {books.length >= 3 &&
                   (filter === "all" || filter === "books") && (
@@ -3029,158 +3368,86 @@ const TwainStoryBuilder: React.FC = () => {
               </>
             )}
 
-            {/* Books flex container with custom spacing */}
-            <div
-              style={{
-                display: "grid",
-                width: "100%",
-                rowGap: "1rem",
-                gridTemplateColumns: "repeat(2, 1fr)",
-                gridColumnGap: "0.75rem",
-                justifyItems: "center",
-                paddingBottom: "1rem",
-                WebkitTransition: "all .3s ease 0ms",
-                transition: "all .3s ease 0ms",
-              }}
-              className="sm:!flex sm:flex-wrap sm:justify-start sm:gap-0 sm:!w-full"
-              onTouchStart={(e) => {
-                // Close active card overlay when tapping outside cards
-                if (e.target === e.currentTarget) {
-                  setActiveCardId(null);
-                }
-              }}
-            >
-              {/* Create/Import book card - first card - only show if there are existing books or stories */}
-              {(books.length > 0 || quickStories.length > 0) &&
-                !(filter === "stories" && quickStories.length === 0) &&
-                !(filter === "books" && books.length === 0) && (
-                  <div
-                    className="hover:shadow-md transition-shadow cursor-pointer flex flex-col rounded-md w-full max-w-[176px] sm:w-[176px] sm:max-w-none relative"
-                    style={{
-                      aspectRatio: "176/268",
-                      backgroundColor: "rgb(227, 230, 230)",
-                    }}
-                  >
-                    <div className="flex-1 flex flex-col justify-center items-center p-2 space-y-2">
-                      {/* Create Book Button */}
-                      <div className="relative w-full">
-                        <button
-                          className={`w-full flex flex-col items-center space-y-1 p-2 rounded cursor-pointer ${
-                            planType !== "professional" && books.length >= 3
-                              ? "opacity-50 cursor-not-allowed"
-                              : ""
-                          }`}
-                          onClick={
-                            planType !== "professional" && books.length >= 3
-                              ? undefined
-                              : handleCreateBookClick
-                          }
-                          disabled={
-                            planType !== "professional" && books.length >= 3
-                          }
-                        >
-                          <AddCircleOutlinedIcon
-                            sx={{
-                              fontSize: 64,
-                              color:
-                                planType !== "professional" && books.length >= 3
-                                  ? "rgb(156, 163, 175)"
-                                  : "rgb(100, 114, 127)",
-                              transition: "transform 0.2s ease",
-                              "&:hover": {
-                                transform:
+            {/* Books flex container with custom spacing - only show when data is loaded */}
+            {isDataLoaded && (
+              <div
+                style={{
+                  display: "grid",
+                  width: "100%",
+                  rowGap: "1rem",
+                  gridTemplateColumns: "repeat(2, 1fr)",
+                  gridColumnGap: "0.75rem",
+                  justifyItems: "center",
+                  paddingBottom: "1rem",
+                  WebkitTransition: "all .3s ease 0ms",
+                  transition: "all .3s ease 0ms",
+                }}
+                className="sm:!flex sm:flex-wrap sm:justify-start sm:gap-0 sm:!w-full"
+                onTouchStart={(e) => {
+                  // Close active card overlay when tapping outside cards
+                  if (e.target === e.currentTarget) {
+                    setActiveCardId(null);
+                  }
+                }}
+              >
+                {/* Create/Import book card - first card - only show if there are existing books or stories */}
+                {(books.length > 0 || quickStories.length > 0) &&
+                  !(filter === "stories" && quickStories.length === 0) &&
+                  !(filter === "books" && books.length === 0) && (
+                    <div
+                      className="hover:shadow-md transition-shadow cursor-pointer flex flex-col rounded-md w-full max-w-[176px] sm:w-[176px] sm:max-w-none relative"
+                      style={{
+                        aspectRatio: "176/268",
+                        backgroundColor: "rgb(227, 230, 230)",
+                      }}
+                    >
+                      <div className="flex-1 flex flex-col justify-center items-center p-2 space-y-2">
+                        {/* Create Book Button */}
+                        <div className="relative w-full">
+                          <button
+                            className={`w-full flex flex-col items-center space-y-1 p-2 rounded cursor-pointer ${
+                              planType !== "professional" && books.length >= 3
+                                ? "opacity-50 cursor-not-allowed"
+                                : ""
+                            }`}
+                            onClick={
+                              planType !== "professional" && books.length >= 3
+                                ? undefined
+                                : handleCreateBookClick
+                            }
+                            disabled={
+                              planType !== "professional" && books.length >= 3
+                            }
+                          >
+                            <AddCircleOutlinedIcon
+                              sx={{
+                                fontSize: 64,
+                                color:
                                   planType !== "professional" &&
                                   books.length >= 3
-                                    ? "none"
-                                    : "scale(1.1)",
-                              },
-                            }}
-                          />
-                          <span
-                            className={`text-sm font-medium ${
-                              planType !== "professional" && books.length >= 3
-                                ? "text-gray-400"
-                                : "text-gray-800"
-                            }`}
-                          >
-                            Create book
-                          </span>
-                        </button>
-                        {planType !== "professional" && books.length >= 3 && (
-                          <div className="absolute top-1 right-1">
-                            <Chip
-                              icon={<WorkspacePremiumOutlinedIcon />}
-                              label="Professional"
-                              sx={{
-                                backgroundColor: "#fbbf24",
-                                color: "white",
-                                fontSize: "10px",
-                                fontWeight: "bold",
-                                height: "20px",
-                                "& .MuiChip-icon": {
-                                  color: "white",
-                                  fontSize: "12px",
+                                    ? "rgb(156, 163, 175)"
+                                    : "rgb(100, 114, 127)",
+                                transition: "transform 0.2s ease",
+                                "&:hover": {
+                                  transform:
+                                    planType !== "professional" &&
+                                    books.length >= 3
+                                      ? "none"
+                                      : "scale(1.1)",
                                 },
                               }}
                             />
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Divider Line */}
-                      <div className="w-full border-b border-gray-300 my-2"></div>
-
-                      {/* Create Story Button */}
-                      <div className="relative w-full">
-                        <button
-                          className={`w-full flex flex-col items-center space-y-1 p-2 rounded cursor-pointer ${
-                            planType !== "professional" &&
-                            quickStories.length >= 3
-                              ? "opacity-50 cursor-not-allowed"
-                              : ""
-                          }`}
-                          onClick={
-                            planType !== "professional" &&
-                            quickStories.length >= 3
-                              ? undefined
-                              : handleCreateStoryClick
-                          }
-                          disabled={
-                            planType !== "professional" &&
-                            quickStories.length >= 3
-                          }
-                        >
-                          <AddCircleOutlinedIcon
-                            sx={{
-                              fontSize: 64,
-                              color:
-                                planType !== "professional" &&
-                                quickStories.length >= 3
-                                  ? "rgb(156, 163, 175)"
-                                  : "rgb(34, 197, 94)",
-                              transition: "transform 0.2s ease",
-                              "&:hover": {
-                                transform:
-                                  planType !== "professional" &&
-                                  quickStories.length >= 3
-                                    ? "none"
-                                    : "scale(1.1)",
-                              },
-                            }}
-                          />
-                          <span
-                            className={`text-sm font-medium ${
-                              planType !== "professional" &&
-                              quickStories.length >= 3
-                                ? "text-gray-400"
-                                : "text-gray-800"
-                            }`}
-                          >
-                            Create story
-                          </span>
-                        </button>
-                        {planType !== "professional" &&
-                          quickStories.length >= 3 && (
+                            <span
+                              className={`text-sm font-medium ${
+                                planType !== "professional" && books.length >= 3
+                                  ? "text-gray-400"
+                                  : "text-gray-800"
+                              }`}
+                            >
+                              Create book
+                            </span>
+                          </button>
+                          {planType !== "professional" && books.length >= 3 && (
                             <div className="absolute top-1 right-1">
                               <Chip
                                 icon={<WorkspacePremiumOutlinedIcon />}
@@ -3199,241 +3466,371 @@ const TwainStoryBuilder: React.FC = () => {
                               />
                             </div>
                           )}
+                        </div>
+
+                        {/* Divider Line */}
+                        <div className="w-full border-b border-gray-300 my-2"></div>
+
+                        {/* Create Story Button */}
+                        <div className="relative w-full">
+                          <button
+                            className={`w-full flex flex-col items-center space-y-1 p-2 rounded cursor-pointer ${
+                              planType !== "professional" &&
+                              quickStories.length >= 3
+                                ? "opacity-50 cursor-not-allowed"
+                                : ""
+                            }`}
+                            onClick={
+                              planType !== "professional" &&
+                              quickStories.length >= 3
+                                ? undefined
+                                : handleCreateStoryClick
+                            }
+                            disabled={
+                              planType !== "professional" &&
+                              quickStories.length >= 3
+                            }
+                          >
+                            <AddCircleOutlinedIcon
+                              sx={{
+                                fontSize: 64,
+                                color:
+                                  planType !== "professional" &&
+                                  quickStories.length >= 3
+                                    ? "rgb(156, 163, 175)"
+                                    : "rgb(34, 197, 94)",
+                                transition: "transform 0.2s ease",
+                                "&:hover": {
+                                  transform:
+                                    planType !== "professional" &&
+                                    quickStories.length >= 3
+                                      ? "none"
+                                      : "scale(1.1)",
+                                },
+                              }}
+                            />
+                            <span
+                              className={`text-sm font-medium ${
+                                planType !== "professional" &&
+                                quickStories.length >= 3
+                                  ? "text-gray-400"
+                                  : "text-gray-800"
+                              }`}
+                            >
+                              Create story
+                            </span>
+                          </button>
+                          {planType !== "professional" &&
+                            quickStories.length >= 3 && (
+                              <div className="absolute top-1 right-1">
+                                <Chip
+                                  icon={<WorkspacePremiumOutlinedIcon />}
+                                  label="Professional"
+                                  sx={{
+                                    backgroundColor: "#fbbf24",
+                                    color: "white",
+                                    fontSize: "10px",
+                                    fontWeight: "bold",
+                                    height: "20px",
+                                    "& .MuiChip-icon": {
+                                      color: "white",
+                                      fontSize: "12px",
+                                    },
+                                  }}
+                                />
+                              </div>
+                            )}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-              {/* Book cards */}
-              {(filter === "all" || filter === "books") &&
-                filteredBooks.map((bookData: Book) => {
-                  const cardId = `book-${bookData.id}`;
-                  const isActive = activeCardId === cardId;
+                {/* Book cards */}
+                {(filter === "all" || filter === "books") &&
+                  filteredBooks.map((bookData: Book) => {
+                    const cardId = `book-${bookData.id}`;
+                    const isActive = activeCardId === cardId;
 
-                  return (
-                    <div
-                      key={bookData.id}
-                      className="bg-white hover:shadow-md cursor-pointer flex flex-col rounded-r-md relative group w-full max-w-[176px] sm:w-[176px] sm:max-w-none"
-                      style={{
-                        aspectRatio: "176/268",
-                        borderLeft: "8px solid rgb(100, 114, 127)",
-                        transition: "transform 0.2s ease",
-                        transform: isActive ? "scale(1.05)" : "scale(1)",
-                      }}
-                      onMouseEnter={(e) => {
-                        // Only apply hover effects on non-touch devices
-                        if (!("ontouchstart" in window)) {
-                          e.currentTarget.style.transform = "scale(1.05)";
-                          setActiveCardId(cardId);
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        // Only apply hover effects on non-touch devices
-                        if (!("ontouchstart" in window)) {
-                          e.currentTarget.style.transform = "scale(1)";
-                          setActiveCardId(null);
-                        }
-                      }}
-                      onTouchStart={() => {
-                        // Touch-specific interaction
-                        setActiveCardId(cardId);
-                      }}
-                      onTouchEnd={() => {
-                        // Reset after a delay to allow for tap interactions
-                        setTimeout(() => setActiveCardId(null), 2000);
-                      }}
-                    >
-                      {/* Hover overlay with icons - covers entire card */}
+                    return (
                       <div
-                        className={`absolute inset-0 bg-black bg-opacity-60 flex flex-col items-center justify-center transition-opacity duration-200 rounded-r-md z-10 ${
-                          isActive
-                            ? "opacity-100"
-                            : "opacity-0 group-hover:opacity-100"
-                        }`}
+                        key={bookData.id}
+                        className="bg-white hover:shadow-md cursor-pointer flex flex-col rounded-r-md relative group w-full max-w-[176px] sm:w-[176px] sm:max-w-none"
+                        style={{
+                          aspectRatio: "176/268",
+                          borderLeft: "8px solid rgb(100, 114, 127)",
+                          transition: "transform 0.2s ease",
+                          transform: isActive ? "scale(1.05)" : "scale(1)",
+                        }}
+                        onMouseEnter={(e) => {
+                          // Only apply hover effects on non-touch devices
+                          if (!("ontouchstart" in window)) {
+                            e.currentTarget.style.transform = "scale(1.05)";
+                            setActiveCardId(cardId);
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          // Only apply hover effects on non-touch devices
+                          if (!("ontouchstart" in window)) {
+                            e.currentTarget.style.transform = "scale(1)";
+                            setActiveCardId(null);
+                          }
+                        }}
+                        onTouchStart={() => {
+                          // Touch-specific interaction
+                          setActiveCardId(cardId);
+                        }}
+                        onTouchEnd={() => {
+                          // Reset after a delay to allow for tap interactions
+                          setTimeout(() => setActiveCardId(null), 2000);
+                        }}
                       >
-                        {/* Book info - always show */}
-                        <div className="text-center mb-4">
-                          <Typography
-                            variant="body1"
-                            sx={{
-                              fontFamily: "'Alike', serif",
-                              fontSize: "16px",
-                              fontWeight: "bold",
-                              color: "white",
-                              textShadow: "1px 1px 2px rgba(0,0,0,0.8)",
-                              mb: 1,
-                            }}
-                          >
-                            {bookData.title}
-                          </Typography>
-                          {bookData.isSeries && bookData.seriesName && (
+                        {/* Hover overlay with icons - covers entire card */}
+                        <div
+                          className={`absolute inset-0 bg-black bg-opacity-60 flex flex-col items-center justify-center transition-opacity duration-200 rounded-r-md z-10 ${
+                            isActive
+                              ? "opacity-100"
+                              : "opacity-0 group-hover:opacity-100"
+                          }`}
+                        >
+                          {/* Book info - always show */}
+                          <div className="text-center mb-4">
                             <Typography
-                              variant="body2"
+                              variant="body1"
                               sx={{
-                                fontFamily: "'Rubik', sans-serif",
-                                fontSize: "12px",
-                                fontWeight: 500,
-                                color: "rgba(255,255,255,0.95)",
+                                fontFamily: "'Alike', serif",
+                                fontSize: "16px",
+                                fontWeight: "bold",
+                                color: "white",
                                 textShadow: "1px 1px 2px rgba(0,0,0,0.8)",
-                                mb: 0.5,
+                                mb: 1,
                               }}
                             >
-                              {bookData.seriesName} #{bookData.seriesNumber}
+                              {bookData.title}
                             </Typography>
-                          )}
-                          <Typography
-                            variant="body2"
-                            sx={{
-                              fontFamily: "'Rubik', sans-serif",
-                              fontSize: "13px",
-                              fontWeight: 400,
-                              color: "white",
-                              textShadow: "1px 1px 2px rgba(0,0,0,0.8)",
-                            }}
-                          >
-                            {bookData.wordCount} words
-                          </Typography>
-                          <Typography
-                            variant="body2"
-                            sx={{
-                              fontFamily: "'Rubik', sans-serif",
-                              fontSize: "12px",
-                              fontWeight: 300,
-                              color: "rgba(255,255,255,0.9)",
-                              textShadow: "1px 1px 2px rgba(0,0,0,0.8)",
-                              mt: 0.25,
-                            }}
-                          >
-                            Started on{" "}
-                            {new Date(bookData.createdAt).toLocaleDateString()}
-                          </Typography>
-                        </div>
-
-                        {/* Action icons */}
-                        <div className="flex items-center space-x-4">
-                          <SettingsOutlinedIcon
-                            onClick={() => handleManageBook(bookData)}
-                            sx={{
-                              fontSize: 32,
-                              color: "white",
-                              cursor: "pointer",
-                              transition: "transform 0.2s ease",
-                              "&:hover": {
-                                transform: "scale(1.1)",
-                              },
-                            }}
-                          />
-                          <DrawOutlinedIcon
-                            onClick={() => handleWriteBook(bookData)}
-                            sx={{
-                              fontSize: 32,
-                              color: "white",
-                              cursor: "pointer",
-                              transition: "transform 0.2s ease",
-                              "&:hover": {
-                                transform: "scale(1.1)",
-                              },
-                            }}
-                          />
-                        </div>
-                      </div>
-
-                      {bookData.coverImage ? (
-                        // Cover image fills entire card - no text overlay
-                        <div className="w-full flex-1 relative z-0 overflow-hidden">
-                          <Image
-                            src={bookData.coverImage}
-                            alt={`${bookData.title} cover`}
-                            fill
-                            style={{ objectFit: "cover" }}
-                            className="rounded-r-sm"
-                          />
-                        </div>
-                      ) : (
-                        // No cover image - traditional layout
-                        <>
-                          <div className="w-full h-48 bg-white flex items-start justify-start p-2 relative overflow-hidden">
-                            <div className="flex flex-col">
-                              <Typography
-                                variant="body1"
-                                sx={{
-                                  fontFamily: "'Alike', serif",
-                                  fontSize: "18px",
-                                  fontWeight: "bold",
-                                  color: "text.secondary",
-                                }}
-                              >
-                                {bookData.title}
-                              </Typography>
-                              {bookData.isSeries && bookData.seriesName && (
-                                <Typography
-                                  variant="body2"
-                                  sx={{
-                                    fontFamily: "'Rubik', sans-serif",
-                                    fontSize: "11px",
-                                    fontWeight: 500,
-                                    color: "rgb(75, 85, 99)",
-                                    mt: 0.25,
-                                  }}
-                                >
-                                  {bookData.seriesName} #{bookData.seriesNumber}
-                                </Typography>
-                              )}
+                            {bookData.isSeries && bookData.seriesName && (
                               <Typography
                                 variant="body2"
                                 sx={{
                                   fontFamily: "'Rubik', sans-serif",
                                   fontSize: "12px",
                                   fontWeight: 500,
-                                  color: "rgb(100, 114, 127)", // Blue-gray text to match book border
-                                  mt: 0.5,
+                                  color: "rgba(255,255,255,0.95)",
+                                  textShadow: "1px 1px 2px rgba(0,0,0,0.8)",
+                                  mb: 0.5,
                                 }}
                               >
-                                BOOK
+                                {bookData.seriesName} #{bookData.seriesNumber}
                               </Typography>
-                            </div>
+                            )}
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                fontFamily: "'Rubik', sans-serif",
+                                fontSize: "13px",
+                                fontWeight: 400,
+                                color: "white",
+                                textShadow: "1px 1px 2px rgba(0,0,0,0.8)",
+                              }}
+                            >
+                              {bookData.wordCount} words
+                            </Typography>
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                fontFamily: "'Rubik', sans-serif",
+                                fontSize: "12px",
+                                fontWeight: 300,
+                                color: "rgba(255,255,255,0.9)",
+                                textShadow: "1px 1px 2px rgba(0,0,0,0.8)",
+                                mt: 0.25,
+                              }}
+                            >
+                              Started on{" "}
+                              {new Date(
+                                bookData.createdAt
+                              ).toLocaleDateString()}
+                            </Typography>
                           </div>
-                          <div className="px-3 pb-3 flex items-end justify-center flex-1">
-                            <div className="text-center">
-                              <Typography
-                                variant="body2"
-                                sx={{
-                                  fontFamily: "'Rubik', sans-serif",
-                                  fontSize: "14px",
-                                  fontWeight: 400,
-                                  textAlign: "center",
-                                }}
-                              >
-                                {bookData.wordCount} words
-                              </Typography>
-                              <Typography
-                                variant="body2"
-                                sx={{
-                                  fontFamily: "'Rubik', sans-serif",
-                                  fontSize: "12px",
-                                  fontWeight: 300,
-                                  textAlign: "center",
-                                  color: "text.secondary",
-                                  mt: 0.5,
-                                }}
-                              >
-                                Started on{" "}
-                                {new Date(
-                                  bookData.createdAt
-                                ).toLocaleDateString()}
-                              </Typography>
-                            </div>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  );
-                })}
 
-              {/* Empty state message */}
-              {filter === "all" &&
-                books.length === 0 &&
-                quickStories.length === 0 && (
+                          {/* Action icons */}
+                          <div className="flex items-center space-x-4">
+                            <SettingsOutlinedIcon
+                              onClick={() => handleManageBook(bookData)}
+                              sx={{
+                                fontSize: 32,
+                                color: "white",
+                                cursor: "pointer",
+                                transition: "transform 0.2s ease",
+                                "&:hover": {
+                                  transform: "scale(1.1)",
+                                },
+                              }}
+                            />
+                            <DrawOutlinedIcon
+                              onClick={() => handleWriteBook(bookData)}
+                              sx={{
+                                fontSize: 32,
+                                color: "white",
+                                cursor: "pointer",
+                                transition: "transform 0.2s ease",
+                                "&:hover": {
+                                  transform: "scale(1.1)",
+                                },
+                              }}
+                            />
+                          </div>
+                        </div>
+
+                        {bookData.coverImage ? (
+                          // Cover image fills entire card - no text overlay
+                          <div className="w-full flex-1 relative z-0 overflow-hidden">
+                            <Image
+                              src={bookData.coverImage}
+                              alt={`${bookData.title} cover`}
+                              fill
+                              style={{ objectFit: "cover" }}
+                              className="rounded-r-sm"
+                            />
+                          </div>
+                        ) : (
+                          // No cover image - traditional layout
+                          <>
+                            <div className="w-full h-48 bg-white flex items-start justify-start p-2 relative overflow-hidden">
+                              <div className="flex flex-col">
+                                <Typography
+                                  variant="body1"
+                                  sx={{
+                                    fontFamily: "'Alike', serif",
+                                    fontSize: "18px",
+                                    fontWeight: "bold",
+                                    color: "text.secondary",
+                                  }}
+                                >
+                                  {bookData.title}
+                                </Typography>
+                                {bookData.isSeries && bookData.seriesName && (
+                                  <Typography
+                                    variant="body2"
+                                    sx={{
+                                      fontFamily: "'Rubik', sans-serif",
+                                      fontSize: "11px",
+                                      fontWeight: 500,
+                                      color: "rgb(75, 85, 99)",
+                                      mt: 0.25,
+                                    }}
+                                  >
+                                    {bookData.seriesName} #
+                                    {bookData.seriesNumber}
+                                  </Typography>
+                                )}
+                                <Typography
+                                  variant="body2"
+                                  sx={{
+                                    fontFamily: "'Rubik', sans-serif",
+                                    fontSize: "12px",
+                                    fontWeight: 500,
+                                    color: "rgb(100, 114, 127)", // Blue-gray text to match book border
+                                    mt: 0.5,
+                                  }}
+                                >
+                                  BOOK
+                                </Typography>
+                              </div>
+                            </div>
+                            <div className="px-3 pb-3 flex items-end justify-center flex-1">
+                              <div className="text-center">
+                                <Typography
+                                  variant="body2"
+                                  sx={{
+                                    fontFamily: "'Rubik', sans-serif",
+                                    fontSize: "14px",
+                                    fontWeight: 400,
+                                    textAlign: "center",
+                                  }}
+                                >
+                                  {bookData.wordCount} words
+                                </Typography>
+                                <Typography
+                                  variant="body2"
+                                  sx={{
+                                    fontFamily: "'Rubik', sans-serif",
+                                    fontSize: "12px",
+                                    fontWeight: 300,
+                                    textAlign: "center",
+                                    color: "text.secondary",
+                                    mt: 0.5,
+                                  }}
+                                >
+                                  Started on{" "}
+                                  {new Date(
+                                    bookData.createdAt
+                                  ).toLocaleDateString()}
+                                </Typography>
+                              </div>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    );
+                  })}
+
+                {/* Empty state message */}
+                {filter === "all" &&
+                  books.length === 0 &&
+                  quickStories.length === 0 &&
+                  isDataLoaded && (
+                    <div
+                      className="col-span-2 sm:col-span-full flex items-center justify-center w-full"
+                      style={{ minHeight: "120px" }}
+                    >
+                      <div className="p-6 w-full text-center">
+                        <Typography
+                          variant="body1"
+                          sx={{
+                            fontFamily: "'Alike', serif",
+                            fontSize: "24px",
+                            fontWeight: 500,
+                            color: "rgb(75, 85, 99)",
+                            lineHeight: 1.5,
+                            mb: 2,
+                          }}
+                        >
+                          You haven&apos;t written anything,
+                          <br /> why not get going my scribe and create a book
+                          or story.
+                        </Typography>
+                        <div className="flex items-center justify-center space-x-4 pt-6">
+                          <button
+                            onClick={handleCreateBookClick}
+                            className="flex items-center space-x-2 text-white px-4 py-2 rounded-md transition-colors duration-200 cursor-pointer"
+                            style={{ backgroundColor: "rgb(100, 114, 127)" }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor =
+                                "rgb(80, 94, 107)";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor =
+                                "rgb(100, 114, 127)";
+                            }}
+                          >
+                            <AddCircleOutlinedIcon sx={{ fontSize: 18 }} />
+                            <span className="font-medium">Create Book</span>
+                          </button>
+                          {/* <span className="text-blue-400">|</span> */}
+                          <button
+                            onClick={handleCreateStoryClick}
+                            className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md transition-colors duration-200 cursor-pointer"
+                          >
+                            <AddCircleOutlinedIcon sx={{ fontSize: 18 }} />
+                            <span className="font-medium">Create Story</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                {/* Empty state message */}
+                {filter === "books" && books.length === 0 && isDataLoaded && (
                   <div
                     className="col-span-2 sm:col-span-full flex items-center justify-center w-full"
                     style={{ minHeight: "120px" }}
@@ -3451,8 +3848,7 @@ const TwainStoryBuilder: React.FC = () => {
                         }}
                       >
                         You haven&apos;t written anything,
-                        <br /> why not get going my scribe and create a book or
-                        story.
+                        <br /> why not get going my scribe and create a book.
                       </Typography>
                       <div className="flex items-center justify-center space-x-4 pt-6">
                         <button
@@ -3484,327 +3880,283 @@ const TwainStoryBuilder: React.FC = () => {
                   </div>
                 )}
 
-              {/* Empty state message */}
-              {filter === "books" && books.length === 0 && (
-                <div
-                  className="col-span-2 sm:col-span-full flex items-center justify-center w-full"
-                  style={{ minHeight: "120px" }}
-                >
-                  <div className="p-6 w-full text-center">
-                    <Typography
-                      variant="body1"
-                      sx={{
-                        fontFamily: "'Alike', serif",
-                        fontSize: "24px",
-                        fontWeight: 500,
-                        color: "rgb(75, 85, 99)",
-                        lineHeight: 1.5,
-                        mb: 2,
-                      }}
-                    >
-                      You haven&apos;t written anything,
-                      <br /> why not get going my scribe and create a book.
-                    </Typography>
-                    <div className="flex items-center justify-center space-x-4 pt-6">
-                      <button
-                        onClick={handleCreateBookClick}
-                        className="flex items-center space-x-2 text-white px-4 py-2 rounded-md transition-colors duration-200 cursor-pointer"
-                        style={{ backgroundColor: "rgb(100, 114, 127)" }}
+                {/* Story cards */}
+
+                {/* Story cards */}
+                {(filter === "all" || filter === "stories") &&
+                  quickStories.map((storyData: Book) => {
+                    const cardId = `story-${storyData.id}`;
+                    const isActive = activeCardId === cardId;
+
+                    return (
+                      <div
+                        key={`story-${storyData.id}`}
+                        className="bg-white hover:shadow-md cursor-pointer flex flex-col rounded-r-md relative group w-full max-w-[176px] sm:w-[176px] sm:max-w-none"
+                        style={{
+                          aspectRatio: "176/268",
+                          borderLeft: "8px solid rgb(34, 197, 94)", // Green border
+                          transition: "transform 0.2s ease",
+                          transform: isActive ? "scale(1.05)" : "scale(1)",
+                        }}
                         onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor =
-                            "rgb(80, 94, 107)";
+                          // Only apply hover effects on non-touch devices
+                          if (!("ontouchstart" in window)) {
+                            e.currentTarget.style.transform = "scale(1.05)";
+                            setActiveCardId(cardId);
+                          }
                         }}
                         onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor =
-                            "rgb(100, 114, 127)";
+                          // Only apply hover effects on non-touch devices
+                          if (!("ontouchstart" in window)) {
+                            e.currentTarget.style.transform = "scale(1)";
+                            setActiveCardId(null);
+                          }
+                        }}
+                        onTouchStart={() => {
+                          // Touch-specific interaction
+                          setActiveCardId(cardId);
+                        }}
+                        onTouchEnd={() => {
+                          // Reset after a delay to allow for tap interactions
+                          setTimeout(() => setActiveCardId(null), 2000);
                         }}
                       >
-                        <AddCircleOutlinedIcon sx={{ fontSize: 18 }} />
-                        <span className="font-medium">Create Book</span>
-                      </button>
-                      {/* <span className="text-blue-400">|</span> */}
-                      <button
-                        onClick={handleCreateStoryClick}
-                        className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md transition-colors duration-200 cursor-pointer"
-                      >
-                        <AddCircleOutlinedIcon sx={{ fontSize: 18 }} />
-                        <span className="font-medium">Create Story</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
+                        {/* Hover overlay with icons - covers entire card */}
+                        <div
+                          className={`absolute inset-0 bg-black bg-opacity-60 flex flex-col items-center justify-center transition-opacity duration-200 rounded-r-md z-10 ${
+                            isActive
+                              ? "opacity-100"
+                              : "opacity-0 group-hover:opacity-100"
+                          }`}
+                        >
+                          {/* Story info */}
+                          <div className="text-center mb-4">
+                            <Typography
+                              variant="body1"
+                              sx={{
+                                fontFamily: "'Alike', serif",
+                                fontSize: "16px",
+                                fontWeight: "bold",
+                                color: "white",
+                                textShadow: "1px 1px 2px rgba(0,0,0,0.8)",
+                                mb: 1,
+                              }}
+                            >
+                              {storyData.title}
+                            </Typography>
+                            {storyData.isSeries && storyData.seriesName && (
+                              <Typography
+                                variant="body2"
+                                sx={{
+                                  fontFamily: "'Rubik', sans-serif",
+                                  fontSize: "12px",
+                                  fontWeight: 500,
+                                  color: "rgba(255,255,255,0.95)",
+                                  textShadow: "1px 1px 2px rgba(0,0,0,0.8)",
+                                  mb: 0.5,
+                                }}
+                              >
+                                {storyData.seriesName} #{storyData.seriesNumber}
+                              </Typography>
+                            )}
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                fontFamily: "'Rubik', sans-serif",
+                                fontSize: "13px",
+                                fontWeight: 400,
+                                color: "white",
+                                textShadow: "1px 1px 2px rgba(0,0,0,0.8)",
+                              }}
+                            >
+                              {storyData.wordCount} words
+                            </Typography>
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                fontFamily: "'Rubik', sans-serif",
+                                fontSize: "12px",
+                                fontWeight: 300,
+                                color: "rgba(255,255,255,0.9)",
+                                textShadow: "1px 1px 2px rgba(0,0,0,0.8)",
+                                mt: 0.25,
+                              }}
+                            >
+                              Started on{" "}
+                              {new Date(
+                                storyData.createdAt
+                              ).toLocaleDateString()}
+                            </Typography>
+                          </div>
 
-              {/* Story cards */}
+                          {/* Action icons */}
+                          <div className="flex items-center space-x-4">
+                            <DeleteOutlineOutlinedIcon
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteStory(storyData);
+                              }}
+                              sx={{
+                                fontSize: 32,
+                                color: "white",
+                                cursor: "pointer",
+                                transition: "transform 0.2s ease",
+                                "&:hover": {
+                                  transform: "scale(1.1)",
+                                  color: "#ff6b6b",
+                                },
+                              }}
+                            />
+                            <DrawOutlinedIcon
+                              onClick={() => {
+                                setSelectedBook(storyData);
+                                setIsQuickStoryMode(true);
+                                setCurrentView("write");
+                              }}
+                              sx={{
+                                fontSize: 32,
+                                color: "white",
+                                cursor: "pointer",
+                                transition: "transform 0.2s ease",
+                                "&:hover": {
+                                  transform: "scale(1.1)",
+                                },
+                              }}
+                            />
+                          </div>
+                        </div>
 
-              {/* Story cards */}
-              {(filter === "all" || filter === "stories") &&
-                quickStories.map((storyData: Book) => {
-                  const cardId = `story-${storyData.id}`;
-                  const isActive = activeCardId === cardId;
-
-                  return (
-                    <div
-                      key={`story-${storyData.id}`}
-                      className="bg-white hover:shadow-md cursor-pointer flex flex-col rounded-r-md relative group w-full max-w-[176px] sm:w-[176px] sm:max-w-none"
-                      style={{
-                        aspectRatio: "176/268",
-                        borderLeft: "8px solid rgb(34, 197, 94)", // Green border
-                        transition: "transform 0.2s ease",
-                        transform: isActive ? "scale(1.05)" : "scale(1)",
-                      }}
-                      onMouseEnter={(e) => {
-                        // Only apply hover effects on non-touch devices
-                        if (!("ontouchstart" in window)) {
-                          e.currentTarget.style.transform = "scale(1.05)";
-                          setActiveCardId(cardId);
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        // Only apply hover effects on non-touch devices
-                        if (!("ontouchstart" in window)) {
-                          e.currentTarget.style.transform = "scale(1)";
-                          setActiveCardId(null);
-                        }
-                      }}
-                      onTouchStart={() => {
-                        // Touch-specific interaction
-                        setActiveCardId(cardId);
-                      }}
-                      onTouchEnd={() => {
-                        // Reset after a delay to allow for tap interactions
-                        setTimeout(() => setActiveCardId(null), 2000);
-                      }}
-                    >
-                      {/* Hover overlay with icons - covers entire card */}
-                      <div
-                        className={`absolute inset-0 bg-black bg-opacity-60 flex flex-col items-center justify-center transition-opacity duration-200 rounded-r-md z-10 ${
-                          isActive
-                            ? "opacity-100"
-                            : "opacity-0 group-hover:opacity-100"
-                        }`}
-                      >
-                        {/* Story info */}
-                        <div className="text-center mb-4">
-                          <Typography
-                            variant="body1"
-                            sx={{
-                              fontFamily: "'Alike', serif",
-                              fontSize: "16px",
-                              fontWeight: "bold",
-                              color: "white",
-                              textShadow: "1px 1px 2px rgba(0,0,0,0.8)",
-                              mb: 1,
-                            }}
-                          >
-                            {storyData.title}
-                          </Typography>
-                          {storyData.isSeries && storyData.seriesName && (
+                        {/* No cover image - traditional layout with green accent */}
+                        <div className="w-full h-48 bg-white flex items-start justify-start p-2 relative overflow-hidden">
+                          <div className="flex flex-col">
+                            <Typography
+                              variant="body1"
+                              sx={{
+                                fontFamily: "'Alike', serif",
+                                fontSize: "18px",
+                                fontWeight: "bold",
+                                color: "text.secondary",
+                              }}
+                            >
+                              {storyData.title}
+                            </Typography>
+                            {storyData.isSeries && storyData.seriesName && (
+                              <Typography
+                                variant="body2"
+                                sx={{
+                                  fontFamily: "'Rubik', sans-serif",
+                                  fontSize: "11px",
+                                  fontWeight: 500,
+                                  color: "rgb(75, 85, 99)",
+                                  mt: 0.25,
+                                }}
+                              >
+                                {storyData.seriesName} #{storyData.seriesNumber}
+                              </Typography>
+                            )}
                             <Typography
                               variant="body2"
                               sx={{
                                 fontFamily: "'Rubik', sans-serif",
                                 fontSize: "12px",
                                 fontWeight: 500,
-                                color: "rgba(255,255,255,0.95)",
-                                textShadow: "1px 1px 2px rgba(0,0,0,0.8)",
-                                mb: 0.5,
+                                color: "rgb(34, 197, 94)", // Green text
+                                mt: 0.5,
                               }}
                             >
-                              {storyData.seriesName} #{storyData.seriesNumber}
+                              STORY
                             </Typography>
-                          )}
-                          <Typography
-                            variant="body2"
-                            sx={{
-                              fontFamily: "'Rubik', sans-serif",
-                              fontSize: "13px",
-                              fontWeight: 400,
-                              color: "white",
-                              textShadow: "1px 1px 2px rgba(0,0,0,0.8)",
-                            }}
-                          >
-                            {storyData.wordCount} words
-                          </Typography>
-                          <Typography
-                            variant="body2"
-                            sx={{
-                              fontFamily: "'Rubik', sans-serif",
-                              fontSize: "12px",
-                              fontWeight: 300,
-                              color: "rgba(255,255,255,0.9)",
-                              textShadow: "1px 1px 2px rgba(0,0,0,0.8)",
-                              mt: 0.25,
-                            }}
-                          >
-                            Started on{" "}
-                            {new Date(storyData.createdAt).toLocaleDateString()}
-                          </Typography>
+                          </div>
                         </div>
-
-                        {/* Action icons */}
-                        <div className="flex items-center space-x-4">
-                          <DeleteOutlineOutlinedIcon
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDeleteStory(storyData);
-                            }}
-                            sx={{
-                              fontSize: 32,
-                              color: "white",
-                              cursor: "pointer",
-                              transition: "transform 0.2s ease",
-                              "&:hover": {
-                                transform: "scale(1.1)",
-                                color: "#ff6b6b",
-                              },
-                            }}
-                          />
-                          <DrawOutlinedIcon
-                            onClick={() => {
-                              setSelectedBook(storyData);
-                              setIsQuickStoryMode(true);
-                              setCurrentView("write");
-                            }}
-                            sx={{
-                              fontSize: 32,
-                              color: "white",
-                              cursor: "pointer",
-                              transition: "transform 0.2s ease",
-                              "&:hover": {
-                                transform: "scale(1.1)",
-                              },
-                            }}
-                          />
-                        </div>
-                      </div>
-
-                      {/* No cover image - traditional layout with green accent */}
-                      <div className="w-full h-48 bg-white flex items-start justify-start p-2 relative overflow-hidden">
-                        <div className="flex flex-col">
-                          <Typography
-                            variant="body1"
-                            sx={{
-                              fontFamily: "'Alike', serif",
-                              fontSize: "18px",
-                              fontWeight: "bold",
-                              color: "text.secondary",
-                            }}
-                          >
-                            {storyData.title}
-                          </Typography>
-                          {storyData.isSeries && storyData.seriesName && (
+                        <div className="px-3 pb-3 flex items-end justify-center flex-1">
+                          <div className="text-center">
                             <Typography
                               variant="body2"
                               sx={{
                                 fontFamily: "'Rubik', sans-serif",
-                                fontSize: "11px",
-                                fontWeight: 500,
-                                color: "rgb(75, 85, 99)",
-                                mt: 0.25,
+                                fontSize: "14px",
+                                fontWeight: 400,
+                                textAlign: "center",
                               }}
                             >
-                              {storyData.seriesName} #{storyData.seriesNumber}
+                              {storyData.wordCount} words
                             </Typography>
-                          )}
-                          <Typography
-                            variant="body2"
-                            sx={{
-                              fontFamily: "'Rubik', sans-serif",
-                              fontSize: "12px",
-                              fontWeight: 500,
-                              color: "rgb(34, 197, 94)", // Green text
-                              mt: 0.5,
-                            }}
-                          >
-                            STORY
-                          </Typography>
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                fontFamily: "'Rubik', sans-serif",
+                                fontSize: "12px",
+                                fontWeight: 300,
+                                textAlign: "center",
+                                color: "text.secondary",
+                                mt: 0.5,
+                              }}
+                            >
+                              Started on{" "}
+                              {new Date(
+                                storyData.createdAt
+                              ).toLocaleDateString()}
+                            </Typography>
+                          </div>
                         </div>
                       </div>
-                      <div className="px-3 pb-3 flex items-end justify-center flex-1">
-                        <div className="text-center">
-                          <Typography
-                            variant="body2"
-                            sx={{
-                              fontFamily: "'Rubik', sans-serif",
-                              fontSize: "14px",
-                              fontWeight: 400,
-                              textAlign: "center",
-                            }}
-                          >
-                            {storyData.wordCount} words
-                          </Typography>
-                          <Typography
-                            variant="body2"
-                            sx={{
-                              fontFamily: "'Rubik', sans-serif",
-                              fontSize: "12px",
-                              fontWeight: 300,
-                              textAlign: "center",
-                              color: "text.secondary",
-                              mt: 0.5,
-                            }}
-                          >
-                            Started on{" "}
-                            {new Date(storyData.createdAt).toLocaleDateString()}
-                          </Typography>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
+                    );
+                  })}
 
-              {/* Empty state for stories */}
-              {filter === "stories" && quickStories.length === 0 && (
-                <div
-                  className="col-span-2 sm:col-span-full flex items-center justify-center w-full"
-                  style={{ minHeight: "120px" }}
-                >
-                  <div className="p-6 w-full text-center">
-                    <Typography
-                      variant="body1"
-                      sx={{
-                        fontFamily: "'Alike', serif",
-                        fontSize: "24px",
-                        fontWeight: 500,
-                        color: "rgb(75, 85, 99)",
-                        lineHeight: 1.5,
-                        mb: 2,
-                      }}
+                {/* Empty state for stories */}
+                {filter === "stories" &&
+                  quickStories.length === 0 &&
+                  isDataLoaded && (
+                    <div
+                      className="col-span-2 sm:col-span-full flex items-center justify-center w-full"
+                      style={{ minHeight: "120px" }}
                     >
-                      You haven&apos;t written anything,
-                      <br /> why not get going my scribe and create a story.
-                    </Typography>
-                    <div className="flex items-center justify-center space-x-4 pt-6">
-                      <button
-                        onClick={handleCreateBookClick}
-                        className="flex items-center space-x-2 text-white px-4 py-2 rounded-md transition-colors duration-200 cursor-pointer"
-                        style={{ backgroundColor: "rgb(100, 114, 127)" }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor =
-                            "rgb(80, 94, 107)";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor =
-                            "rgb(100, 114, 127)";
-                        }}
-                      >
-                        <AddCircleOutlinedIcon sx={{ fontSize: 18 }} />
-                        <span className="font-medium">Create Book</span>
-                      </button>
-                      {/* <span className="text-blue-400">|</span> */}
-                      <button
-                        onClick={handleCreateStoryClick}
-                        className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md transition-colors duration-200 cursor-pointer"
-                      >
-                        <AddCircleOutlinedIcon sx={{ fontSize: 18 }} />
-                        <span className="font-medium">Create Story</span>
-                      </button>
+                      <div className="p-6 w-full text-center">
+                        <Typography
+                          variant="body1"
+                          sx={{
+                            fontFamily: "'Alike', serif",
+                            fontSize: "24px",
+                            fontWeight: 500,
+                            color: "rgb(75, 85, 99)",
+                            lineHeight: 1.5,
+                            mb: 2,
+                          }}
+                        >
+                          You haven&apos;t written anything,
+                          <br /> why not get going my scribe and create a story.
+                        </Typography>
+                        <div className="flex items-center justify-center space-x-4 pt-6">
+                          <button
+                            onClick={handleCreateBookClick}
+                            className="flex items-center space-x-2 text-white px-4 py-2 rounded-md transition-colors duration-200 cursor-pointer"
+                            style={{ backgroundColor: "rgb(100, 114, 127)" }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor =
+                                "rgb(80, 94, 107)";
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor =
+                                "rgb(100, 114, 127)";
+                            }}
+                          >
+                            <AddCircleOutlinedIcon sx={{ fontSize: 18 }} />
+                            <span className="font-medium">Create Book</span>
+                          </button>
+                          {/* <span className="text-blue-400">|</span> */}
+                          <button
+                            onClick={handleCreateStoryClick}
+                            className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md transition-colors duration-200 cursor-pointer"
+                          >
+                            <AddCircleOutlinedIcon sx={{ fontSize: 18 }} />
+                            <span className="font-medium">Create Story</span>
+                          </button>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </div>
-              )}
-            </div>
+                  )}
+              </div>
+            )}
           </div>
         </main>
 

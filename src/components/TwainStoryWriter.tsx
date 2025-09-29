@@ -859,13 +859,25 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
         if (
           !lastModificationTrackTime ||
           modificationTime.getTime() - lastModificationTrackTime.getTime() >
-            30000 // 30 second debounce
+            5000 // 5 second debounce (reduced from 30 seconds)
         ) {
           const wordCountChange = currentWordCount - modificationStartWordCount;
 
           // Only track if there's a meaningful word count change
-          if (Math.abs(wordCountChange) > 5) {
-            // Only log if more than 5 words changed
+          if (Math.abs(wordCountChange) > 1) {
+            // Only log if more than 1 word changed (reduced from 5)
+            console.log("Logging modification:", {
+              type: currentChapter
+                ? "chapter"
+                : currentStory
+                ? "story"
+                : "outline",
+              title:
+                currentChapter?.title ||
+                currentStory?.title ||
+                currentOutline?.title,
+              wordCountChange,
+            });
             // Add to recent activity based on the type of item being edited
             if (currentChapter) {
               addToRecentActivity("chapter", currentChapter.title, "modified");
