@@ -193,6 +193,27 @@ const saveToStorage = (
   }
 };
 
+// Helper function to calculate word count from content
+const getItemWordCount = (content: string): number => {
+  try {
+    const delta = JSON.parse(content);
+    return (
+      delta.ops?.reduce((acc: number, op: DeltaOperation) => {
+        if (typeof op.insert === "string") {
+          const words = op.insert
+            .trim()
+            .split(/\s+/)
+            .filter((word) => word.length > 0);
+          return acc + words.length;
+        }
+        return acc;
+      }, 0) || 0
+    );
+  } catch {
+    return 0;
+  }
+};
+
 const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
   book,
   onBackToBookshelf,
@@ -685,8 +706,8 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
             : undefined;
           const wordCountChange = currentWordCount - modificationStartWordCount;
 
-          // Only track if there's a meaningful word count change (more than 0 words)
-          if (wordCountChange > 0) {
+          // Only track if there's a meaningful word count change (any change, not just increases)
+          if (wordCountChange !== 0) {
             // Track recent activity directly
             if (session?.user?.email) {
               const storageKey = getStorageKey(
@@ -730,7 +751,14 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                     : "modified";
 
                 const newActivity: RecentActivity = {
-                  id: activityItem.id,
+                  id:
+                    action === "modified"
+                      ? `${
+                          activityItem.id
+                        }_${modificationTime.getTime()}_${Math.random()
+                          .toString(36)
+                          .substr(2, 9)}`
+                      : activityItem.id,
                   type: activityType,
                   title: activityItem.title,
                   createdAt: activityItem.createdAt,
@@ -742,10 +770,18 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                     action === "modified" ? modificationTime : undefined,
                 };
 
-                // Remove if already exists (to move to front)
-                const filteredActivity = recentActivity.filter(
-                  (activity) => activity.id !== activityItem!.id
-                );
+                // For modifications, don't remove existing entries - just add new one
+                // For created items, remove existing created entries
+                let filteredActivity = recentActivity;
+                if (action === "created") {
+                  filteredActivity = recentActivity.filter(
+                    (activity) =>
+                      !(
+                        activity.id === activityItem!.id &&
+                        activity.action === "created"
+                      )
+                  );
+                }
 
                 // Add to front and limit to 24 items
                 const updatedActivity = [
@@ -2824,10 +2860,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                                     marginTop: "4px",
                                   }}
                                 >
-                                  Created:{" "}
-                                  {new Date(
-                                    outline.createdAt
-                                  ).toLocaleDateString()}
+                                  {getItemWordCount(outline.content)} words
                                 </Typography>
                                 <div className="flex items-center gap-1">
                                   <IconButton
@@ -2913,10 +2946,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                                     marginTop: "4px",
                                   }}
                                 >
-                                  Created:{" "}
-                                  {new Date(
-                                    story.createdAt
-                                  ).toLocaleDateString()}
+                                  {getItemWordCount(story.content)} words
                                 </Typography>
                                 <div className="flex items-center gap-1">
                                   <IconButton
@@ -3000,10 +3030,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                                     marginTop: "4px",
                                   }}
                                 >
-                                  Created:{" "}
-                                  {new Date(
-                                    chapter.createdAt
-                                  ).toLocaleDateString()}
+                                  {getItemWordCount(chapter.content)} words
                                 </Typography>
                                 <div className="flex items-center gap-1">
                                   <IconButton
@@ -3915,7 +3942,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                                     activity.createdAt
                                   ).toLocaleDateString()}
                             </Typography>
-                            {activity.wordCount &&
+                            {activity.wordCount !== undefined &&
                               activity.action !== "deleted" && (
                                 <>
                                   <span
@@ -3932,10 +3959,14 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                                       fontFamily: "'Rubik', sans-serif",
                                       fontWeight: 400,
                                       fontSize: "12px",
-                                      color: "rgb(34, 197, 94)",
+                                      color:
+                                        activity.wordCount >= 0
+                                          ? "rgb(34, 197, 94)"
+                                          : "rgb(239, 68, 68)",
                                     }}
                                   >
-                                    +{activity.wordCount} words
+                                    {activity.wordCount > 0 ? "+" : ""}
+                                    {activity.wordCount} words
                                   </Typography>
                                 </>
                               )}

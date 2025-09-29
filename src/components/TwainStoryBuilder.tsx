@@ -250,6 +250,9 @@ const updateBookWordCount = (
         : book
     );
     saveBooksToStorage(updatedBooks, userEmail);
+
+    // Trigger a custom event to notify components that books were updated
+    window.dispatchEvent(new CustomEvent("booksUpdated"));
   } catch (error) {
     console.error("Error updating word count:", error);
   }
@@ -269,6 +272,9 @@ const updateQuickStoryWordCount = (
         : story
     );
     saveQuickStoriesToStorage(updatedQuickStories, userEmail);
+
+    // Trigger a custom event to notify components that quick stories were updated
+    window.dispatchEvent(new CustomEvent("quickStoriesUpdated"));
   } catch (error) {
     console.error("Error updating quick story word count:", error);
   }
@@ -510,6 +516,36 @@ const TwainStoryBuilder: React.FC = () => {
       );
       setQuickStories(storedQuickStories);
     }
+  }, [session?.user?.email]);
+
+  // Listen for word count updates and reload books/stories
+  useEffect(() => {
+    const handleBooksUpdated = () => {
+      if (session?.user?.email) {
+        const storedBooks = loadBooksFromStorage(session.user.email);
+        setBooks(storedBooks);
+      }
+    };
+
+    const handleQuickStoriesUpdated = () => {
+      if (session?.user?.email) {
+        const storedQuickStories = loadQuickStoriesFromStorage(
+          session.user.email
+        );
+        setQuickStories(storedQuickStories);
+      }
+    };
+
+    window.addEventListener("booksUpdated", handleBooksUpdated);
+    window.addEventListener("quickStoriesUpdated", handleQuickStoriesUpdated);
+
+    return () => {
+      window.removeEventListener("booksUpdated", handleBooksUpdated);
+      window.removeEventListener(
+        "quickStoriesUpdated",
+        handleQuickStoriesUpdated
+      );
+    };
   }, [session?.user?.email]);
 
   // Record login when session becomes available
