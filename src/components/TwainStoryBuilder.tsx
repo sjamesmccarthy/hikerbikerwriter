@@ -1737,60 +1737,62 @@ const TwainStoryBuilder: React.FC = () => {
               className="sm:!flex sm:flex-wrap sm:justify-start sm:gap-0 sm:!w-full"
             >
               {/* Create/Import book card - first card - only show if there are existing books or stories */}
-              {(books.length > 0 || quickStories.length > 0) && (
-                <div
-                  className="hover:shadow-md transition-shadow cursor-pointer flex flex-col rounded-md w-full max-w-[176px] sm:w-[176px] sm:max-w-none"
-                  style={{
-                    aspectRatio: "176/268",
-                    backgroundColor: "rgb(227, 230, 230)",
-                  }}
-                >
-                  <div className="flex-1 flex flex-col justify-center items-center p-2 space-y-2">
-                    {/* Create Book Button */}
-                    <button
-                      className="w-full flex flex-col items-center space-y-1 p-2 rounded cursor-pointer"
-                      onClick={handleCreateBookClick}
-                    >
-                      <AddCircleOutlinedIcon
-                        sx={{
-                          fontSize: 64,
-                          color: "rgb(100, 114, 127)",
-                          transition: "transform 0.2s ease",
-                          "&:hover": {
-                            transform: "scale(1.1)",
-                          },
-                        }}
-                      />
-                      <span className="text-sm font-medium text-gray-800">
-                        Create book
-                      </span>
-                    </button>
+              {(books.length > 0 || quickStories.length > 0) &&
+                !(filter === "stories" && quickStories.length === 0) &&
+                !(filter === "books" && books.length === 0) && (
+                  <div
+                    className="hover:shadow-md transition-shadow cursor-pointer flex flex-col rounded-md w-full max-w-[176px] sm:w-[176px] sm:max-w-none"
+                    style={{
+                      aspectRatio: "176/268",
+                      backgroundColor: "rgb(227, 230, 230)",
+                    }}
+                  >
+                    <div className="flex-1 flex flex-col justify-center items-center p-2 space-y-2">
+                      {/* Create Book Button */}
+                      <button
+                        className="w-full flex flex-col items-center space-y-1 p-2 rounded cursor-pointer"
+                        onClick={handleCreateBookClick}
+                      >
+                        <AddCircleOutlinedIcon
+                          sx={{
+                            fontSize: 64,
+                            color: "rgb(100, 114, 127)",
+                            transition: "transform 0.2s ease",
+                            "&:hover": {
+                              transform: "scale(1.1)",
+                            },
+                          }}
+                        />
+                        <span className="text-sm font-medium text-gray-800">
+                          Create book
+                        </span>
+                      </button>
 
-                    {/* Divider Line */}
-                    <div className="w-full border-b border-gray-300 my-2"></div>
+                      {/* Divider Line */}
+                      <div className="w-full border-b border-gray-300 my-2"></div>
 
-                    {/* Create Story Button */}
-                    <button
-                      className="w-full flex flex-col items-center space-y-1 p-2 rounded cursor-pointer"
-                      onClick={handleCreateStoryClick}
-                    >
-                      <AddCircleOutlinedIcon
-                        sx={{
-                          fontSize: 64,
-                          color: "rgb(34, 197, 94)",
-                          transition: "transform 0.2s ease",
-                          "&:hover": {
-                            transform: "scale(1.1)",
-                          },
-                        }}
-                      />
-                      <span className="text-sm font-medium text-gray-800">
-                        Create Story
-                      </span>
-                    </button>
+                      {/* Create Story Button */}
+                      <button
+                        className="w-full flex flex-col items-center space-y-1 p-2 rounded cursor-pointer"
+                        onClick={handleCreateStoryClick}
+                      >
+                        <AddCircleOutlinedIcon
+                          sx={{
+                            fontSize: 64,
+                            color: "rgb(34, 197, 94)",
+                            transition: "transform 0.2s ease",
+                            "&:hover": {
+                              transform: "scale(1.1)",
+                            },
+                          }}
+                        />
+                        <span className="text-sm font-medium text-gray-800">
+                          Create Story
+                        </span>
+                      </button>
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
 
               {/* Book cards */}
               {(filter === "all" || filter === "books") &&
@@ -1964,10 +1966,61 @@ const TwainStoryBuilder: React.FC = () => {
                 })}
 
               {/* Empty state message */}
-              {((filter === "books" && books.length === 0) ||
-                (filter === "all" &&
-                  books.length === 0 &&
-                  quickStories.length === 0)) && (
+              {filter === "all" &&
+                books.length === 0 &&
+                quickStories.length === 0 && (
+                  <div
+                    className="col-span-2 sm:col-span-full flex items-center justify-center w-full"
+                    style={{ minHeight: "120px" }}
+                  >
+                    <div className="p-6 w-full text-center">
+                      <Typography
+                        variant="body1"
+                        sx={{
+                          fontFamily: "'Alike', serif",
+                          fontSize: "24px",
+                          fontWeight: 500,
+                          color: "rgb(75, 85, 99)",
+                          lineHeight: 1.5,
+                          mb: 2,
+                        }}
+                      >
+                        You haven&apos;t written anything,
+                        <br /> why not get going my scribe and create a book or
+                        story.
+                      </Typography>
+                      <div className="flex items-center justify-center space-x-4 pt-6">
+                        <button
+                          onClick={handleCreateBookClick}
+                          className="flex items-center space-x-2 text-white px-4 py-2 rounded-md transition-colors duration-200 cursor-pointer"
+                          style={{ backgroundColor: "rgb(100, 114, 127)" }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor =
+                              "rgb(80, 94, 107)";
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor =
+                              "rgb(100, 114, 127)";
+                          }}
+                        >
+                          <AddCircleOutlinedIcon sx={{ fontSize: 18 }} />
+                          <span className="font-medium">Create Book</span>
+                        </button>
+                        {/* <span className="text-blue-400">|</span> */}
+                        <button
+                          onClick={handleCreateStoryClick}
+                          className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md transition-colors duration-200 cursor-pointer"
+                        >
+                          <AddCircleOutlinedIcon sx={{ fontSize: 18 }} />
+                          <span className="font-medium">Create Story</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+              {/* Empty state message */}
+              {filter === "books" && books.length === 0 && (
                 <div
                   className="col-span-2 sm:col-span-full flex items-center justify-center w-full"
                   style={{ minHeight: "120px" }}
@@ -1985,8 +2038,7 @@ const TwainStoryBuilder: React.FC = () => {
                       }}
                     >
                       You haven&apos;t written anything,
-                      <br /> why not get going my scribe and create a story or
-                      book.
+                      <br /> why not get going my scribe and create a book.
                     </Typography>
                     <div className="flex items-center justify-center space-x-4 pt-6">
                       <button
@@ -2005,7 +2057,7 @@ const TwainStoryBuilder: React.FC = () => {
                         <AddCircleOutlinedIcon sx={{ fontSize: 18 }} />
                         <span className="font-medium">Create Book</span>
                       </button>
-                      <span className="text-blue-400">|</span>
+                      {/* <span className="text-blue-400">|</span> */}
                       <button
                         onClick={handleCreateStoryClick}
                         className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md transition-colors duration-200 cursor-pointer"
@@ -2198,10 +2250,10 @@ const TwainStoryBuilder: React.FC = () => {
                         mb: 2,
                       }}
                     >
-                      You haven&apos;t written anything, why not get going my
-                      scribe and create a story or book.
+                      You haven&apos;t written anything,
+                      <br /> why not get going my scribe and create a story.
                     </Typography>
-                    <div className="flex items-center justify-center space-x-4">
+                    <div className="flex items-center justify-center space-x-4 pt-6">
                       <button
                         onClick={handleCreateBookClick}
                         className="flex items-center space-x-2 text-white px-4 py-2 rounded-md transition-colors duration-200 cursor-pointer"
@@ -2218,7 +2270,7 @@ const TwainStoryBuilder: React.FC = () => {
                         <AddCircleOutlinedIcon sx={{ fontSize: 18 }} />
                         <span className="font-medium">Create Book</span>
                       </button>
-                      <span className="text-blue-400">|</span>
+                      {/* <span className="text-blue-400">|</span> */}
                       <button
                         onClick={handleCreateStoryClick}
                         className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md transition-colors duration-200 cursor-pointer"
