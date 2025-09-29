@@ -3851,7 +3851,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                     return (
                       <div
                         key={activity.id}
-                        className={`flex items-center gap-3 p-3 rounded-lg border ${getBackgroundColor()}`}
+                        className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer ${getBackgroundColor()}`}
                       >
                         {activity.type === "idea" ? (
                           <BatchPredictionIcon
