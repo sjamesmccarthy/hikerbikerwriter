@@ -16,7 +16,7 @@ React hook for easy integration with components, providing automatic re-renderin
 
 ### User Preferences Management
 
-- **Plan Status**: Track user's current plan (free, basic, professional, enterprise)
+- **Plan Status**: Track user's current plan (free, freelance, professional)
 - **Account Metadata**: Creation date, last login, login count
 - **UI Preferences**: Theme, sidebar state, default view
 - **Writing Preferences**: Auto-save settings, word count goals, font preferences
@@ -66,9 +66,7 @@ const MyComponent = () => {
 ### Plan Upgrade Handling
 
 ```tsx
-const handleUpgradePlan = (
-  newPlanType: "basic" | "professional" | "enterprise"
-) => {
+const handleUpgradePlan = (newPlanType: "freelance" | "professional") => {
   updatePlan({
     type: newPlanType,
     status: "active",
@@ -108,36 +106,28 @@ const canCollaborate = checkFeature("collaboration");
 - ✓ Local storage
 - ✓ Basic writing tools
 - ✓ Text export
-- ✓ Up to 3 books
+- ✓ Up to 1 book
 - ✗ Cloud storage
 - ✗ Advanced exports
 
-### Basic Plan ($5.99/month)
+### Freelance Plan ($2.99/month)
 
 - ✓ Cloud storage
-- ✓ Unlimited books
+- ✓ Up to 5 books
 - ✓ Advanced writing tools
-- ✓ PDF/Word export
+- ✓ Export to PDF/DOCX
 - ✓ Basic templates
 - ✓ Email support
 
-### Professional Plan ($9.99/month)
+### Professional Plan ($6.99/month)
 
-- ✓ All Basic features
-- ✓ Premium templates
-- ✓ Collaboration tools
-- ✓ Version history
-- ✓ Priority support
-- ✓ Custom branding
-
-### Enterprise Plan ($19.99/month)
-
-- ✓ All Professional features
-- ✓ Team collaboration
-- ✓ Advanced version history
-- ✓ Dedicated support
-- ✓ Custom integrations
-- ✓ SSO support
+- ✓ All Freelance features
+- ✓ Unlimited books
+- ✓ Import DOCX files
+- ✓ Premium templates and themes
+- ✓ Publish to Amazon Kindle, ePub, and PDF
+- ✓ Advanced collaboration tools
+- ✓ Priority customer support
 - ✓ Admin dashboard
 
 ## Data Structure

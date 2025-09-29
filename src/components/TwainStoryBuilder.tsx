@@ -269,13 +269,13 @@ const generateQuickStoryId = (existingStories: Book[]): number => {
 
 // Plan utility functions
 const getPlanFeatures = (
-  planType: "free" | "basic" | "professional" | "enterprise"
+  planType: "free" | "freelance" | "professional"
 ): string[] => {
   const features: Record<string, string[]> = {
-    free: ["local-storage", "basic-writing", "export-txt", "up-to-3-books"],
-    basic: [
+    free: ["local-storage", "basic-writing", "export-txt", "up-to-1-book"],
+    freelance: [
       "cloud-storage",
-      "unlimited-books",
+      "up-to-5-books",
       "advanced-writing",
       "export-pdf",
       "export-docx",
@@ -288,23 +288,12 @@ const getPlanFeatures = (
       "advanced-writing",
       "export-all-formats",
       "premium-templates",
+      "import-docx",
       "collaboration",
       "version-history",
       "priority-support",
       "custom-branding",
-    ],
-    enterprise: [
-      "cloud-storage",
-      "unlimited-books",
-      "advanced-writing",
-      "export-all-formats",
-      "premium-templates",
-      "team-collaboration",
-      "advanced-version-history",
-      "dedicated-support",
-      "custom-integrations",
-      "sso",
-      "admin-dashboard",
+      "publish-kindle-epub",
     ],
   };
 
@@ -312,7 +301,7 @@ const getPlanFeatures = (
 };
 
 const getPlanEndDate = (
-  planType: "free" | "basic" | "professional" | "enterprise"
+  planType: "free" | "freelance" | "professional"
 ): string | undefined => {
   if (planType === "free") {
     return undefined; // Free plan doesn't expire
@@ -324,9 +313,7 @@ const getPlanEndDate = (
 };
 
 // Helper function to get plan chip properties
-const getPlanChipProps = (
-  planType: "free" | "basic" | "professional" | "enterprise"
-) => {
+const getPlanChipProps = (planType: "free" | "freelance" | "professional") => {
   switch (planType) {
     case "free":
       return {
@@ -340,24 +327,24 @@ const getPlanChipProps = (
           height: "32px",
         },
       };
-    case "professional":
+    case "freelance":
       return {
-        label: "Pro",
-        color: "error" as const,
+        label: "Freelance",
+        color: "primary" as const,
         sx: {
-          backgroundColor: "#f44336",
+          backgroundColor: "#2196f3",
           color: "white",
           fontSize: "14px",
           fontWeight: "bold",
           height: "32px",
         },
       };
-    case "enterprise":
+    case "professional":
       return {
-        label: "Enterprise",
-        color: "primary" as const,
+        label: "Pro",
+        color: "error" as const,
         sx: {
-          backgroundColor: "#2196f3",
+          backgroundColor: "#f44336",
           color: "white",
           fontSize: "14px",
           fontWeight: "bold",
@@ -493,9 +480,7 @@ const TwainStoryBuilder: React.FC = () => {
     setCurrentView("account");
   };
 
-  const handleUpgradePlan = (
-    newPlanType: "basic" | "professional" | "enterprise"
-  ) => {
+  const handleUpgradePlan = (newPlanType: "freelance" | "professional") => {
     // This would typically integrate with a payment system
     // For now, we'll just update the local preferences
     updatePlan({

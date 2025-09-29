@@ -230,13 +230,11 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
     new Set()
   ); // Start with all collapsed
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
   const [sidebarExpandedFromIcon, setSidebarExpandedFromIcon] = useState(false);
 
   // Check for mobile screen size
   useEffect(() => {
     const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768); // sm breakpoint
       if (window.innerWidth < 768) {
         setSidebarCollapsed(true); // Auto-collapse on mobile
       }

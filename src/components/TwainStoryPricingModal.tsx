@@ -7,7 +7,7 @@ import CloseIcon from "@mui/icons-material/Close";
 interface TwainStoryPricingModalProps {
   open: boolean;
   onClose: () => void;
-  onUpgrade: (planType: "basic" | "freelance" | "professional") => void;
+  onUpgrade: (planType: "freelance" | "professional") => void;
 }
 
 const TwainStoryPricingModal: React.FC<TwainStoryPricingModalProps> = ({
@@ -338,7 +338,7 @@ const TwainStoryPricingModal: React.FC<TwainStoryPricingModalProps> = ({
                   },
                 }}
               >
-                Start Freelance
+                Start Professional
               </Button>
             </div>
           </div>

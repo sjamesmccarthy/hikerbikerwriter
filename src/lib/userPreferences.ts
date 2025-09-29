@@ -5,8 +5,8 @@
  * All data is keyed by user email to ensure proper data isolation between users.
  */
 
-export interface UserPlan {
-  type: "free" | "basic" | "professional" | "enterprise";
+export interface Plan {
+  type: "free" | "freelance" | "professional";
   status: "active" | "expired" | "cancelled";
   startDate?: string;
   endDate?: string;
@@ -15,7 +15,7 @@ export interface UserPlan {
 
 export interface UserPreferences {
   // Plan and subscription info
-  plan: UserPlan;
+  plan: Plan;
 
   // Account metadata
   accountCreatedAt: string;
@@ -236,7 +236,7 @@ export const updateUserPreference = <K extends keyof UserPreferences>(
  * Update user plan information
  */
 export const updateUserPlan = (
-  planInfo: Partial<UserPlan>,
+  planInfo: Partial<Plan>,
   userEmail?: string
 ): void => {
   if (!userEmail) return;
@@ -266,7 +266,7 @@ export const hasFeature = (feature: string, userEmail?: string): boolean => {
 /**
  * Get user's current plan type
  */
-export const getUserPlanType = (userEmail?: string): UserPlan["type"] => {
+export const getUserPlanType = (userEmail?: string): Plan["type"] => {
   if (!userEmail) return "free";
 
   const preferences = loadUserPreferences(userEmail);

@@ -9,7 +9,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useSession } from "next-auth/react";
 import {
   UserPreferences,
-  UserPlan,
+  Plan,
   loadUserPreferences,
   saveUserPreferences,
   updateUserPreference,
@@ -29,7 +29,7 @@ export interface UseUserPreferencesReturn {
   isLoading: boolean;
 
   // Preference getters
-  planType: UserPlan["type"];
+  planType: Plan["type"];
   isActivePlan: boolean;
   loginInfo: { lastLogin: string; loginCount: number; accountAge: number };
 
@@ -38,7 +38,7 @@ export interface UseUserPreferencesReturn {
     key: K,
     value: UserPreferences[K]
   ) => void;
-  updatePlan: (planInfo: Partial<UserPlan>) => void;
+  updatePlan: (planInfo: Partial<Plan>) => void;
   addToRecent: (type: "book" | "story", id: string) => void;
 
   // Login tracking
@@ -101,7 +101,7 @@ export const useUserPreferences = (): UseUserPreferencesReturn => {
 
   // Update plan information
   const updatePlan = useCallback(
-    (planInfo: Partial<UserPlan>) => {
+    (planInfo: Partial<Plan>) => {
       if (!userEmail) return;
 
       const updatedPreferences = {
@@ -209,7 +209,7 @@ export const useUserPlan = () => {
     useUserPreferences();
 
   const upgradePlan = useCallback(
-    (newPlanType: UserPlan["type"]) => {
+    (newPlanType: Plan["type"]) => {
       const planFeatures = getPlanFeatures(newPlanType);
 
       updatePlan({
@@ -251,12 +251,12 @@ export const useUserPlan = () => {
 /**
  * Get features available for each plan type
  */
-const getPlanFeatures = (planType: UserPlan["type"]): string[] => {
-  const features: Record<UserPlan["type"], string[]> = {
-    free: ["local-storage", "basic-writing", "export-txt", "up-to-3-books"],
-    basic: [
+const getPlanFeatures = (planType: Plan["type"]): string[] => {
+  const features: Record<Plan["type"], string[]> = {
+    free: ["local-storage", "basic-writing", "export-txt", "up-to-1-book"],
+    freelance: [
       "cloud-storage",
-      "unlimited-books",
+      "up-to-5-books",
       "advanced-writing",
       "export-pdf",
       "export-docx",
@@ -269,23 +269,12 @@ const getPlanFeatures = (planType: UserPlan["type"]): string[] => {
       "advanced-writing",
       "export-all-formats",
       "premium-templates",
+      "import-docx",
       "collaboration",
       "version-history",
       "priority-support",
       "custom-branding",
-    ],
-    enterprise: [
-      "cloud-storage",
-      "unlimited-books",
-      "advanced-writing",
-      "export-all-formats",
-      "premium-templates",
-      "team-collaboration",
-      "advanced-version-history",
-      "dedicated-support",
-      "custom-integrations",
-      "sso",
-      "admin-dashboard",
+      "publish-kindle-epub",
     ],
   };
 
@@ -295,7 +284,7 @@ const getPlanFeatures = (planType: UserPlan["type"]): string[] => {
 /**
  * Get plan end date based on plan type (assuming annual billing)
  */
-const getPlanEndDate = (planType: UserPlan["type"]): string | undefined => {
+const getPlanEndDate = (planType: Plan["type"]): string | undefined => {
   if (planType === "free") {
     return undefined; // Free plan doesn't expire
   }
