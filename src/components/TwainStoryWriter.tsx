@@ -4027,14 +4027,23 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
             </Box>
 
             {/* Modal content */}
-            <Box sx={{ p: 4 }}>
+            <Box
+              sx={{
+                p: 4,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                minHeight: { xs: "calc(100vh - 80px)", sm: "auto" },
+              }}
+            >
               <TextField
                 fullWidth
                 label="Idea Title"
                 value={ideaTitle}
                 onChange={(e) => setIdeaTitle(e.target.value)}
                 variant="outlined"
-                sx={{ mb: 3 }}
+                sx={{ mb: 3, maxWidth: { xs: "100%", sm: "none" } }}
                 autoFocus
               />
               <TextField
@@ -4045,13 +4054,14 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                 variant="outlined"
                 multiline
                 rows={4}
-                sx={{ mb: 4 }}
+                sx={{ mb: 4, maxWidth: { xs: "100%", sm: "none" } }}
               />
               <Box
                 sx={{
                   display: "flex",
                   gap: 2,
                   justifyContent: "space-between",
+                  width: "100%",
                 }}
               >
                 <Button
@@ -4153,7 +4163,19 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
 
             {/* Modal content */}
             <Box
-              sx={{ p: 4, overflowY: "auto", maxHeight: "calc(80vh - 80px)" }}
+              sx={{
+                p: 4,
+                overflowY: "auto",
+                maxHeight: {
+                  xs: "calc(100vh - 80px)",
+                  sm: "calc(80vh - 80px)",
+                },
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: { xs: "center", sm: "flex-start" },
+                minHeight: { xs: "calc(100vh - 80px)", sm: "auto" },
+              }}
             >
               {/* Avatar Upload */}
               <Box
@@ -4286,6 +4308,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                   display: "flex",
                   gap: 2,
                   justifyContent: "space-between",
+                  width: "100%",
                 }}
               >
                 <Button
@@ -4385,14 +4408,23 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
             </Box>
 
             {/* Modal content */}
-            <Box sx={{ p: 4 }}>
+            <Box
+              sx={{
+                p: 4,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                minHeight: { xs: "calc(100vh - 80px)", sm: "auto" },
+              }}
+            >
               <TextField
                 fullWidth
                 label="Chapter Name (optional)"
                 value={chapterTitle}
                 onChange={(e) => setChapterTitle(e.target.value)}
                 variant="outlined"
-                sx={{ mb: 4 }}
+                sx={{ mb: 4, maxWidth: { xs: "100%", sm: "none" } }}
                 autoFocus
               />
               <Box
@@ -4400,6 +4432,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                   display: "flex",
                   gap: 2,
                   justifyContent: "space-between",
+                  width: "100%",
                 }}
               >
                 <Button
@@ -4611,17 +4644,29 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
             </Box>
 
             {/* Modal content */}
-            <Box sx={{ p: 4 }}>
+            <Box
+              sx={{
+                p: 4,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "center",
+                justifyContent: "center",
+                minHeight: { xs: "calc(100vh - 80px)", sm: "auto" },
+              }}
+            >
               <TextField
                 fullWidth
                 label="Part Title"
                 value={partTitle}
                 onChange={(e) => setPartTitle(e.target.value)}
                 variant="outlined"
-                sx={{ mb: 3 }}
+                sx={{ mb: 3, maxWidth: { xs: "100%", sm: "none" } }}
                 autoFocus
               />
-              <FormControl fullWidth sx={{ mb: 4 }}>
+              <FormControl
+                fullWidth
+                sx={{ mb: 4, maxWidth: { xs: "100%", sm: "none" } }}
+              >
                 <InputLabel>Select Chapters</InputLabel>
                 <Select
                   multiple
@@ -4669,7 +4714,10 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                     })}
                 </Select>
               </FormControl>
-              <FormControl fullWidth sx={{ mb: 4 }}>
+              <FormControl
+                fullWidth
+                sx={{ mb: 4, maxWidth: { xs: "100%", sm: "none" } }}
+              >
                 <InputLabel>Select Stories</InputLabel>
                 <Select
                   multiple
@@ -4712,6 +4760,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                   display: "flex",
                   gap: 2,
                   justifyContent: "space-between",
+                  width: "100%",
                 }}
               >
                 <Button
