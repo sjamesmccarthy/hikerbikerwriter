@@ -2679,8 +2679,8 @@ const TwainStoryBuilder: React.FC = () => {
                 </Button>
               </ButtonGroup>
 
-              {/* Series filter dropdown - only show when books filter is selected */}
-              {filter === "books" && (
+              {/* Series filter dropdown - only show when books filter is selected and there are series */}
+              {filter === "books" && getUniqueSeriesNames(books).length > 0 && (
                 <FormControl
                   sx={{
                     minWidth: 200,
@@ -3401,13 +3401,15 @@ const TwainStoryBuilder: React.FC = () => {
           className="w-full text-center py-4 px-8 text-gray-200 text-xs"
           style={{ backgroundColor: "rgb(38, 52, 63)" }}
         >
-          You are subscribed to the{" "}
-          {planType.charAt(0).toUpperCase() + planType.slice(1)} plan.
+          <span className="text-green-200">
+            You are subscribed to the{" "}
+            {planType.charAt(0).toUpperCase() + planType.slice(1)} plan.
+          </span>
           <br />
           {planType === "freelance" &&
-            "Data may be periodically cleared from local storage when you clear cache. Your content will also not be accessible across devices"}
-          {!isActivePlan && planType !== "freelance" && "Your plan has expired"}{" "}
-          please{" "}
+            "Your content is being stored in local storage and will not be accessible across devices"}
+          {!isActivePlan && planType !== "freelance" && "Your plan has expired"}
+          . Please{" "}
           {(planType === "freelance" || !isActivePlan) && (
             <>
               <span
@@ -3421,9 +3423,10 @@ const TwainStoryBuilder: React.FC = () => {
               to store your content in the cloud and access it everywhere.
             </>
           )}
-          {isActivePlan && planType !== "freelance" && (
+          {isActivePlan && planType === "professional" && (
             <span className="text-green-200">
-              Enjoy unlimited cloud storage and premium features!
+              Enjoy unlimited cloud storage, ideas, stories, chapters and other
+              premium features!
             </span>
           )}
         </div>
