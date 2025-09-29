@@ -411,6 +411,7 @@ const TwainStoryBuilder: React.FC = () => {
   );
   const [notification, setNotification] = useState<string>("");
   const [showPricing, setShowPricing] = useState(false);
+  const [activeCardId, setActiveCardId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Select a random Twain image (1-6)
@@ -1735,6 +1736,12 @@ const TwainStoryBuilder: React.FC = () => {
                 transition: "all .3s ease 0ms",
               }}
               className="sm:!flex sm:flex-wrap sm:justify-start sm:gap-0 sm:!w-full"
+              onTouchStart={(e) => {
+                // Close active card overlay when tapping outside cards
+                if (e.target === e.currentTarget) {
+                  setActiveCardId(null);
+                }
+              }}
             >
               {/* Create/Import book card - first card - only show if there are existing books or stories */}
               {(books.length > 0 || quickStories.length > 0) &&
@@ -1797,6 +1804,9 @@ const TwainStoryBuilder: React.FC = () => {
               {/* Book cards */}
               {(filter === "all" || filter === "books") &&
                 books.map((bookData: Book) => {
+                  const cardId = `book-${bookData.id}`;
+                  const isActive = activeCardId === cardId;
+
                   return (
                     <div
                       key={bookData.id}
@@ -1805,16 +1815,39 @@ const TwainStoryBuilder: React.FC = () => {
                         aspectRatio: "176/268",
                         borderLeft: "8px solid rgb(100, 114, 127)",
                         transition: "transform 0.2s ease",
+                        transform: isActive ? "scale(1.05)" : "scale(1)",
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = "scale(1.05)";
+                        // Only apply hover effects on non-touch devices
+                        if (!("ontouchstart" in window)) {
+                          e.currentTarget.style.transform = "scale(1.05)";
+                          setActiveCardId(cardId);
+                        }
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = "scale(1)";
+                        // Only apply hover effects on non-touch devices
+                        if (!("ontouchstart" in window)) {
+                          e.currentTarget.style.transform = "scale(1)";
+                          setActiveCardId(null);
+                        }
+                      }}
+                      onTouchStart={() => {
+                        // Touch-specific interaction
+                        setActiveCardId(cardId);
+                      }}
+                      onTouchEnd={() => {
+                        // Reset after a delay to allow for tap interactions
+                        setTimeout(() => setActiveCardId(null), 2000);
                       }}
                     >
                       {/* Hover overlay with icons - covers entire card */}
-                      <div className="absolute inset-0 bg-black bg-opacity-60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-r-md z-10">
+                      <div
+                        className={`absolute inset-0 bg-black bg-opacity-60 flex flex-col items-center justify-center transition-opacity duration-200 rounded-r-md z-10 ${
+                          isActive
+                            ? "opacity-100"
+                            : "opacity-0 group-hover:opacity-100"
+                        }`}
+                      >
                         {/* Book info - always show */}
                         <div className="text-center mb-4">
                           <Typography
@@ -2073,6 +2106,9 @@ const TwainStoryBuilder: React.FC = () => {
               {/* Story cards */}
               {(filter === "all" || filter === "stories") &&
                 quickStories.map((storyData: Book) => {
+                  const cardId = `story-${storyData.id}`;
+                  const isActive = activeCardId === cardId;
+
                   return (
                     <div
                       key={`story-${storyData.id}`}
@@ -2081,16 +2117,39 @@ const TwainStoryBuilder: React.FC = () => {
                         aspectRatio: "176/268",
                         borderLeft: "8px solid rgb(34, 197, 94)", // Green border
                         transition: "transform 0.2s ease",
+                        transform: isActive ? "scale(1.05)" : "scale(1)",
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = "scale(1.05)";
+                        // Only apply hover effects on non-touch devices
+                        if (!("ontouchstart" in window)) {
+                          e.currentTarget.style.transform = "scale(1.05)";
+                          setActiveCardId(cardId);
+                        }
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = "scale(1)";
+                        // Only apply hover effects on non-touch devices
+                        if (!("ontouchstart" in window)) {
+                          e.currentTarget.style.transform = "scale(1)";
+                          setActiveCardId(null);
+                        }
+                      }}
+                      onTouchStart={() => {
+                        // Touch-specific interaction
+                        setActiveCardId(cardId);
+                      }}
+                      onTouchEnd={() => {
+                        // Reset after a delay to allow for tap interactions
+                        setTimeout(() => setActiveCardId(null), 2000);
                       }}
                     >
                       {/* Hover overlay with icons - covers entire card */}
-                      <div className="absolute inset-0 bg-black bg-opacity-60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 rounded-r-md z-10">
+                      <div
+                        className={`absolute inset-0 bg-black bg-opacity-60 flex flex-col items-center justify-center transition-opacity duration-200 rounded-r-md z-10 ${
+                          isActive
+                            ? "opacity-100"
+                            : "opacity-0 group-hover:opacity-100"
+                        }`}
+                      >
                         {/* Story info */}
                         <div className="text-center mb-4">
                           <Typography
