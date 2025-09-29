@@ -6,7 +6,7 @@
  */
 
 export interface Plan {
-  type: "free" | "professional";
+  type: "freelance" | "professional";
   status: "active" | "expired" | "cancelled";
   startDate?: string;
   endDate?: string;
@@ -62,7 +62,7 @@ export interface UserPreferences {
 // Default preferences for new users
 export const DEFAULT_USER_PREFERENCES: UserPreferences = {
   plan: {
-    type: "free",
+    type: "freelance",
     status: "active",
     startDate: new Date().toISOString(),
     features: ["local-storage", "basic-writing", "export-txt"],
@@ -267,7 +267,7 @@ export const hasFeature = (feature: string, userEmail?: string): boolean => {
  * Get user's current plan type
  */
 export const getUserPlanType = (userEmail?: string): Plan["type"] => {
-  if (!userEmail) return "free";
+  if (!userEmail) return "freelance";
 
   const preferences = loadUserPreferences(userEmail);
   return preferences.plan.type;

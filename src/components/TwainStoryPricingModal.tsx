@@ -86,7 +86,7 @@ const TwainStoryPricingModal: React.FC<TwainStoryPricingModalProps> = ({
           }}
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Free Plan */}
+            {/* Freelance Plan */}
             <div className="border border-gray-200 rounded-lg p-6 bg-white flex flex-col h-full">
               <div className="flex-1">
                 <div className="text-center mb-6">

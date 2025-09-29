@@ -310,9 +310,9 @@ const generateQuickStoryId = (existingStories: Book[]): number => {
 };
 
 // Plan utility functions
-const getPlanFeatures = (planType: "free" | "professional"): string[] => {
+const getPlanFeatures = (planType: "freelance" | "professional"): string[] => {
   const features: Record<string, string[]> = {
-    free: ["local-storage", "basic-writing", "export-txt", "up-to-1-book"],
+    freelance: ["local-storage", "basic-writing", "export-txt", "up-to-1-book"],
     professional: [
       "cloud-storage",
       "unlimited-books",
@@ -328,14 +328,14 @@ const getPlanFeatures = (planType: "free" | "professional"): string[] => {
     ],
   };
 
-  return features[planType] || features.free;
+  return features[planType] || features.freelance;
 };
 
 const getPlanEndDate = (
-  planType: "free" | "professional"
+  planType: "freelance" | "professional"
 ): string | undefined => {
-  if (planType === "free") {
-    return undefined; // Free plan doesn't expire
+  if (planType === "freelance") {
+    return undefined; // Freelance plan doesn't expire
   }
 
   const endDate = new Date();
@@ -344,11 +344,11 @@ const getPlanEndDate = (
 };
 
 // Helper function to get plan chip properties
-const getPlanChipProps = (planType: "free" | "professional") => {
+const getPlanChipProps = (planType: "freelance" | "professional") => {
   switch (planType) {
-    case "free":
+    case "freelance":
       return {
-        label: "Free",
+        label: "Freelance",
         color: "default" as const,
         sx: {
           backgroundColor: "#9e9e9e",
@@ -372,7 +372,7 @@ const getPlanChipProps = (planType: "free" | "professional") => {
       };
     default:
       return {
-        label: "Free",
+        label: "Freelance",
         color: "default" as const,
         sx: {
           backgroundColor: "#9e9e9e",
@@ -458,9 +458,8 @@ const TwainStoryBuilder: React.FC = () => {
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Select a random Twain image (1-6)
-  const randomImageNumber = Math.floor(Math.random() * 6) + 1;
-  const backgroundImage = `/images/twain${randomImageNumber}.png`;
+  // Use twain5.png for the login screen
+  const backgroundImage = `/images/twain5.png`;
 
   // Debug: Log which image is being used
   console.log("Loading Twain image:", backgroundImage);
@@ -2399,7 +2398,7 @@ const TwainStoryBuilder: React.FC = () => {
                             : "Local Storage Only"}
                         </Typography>
                       </div>
-                      {planType === "free" && (
+                      {planType === "freelance" && (
                         <Button
                           onClick={handleShowPricing}
                           variant="outlined"
@@ -2544,10 +2543,15 @@ const TwainStoryBuilder: React.FC = () => {
         {/* Header - 300px tall */}
         <header
           className="h-[300px] flex flex-col justify-center items-center text-white relative"
-          style={{ backgroundColor: "rgb(38, 52, 63)" }}
+          style={{
+            backgroundImage: `url(/images/twain5.png)`,
+            backgroundSize: "cover",
+            backgroundPosition: "center",
+            backgroundRepeat: "no-repeat",
+          }}
         >
           {/* Profile Menu - Top Right */}
-          <div className="absolute top-4 right-4 flex items-center">
+          <div className="absolute top-4 right-4 flex items-center z-10">
             <div className="relative">
               <IconButton onClick={handleMenuOpen}>
                 <UserAvatar session={session} />
@@ -2584,6 +2588,8 @@ const TwainStoryBuilder: React.FC = () => {
             style={{
               filter: "invert(1) brightness(100%)",
               marginBottom: "32px",
+              position: "relative",
+              zIndex: 10,
             }}
           />
           <Typography
@@ -2592,6 +2598,8 @@ const TwainStoryBuilder: React.FC = () => {
               fontFamily: "'Rubik', sans-serif",
               fontWeight: 600,
               marginBottom: 1,
+              position: "relative",
+              zIndex: 10,
             }}
           >
             <span className="block sm:hidden">Welcome Back</span>
@@ -2608,6 +2616,8 @@ const TwainStoryBuilder: React.FC = () => {
               textAlign: "center",
               maxWidth: "600px",
               px: { xs: 3, sm: 0 },
+              position: "relative",
+              zIndex: 10,
             }}
           >
             This is your bookshelf, where you can write, plan, edit and typeset
@@ -2691,8 +2701,8 @@ const TwainStoryBuilder: React.FC = () => {
                     label="Filter by Series"
                     onChange={(e) => handleSeriesFilterChange(e.target.value)}
                   >
-                    <MenuItem value="all">All Series</MenuItem>
-                    {/* <MenuItem value="no-series">No Series</MenuItem> */}
+                    <MenuItem value="all">All Books & Series</MenuItem>
+                    <MenuItem value="no-series">No Series</MenuItem>
                     {getUniqueSeriesNames(books).map((seriesName) => (
                       <MenuItem key={seriesName} value={seriesName}>
                         {seriesName}
@@ -3394,25 +3404,24 @@ const TwainStoryBuilder: React.FC = () => {
           You are subscribed to the{" "}
           {planType.charAt(0).toUpperCase() + planType.slice(1)} plan.
           <br />
-          {planType === "free" &&
+          {planType === "freelance" &&
             "Data may be periodically cleared from local storage when you clear cache. Your content will also not be accessible across devices"}
-          {!isActivePlan && planType !== "free" && "Your plan has expired"}.
-          <br />
-          {(planType === "free" || !isActivePlan) && (
+          {!isActivePlan && planType !== "freelance" && "Your plan has expired"}{" "}
+          please{" "}
+          {(planType === "freelance" || !isActivePlan) && (
             <>
               <span
                 onClick={handleShowPricing}
                 className="underline cursor-pointer hover:text-white transition-colors duration-200"
               >
-                {planType === "free"
-                  ? "Upgrade to a paid plan"
-                  : "Renew your subscription"}
+                {planType === "freelance"
+                  ? "upgrade to a paid plan"
+                  : "renew your subscription"}
               </span>{" "}
-              to retain your data permanently and access it across all your
-              devices.
+              to store your content in the cloud and access it everywhere.
             </>
           )}
-          {isActivePlan && planType !== "free" && (
+          {isActivePlan && planType !== "freelance" && (
             <span className="text-green-200">
               Enjoy unlimited cloud storage and premium features!
             </span>
@@ -3721,15 +3730,17 @@ const TwainStoryBuilder: React.FC = () => {
         }}
       >
         {/* Mobile: Single container with background image, Desktop: Login Panel (50%) */}
-        <div
-          className="w-full md:w-1/2 bg-white flex flex-col relative md:bg-none"
-          style={{
-            backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.9)), url(${backgroundImage})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            backgroundRepeat: "no-repeat",
-          }}
-        >
+        <div className="w-full md:w-1/2 bg-white flex flex-col relative">
+          {/* Mobile background overlay - only visible on mobile */}
+          <div
+            className="absolute inset-0 md:hidden"
+            style={{
+              backgroundImage: `linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.9)), url(${backgroundImage})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              backgroundRepeat: "no-repeat",
+            }}
+          ></div>
           {/* Content layer */}
           <div className="relative z-10 flex flex-col sm:h-full h-screen">
             {/* Icon in top left */}

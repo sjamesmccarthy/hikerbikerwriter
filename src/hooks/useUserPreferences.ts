@@ -253,7 +253,7 @@ export const useUserPlan = () => {
  */
 const getPlanFeatures = (planType: Plan["type"]): string[] => {
   const features: Record<Plan["type"], string[]> = {
-    free: ["local-storage", "basic-writing", "export-txt", "up-to-1-book"],
+    freelance: ["local-storage", "basic-writing", "export-txt", "up-to-1-book"],
     professional: [
       "cloud-storage",
       "unlimited-books",
@@ -269,15 +269,15 @@ const getPlanFeatures = (planType: Plan["type"]): string[] => {
     ],
   };
 
-  return features[planType] || features.free;
+  return features[planType] || features.freelance;
 };
 
 /**
  * Get plan end date based on plan type (assuming annual billing)
  */
 const getPlanEndDate = (planType: Plan["type"]): string | undefined => {
-  if (planType === "free") {
-    return undefined; // Free plan doesn't expire
+  if (planType === "freelance") {
+    return undefined; // Freelance plan doesn't expire
   }
 
   const endDate = new Date();
