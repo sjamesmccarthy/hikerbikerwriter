@@ -30,6 +30,7 @@ import DeleteForeverOutlinedIcon from "@mui/icons-material/DeleteForeverOutlined
 import CloudUploadOutlinedIcon from "@mui/icons-material/CloudUploadOutlined";
 import DeleteOutlinedIcon from "@mui/icons-material/DeleteOutlined";
 import DeleteOutlineOutlinedIcon from "@mui/icons-material/DeleteOutlineOutlined";
+import LogoutOutlinedIcon from "@mui/icons-material/LogoutOutlined";
 import Image from "next/image";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import TwainStoryWriter from "./TwainStoryWriter";
@@ -1289,6 +1290,7 @@ const TwainStoryBuilder: React.FC = () => {
                               fontFamily: "'Rubik', sans-serif",
                               color: "rgb(107, 114, 128)",
                               fontStyle: "italic",
+                              display: { xs: "none", sm: "block" },
                             }}
                           >
                             A member since{" "}
@@ -1309,24 +1311,42 @@ const TwainStoryBuilder: React.FC = () => {
                           </Typography>
                         </div>
                       </div>
-                      <Button
-                        onClick={handleLogout}
-                        variant="outlined"
-                        size="small"
-                        sx={{
-                          textTransform: "none",
-                          fontFamily: "'Rubik', sans-serif",
-                          borderColor: "rgb(209, 213, 219)",
-                          color: "rgb(107, 114, 128)",
-                          "&:hover": {
-                            borderColor: "rgb(239, 68, 68)",
-                            color: "rgb(239, 68, 68)",
-                            backgroundColor: "rgba(239, 68, 68, 0.04)",
-                          },
-                        }}
-                      >
-                        Sign Out
-                      </Button>
+                      {/* Mobile: Icon Button, Desktop: Text Button */}
+                      <div className="sm:hidden">
+                        <IconButton
+                          onClick={handleLogout}
+                          size="small"
+                          sx={{
+                            color: "rgb(107, 114, 128)",
+                            "&:hover": {
+                              color: "rgb(239, 68, 68)",
+                              backgroundColor: "rgba(239, 68, 68, 0.04)",
+                            },
+                          }}
+                        >
+                          <LogoutOutlinedIcon />
+                        </IconButton>
+                      </div>
+                      <div className="hidden sm:block">
+                        <Button
+                          onClick={handleLogout}
+                          variant="outlined"
+                          size="small"
+                          sx={{
+                            textTransform: "none",
+                            fontFamily: "'Rubik', sans-serif",
+                            borderColor: "rgb(209, 213, 219)",
+                            color: "rgb(107, 114, 128)",
+                            "&:hover": {
+                              borderColor: "rgb(239, 68, 68)",
+                              color: "rgb(239, 68, 68)",
+                              backgroundColor: "rgba(239, 68, 68, 0.04)",
+                            },
+                          }}
+                        >
+                          Sign Out
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1346,57 +1366,72 @@ const TwainStoryBuilder: React.FC = () => {
                   </Typography>
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="text-center p-4 bg-gray-50 rounded-lg">
-                      <Typography
-                        variant="h4"
-                        sx={{
-                          fontFamily: "'Rubik', sans-serif",
-                          fontWeight: 700,
-                          color: "rgb(19, 135, 194)",
-                        }}
-                      >
-                        {books.length}
-                      </Typography>
+                    <div className="flex flex-row sm:flex-col items-center sm:text-center justify-between sm:justify-center p-4 bg-gray-50 rounded-lg">
                       <Typography
                         variant="body2"
                         sx={{
                           fontFamily: "'Rubik', sans-serif",
                           color: "rgb(107, 114, 128)",
+                          order: { xs: 1, sm: 2 },
                         }}
                       >
                         Books
                       </Typography>
-                    </div>
-
-                    <div className="text-center p-4 bg-gray-50 rounded-lg">
                       <Typography
                         variant="h4"
                         sx={{
                           fontFamily: "'Rubik', sans-serif",
                           fontWeight: 700,
                           color: "rgb(19, 135, 194)",
+                          order: { xs: 2, sm: 1 },
                         }}
                       >
-                        {quickStories.length}
+                        {books.length}
                       </Typography>
+                    </div>
+
+                    <div className="flex flex-row sm:flex-col items-center sm:text-center justify-between sm:justify-center p-4 bg-gray-50 rounded-lg">
                       <Typography
                         variant="body2"
                         sx={{
                           fontFamily: "'Rubik', sans-serif",
                           color: "rgb(107, 114, 128)",
+                          order: { xs: 1, sm: 2 },
                         }}
                       >
                         Stories
                       </Typography>
-                    </div>
-
-                    <div className="text-center p-4 bg-gray-50 rounded-lg">
                       <Typography
                         variant="h4"
                         sx={{
                           fontFamily: "'Rubik', sans-serif",
                           fontWeight: 700,
                           color: "rgb(19, 135, 194)",
+                          order: { xs: 2, sm: 1 },
+                        }}
+                      >
+                        {quickStories.length}
+                      </Typography>
+                    </div>
+
+                    <div className="flex flex-row sm:flex-col items-center sm:text-center justify-between sm:justify-center p-4 bg-gray-50 rounded-lg">
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontFamily: "'Rubik', sans-serif",
+                          color: "rgb(107, 114, 128)",
+                          order: { xs: 1, sm: 2 },
+                        }}
+                      >
+                        Total Words
+                      </Typography>
+                      <Typography
+                        variant="h4"
+                        sx={{
+                          fontFamily: "'Rubik', sans-serif",
+                          fontWeight: 700,
+                          color: "rgb(19, 135, 194)",
+                          order: { xs: 2, sm: 1 },
                         }}
                       >
                         {books.reduce(
@@ -1407,15 +1442,6 @@ const TwainStoryBuilder: React.FC = () => {
                             (total, story) => total + story.wordCount,
                             0
                           )}
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          fontFamily: "'Rubik', sans-serif",
-                          color: "rgb(107, 114, 128)",
-                        }}
-                      >
-                        Total Words
                       </Typography>
                     </div>
                   </div>
@@ -1570,7 +1596,10 @@ const TwainStoryBuilder: React.FC = () => {
                         },
                       }}
                     >
-                      Permanently Delete Account
+                      <span className="sm:hidden">Delete Account</span>
+                      <span className="hidden sm:inline">
+                        Permanently Delete Account
+                      </span>
                     </Button>
                   </div>
                 </div>
