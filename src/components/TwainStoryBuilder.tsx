@@ -442,6 +442,28 @@ const getAvailableBookNumbers = (
   return allNumbers.filter((num) => !usedNumbers.includes(num));
 };
 
+// Reusable Footer Component
+const TwainFooter: React.FC = () => {
+  return (
+    <footer className="h-[100px] flex items-center justify-center bg-gray-200">
+      <Typography
+        variant="body2"
+        color="text.secondary"
+        sx={{ fontFamily: "'Rubik', sans-serif", textAlign: "center" }}
+      >
+        © 2025 Twain Story Writer. All rights reserved.
+        <br />
+        You are using a BETA version of this software - please report any bugs
+        or issues and feature requests to{" "}
+        <a href="mailto:beta@twainstorywriter.com" className="underline">
+          beta@twainstorywriter.com
+        </a>
+        .
+      </Typography>
+    </footer>
+  );
+};
+
 const TwainStoryBuilder: React.FC = () => {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -2495,15 +2517,7 @@ const TwainStoryBuilder: React.FC = () => {
           </main>
 
           {/* Footer - 100px tall */}
-          <footer className="h-[100px] flex items-center justify-center bg-gray-200">
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              sx={{ fontFamily: "'Rubik', sans-serif" }}
-            >
-              © 2025 Twain Story Builder. All rights reserved.
-            </Typography>
-          </footer>
+          <TwainFooter />
 
           {/* Export Modal */}
           <Modal
@@ -3433,15 +3447,7 @@ const TwainStoryBuilder: React.FC = () => {
           </main>
 
           {/* Footer - 100px tall */}
-          <footer className="h-[100px] flex items-center justify-center bg-gray-200">
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              sx={{ fontFamily: "'Rubik', sans-serif" }}
-            >
-              © 2025 Twain Story Builder. All rights reserved.
-            </Typography>
-          </footer>
+          <TwainFooter />
 
           {/* Pricing Modal - Available for account settings */}
           <TwainStoryPricingModal
@@ -4535,22 +4541,7 @@ const TwainStoryBuilder: React.FC = () => {
         </div>
 
         {/* Footer - 100px tall */}
-        <footer className="h-[100px] flex items-center justify-center bg-gray-200">
-          <Typography
-            variant="body2"
-            color="text.secondary"
-            sx={{ fontFamily: "'Rubik', sans-serif", textAlign: "center" }}
-          >
-            © 2025 Twain Story Writer. All rights reserved.
-            <br />
-            You are using a BETA version of this software - please report any
-            bugs or issues and feature requests to{" "}
-            <a href="mailto:beta@twainstorywriter.com" className="underline">
-              beta@twainstorywriter.com
-            </a>
-            .
-          </Typography>
-        </footer>
+        <TwainFooter />
 
         {/* Create Book Modal */}
         <Modal
@@ -5036,6 +5027,7 @@ export {
   saveQuickStoriesToStorage,
   updateQuickStoryWordCount,
   getQuickStoriesStorageKey,
+  TwainFooter,
 };
 export type { Book };
 
