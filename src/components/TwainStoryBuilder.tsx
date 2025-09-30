@@ -38,6 +38,7 @@ import LogoutOutlinedIcon from "@mui/icons-material/LogoutOutlined";
 import AddIcon from "@mui/icons-material/Add";
 import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import { twainPricingPlans } from "../data/twainPricingPlans";
 import PictureAsPdfOutlinedIcon from "@mui/icons-material/PictureAsPdfOutlined";
 import FileCopyOutlinedIcon from "@mui/icons-material/FileCopyOutlined";
 import TabletAndroidOutlinedIcon from "@mui/icons-material/TabletAndroidOutlined";
@@ -47,6 +48,7 @@ import WorkspacePremiumOutlinedIcon from "@mui/icons-material/WorkspacePremiumOu
 import TwainStoryWriter from "./TwainStoryWriter";
 import TwainStoryPricingModal from "./TwainStoryPricingModal";
 import { useUserPreferences } from "../hooks/useUserPreferences";
+import { migrateUserPreferencesEndDate } from "../lib/userPreferences";
 
 // Utility function to process Google profile image URL
 const processGoogleImageUrl = (url: string): string => {
@@ -204,6 +206,8 @@ interface Book {
   clauseAllRightsReserved?: boolean;
   clauseFiction?: boolean;
   clauseMoralRights?: boolean;
+  clauseCustom?: boolean;
+  customClauseText?: string;
 }
 
 // Local storage utilities
@@ -414,6 +418,7 @@ const TwainStoryBuilder: React.FC = () => {
     isActivePlan,
     loginInfo,
     updatePlan,
+    updatePreference,
     recordLogin,
     checkFeature,
   } = useUserPreferences();
@@ -464,10 +469,14 @@ const TwainStoryBuilder: React.FC = () => {
     useState(false);
   const [managedBookClauseMoralRights, setManagedBookClauseMoralRights] =
     useState(false);
+  const [managedBookClauseCustom, setManagedBookClauseCustom] = useState(false);
+  const [managedBookCustomClauseText, setManagedBookCustomClauseText] =
+    useState("");
   const [notification, setNotification] = useState<string>("");
   const [showPricing, setShowPricing] = useState(false);
   const [showExportModal, setShowExportModal] = useState(false);
   const [activeCardId, setActiveCardId] = useState<string | null>(null);
+  const [aboutAuthor, setAboutAuthor] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Use twain5.png for the login screen
@@ -517,6 +526,13 @@ const TwainStoryBuilder: React.FC = () => {
     }
   }, [session?.user?.email, session]);
 
+  // Load aboutAuthor from user preferences
+  useEffect(() => {
+    if (preferences?.customSettings?.aboutAuthor) {
+      setAboutAuthor(preferences.customSettings.aboutAuthor as string);
+    }
+  }, [preferences]);
+
   // Load quick stories from localStorage on component mount
   useEffect(() => {
     if (session?.user?.email) {
@@ -561,6 +577,8 @@ const TwainStoryBuilder: React.FC = () => {
   useEffect(() => {
     if (session?.user?.email && status === "authenticated") {
       recordLogin();
+      // Run migration to ensure endDate is set for professional plans
+      migrateUserPreferencesEndDate(session.user.email);
     }
   }, [session?.user?.email, status, recordLogin]);
 
@@ -600,6 +618,22 @@ const TwainStoryBuilder: React.FC = () => {
   const handleAccountSettings = () => {
     handleMenuClose();
     setCurrentView("account");
+  };
+
+  const handleAboutAuthorChange = (value: string) => {
+    // Limit to 350 words
+    const words = value
+      .trim()
+      .split(/\s+/)
+      .filter((word) => word.length > 0);
+    if (words.length <= 350) {
+      setAboutAuthor(value);
+      // Save to user preferences
+      updatePreference("customSettings", {
+        ...preferences.customSettings,
+        aboutAuthor: value,
+      });
+    }
   };
 
   const handleUpgradePlan = (newPlanType: "professional") => {
@@ -668,6 +702,8 @@ const TwainStoryBuilder: React.FC = () => {
         clauseAllRightsReserved: undefined,
         clauseFiction: undefined,
         clauseMoralRights: undefined,
+        clauseCustom: undefined,
+        customClauseText: undefined,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -725,6 +761,8 @@ const TwainStoryBuilder: React.FC = () => {
         clauseAllRightsReserved: undefined,
         clauseFiction: undefined,
         clauseMoralRights: undefined,
+        clauseCustom: undefined,
+        customClauseText: undefined,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       };
@@ -771,6 +809,8 @@ const TwainStoryBuilder: React.FC = () => {
     );
     setManagedBookClauseFiction(book.clauseFiction || false);
     setManagedBookClauseMoralRights(book.clauseMoralRights || false);
+    setManagedBookClauseCustom(book.clauseCustom || false);
+    setManagedBookCustomClauseText(book.customClauseText || "");
     setCurrentView("manage");
   };
 
@@ -799,6 +839,8 @@ const TwainStoryBuilder: React.FC = () => {
     setManagedBookClauseAllRightsReserved(false);
     setManagedBookClauseFiction(false);
     setManagedBookClauseMoralRights(false);
+    setManagedBookClauseCustom(false);
+    setManagedBookCustomClauseText("");
 
     // Reload books from localStorage to pick up any word count updates
     if (session?.user?.email) {
@@ -846,6 +888,10 @@ const TwainStoryBuilder: React.FC = () => {
           managedBookClauseAllRightsReserved || undefined,
         clauseFiction: managedBookClauseFiction || undefined,
         clauseMoralRights: managedBookClauseMoralRights || undefined,
+        clauseCustom: managedBookClauseCustom || undefined,
+        customClauseText: managedBookClauseCustom
+          ? managedBookCustomClauseText.trim() || undefined
+          : undefined,
         updatedAt: new Date().toISOString(),
       };
 
@@ -1469,7 +1515,7 @@ const TwainStoryBuilder: React.FC = () => {
                     </div>
                   </div>
 
-                  {/* Description Section */}
+                  {/* Dedication Section */}
                   <div className="mt-6">
                     <Typography
                       variant="h6"
@@ -1480,7 +1526,7 @@ const TwainStoryBuilder: React.FC = () => {
                         mb: 2,
                       }}
                     >
-                      Description (Brief Synopsis)
+                      Dedication
                     </Typography>
 
                     <div className="relative">
@@ -1495,7 +1541,7 @@ const TwainStoryBuilder: React.FC = () => {
                           setManagedBookDescription(value.slice(0, 4000));
                         }}
                         variant="outlined"
-                        placeholder="Enter a brief synopsis or description of your book..."
+                        placeholder="Enter a dedication for your book..."
                         sx={{
                           "& .MuiOutlinedInput-root": {
                             fontFamily: "'Rubik', sans-serif",
@@ -2176,6 +2222,85 @@ const TwainStoryBuilder: React.FC = () => {
                           },
                         }}
                       />
+
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={managedBookClauseCustom}
+                            onChange={(e) =>
+                              setManagedBookClauseCustom(e.target.checked)
+                            }
+                            disabled={planType !== "professional"}
+                            sx={{
+                              color: "rgb(19, 135, 194)",
+                              "&.Mui-checked": {
+                                color: "rgb(19, 135, 194)",
+                              },
+                              mt: "-8px",
+                            }}
+                          />
+                        }
+                        label={
+                          <div>
+                            <div
+                              className={`font-medium mb-1 cursor-pointer ${
+                                planType !== "professional"
+                                  ? "text-gray-400"
+                                  : "text-gray-800"
+                              }`}
+                              onClick={() => {
+                                if (planType === "professional") {
+                                  setManagedBookClauseCustom(
+                                    !managedBookClauseCustom
+                                  );
+                                }
+                              }}
+                            >
+                              Custom
+                            </div>
+                            <div
+                              className={`text-sm ${
+                                planType !== "professional"
+                                  ? "text-gray-400"
+                                  : "text-gray-600"
+                              }`}
+                            >
+                              Add your own custom legal clause or disclaimer
+                            </div>
+                          </div>
+                        }
+                        sx={{
+                          alignItems: "flex-start",
+                          mb: 3,
+                          "& .MuiFormControlLabel-label": {
+                            fontFamily: "'Rubik', sans-serif",
+                          },
+                        }}
+                      />
+
+                      {/* Custom Clause Textarea - shown when Custom is checked */}
+                      {managedBookClauseCustom && (
+                        <div className="ml-8 mt-2 mb-3">
+                          <TextField
+                            fullWidth
+                            multiline
+                            rows={4}
+                            value={managedBookCustomClauseText}
+                            onChange={(e) =>
+                              setManagedBookCustomClauseText(e.target.value)
+                            }
+                            variant="outlined"
+                            placeholder="Enter your custom legal clause or disclaimer..."
+                            disabled={planType !== "professional"}
+                            sx={{
+                              "& .MuiOutlinedInput-root": {
+                                fontFamily: "'Rubik', sans-serif",
+                                fontSize: "14px",
+                              },
+                            }}
+                          />
+                        </div>
+                      )}
                     </FormGroup>
                   </div>
 
@@ -2198,7 +2323,7 @@ const TwainStoryBuilder: React.FC = () => {
                         },
                       }}
                     >
-                      Export Book
+                      Export/Publish Book
                     </Button>
                     <Button
                       onClick={handleDeleteBook}
@@ -2794,6 +2919,69 @@ const TwainStoryBuilder: React.FC = () => {
                       </div>
                     </div>
                   </div>
+
+                  {/* About Author Section */}
+                  <div className="mt-6">
+                    <Typography
+                      variant="h6"
+                      sx={{
+                        fontFamily: "'Rubik', sans-serif",
+                        fontWeight: 600,
+                        color: "rgb(31, 41, 55)",
+                        mb: 2,
+                      }}
+                    >
+                      About Author
+                    </Typography>
+
+                    <div className="relative">
+                      <TextField
+                        fullWidth
+                        multiline
+                        rows={6}
+                        value={aboutAuthor}
+                        onChange={(e) =>
+                          handleAboutAuthorChange(e.target.value)
+                        }
+                        variant="outlined"
+                        placeholder="Write a brief biography or description about yourself as an author..."
+                        sx={{
+                          "& .MuiOutlinedInput-root": {
+                            fontFamily: "'Rubik', sans-serif",
+                          },
+                        }}
+                      />
+
+                      {/* Word Counter */}
+                      <div className="absolute bottom-3 right-3 text-sm text-gray-500 bg-white px-2 py-1 rounded">
+                        <Typography
+                          variant="caption"
+                          sx={{
+                            fontFamily: "'Rubik', sans-serif",
+                            color: (() => {
+                              const wordCount = aboutAuthor
+                                .trim()
+                                .split(/\s+/)
+                                .filter((word) => word.length > 0).length;
+                              return wordCount > 320
+                                ? "rgb(248, 113, 113)"
+                                : "rgb(107, 114, 128)";
+                            })(),
+                          }}
+                        >
+                          {(() => {
+                            const wordCount = aboutAuthor
+                              .trim()
+                              .split(/\s+/)
+                              .filter((word) => word.length > 0).length;
+                            return aboutAuthor.trim() === ""
+                              ? "350 words remaining"
+                              : `${350 - wordCount} words remaining`;
+                          })()}
+                        </Typography>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Account Statistics */}
@@ -2917,7 +3105,11 @@ const TwainStoryBuilder: React.FC = () => {
                             color: "rgb(31, 41, 55)",
                           }}
                         >
-                          {planType.charAt(0).toUpperCase() + planType.slice(1)}{" "}
+                          {twainPricingPlans.plans[
+                            planType as keyof typeof twainPricingPlans.plans
+                          ]?.name ||
+                            planType.charAt(0).toUpperCase() +
+                              planType.slice(1)}{" "}
                           Plan
                         </Typography>
                         <Typography
@@ -2927,11 +3119,53 @@ const TwainStoryBuilder: React.FC = () => {
                             color: "rgb(107, 114, 128)",
                           }}
                         >
-                          {isActivePlan ? "Active" : "Expired"} •{" "}
-                          {checkFeature("cloud-storage")
-                            ? "Cloud Storage"
+                          {isActivePlan ? "Active" : "Inactive"} •{" "}
+                          {twainPricingPlans.plans[
+                            planType as keyof typeof twainPricingPlans.plans
+                          ]?.limitations.storage === "cloud"
+                            ? "Cloud Storage Enabled"
                             : "Local Storage Only"}
+                          {planType === "freelance" && (
+                            <>
+                              {" "}
+                              • $
+                              {
+                                twainPricingPlans.plans.freelance.price.amount
+                              }{" "}
+                              {twainPricingPlans.plans.freelance.price.period}
+                            </>
+                          )}
+                          {planType === "professional" && (
+                            <>
+                              {" "}
+                              • $
+                              {
+                                twainPricingPlans.plans.professional.price
+                                  .amount
+                              }{" "}
+                              per{" "}
+                              {
+                                twainPricingPlans.plans.professional.price
+                                  .period
+                              }
+                            </>
+                          )}
                         </Typography>
+                        {preferences.plan.endDate && (
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontFamily: "'Rubik', sans-serif",
+                              color: "rgb(107, 114, 128)",
+                              mt: 0.5,
+                            }}
+                          >
+                            Expires{" "}
+                            {new Date(
+                              preferences.plan.endDate
+                            ).toLocaleDateString()}
+                          </Typography>
+                        )}
                       </div>
                       {planType === "freelance" && (
                         <Button
@@ -2954,38 +3188,19 @@ const TwainStoryBuilder: React.FC = () => {
                     </div>
 
                     <div className="grid grid-cols-2 gap-2 text-sm">
-                      {[
-                        {
-                          feature: "unlimited-books",
-                          label: "Unlimited Books",
-                        },
-                        { feature: "cloud-storage", label: "Cloud Storage" },
-                        { feature: "export-pdf", label: "PDF Export" },
-                        { feature: "export-docx", label: "Word Export" },
-                        { feature: "collaboration", label: "Collaboration" },
-                        {
-                          feature: "version-history",
-                          label: "Version History",
-                        },
-                      ].map(({ feature, label }) => (
-                        <div key={feature} className="flex items-center">
+                      {twainPricingPlans.plans[
+                        planType as keyof typeof twainPricingPlans.plans
+                      ]?.features.map((feature, index) => (
+                        <div key={index} className="flex items-start">
+                          <span className="text-green-500 mr-2">✓</span>
                           <span
-                            className={`mr-2 ${
-                              checkFeature(feature)
-                                ? "text-green-500"
-                                : "text-gray-400"
-                            }`}
+                            className={
+                              feature.includes("coming soon")
+                                ? "text-gray-400 italic"
+                                : "text-gray-700"
+                            }
                           >
-                            {checkFeature(feature) ? "✓" : "✗"}
-                          </span>
-                          <span
-                            className={`${
-                              checkFeature(feature)
-                                ? "text-gray-700"
-                                : "text-gray-400"
-                            }`}
-                          >
-                            {label}
+                            {feature}
                           </span>
                         </div>
                       ))}

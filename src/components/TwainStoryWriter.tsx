@@ -28,6 +28,7 @@ import {
   ListItemText,
   Tooltip,
   Chip,
+  Slider,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -48,6 +49,7 @@ import KeyboardDoubleArrowDownIcon from "@mui/icons-material/KeyboardDoubleArrow
 import MenuOpenIcon from "@mui/icons-material/MenuOpen";
 import HistoryEduIcon from "@mui/icons-material/HistoryEdu";
 import TimerOutlinedIcon from "@mui/icons-material/TimerOutlined";
+import DataSaverOnOutlinedIcon from "@mui/icons-material/DataSaverOnOutlined";
 import FileUploadOutlinedIcon from "@mui/icons-material/FileUploadOutlined";
 import WorkspacePremiumOutlinedIcon from "@mui/icons-material/WorkspacePremiumOutlined";
 import MenuBookOutlinedIcon from "@mui/icons-material/MenuBookOutlined";
@@ -308,6 +310,14 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
   const [timerInterval, setTimerInterval] = useState<NodeJS.Timeout | null>(
     null
   );
+
+  // Word goal related state
+  const [wordGoalModalOpen, setWordGoalModalOpen] = useState(false);
+  const [selectedWordGoal, setSelectedWordGoal] = useState(500);
+  const [wordGoalActive, setWordGoalActive] = useState(false);
+  const [wordGoalStartCount, setWordGoalStartCount] = useState(0);
+  const [congratulationsModalOpen, setCongratulationsModalOpen] =
+    useState(false);
 
   // Track modification sessions
   const [lastModificationTrackTime, setLastModificationTrackTime] =
@@ -1145,6 +1155,47 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
       }
     };
   }, [timerInterval]);
+
+  // Word goal functions
+  const handleWordGoalClick = () => {
+    setWordGoalModalOpen(true);
+  };
+
+  const handleWordGoalModalClose = () => {
+    setWordGoalModalOpen(false);
+  };
+
+  const handleStartWordGoal = () => {
+    setWordGoalActive(true);
+    setWordGoalStartCount(currentEditorWordCount);
+    setWordGoalModalOpen(false);
+  };
+
+  const handleStopWordGoal = () => {
+    setWordGoalActive(false);
+    setWordGoalStartCount(0);
+  };
+
+  const handleCongratulationsModalClose = () => {
+    setCongratulationsModalOpen(false);
+    setWordGoalActive(false);
+    setWordGoalStartCount(0);
+  };
+
+  // Check if word goal is reached
+  useEffect(() => {
+    if (wordGoalActive && wordGoalStartCount > 0) {
+      const wordsWritten = currentEditorWordCount - wordGoalStartCount;
+      if (wordsWritten >= selectedWordGoal) {
+        setCongratulationsModalOpen(true);
+      }
+    }
+  }, [
+    currentEditorWordCount,
+    wordGoalActive,
+    wordGoalStartCount,
+    selectedWordGoal,
+  ]);
 
   const handleEditIdea = (idea: Idea) => {
     setEditingIdea(idea);
@@ -2431,7 +2482,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
     <div className="h-screen flex relative">
       {/* Column 1: Sidebar with Accordions - overlay */}
       <div
-        className="bg-gray-50 border-r border-gray-200 flex flex-col transition-all duration-300 ease-in-out overflow-hidden fixed left-0 top-0 h-screen z-20"
+        className="bg-gray-50 border-r border-gray-200 flex flex-col transition-all duration-300 ease-in-out fixed left-0 top-0 h-screen z-20"
         style={{
           width: sidebarCollapsed
             ? "65px"
@@ -2510,8 +2561,8 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
 
         {/* Accordion Sections - Full View */}
         {!sidebarCollapsed && (
-          <div className="flex flex-col flex-1">
-            <div className="flex-1 overflow-y-auto">
+          <div className="flex flex-col flex-1 min-h-0">
+            <div className="flex-1 overflow-y-auto p-1">
               {accordionSections.map((section) => (
                 <Accordion
                   key={section.title}
@@ -3588,18 +3639,58 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                     </IconButton>
                   </div>
                 ) : (
-                  <IconButton
-                    onClick={handleTimerClick}
-                    size="small"
-                    sx={{
-                      color: "rgb(107, 114, 128)",
-                      "&:hover": {
-                        backgroundColor: "rgba(107, 114, 128, 0.1)",
-                      },
-                    }}
-                  >
-                    <TimerOutlinedIcon fontSize="small" />
-                  </IconButton>
+                  <div className="flex items-center gap-1">
+                    <IconButton
+                      onClick={handleTimerClick}
+                      size="small"
+                      sx={{
+                        color: "rgb(107, 114, 128)",
+                        "&:hover": {
+                          backgroundColor: "rgba(107, 114, 128, 0.1)",
+                        },
+                      }}
+                    >
+                      <TimerOutlinedIcon fontSize="small" />
+                    </IconButton>
+
+                    {/* Word Goal Icon */}
+                    {wordGoalActive ? (
+                      <div className="flex items-center gap-1">
+                        <div className="text-sm font-semibold text-green-600">
+                          {Math.max(
+                            0,
+                            currentEditorWordCount - wordGoalStartCount
+                          )}{" "}
+                          / {selectedWordGoal}
+                        </div>
+                        <IconButton
+                          onClick={handleStopWordGoal}
+                          size="small"
+                          sx={{
+                            color: "rgb(239, 68, 68)",
+                            "&:hover": {
+                              backgroundColor: "rgba(239, 68, 68, 0.1)",
+                            },
+                          }}
+                        >
+                          <CloseIcon fontSize="small" />
+                        </IconButton>
+                      </div>
+                    ) : (
+                      <IconButton
+                        onClick={handleWordGoalClick}
+                        size="small"
+                        sx={{
+                          color: "rgb(107, 114, 128)",
+                          "&:hover": {
+                            backgroundColor: "rgba(107, 114, 128, 0.1)",
+                          },
+                        }}
+                      >
+                        <DataSaverOnOutlinedIcon fontSize="small" />
+                      </IconButton>
+                    )}
+                  </div>
                 )}
 
                 <Typography
@@ -4013,8 +4104,8 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
               top: { xs: 0, sm: "50%" },
               left: { xs: 0, sm: "50%" },
               transform: { xs: "none", sm: "translate(-50%, -50%)" },
-              width: { xs: "100%", sm: 500 },
-              height: { xs: "100vh", sm: "auto" },
+              width: { xs: "100%", sm: "75vw" },
+              height: { xs: "100vh", sm: "75vh" },
               bgcolor: "background.paper",
               borderRadius: { xs: 0, sm: 3 },
               overflow: "hidden",
@@ -4064,8 +4155,9 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "center",
-                justifyContent: "center",
-                minHeight: { xs: "calc(100vh - 80px)", sm: "auto" },
+                justifyContent: "flex-start",
+                height: { xs: "calc(100vh - 80px)", sm: "calc(75vh - 80px)" },
+                overflow: "auto",
               }}
             >
               <TextField
@@ -4084,8 +4176,19 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                 onChange={(e) => setIdeaNotes(e.target.value)}
                 variant="outlined"
                 multiline
-                rows={4}
-                sx={{ mb: 4, maxWidth: { xs: "100%", sm: "none" } }}
+                sx={{
+                  mb: 4,
+                  maxWidth: { xs: "100%", sm: "none" },
+                  flex: 1,
+                  "& .MuiOutlinedInput-root": {
+                    height: "100%",
+                    alignItems: "stretch",
+                  },
+                  "& .MuiOutlinedInput-input": {
+                    height: "100% !important",
+                    overflow: "auto !important",
+                  },
+                }}
               />
               <Box
                 sx={{
@@ -4147,9 +4250,8 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
               top: { xs: 0, sm: "50%" },
               left: { xs: 0, sm: "50%" },
               transform: { xs: "none", sm: "translate(-50%, -50%)" },
-              width: { xs: "100%", sm: 600 },
-              height: { xs: "100vh", sm: "auto" },
-              maxHeight: { xs: "100vh", sm: "80vh" },
+              width: { xs: "100%", sm: "75vw" },
+              height: { xs: "100vh", sm: "75vh" },
               bgcolor: "background.paper",
               borderRadius: { xs: 0, sm: 3 },
               overflow: "hidden",
@@ -4196,134 +4298,214 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
             <Box
               sx={{
                 p: 4,
-                overflowY: "auto",
-                maxHeight: {
-                  xs: "calc(100vh - 80px)",
-                  sm: "calc(80vh - 80px)",
-                },
                 display: "flex",
                 flexDirection: "column",
-                alignItems: "center",
-                justifyContent: { xs: "center", sm: "flex-start" },
-                minHeight: { xs: "calc(100vh - 80px)", sm: "auto" },
+                height: { xs: "calc(100vh - 80px)", sm: "calc(75vh - 80px)" },
+                overflow: "auto",
               }}
             >
-              {/* Avatar Upload */}
+              {/* Avatar Upload and Basic Info Row */}
               <Box
-                sx={{ mb: 3, display: "flex", alignItems: "center", gap: 2 }}
+                sx={{
+                  display: "flex",
+                  gap: 3,
+                  mb: 3,
+                  alignItems: "flex-start",
+                }}
               >
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleAvatarUpload}
-                  style={{ display: "none" }}
-                  id="avatar-upload"
-                />
-                <label htmlFor="avatar-upload">
-                  <IconButton component="span">
-                    {characterAvatar ? (
-                      <Image
-                        src={characterAvatar}
-                        alt="Character Avatar"
-                        width={40}
-                        height={40}
-                        style={{
-                          borderRadius: "50%",
-                          objectFit: "cover",
-                        }}
-                      />
-                    ) : (
-                      <FaceOutlinedIcon sx={{ fontSize: 40 }} />
-                    )}
-                  </IconButton>
-                </label>
+                {/* Avatar Upload */}
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    minWidth: "80px",
+                  }}
+                >
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarUpload}
+                    style={{ display: "none" }}
+                    id="avatar-upload"
+                  />
+                  <label htmlFor="avatar-upload">
+                    <IconButton component="span">
+                      {characterAvatar ? (
+                        <Image
+                          src={characterAvatar}
+                          alt="Character Avatar"
+                          width={60}
+                          height={60}
+                          style={{
+                            borderRadius: "50%",
+                            objectFit: "cover",
+                          }}
+                        />
+                      ) : (
+                        <FaceOutlinedIcon sx={{ fontSize: 60 }} />
+                      )}
+                    </IconButton>
+                  </label>
+                </Box>
+
+                {/* Name and Gender */}
+                <Box
+                  sx={{
+                    flex: 1,
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 2,
+                  }}
+                >
+                  <TextField
+                    fullWidth
+                    label="Name"
+                    value={characterName}
+                    onChange={(e) => setCharacterName(e.target.value)}
+                    variant="outlined"
+                    autoFocus
+                  />
+                  <FormControl fullWidth>
+                    <InputLabel>Gender</InputLabel>
+                    <Select
+                      value={characterGender}
+                      onChange={(e) => setCharacterGender(e.target.value)}
+                      label="Gender"
+                    >
+                      <MenuItem value="">
+                        <em>Select Gender</em>
+                      </MenuItem>
+                      <MenuItem value="Male">Male</MenuItem>
+                      <MenuItem value="Female">Female</MenuItem>
+                      <MenuItem value="Animal">Animal</MenuItem>
+                      <MenuItem value="Other">Other</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Box>
               </Box>
 
-              <TextField
-                fullWidth
-                label="Name"
-                value={characterName}
-                onChange={(e) => setCharacterName(e.target.value)}
-                variant="outlined"
-                sx={{ mb: 3 }}
-                autoFocus
-              />
-              <FormControl fullWidth sx={{ mb: 3 }}>
-                <InputLabel>Gender</InputLabel>
-                <Select
-                  value={characterGender}
-                  onChange={(e) => setCharacterGender(e.target.value)}
-                  label="Gender"
-                >
-                  <MenuItem value="">
-                    <em>Select Gender</em>
-                  </MenuItem>
-                  <MenuItem value="Male">Male</MenuItem>
-                  <MenuItem value="Female">Female</MenuItem>
-                  <MenuItem value="Animal">Animal</MenuItem>
-                  <MenuItem value="Other">Other</MenuItem>
-                </Select>
-              </FormControl>
-              <TextField
-                fullWidth
-                label="Backstory"
-                value={characterBackstory}
-                onChange={(e) => setCharacterBackstory(e.target.value)}
-                variant="outlined"
-                multiline
-                rows={3}
-                sx={{ mb: 3 }}
-              />
-              <TextField
-                fullWidth
-                label="Characterization (Personality, Traits, motivations, etc)"
-                value={characterCharacterization}
-                onChange={(e) => setCharacterCharacterization(e.target.value)}
-                variant="outlined"
-                multiline
-                rows={3}
-                sx={{ mb: 3 }}
-              />
-              <TextField
-                fullWidth
-                label="Voice (Speech, vocab, sense of humor, etc)"
-                value={characterVoice}
-                onChange={(e) => setCharacterVoice(e.target.value)}
-                variant="outlined"
-                multiline
-                rows={3}
-                sx={{ mb: 3 }}
-              />
-              <TextField
-                fullWidth
-                label="Appearance (Height, weight, build, hair/eye color, etc)"
-                value={characterAppearance}
-                onChange={(e) => setCharacterAppearance(e.target.value)}
-                variant="outlined"
-                multiline
-                rows={3}
-                sx={{ mb: 3 }}
-              />
-              <TextField
-                fullWidth
-                label="Friends & Family (Relation to other characters)"
-                value={characterFriendsFamily}
-                onChange={(e) => setCharacterFriendsFamily(e.target.value)}
-                variant="outlined"
-                multiline
-                rows={3}
-                sx={{ mb: 3 }}
-              />
-              <TextField
-                fullWidth
-                label="Favorites (sport, food, animal, music, etc)"
-                value={characterFavorites}
-                onChange={(e) => setCharacterFavorites(e.target.value)}
-                variant="outlined"
-                multiline
-                rows={3}
-                sx={{ mb: 3 }}
-              />
+              {/* Character Details in 2 columns for larger screens */}
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" },
+                  gap: 3,
+                  flex: 1,
+                  mb: 3,
+                }}
+              >
+                <TextField
+                  fullWidth
+                  label="Backstory"
+                  value={characterBackstory}
+                  onChange={(e) => setCharacterBackstory(e.target.value)}
+                  variant="outlined"
+                  multiline
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      height: "100%",
+                      alignItems: "stretch",
+                    },
+                    "& .MuiOutlinedInput-input": {
+                      height: "100% !important",
+                      overflow: "auto !important",
+                    },
+                  }}
+                />
+                <TextField
+                  fullWidth
+                  label="Characterization (Personality, Traits, motivations, etc)"
+                  value={characterCharacterization}
+                  onChange={(e) => setCharacterCharacterization(e.target.value)}
+                  variant="outlined"
+                  multiline
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      height: "100%",
+                      alignItems: "stretch",
+                    },
+                    "& .MuiOutlinedInput-input": {
+                      height: "100% !important",
+                      overflow: "auto !important",
+                    },
+                  }}
+                />
+                <TextField
+                  fullWidth
+                  label="Voice (Speech, vocab, sense of humor, etc)"
+                  value={characterVoice}
+                  onChange={(e) => setCharacterVoice(e.target.value)}
+                  variant="outlined"
+                  multiline
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      height: "100%",
+                      alignItems: "stretch",
+                    },
+                    "& .MuiOutlinedInput-input": {
+                      height: "100% !important",
+                      overflow: "auto !important",
+                    },
+                  }}
+                />
+                <TextField
+                  fullWidth
+                  label="Appearance (Height, weight, build, hair/eye color, etc)"
+                  value={characterAppearance}
+                  onChange={(e) => setCharacterAppearance(e.target.value)}
+                  variant="outlined"
+                  multiline
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      height: "100%",
+                      alignItems: "stretch",
+                    },
+                    "& .MuiOutlinedInput-input": {
+                      height: "100% !important",
+                      overflow: "auto !important",
+                    },
+                  }}
+                />
+                <TextField
+                  fullWidth
+                  label="Friends & Family (Relation to other characters)"
+                  value={characterFriendsFamily}
+                  onChange={(e) => setCharacterFriendsFamily(e.target.value)}
+                  variant="outlined"
+                  multiline
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      height: "100%",
+                      alignItems: "stretch",
+                    },
+                    "& .MuiOutlinedInput-input": {
+                      height: "100% !important",
+                      overflow: "auto !important",
+                    },
+                  }}
+                />
+                <TextField
+                  fullWidth
+                  label="Favorites (sport, food, animal, music, etc)"
+                  value={characterFavorites}
+                  onChange={(e) => setCharacterFavorites(e.target.value)}
+                  variant="outlined"
+                  multiline
+                  sx={{
+                    "& .MuiOutlinedInput-root": {
+                      height: "100%",
+                      alignItems: "stretch",
+                    },
+                    "& .MuiOutlinedInput-input": {
+                      height: "100% !important",
+                      overflow: "auto !important",
+                    },
+                  }}
+                />
+              </Box>
+
+              {/* Misc field spans full width */}
               <TextField
                 fullWidth
                 label="Misc (title, religion, etc)"
@@ -4331,7 +4513,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                 onChange={(e) => setCharacterMisc(e.target.value)}
                 variant="outlined"
                 multiline
-                rows={3}
+                rows={2}
                 sx={{ mb: 3 }}
               />
               <Box
@@ -4951,6 +5133,232 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                   Start Timer
                 </Button>
               </Box>
+            </Box>
+          </Box>
+        </Modal>
+
+        {/* Word Goal Modal */}
+        <Modal
+          open={wordGoalModalOpen}
+          onClose={handleWordGoalModalClose}
+          aria-labelledby="word-goal-modal-title"
+        >
+          <Box
+            sx={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              width: 400,
+              bgcolor: "background.paper",
+              borderRadius: 3,
+              overflow: "hidden",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
+            }}
+          >
+            {/* Header */}
+            <Box
+              sx={{
+                backgroundColor: "rgb(38, 52, 63)",
+                color: "white",
+                p: 2,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <Typography
+                id="word-goal-modal-title"
+                variant="h6"
+                component="h2"
+                sx={{
+                  fontFamily: "'Rubik', sans-serif",
+                  fontWeight: 600,
+                  margin: 0,
+                }}
+              >
+                Set Word Goal
+              </Typography>
+              <IconButton
+                onClick={handleWordGoalModalClose}
+                sx={{
+                  color: "white",
+                  "&:hover": {
+                    backgroundColor: "rgba(255, 255, 255, 0.1)",
+                  },
+                }}
+              >
+                <CloseIcon />
+              </IconButton>
+            </Box>
+
+            {/* Modal content */}
+            <Box sx={{ p: 4 }}>
+              <Typography
+                variant="body2"
+                sx={{ mb: 3, color: "rgb(107, 114, 128)" }}
+              >
+                Choose your word count goal for this writing session:
+              </Typography>
+
+              <Box sx={{ px: 2, mb: 4 }}>
+                <Slider
+                  value={selectedWordGoal}
+                  onChange={(_, newValue) =>
+                    setSelectedWordGoal(newValue as number)
+                  }
+                  step={null}
+                  marks={[
+                    { value: 500, label: "500" },
+                    { value: 1000, label: "1000" },
+                    { value: 1500, label: "1500" },
+                    { value: 2000, label: "2000" },
+                  ]}
+                  min={500}
+                  max={2000}
+                  valueLabelDisplay="on"
+                  valueLabelFormat={(value) => `${value} words`}
+                  sx={{
+                    color: "rgb(19, 135, 194)",
+                    "& .MuiSlider-valueLabelOpen": {
+                      transform: "translateY(-100%) scale(1)",
+                    },
+                  }}
+                />
+              </Box>
+
+              <Box
+                sx={{
+                  display: "flex",
+                  gap: 2,
+                  justifyContent: "space-between",
+                }}
+              >
+                <Button
+                  onClick={handleWordGoalModalClose}
+                  variant="outlined"
+                  sx={{
+                    flex: 1,
+                    boxShadow: "none",
+                    "&:hover": {
+                      boxShadow: "none",
+                    },
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleStartWordGoal}
+                  variant="contained"
+                  sx={{
+                    flex: 1,
+                    backgroundColor: "rgb(19, 135, 194)",
+                    textTransform: "none",
+                    fontFamily: "'Rubik', sans-serif",
+                    py: 1.5,
+                    boxShadow: "none",
+                    "&:hover": {
+                      backgroundColor: "rgb(15, 108, 155)",
+                      boxShadow: "none",
+                    },
+                  }}
+                >
+                  Start Goal
+                </Button>
+              </Box>
+            </Box>
+          </Box>
+        </Modal>
+
+        {/* Congratulations Modal */}
+        <Modal
+          open={congratulationsModalOpen}
+          onClose={handleCongratulationsModalClose}
+          aria-labelledby="congratulations-modal-title"
+        >
+          <Box
+            sx={{
+              position: "absolute",
+              top: "50%",
+              left: "50%",
+              transform: "translate(-50%, -50%)",
+              width: 400,
+              bgcolor: "background.paper",
+              borderRadius: 3,
+              overflow: "hidden",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
+            }}
+          >
+            {/* Header */}
+            <Box
+              sx={{
+                backgroundColor: "rgb(34, 197, 94)",
+                color: "white",
+                p: 2,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+              }}
+            >
+              <Typography
+                id="congratulations-modal-title"
+                variant="h6"
+                component="h2"
+                sx={{
+                  fontFamily: "'Rubik', sans-serif",
+                  fontWeight: 600,
+                  margin: 0,
+                }}
+              >
+                🎉 Congratulations!
+              </Typography>
+              <IconButton
+                onClick={handleCongratulationsModalClose}
+                sx={{
+                  color: "white",
+                  "&:hover": {
+                    backgroundColor: "rgba(255, 255, 255, 0.1)",
+                  },
+                }}
+              >
+                <CloseIcon />
+              </IconButton>
+            </Box>
+
+            {/* Modal content */}
+            <Box sx={{ p: 4, textAlign: "center" }}>
+              <Typography
+                variant="h5"
+                sx={{ mb: 2, fontWeight: "bold", color: "rgb(34, 197, 94)" }}
+              >
+                Goal Achieved!
+              </Typography>
+              <Typography
+                variant="body1"
+                sx={{ mb: 3, color: "rgb(107, 114, 128)" }}
+              >
+                You&apos;ve successfully written {selectedWordGoal} words in
+                this session. Great job!
+              </Typography>
+
+              <Button
+                onClick={handleCongratulationsModalClose}
+                variant="contained"
+                sx={{
+                  backgroundColor: "rgb(34, 197, 94)",
+                  textTransform: "none",
+                  fontFamily: "'Rubik', sans-serif",
+                  py: 1.5,
+                  px: 4,
+                  boxShadow: "none",
+                  "&:hover": {
+                    backgroundColor: "rgb(22, 163, 74)",
+                    boxShadow: "none",
+                  },
+                }}
+              >
+                Continue Writing
+              </Button>
             </Box>
           </Box>
         </Modal>

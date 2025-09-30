@@ -85,6 +85,9 @@ CREATE TABLE user_preferences (
     -- Custom settings
     custom_settings JSON,
     
+    -- Author information
+    about_author TEXT, -- New field for author biography (up to 350 words)
+    
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     
@@ -126,6 +129,8 @@ CREATE TABLE books (
     clause_all_rights_reserved BOOLEAN DEFAULT FALSE,
     clause_fiction BOOLEAN DEFAULT FALSE,
     clause_moral_rights BOOLEAN DEFAULT FALSE,
+    clause_custom BOOLEAN DEFAULT FALSE,
+    custom_clause_text TEXT NULL,
     
     -- Type distinction
     is_quick_story BOOLEAN DEFAULT FALSE,

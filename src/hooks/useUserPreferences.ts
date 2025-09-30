@@ -5,7 +5,7 @@
  * in React components with automatic re-rendering when preferences change.
  */
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { useSession } from "next-auth/react";
 import {
   UserPreferences,
@@ -14,9 +14,6 @@ import {
   saveUserPreferences,
   updateUserPreference,
   updateUserPlan,
-  hasFeature,
-  getUserPlanType,
-  isPlanActive,
   addToRecentActivity,
   getLastLoginInfo,
   recordUserLogin,
@@ -143,9 +140,12 @@ export const useUserPreferences = (): UseUserPreferencesReturn => {
   // Check if user has a feature
   const checkFeature = useCallback(
     (feature: string): boolean => {
-      return hasFeature(feature, userEmail || undefined);
+      if (!userEmail || isLoading) return false;
+
+      // Use current preferences state instead of re-loading from localStorage
+      return preferences.plan.features?.includes(feature) || false;
     },
-    [userEmail]
+    [userEmail, isLoading, preferences.plan.features]
   );
 
   // Refresh preferences from localStorage
@@ -180,9 +180,24 @@ export const useUserPreferences = (): UseUserPreferencesReturn => {
     }
   }, [userEmail, refreshPreferences]);
 
-  // Derived values
-  const planType = getUserPlanType(userEmail || undefined);
-  const isActivePlan = isPlanActive(userEmail || undefined);
+  // Derived values from current state
+  const planType = preferences.plan.type;
+
+  const isActivePlan = useMemo(() => {
+    if (preferences.plan.status !== "active") {
+      return false;
+    }
+
+    // Check if plan has expired
+    if (preferences.plan.endDate) {
+      const endDate = new Date(preferences.plan.endDate);
+      const now = new Date();
+      return now <= endDate;
+    }
+
+    return true;
+  }, [preferences.plan.status, preferences.plan.endDate]);
+
   const loginInfo = getLastLoginInfo(userEmail || undefined);
 
   return {

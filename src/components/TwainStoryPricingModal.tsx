@@ -3,6 +3,7 @@
 import React from "react";
 import { Modal, Box, Typography, Button, IconButton } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import { twainPricingPlans } from "../data/twainPricingPlans";
 
 interface TwainStoryPricingModalProps {
   open: boolean;
@@ -86,190 +87,106 @@ const TwainStoryPricingModal: React.FC<TwainStoryPricingModalProps> = ({
           }}
         >
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Freelance Plan */}
-            <div className="border border-gray-200 rounded-lg p-6 bg-white flex flex-col h-full">
-              <div className="flex-1">
-                <div className="text-center mb-6">
-                  <Typography
-                    variant="h5"
-                    sx={{
-                      fontFamily: "'Rubik', sans-serif",
-                      fontWeight: 600,
-                      color: "rgb(31, 41, 55)",
-                      mb: 2,
-                    }}
-                  >
-                    Freelance
-                  </Typography>
-                  <Typography
-                    variant="h3"
-                    sx={{
-                      fontFamily: "'Rubik', sans-serif",
-                      fontWeight: 700,
-                      color: "rgb(19, 135, 194)",
-                      mb: 1,
-                    }}
-                  >
-                    $0
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      fontFamily: "'Rubik', sans-serif",
-                      color: "rgb(107, 114, 128)",
-                    }}
-                  >
-                    Forever
-                  </Typography>
-                </div>
-
-                <div className="space-y-3 mb-6">
-                  <div className="flex items-center">
-                    <span className="text-green-500 mr-2">✓</span>
-                    <span className="text-gray-700">
-                      3 Outlines and 3 Stories
-                    </span>
-                  </div>
-                  <div className="flex items-center">
-                    <span className="text-green-500 mr-2">✓</span>
-                    <span className="text-gray-700">
-                      3 Books or 3 Story Collections{" "}
-                    </span>
-                  </div>
-                  <div className="flex items-center">
-                    <span className="text-green-500 mr-2">✓</span>
-                    <span className="text-gray-700">Local storage only*</span>
-                  </div>
-                  <div className="flex items-center">
-                    <span className="text-green-500 mr-2">✓</span>
-                    <span className="text-gray-700">
-                      Export to Word® as DOCx
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              <Button
-                fullWidth
-                variant="outlined"
-                sx={{
-                  py: 1.5,
-                  textTransform: "none",
-                  fontFamily: "'Rubik', sans-serif",
-                  borderColor: "rgb(19, 135, 194)",
-                  color: "rgb(19, 135, 194)",
-                  "&:hover": {
-                    backgroundColor: "rgba(19, 135, 194, 0.04)",
-                  },
-                }}
+            {Object.entries(twainPricingPlans.plans).map(([planKey, plan]) => (
+              <div
+                key={planKey}
+                className={`${
+                  plan.popular
+                    ? "border-2 border-blue-500"
+                    : "border border-gray-200"
+                } rounded-lg p-6 bg-white relative flex flex-col h-full`}
               >
-                Get Started Free
-              </Button>
-            </div>
+                {plan.popular && (
+                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                    <span className="bg-blue-500 text-white px-3 py-1 rounded-full text-sm font-medium">
+                      Popular
+                    </span>
+                  </div>
+                )}
 
-            {/* Professional Plan */}
-            <div className="border-2 border-blue-500 rounded-lg p-6 bg-white relative flex flex-col h-full">
-              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                <span className="bg-blue-500 text-white px-3 py-1 rounded-full text-sm font-medium">
-                  Popular
-                </span>
-              </div>
+                <div className="flex-1">
+                  <div className="text-center mb-6">
+                    <Typography
+                      variant="h5"
+                      sx={{
+                        fontFamily: "'Rubik', sans-serif",
+                        fontWeight: 600,
+                        color: "rgb(31, 41, 55)",
+                        mb: 2,
+                      }}
+                    >
+                      {plan.name}
+                    </Typography>
+                    <Typography
+                      variant="h3"
+                      sx={{
+                        fontFamily: "'Rubik', sans-serif",
+                        fontWeight: 700,
+                        color: "rgb(19, 135, 194)",
+                        mb: 1,
+                      }}
+                    >
+                      ${plan.price.amount}
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        fontFamily: "'Rubik', sans-serif",
+                        color: "rgb(107, 114, 128)",
+                      }}
+                    >
+                      per {plan.price.period}
+                    </Typography>
+                  </div>
 
-              <div className="flex-1">
-                <div className="text-center mb-6">
-                  <Typography
-                    variant="h5"
-                    sx={{
-                      fontFamily: "'Rubik', sans-serif",
-                      fontWeight: 600,
-                      color: "rgb(31, 41, 55)",
-                      mb: 2,
-                    }}
-                  >
-                    Professional
-                  </Typography>
-                  <Typography
-                    variant="h3"
-                    sx={{
-                      fontFamily: "'Rubik', sans-serif",
-                      fontWeight: 700,
-                      color: "rgb(19, 135, 194)",
-                      mb: 1,
-                    }}
-                  >
-                    $45
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      fontFamily: "'Rubik', sans-serif",
-                      color: "rgb(107, 114, 128)",
-                    }}
-                  >
-                    per year
-                  </Typography>
+                  <div className="space-y-3 mb-6">
+                    {plan.features.map((feature, index) => (
+                      <div key={index} className="flex items-center">
+                        <span className="text-green-500 mr-2">✓</span>
+                        <span
+                          className={
+                            feature.includes("coming soon")
+                              ? "text-gray-400 italic"
+                              : "text-gray-700"
+                          }
+                        >
+                          {feature}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
 
-                <div className="space-y-3 mb-6">
-                  <div className="flex items-center">
-                    <span className="text-green-500 mr-2">✓</span>
-                    <span className="text-gray-700">
-                      Unlimited Ideas, Characters, Outlines, Stories, Chapters
-                      and Parts
-                    </span>
-                  </div>
-                  <div className="flex items-center">
-                    <span className="text-green-500 mr-2">✓</span>
-                    <span className="text-gray-700">
-                      Unlimited books and story collections
-                    </span>
-                  </div>
-                  <div className="flex items-center">
-                    <span className="text-green-500 mr-2">✓</span>
-                    <span className="text-gray-700">Unlimited book series</span>
-                  </div>
-                  <div className="flex items-center">
-                    <span className="text-green-500 mr-2">✓</span>
-                    <span className="text-gray-700">Cloud storage**</span>
-                  </div>
-                  <div className="flex items-center">
-                    <span className="text-green-500 mr-2">✓</span>
-                    <span className="text-gray-700">
-                      Export to Word® as DOCx
-                    </span>
-                  </div>
-                  <div className="flex items-center">
-                    <span className="text-green-500 mr-2">✓</span>
-                    <span className="text-gray-700">Import Word® files</span>
-                  </div>
-                  <div className="flex items-center">
-                    <span className="text-green-500 mr-2">✓</span>
-                    <span className="text-gray-400 italic">
-                      Publish Book to Amazon Kindle***
-                    </span>
-                  </div>
-                </div>
+                <Button
+                  fullWidth
+                  variant={plan.popular ? "contained" : "outlined"}
+                  onClick={() => plan.popular && onUpgrade("professional")}
+                  sx={{
+                    py: 1.5,
+                    textTransform: "none",
+                    fontFamily: "'Rubik', sans-serif",
+                    ...(plan.popular
+                      ? {
+                          backgroundColor: "rgb(19, 135, 194)",
+                          boxShadow: "none",
+                          "&:hover": {
+                            backgroundColor: "rgb(15, 108, 155)",
+                            boxShadow: "none",
+                          },
+                        }
+                      : {
+                          borderColor: "rgb(19, 135, 194)",
+                          color: "rgb(19, 135, 194)",
+                          "&:hover": {
+                            backgroundColor: "rgba(19, 135, 194, 0.04)",
+                          },
+                        }),
+                  }}
+                >
+                  {plan.popular ? "Start Professional" : "Get Started Free"}
+                </Button>
               </div>
-
-              <Button
-                fullWidth
-                variant="contained"
-                onClick={() => onUpgrade("professional")}
-                sx={{
-                  py: 1.5,
-                  textTransform: "none",
-                  fontFamily: "'Rubik', sans-serif",
-                  backgroundColor: "rgb(19, 135, 194)",
-                  boxShadow: "none",
-                  "&:hover": {
-                    backgroundColor: "rgb(15, 108, 155)",
-                    boxShadow: "none",
-                  },
-                }}
-              >
-                Start Professional
-              </Button>
-            </div>
+            ))}
           </div>
 
           <div className="mt-6 text-center">

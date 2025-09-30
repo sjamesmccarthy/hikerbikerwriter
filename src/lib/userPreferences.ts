@@ -65,7 +65,7 @@ export const DEFAULT_USER_PREFERENCES: UserPreferences = {
     type: "freelance",
     status: "active",
     startDate: new Date().toISOString(),
-    features: ["local-storage", "basic-writing", "export-txt"],
+    features: ["local-storage", "basic-writing", "export-txt", "up-to-1-book"],
   },
   accountCreatedAt: new Date().toISOString(),
   lastLoginAt: new Date().toISOString(),
@@ -129,6 +129,35 @@ export const loadUserPreferences = (userEmail?: string): UserPreferences => {
       ...DEFAULT_USER_PREFERENCES,
       ...preferences,
     };
+
+    // Migrate plan features if needed
+    if (
+      mergedPreferences.plan.type === "freelance" &&
+      mergedPreferences.plan.features &&
+      !mergedPreferences.plan.features.includes("up-to-1-book")
+    ) {
+      mergedPreferences.plan.features = [
+        ...mergedPreferences.plan.features,
+        "up-to-1-book",
+      ];
+      // Save the migrated preferences
+      saveUserPreferences(mergedPreferences, userEmail);
+    }
+
+    // Migrate endDate for professional plans if missing
+    if (
+      mergedPreferences.plan.type === "professional" &&
+      mergedPreferences.plan.startDate &&
+      !mergedPreferences.plan.endDate
+    ) {
+      const startDate = new Date(mergedPreferences.plan.startDate);
+      const endDate = new Date(startDate);
+      endDate.setFullYear(endDate.getFullYear() + 1); // Add 1 year
+
+      mergedPreferences.plan.endDate = endDate.toISOString();
+      // Save the migrated preferences
+      saveUserPreferences(mergedPreferences, userEmail);
+    }
 
     return mergedPreferences;
   } catch (error) {
@@ -377,7 +406,33 @@ export const clearUserPreferences = (userEmail?: string): void => {
 };
 
 /**
- * Export user preferences for backup/migration
+ * Manually migrate user preferences to add missing endDate for professional plans
+ * This can be called to fix existing users
+ */
+export const migrateUserPreferencesEndDate = (userEmail?: string): void => {
+  if (!userEmail) return;
+
+  const preferences = loadUserPreferences(userEmail);
+
+  // Add endDate for professional plans if missing
+  if (
+    preferences.plan.type === "professional" &&
+    preferences.plan.startDate &&
+    !preferences.plan.endDate
+  ) {
+    const startDate = new Date(preferences.plan.startDate);
+    const endDate = new Date(startDate);
+    endDate.setFullYear(endDate.getFullYear() + 1); // Add 1 year
+
+    updateUserPlan({ endDate: endDate.toISOString() }, userEmail);
+    console.log(
+      `Added endDate for professional plan: ${endDate.toISOString()}`
+    );
+  }
+};
+
+/**
+ * Export user preferences to JSON string for backup
  */
 export const exportUserPreferences = (userEmail?: string): string | null => {
   if (!userEmail) return null;
