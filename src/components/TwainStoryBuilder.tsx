@@ -44,9 +44,10 @@ import FileCopyOutlinedIcon from "@mui/icons-material/FileCopyOutlined";
 import TabletAndroidOutlinedIcon from "@mui/icons-material/TabletAndroidOutlined";
 import Image from "next/image";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
-import WorkspacePremiumOutlinedIcon from "@mui/icons-material/WorkspacePremiumOutlined";
 import TwainStoryWriter from "./TwainStoryWriter";
-import TwainStoryPricingModal from "./TwainStoryPricingModal";
+import TwainStoryPricingModal, {
+  ProfessionalFeatureChip,
+} from "./TwainStoryPricingModal";
 import { useUserPreferences } from "../hooks/useUserPreferences";
 import { migrateUserPreferencesEndDate } from "../lib/userPreferences";
 
@@ -687,6 +688,22 @@ const TwainStoryBuilder: React.FC = () => {
     setShowPricing(false);
   };
 
+  const handleDowngradeToFreelance = () => {
+    // Debug function to switch back to freelance plan
+    updatePlan({
+      type: "freelance",
+      status: "active",
+      startDate: new Date().toISOString(),
+      endDate: undefined, // Freelance plan doesn't expire
+      features: getPlanFeatures("freelance"),
+    });
+
+    // Use setTimeout to ensure notification appears after state update
+    setTimeout(() => {
+      showNotification("Successfully switched back to Freelance plan!");
+    }, 100);
+  };
+
   const handleFilterChange = (newFilter: "all" | "books" | "stories") => {
     setFilter(newFilter);
     // Reset series filter when changing main filter
@@ -1195,7 +1212,7 @@ const TwainStoryBuilder: React.FC = () => {
                 <MenuItem onClick={handleAccountSettings}>
                   Account Settings
                 </MenuItem>
-                <MenuItem onClick={handleLogout}>Log Out</MenuItem>
+                <MenuItem onClick={handleLogout}>Sign Out</MenuItem>
               </Menu>
             </div>
 
@@ -1444,19 +1461,10 @@ const TwainStoryBuilder: React.FC = () => {
                           {planType !== "professional" &&
                             getTotalBooksInSeries(books) >= 3 &&
                             !managedBookIsSeries && (
-                              <Chip
-                                icon={<WorkspacePremiumOutlinedIcon />}
-                                label="Professional Feature"
-                                sx={{
-                                  backgroundColor: "#fbbf24",
-                                  color: "white",
-                                  fontSize: "12px",
-                                  fontWeight: "bold",
-                                  height: "28px",
-                                  "& .MuiChip-icon": {
-                                    color: "white",
-                                  },
-                                }}
+                              <ProfessionalFeatureChip
+                                label="Upgrade to Professional"
+                                size="medium"
+                                onClick={handleShowPricing}
                               />
                             )}
                         </div>
@@ -1750,19 +1758,10 @@ const TwainStoryBuilder: React.FC = () => {
                             Contributors
                           </Typography>
                           {planType !== "professional" && (
-                            <Chip
-                              icon={<WorkspacePremiumOutlinedIcon />}
-                              label="Professional Feature"
-                              sx={{
-                                backgroundColor: "#fbbf24",
-                                color: "white",
-                                fontSize: "12px",
-                                fontWeight: "bold",
-                                height: "28px",
-                                "& .MuiChip-icon": {
-                                  color: "white",
-                                },
-                              }}
+                            <ProfessionalFeatureChip
+                              label="Upgrade to Professional"
+                              size="medium"
+                              onClick={handleShowPricing}
                             />
                           )}
                         </div>
@@ -1980,19 +1979,10 @@ const TwainStoryBuilder: React.FC = () => {
                         Publisher Details
                       </h3>
                       {planType !== "professional" && (
-                        <Chip
-                          icon={<WorkspacePremiumOutlinedIcon />}
-                          label="Professional Feature"
-                          sx={{
-                            backgroundColor: "#fbbf24",
-                            color: "white",
-                            fontSize: "12px",
-                            fontWeight: "bold",
-                            height: "28px",
-                            "& .MuiChip-icon": {
-                              color: "white",
-                            },
-                          }}
+                        <ProfessionalFeatureChip
+                          label="Upgrade to Professional"
+                          size="medium"
+                          onClick={handleShowPricing}
                         />
                       )}
                     </div>
@@ -2123,19 +2113,10 @@ const TwainStoryBuilder: React.FC = () => {
                         Clauses
                       </h3>
                       {planType !== "professional" && (
-                        <Chip
-                          icon={<WorkspacePremiumOutlinedIcon />}
-                          label="Professional Feature"
-                          sx={{
-                            backgroundColor: "#fbbf24",
-                            color: "white",
-                            fontSize: "12px",
-                            fontWeight: "bold",
-                            height: "28px",
-                            "& .MuiChip-icon": {
-                              color: "white",
-                            },
-                          }}
+                        <ProfessionalFeatureChip
+                          label="Upgrade to Professional"
+                          size="medium"
+                          onClick={handleShowPricing}
                         />
                       )}
                     </div>
@@ -2436,24 +2417,9 @@ const TwainStoryBuilder: React.FC = () => {
                           className="absolute right-1"
                           style={{ top: "-12px" }}
                         >
-                          <Chip
-                            icon={<WorkspacePremiumOutlinedIcon />}
-                            label="Professional Feature"
+                          <ProfessionalFeatureChip
+                            size="small"
                             onClick={handleShowPricing}
-                            sx={{
-                              backgroundColor: "#fbbf24",
-                              color: "white",
-                              fontSize: "12px",
-                              fontWeight: "bold",
-                              height: "28px",
-                              cursor: "pointer",
-                              "& .MuiChip-icon": {
-                                color: "white",
-                              },
-                              "&:hover": {
-                                backgroundColor: "#f59e0b",
-                              },
-                            }}
                           />
                         </div>
                       )}
@@ -2897,7 +2863,7 @@ const TwainStoryBuilder: React.FC = () => {
                 <MenuItem onClick={handleAccountSettings}>
                   Account Settings
                 </MenuItem>
-                <MenuItem onClick={handleLogout}>Log Out</MenuItem>
+                <MenuItem onClick={handleLogout}>Sign Out</MenuItem>
               </Menu>
             </div>
 
@@ -3255,6 +3221,21 @@ const TwainStoryBuilder: React.FC = () => {
                             planType.charAt(0).toUpperCase() +
                               planType.slice(1)}{" "}
                           Plan
+                          {planType === "professional" && (
+                            <span
+                              onClick={handleDowngradeToFreelance}
+                              style={{
+                                color: "rgb(107, 114, 128)",
+                                fontSize: "14px",
+                                fontWeight: 400,
+                                cursor: "pointer",
+                                textDecoration: "underline",
+                                marginLeft: "8px",
+                              }}
+                            >
+                              - switch back to Freelance
+                            </span>
+                          )}
                         </Typography>
                         <Typography
                           variant="body2"
@@ -3470,7 +3451,7 @@ const TwainStoryBuilder: React.FC = () => {
               <MenuItem onClick={handleAccountSettings}>
                 Account Settings
               </MenuItem>
-              <MenuItem onClick={handleLogout}>Log Out</MenuItem>
+              <MenuItem onClick={handleLogout}>Sign Out</MenuItem>
             </Menu>
           </div>
 
@@ -3612,121 +3593,6 @@ const TwainStoryBuilder: React.FC = () => {
               </div>
             )}
 
-            {/* Limit Warning Messages - only show when data is loaded */}
-            {isDataLoaded && planType !== "professional" && (
-              <>
-                {books.length >= 3 &&
-                  (filter === "all" || filter === "books") && (
-                    <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center">
-                          <div className="flex-shrink-0">
-                            <svg
-                              className="h-5 w-5 text-red-400"
-                              viewBox="0 0 20 20"
-                              fill="currentColor"
-                            >
-                              <path
-                                fillRule="evenodd"
-                                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                          </div>
-                          <div className="ml-3">
-                            <p className="text-sm text-red-800">
-                              You&apos;ve reached your limit of{" "}
-                              <strong>3 books</strong>.
-                              <span className="ml-1">
-                                Upgrade to Professional to create unlimited
-                                books.
-                              </span>
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex-shrink-0">
-                          <Chip
-                            icon={<WorkspacePremiumOutlinedIcon />}
-                            label="Upgrade to Professional"
-                            clickable
-                            onClick={() => setShowPricing(true)}
-                            sx={{
-                              backgroundColor: "#fbbf24",
-                              color: "white",
-                              fontSize: "12px",
-                              fontWeight: "bold",
-                              height: "28px",
-                              cursor: "pointer",
-                              "&:hover": {
-                                backgroundColor: "#f59e0b",
-                              },
-                              "& .MuiChip-icon": {
-                                color: "white",
-                              },
-                            }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                {quickStories.length >= 3 &&
-                  (filter === "all" || filter === "stories") && (
-                    <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center">
-                          <div className="flex-shrink-0">
-                            <svg
-                              className="h-5 w-5 text-red-400"
-                              viewBox="0 0 20 20"
-                              fill="currentColor"
-                            >
-                              <path
-                                fillRule="evenodd"
-                                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                          </div>
-                          <div className="ml-3">
-                            <p className="text-sm text-red-800">
-                              You&apos;ve reached your limit of{" "}
-                              <strong>3 story collections</strong>.
-                              <span className="ml-1">
-                                Upgrade to Professional to create unlimited
-                                story collections.
-                              </span>
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex-shrink-0">
-                          <Chip
-                            icon={<WorkspacePremiumOutlinedIcon />}
-                            label="Upgrade to Professional"
-                            clickable
-                            onClick={() => setShowPricing(true)}
-                            sx={{
-                              backgroundColor: "#fbbf24",
-                              color: "white",
-                              fontSize: "12px",
-                              fontWeight: "bold",
-                              height: "28px",
-                              cursor: "pointer",
-                              "&:hover": {
-                                backgroundColor: "#f59e0b",
-                              },
-                              "& .MuiChip-icon": {
-                                color: "white",
-                              },
-                            }}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  )}
-              </>
-            )}
-
             {/* Books flex container with custom spacing - only show when data is loaded */}
             {isDataLoaded && (
               <div
@@ -3805,26 +3671,11 @@ const TwainStoryBuilder: React.FC = () => {
                             </span>
                           </button>
                           {planType !== "professional" && books.length >= 3 && (
-                            <div className="absolute top-1 right-1">
-                              <Chip
-                                icon={<WorkspacePremiumOutlinedIcon />}
-                                label="Professional"
+                            <div className="absolute top-1 right-8">
+                              <ProfessionalFeatureChip
+                                label="PRO"
+                                size="small"
                                 onClick={handleShowPricing}
-                                sx={{
-                                  backgroundColor: "#fbbf24",
-                                  color: "white",
-                                  fontSize: "10px",
-                                  fontWeight: "bold",
-                                  height: "20px",
-                                  cursor: "pointer",
-                                  "& .MuiChip-icon": {
-                                    color: "white",
-                                    fontSize: "12px",
-                                  },
-                                  "&:hover": {
-                                    backgroundColor: "#f59e0b",
-                                  },
-                                }}
                               />
                             </div>
                           )}
@@ -3884,21 +3735,10 @@ const TwainStoryBuilder: React.FC = () => {
                           </button>
                           {planType !== "professional" &&
                             quickStories.length >= 3 && (
-                              <div className="absolute top-1 right-1">
-                                <Chip
-                                  icon={<WorkspacePremiumOutlinedIcon />}
-                                  label="Professional"
-                                  sx={{
-                                    backgroundColor: "#fbbf24",
-                                    color: "white",
-                                    fontSize: "10px",
-                                    fontWeight: "bold",
-                                    height: "20px",
-                                    "& .MuiChip-icon": {
-                                      color: "white",
-                                      fontSize: "12px",
-                                    },
-                                  }}
+                              <div className="absolute top-1 right-8">
+                                <ProfessionalFeatureChip
+                                  label="PRO"
+                                  size="small"
                                 />
                               </div>
                             )}
@@ -4535,6 +4375,71 @@ const TwainStoryBuilder: React.FC = () => {
                   )}
               </div>
             )}
+
+            {/* Limit Warning Message - Combined single box with light blue styling */}
+            {isDataLoaded &&
+              planType !== "professional" &&
+              ((books.length >= 3 &&
+                (filter === "all" || filter === "books")) ||
+                (quickStories.length >= 3 &&
+                  (filter === "all" || filter === "stories"))) && (
+                <div className="mt-6 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center">
+                      <div className="flex-shrink-0">
+                        <svg
+                          className="h-5 w-5 text-blue-400"
+                          viewBox="0 0 20 20"
+                          fill="currentColor"
+                        >
+                          <path
+                            fillRule="evenodd"
+                            d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                            clipRule="evenodd"
+                          />
+                        </svg>
+                      </div>
+                      <div className="ml-3">
+                        <div className="text-sm text-blue-800">
+                          {books.length >= 3 &&
+                            (filter === "all" || filter === "books") && (
+                              <p>
+                                You&apos;ve reached your limit of{" "}
+                                <strong>3 books</strong>.
+                                <span className="ml-1">
+                                  Upgrade to Professional to create unlimited
+                                  books.
+                                </span>
+                              </p>
+                            )}
+                          {books.length >= 3 &&
+                            quickStories.length >= 3 &&
+                            filter === "all" && (
+                              <div className="my-2 border-t border-blue-200"></div>
+                            )}
+                          {quickStories.length >= 3 &&
+                            (filter === "all" || filter === "stories") && (
+                              <p>
+                                You&apos;ve reached your limit of{" "}
+                                <strong>3 story collections</strong>.
+                                <span className="ml-1">
+                                  Upgrade to Professional to create unlimited
+                                  story collections.
+                                </span>
+                              </p>
+                            )}
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex-shrink-0">
+                      <ProfessionalFeatureChip
+                        label="Upgrade to Professional"
+                        onClick={() => setShowPricing(true)}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
           </div>
         </main>
 

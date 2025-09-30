@@ -1,9 +1,61 @@
 "use client";
 
 import React from "react";
-import { Modal, Box, Typography, Button, IconButton } from "@mui/material";
+import {
+  Modal,
+  Box,
+  Typography,
+  Button,
+  IconButton,
+  Chip,
+} from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+import WorkspacePremiumOutlinedIcon from "@mui/icons-material/WorkspacePremiumOutlined";
 import { twainPricingPlans } from "../data/twainPricingPlans";
+
+interface TwainStoryPricingModalProps {
+  open: boolean;
+  onClose: () => void;
+  onUpgrade: (planType: "professional") => void;
+}
+
+interface ProfessionalFeatureChipProps {
+  onClick?: () => void;
+  size?: "small" | "medium";
+  label?: string;
+}
+
+// Reusable Professional Feature Chip component
+export const ProfessionalFeatureChip: React.FC<
+  ProfessionalFeatureChipProps
+> = ({ onClick, size = "medium", label = "Professional Feature" }) => {
+  const isSmall = size === "small";
+
+  return (
+    <Chip
+      icon={<WorkspacePremiumOutlinedIcon />}
+      label={label}
+      onClick={onClick}
+      sx={{
+        backgroundColor: "#fbbf24",
+        color: "white",
+        fontSize: isSmall ? "10px" : "12px",
+        fontWeight: "bold",
+        height: isSmall ? "20px" : "28px",
+        cursor: onClick ? "pointer" : "default",
+        "& .MuiChip-icon": {
+          color: "white",
+          fontSize: isSmall ? "12px" : "16px",
+        },
+        "&:hover": onClick
+          ? {
+              backgroundColor: "#f59e0b",
+            }
+          : {},
+      }}
+    />
+  );
+};
 
 interface TwainStoryPricingModalProps {
   open: boolean;

@@ -27,7 +27,6 @@ import {
   Checkbox,
   ListItemText,
   Tooltip,
-  Chip,
   Slider,
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -51,10 +50,11 @@ import HistoryEduIcon from "@mui/icons-material/HistoryEdu";
 import TimerOutlinedIcon from "@mui/icons-material/TimerOutlined";
 import DataSaverOnOutlinedIcon from "@mui/icons-material/DataSaverOnOutlined";
 import FileUploadOutlinedIcon from "@mui/icons-material/FileUploadOutlined";
-import WorkspacePremiumOutlinedIcon from "@mui/icons-material/WorkspacePremiumOutlined";
 import MenuBookOutlinedIcon from "@mui/icons-material/MenuBookOutlined";
 import HistoryEduOutlinedIcon from "@mui/icons-material/HistoryEduOutlined";
-import TwainStoryPricingModal from "./TwainStoryPricingModal";
+import TwainStoryPricingModal, {
+  ProfessionalFeatureChip,
+} from "./TwainStoryPricingModal";
 
 // Define Quill types
 interface QuillInstance {
@@ -2789,6 +2789,16 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                             </div>
                           </div>
                         ))}
+                        {/* Add Professional Feature Chip when at limit */}
+                        {planType !== "professional" && ideas.length >= 3 && (
+                          <div className="mt-3 flex justify-center">
+                            <ProfessionalFeatureChip
+                              onClick={() => setPricingModalOpen(true)}
+                              size="small"
+                              label="Upgrade for Unlimited Ideas"
+                            />
+                          </div>
+                        )}
                       </div>
                     ) : section.title === "CHARACTERS" &&
                       (characters.length > 0 || planType === "professional") ? (
@@ -2894,6 +2904,17 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                             </div>
                           );
                         })}
+                        {/* Add Professional Feature Chip when at limit */}
+                        {planType !== "professional" &&
+                          characters.length >= 3 && (
+                            <div className="mt-3 flex justify-center">
+                              <ProfessionalFeatureChip
+                                onClick={() => setPricingModalOpen(true)}
+                                size="small"
+                                label="Upgrade for Unlimited Characters"
+                              />
+                            </div>
+                          )}
                       </div>
                     ) : section.title === "OUTLINE" && outlines.length > 0 ? (
                       <div className="space-y-3">
@@ -2980,6 +3001,17 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                             </div>
                           </div>
                         ))}
+                        {/* Add Professional Feature Chip when at limit */}
+                        {planType !== "professional" &&
+                          outlines.length >= 1 && (
+                            <div className="mt-3 flex justify-center">
+                              <ProfessionalFeatureChip
+                                onClick={() => setPricingModalOpen(true)}
+                                size="small"
+                                label="Upgrade for Unlimited Outlines"
+                              />
+                            </div>
+                          )}
                       </div>
                     ) : section.title === "STORIES" && stories.length > 0 ? (
                       <div className="space-y-3">
@@ -3064,6 +3096,16 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                             </div>
                           </div>
                         ))}
+                        {/* Add Professional Feature Chip when at limit */}
+                        {planType !== "professional" && stories.length >= 3 && (
+                          <div className="mt-3 flex justify-center">
+                            <ProfessionalFeatureChip
+                              onClick={() => setPricingModalOpen(true)}
+                              size="small"
+                              label="Upgrade for Unlimited Stories"
+                            />
+                          </div>
+                        )}
                       </div>
                     ) : section.title === "CHAPTERS" && chapters.length > 0 ? (
                       <div className="space-y-3">
@@ -3150,6 +3192,17 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                             </div>
                           </div>
                         ))}
+                        {/* Add Professional Feature Chip when at limit */}
+                        {planType !== "professional" &&
+                          chapters.length >= 3 && (
+                            <div className="mt-3 flex justify-center">
+                              <ProfessionalFeatureChip
+                                onClick={() => setPricingModalOpen(true)}
+                                size="small"
+                                label="Upgrade for Unlimited Chapters"
+                              />
+                            </div>
+                          )}
                       </div>
                     ) : section.title === "PARTS" && parts.length > 0 ? (
                       <div className="space-y-3">
@@ -3283,31 +3336,28 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                           </Typography>
                         ) : section.title === "PARTS" &&
                           planType !== "professional" ? (
-                          <Chip
-                            icon={<WorkspacePremiumOutlinedIcon />}
-                            label="Professional Feature"
-                            onClick={() => setPricingModalOpen(true)}
-                            sx={{
-                              backgroundColor: "#fbbf24",
-                              color: "white",
-                              fontSize: "12px",
-                              fontWeight: "bold",
-                              height: "28px",
-                              cursor: "pointer",
-                              "&:hover": {
-                                backgroundColor: "#f59e0b",
-                              },
-                              "& .MuiChip-icon": {
-                                color: "white",
-                                fontSize: "16px",
-                                marginRight: "4px",
-                              },
-                              "& .MuiChip-label": {
-                                paddingLeft: "0px",
-                                paddingRight: "8px",
-                              },
-                            }}
-                          />
+                          <>
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                fontFamily: "'Rubik', sans-serif",
+                                fontWeight: 400,
+                                fontSize: "13px",
+                                color: "rgb(107, 114, 128)",
+                                lineHeight: 1.5,
+                                textAlign: "center",
+                                mb: 2,
+                              }}
+                            >
+                              Freelances users can not create any Parts.
+                              Professional users can create unlimited Parts.
+                            </Typography>
+                            <ProfessionalFeatureChip
+                              label="Upgrade to Professional"
+                              onClick={() => setPricingModalOpen(true)}
+                              size="small"
+                            />
+                          </>
                         ) : section.title === "OUTLINE" ? (
                           <Typography
                             variant="body2"
@@ -3465,35 +3515,15 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                       lineHeight: 1.4,
                     }}
                   >
-                    Import DOCX or TXT
+                    Import Word® or Text File
                   </Typography>
                 </div>
                 {planType !== "professional" && (
                   <div className="absolute right-2" style={{ top: "-8px" }}>
-                    <Chip
-                      icon={<WorkspacePremiumOutlinedIcon />}
+                    <ProfessionalFeatureChip
                       label="Professional Feature"
                       onClick={() => setPricingModalOpen(true)}
-                      sx={{
-                        backgroundColor: "#fbbf24",
-                        color: "white",
-                        fontSize: "10px",
-                        fontWeight: "bold",
-                        height: "20px",
-                        cursor: "pointer",
-                        "&:hover": {
-                          backgroundColor: "#f59e0b",
-                        },
-                        "& .MuiChip-icon": {
-                          color: "white",
-                          fontSize: "14px",
-                          marginRight: "4px",
-                        },
-                        "& .MuiChip-label": {
-                          paddingLeft: "0px",
-                          paddingRight: "8px",
-                        },
-                      }}
+                      size="small"
                     />
                   </div>
                 )}
