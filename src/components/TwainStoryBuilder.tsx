@@ -1216,16 +1216,36 @@ const TwainStoryBuilder: React.FC = () => {
               </Menu>
             </div>
 
-            <Image
-              src="/images/twain-logo.png"
-              alt="Twain Logo"
-              width={120}
-              height={120}
-              style={{
-                filter: "invert(1) brightness(100%)",
-                marginBottom: "16px",
-              }}
-            />
+            <div style={{ position: "relative", display: "inline-block" }}>
+              <Image
+                src="/images/twain-logo.png"
+                alt="Twain Logo"
+                width={120}
+                height={120}
+                style={{
+                  filter: "invert(1) brightness(100%)",
+                  marginBottom: "16px",
+                }}
+              />
+              <div
+                style={{
+                  position: "absolute",
+                  bottom: "0",
+                  right: "-12px",
+                  backgroundColor: "#ff4757",
+                  color: "white",
+                  fontSize: "14px",
+                  fontWeight: "bold",
+                  padding: "4px 8px",
+                  borderRadius: "6px",
+                  fontFamily: "'Rubik', sans-serif",
+                  border: "1px solid white",
+                  zIndex: 10,
+                }}
+              >
+                BETA
+              </div>
+            </div>
             <Typography
               variant="h4"
               sx={{
@@ -2867,16 +2887,36 @@ const TwainStoryBuilder: React.FC = () => {
               </Menu>
             </div>
 
-            <Image
-              src="/images/twain-logo.png"
-              alt="Twain Logo"
-              width={120}
-              height={120}
-              style={{
-                filter: "invert(1) brightness(100%)",
-                marginBottom: "16px",
-              }}
-            />
+            <div style={{ position: "relative", display: "inline-block" }}>
+              <Image
+                src="/images/twain-logo.png"
+                alt="Twain Logo"
+                width={120}
+                height={120}
+                style={{
+                  filter: "invert(1) brightness(100%)",
+                  marginBottom: "16px",
+                }}
+              />
+              <div
+                style={{
+                  position: "absolute",
+                  bottom: "0",
+                  right: "-12px",
+                  backgroundColor: "#ff4757",
+                  color: "white",
+                  fontSize: "14px",
+                  fontWeight: "bold",
+                  padding: "4px 8px",
+                  borderRadius: "6px",
+                  fontFamily: "'Rubik', sans-serif",
+                  border: "1px solid white",
+                  zIndex: 10,
+                }}
+              >
+                BETA
+              </div>
+            </div>
             <Typography
               variant="h4"
               sx={{
@@ -3455,18 +3495,36 @@ const TwainStoryBuilder: React.FC = () => {
             </Menu>
           </div>
 
-          <Image
-            src="/images/twain-logo.png"
-            alt="Twain Logo"
-            width={120}
-            height={120}
-            style={{
-              filter: "invert(1) brightness(100%)",
-              marginBottom: "32px",
-              position: "relative",
-              zIndex: 10,
-            }}
-          />
+          <div style={{ position: "relative", display: "inline-block" }}>
+            <Image
+              src="/images/twain-logo.png"
+              alt="Twain Logo"
+              width={120}
+              height={120}
+              style={{
+                filter: "invert(1) brightness(100%)",
+                marginBottom: "16px",
+              }}
+            />
+            <div
+              style={{
+                position: "absolute",
+                bottom: "16px",
+                right: "-12px",
+                backgroundColor: "#ff4757",
+                color: "white",
+                fontSize: "14px",
+                fontWeight: "bold",
+                padding: "4px 8px",
+                borderRadius: "6px",
+                fontFamily: "'Rubik', sans-serif",
+                border: "1px solid white",
+                zIndex: 20,
+              }}
+            >
+              BETA
+            </div>
+          </div>
           <Typography
             variant="h4"
             sx={{
@@ -4484,7 +4542,7 @@ const TwainStoryBuilder: React.FC = () => {
             color="text.secondary"
             sx={{ fontFamily: "'Rubik', sans-serif" }}
           >
-            © 2025 Twain Story Builder. All rights reserved.
+            © 2025 Twain Story Builder - BETA. All rights reserved.
           </Typography>
         </footer>
 
@@ -4794,12 +4852,32 @@ const TwainStoryBuilder: React.FC = () => {
           <div className="relative z-10 flex flex-col sm:h-full h-screen">
             {/* Icon in top left */}
             <div className="pt-32 pl-16 md:pt-32 md:pl-32">
-              <Image
-                src="/images/twain-logo.png"
-                alt="Twain Logo"
-                width={160}
-                height={160}
-              />
+              <div style={{ position: "relative", display: "inline-block" }}>
+                <Image
+                  src="/images/twain-logo.png"
+                  alt="Twain Logo"
+                  width={160}
+                  height={160}
+                />
+                <div
+                  style={{
+                    position: "absolute",
+                    bottom: "-16px",
+                    right: "-14px",
+                    backgroundColor: "#ff4757",
+                    color: "white",
+                    fontSize: "16px",
+                    fontWeight: "bold",
+                    padding: "5px 10px",
+                    borderRadius: "7px",
+                    fontFamily: "'Rubik', sans-serif",
+                    border: "1px solid white",
+                    zIndex: 10,
+                  }}
+                >
+                  BETA
+                </div>
+              </div>
             </div>
 
             {/* Centered login content */}
@@ -4820,7 +4898,7 @@ const TwainStoryBuilder: React.FC = () => {
                 </Typography>
 
                 <Typography
-                  variant="h5"
+                  variant="h4"
                   sx={{
                     color: "#1f2937",
                     fontFamily: "'Crimson-Text', serif",
@@ -4828,10 +4906,10 @@ const TwainStoryBuilder: React.FC = () => {
                     letterSpacing: 0,
                     fontStretch: "100%",
                     lineHeight: 1.2,
-                    marginBottom: "32px",
+                    marginBottom: "24px",
                   }}
                 >
-                  Log in to Twain Story Builder
+                  Log in to Twain Story Writer
                 </Typography>
 
                 <Button
@@ -4896,7 +4974,7 @@ const TwainStoryBuilder: React.FC = () => {
                     },
                   }}
                 >
-                  Request Access
+                  Request Access To Our Beta
                 </Typography>
                 <Typography
                   variant="body2"

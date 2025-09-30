@@ -92,6 +92,10 @@ const TwainStoryPricingModal: React.FC<TwainStoryPricingModalProps> = ({
           display: { xs: "flex", sm: "block" },
           flexDirection: { xs: "column", sm: "row" },
           zIndex: 99999,
+          outline: "none",
+          "&:focus": {
+            outline: "none",
+          },
         }}
       >
         {/* Header with same background as page header */}
