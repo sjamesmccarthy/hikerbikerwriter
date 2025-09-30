@@ -3509,7 +3509,7 @@ const TwainStoryBuilder: React.FC = () => {
             <div
               style={{
                 position: "absolute",
-                bottom: "16px",
+                bottom: "0",
                 right: "-12px",
                 backgroundColor: "#ff4757",
                 color: "white",
@@ -3544,7 +3544,7 @@ const TwainStoryBuilder: React.FC = () => {
             variant="body2"
             sx={{
               fontFamily: "'Rubik', sans-serif",
-              fontWeight: 300,
+              fontWeight: 600,
               fontSize: "14px",
               textAlign: "center",
               maxWidth: "600px",
@@ -3553,8 +3553,7 @@ const TwainStoryBuilder: React.FC = () => {
               zIndex: 10,
             }}
           >
-            This is your bookshelf, where you can write, plan, edit and typeset
-            your books
+            This is your bookshelf of books and stories.
           </Typography>
         </header>
 
@@ -4503,7 +4502,7 @@ const TwainStoryBuilder: React.FC = () => {
 
         {/* Plan Status Notice */}
         <div
-          className="w-full text-center py-4 px-8 text-gray-200 text-xs"
+          className="hidden w-full text-center py-4 px-8 text-gray-200 text-xs"
           style={{ backgroundColor: "rgb(38, 52, 63)" }}
         >
           <span className="text-green-200">
@@ -4540,9 +4539,16 @@ const TwainStoryBuilder: React.FC = () => {
           <Typography
             variant="body2"
             color="text.secondary"
-            sx={{ fontFamily: "'Rubik', sans-serif" }}
+            sx={{ fontFamily: "'Rubik', sans-serif", textAlign: "center" }}
           >
-            © 2025 Twain Story Builder - BETA. All rights reserved.
+            © 2025 Twain Story Writer. All rights reserved.
+            <br />
+            You are using a BETA version of this software - please report any
+            bugs or issues and feature requests to{" "}
+            <a href="mailto:beta@twainstorywriter.com" className="underline">
+              beta@twainstorywriter.com
+            </a>
+            .
           </Typography>
         </footer>
 
