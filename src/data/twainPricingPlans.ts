@@ -34,8 +34,9 @@ export const twainPricingPlans: PricingPlans = {
         period: "forever",
       },
       features: [
-        "3 Outlines and 3 Stories",
-        "3 Books or 3 Story Collections",
+        "3 Ideas, Characters, Outlines, Stories, Chapters and Parts",
+        "3 books and story collections",
+        "1 book series with max 3 books",
         "Local storage only",
         "Export to Word® as DOCx",
       ],
@@ -50,7 +51,7 @@ export const twainPricingPlans: PricingPlans = {
     professional: {
       name: "Professional",
       price: {
-        amount: 45,
+        amount: 24.99,
         currency: "USD",
         period: "year",
       },
@@ -61,6 +62,7 @@ export const twainPricingPlans: PricingPlans = {
         "Cloud storage",
         "Export to Word® as DOCx",
         "Import Word® files",
+        "Publish Book to Word® or PDF",
         "Publish Book to Amazon Kindle (coming soon)",
       ],
       limitations: {

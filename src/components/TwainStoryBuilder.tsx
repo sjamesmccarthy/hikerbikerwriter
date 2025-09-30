@@ -409,6 +409,38 @@ const getUniqueSeriesNames = (books: Book[]): string[] => {
   return seriesNames.sort(); // Sort alphabetically
 };
 
+// Helper function to count existing series for a user
+const getExistingSeriesCount = (books: Book[]): number => {
+  const uniqueSeriesNames = getUniqueSeriesNames(books);
+  return uniqueSeriesNames.length;
+};
+
+// Helper function to count total books in series for a user
+const getTotalBooksInSeries = (books: Book[]): number => {
+  return books.filter((book) => book.isSeries).length;
+};
+
+// Helper function to get available book numbers for a series
+const getAvailableBookNumbers = (
+  books: Book[],
+  seriesName: string,
+  currentBookId?: number
+): number[] => {
+  // Get all book numbers already used in this series (excluding the current book being edited)
+  const usedNumbers = books
+    .filter(
+      (book) =>
+        book.isSeries &&
+        book.seriesName === seriesName &&
+        book.id !== currentBookId
+    )
+    .map((book) => book.seriesNumber || 1);
+
+  // Generate all possible numbers (1-12) and filter out used ones
+  const allNumbers = Array.from({ length: 12 }, (_, i) => i + 1);
+  return allNumbers.filter((num) => !usedNumbers.includes(num));
+};
+
 const TwainStoryBuilder: React.FC = () => {
   const { data: session, status } = useSession();
   const router = useRouter();
@@ -792,8 +824,33 @@ const TwainStoryBuilder: React.FC = () => {
     setManagedBookEdition(book.edition);
     setManagedBookCopyrightYear(book.copyrightYear);
     setManagedBookIsSeries(book.isSeries || false);
-    setManagedBookSeriesName(book.seriesName || "");
-    setManagedBookSeriesNumber(book.seriesNumber || 1);
+
+    // For freelance users who already have a series, auto-select it
+    if (planType !== "professional" && getExistingSeriesCount(books) >= 1) {
+      const existingSeriesNames = getUniqueSeriesNames(books);
+      if (existingSeriesNames.length > 0) {
+        const selectedSeriesName = book.seriesName || existingSeriesNames[0];
+        setManagedBookSeriesName(selectedSeriesName);
+
+        // Set book number to current or next available number
+        if (book.seriesNumber) {
+          setManagedBookSeriesNumber(book.seriesNumber);
+        } else {
+          // For new books, set to the next available number
+          const availableNumbers = getAvailableBookNumbers(
+            books,
+            selectedSeriesName,
+            book.id
+          );
+          setManagedBookSeriesNumber(
+            availableNumbers.length > 0 ? availableNumbers[0] : 1
+          );
+        }
+      }
+    } else {
+      setManagedBookSeriesName(book.seriesName || "");
+      setManagedBookSeriesNumber(book.seriesNumber || 1);
+    }
     setManagedBookContributors(book.contributors || []);
     setManagedBookDescription(book.description || "");
     setManagedBookGenre(book.genre || "");
@@ -1374,28 +1431,34 @@ const TwainStoryBuilder: React.FC = () => {
                                   setManagedBookIsSeries(e.target.checked)
                                 }
                                 color="primary"
-                                disabled={planType !== "professional"}
+                                disabled={
+                                  planType !== "professional" &&
+                                  getTotalBooksInSeries(books) >= 3 &&
+                                  !managedBookIsSeries
+                                }
                               />
                             }
                             label="This book is part of a series"
                             sx={{ mb: 0 }}
                           />
-                          {planType !== "professional" && (
-                            <Chip
-                              icon={<WorkspacePremiumOutlinedIcon />}
-                              label="Professional Feature"
-                              sx={{
-                                backgroundColor: "#fbbf24",
-                                color: "white",
-                                fontSize: "12px",
-                                fontWeight: "bold",
-                                height: "28px",
-                                "& .MuiChip-icon": {
+                          {planType !== "professional" &&
+                            getTotalBooksInSeries(books) >= 3 &&
+                            !managedBookIsSeries && (
+                              <Chip
+                                icon={<WorkspacePremiumOutlinedIcon />}
+                                label="Professional Feature"
+                                sx={{
+                                  backgroundColor: "#fbbf24",
                                   color: "white",
-                                },
-                              }}
-                            />
-                          )}
+                                  fontSize: "12px",
+                                  fontWeight: "bold",
+                                  height: "28px",
+                                  "& .MuiChip-icon": {
+                                    color: "white",
+                                  },
+                                }}
+                              />
+                            )}
                         </div>
 
                         {managedBookIsSeries && (
@@ -1427,11 +1490,27 @@ const TwainStoryBuilder: React.FC = () => {
                                   onChange={(e) => {
                                     if (e.target.value === "New Series") {
                                       setManagedBookSeriesName("");
+                                      setManagedBookSeriesNumber(1);
                                     } else {
                                       setManagedBookSeriesName(e.target.value);
+                                      // Set book number to next available in this series
+                                      const availableNumbers =
+                                        getAvailableBookNumbers(
+                                          books,
+                                          e.target.value,
+                                          selectedBook?.id
+                                        );
+                                      setManagedBookSeriesNumber(
+                                        availableNumbers.length > 0
+                                          ? availableNumbers[0]
+                                          : 1
+                                      );
                                     }
                                   }}
-                                  disabled={planType !== "professional"}
+                                  disabled={
+                                    planType !== "professional" &&
+                                    getExistingSeriesCount(books) >= 1
+                                  }
                                 >
                                   <MenuItem value="New Series">
                                     New Series
@@ -1469,11 +1548,16 @@ const TwainStoryBuilder: React.FC = () => {
                                       Number(e.target.value)
                                     )
                                   }
-                                  disabled={planType !== "professional"}
+                                  disabled={
+                                    planType !== "professional" &&
+                                    getTotalBooksInSeries(books) >= 3 &&
+                                    !selectedBook?.isSeries
+                                  }
                                 >
-                                  {Array.from(
-                                    { length: 12 },
-                                    (_, i) => i + 1
+                                  {getAvailableBookNumbers(
+                                    books,
+                                    managedBookSeriesName,
+                                    selectedBook?.id
                                   ).map((num) => (
                                     <MenuItem key={num} value={num}>
                                       Book {num}
@@ -1506,7 +1590,10 @@ const TwainStoryBuilder: React.FC = () => {
                                 }
                                 variant="outlined"
                                 placeholder="Enter the name of your new series"
-                                disabled={planType !== "professional"}
+                                disabled={
+                                  planType !== "professional" &&
+                                  getExistingSeriesCount(books) >= 1
+                                }
                               />
                             )}
                           </div>
@@ -1882,7 +1969,7 @@ const TwainStoryBuilder: React.FC = () => {
 
                   {/* Publisher Details */}
                   <div className="mt-8">
-                    <div className="flex items-center justify-between mb-4">
+                    <div className="flex items-center gap-3 mb-4">
                       <h3
                         className={`text-lg font-semibold ${
                           planType !== "professional"
@@ -2025,7 +2112,7 @@ const TwainStoryBuilder: React.FC = () => {
 
                   {/* Clauses */}
                   <div className="mt-8">
-                    <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-3 mb-2">
                       <h3
                         className={`text-lg font-semibold ${
                           planType !== "professional"
@@ -2306,25 +2393,71 @@ const TwainStoryBuilder: React.FC = () => {
 
                   {/* Action Buttons */}
                   <div className="flex flex-col sm:flex-row gap-4 pt-6">
-                    <Button
-                      onClick={handleExportBook}
-                      variant="outlined"
-                      startIcon={<SimCardDownloadOutlinedIcon />}
-                      sx={{
-                        flex: 1,
-                        textTransform: "none",
-                        fontFamily: "'Rubik', sans-serif",
-                        py: 1.5,
-                        borderColor: "rgb(156, 163, 175)",
-                        color: "rgb(107, 114, 128)",
-                        "&:hover": {
-                          borderColor: "rgb(107, 114, 128)",
-                          backgroundColor: "rgba(107, 114, 128, 0.1)",
-                        },
-                      }}
-                    >
-                      Export/Publish Book
-                    </Button>
+                    <div className="relative flex-1">
+                      <Button
+                        onClick={
+                          planType === "professional"
+                            ? handleExportBook
+                            : undefined
+                        }
+                        disabled={planType !== "professional"}
+                        variant="outlined"
+                        startIcon={<SimCardDownloadOutlinedIcon />}
+                        sx={{
+                          width: "100%",
+                          textTransform: "none",
+                          fontFamily: "'Rubik', sans-serif",
+                          py: 1.5,
+                          borderColor:
+                            planType === "professional"
+                              ? "rgb(156, 163, 175)"
+                              : "rgb(209, 213, 219)",
+                          color:
+                            planType === "professional"
+                              ? "rgb(107, 114, 128)"
+                              : "rgb(156, 163, 175)",
+                          "&:hover":
+                            planType === "professional"
+                              ? {
+                                  borderColor: "rgb(107, 114, 128)",
+                                  backgroundColor: "rgba(107, 114, 128, 0.1)",
+                                }
+                              : {},
+                          "&.Mui-disabled": {
+                            borderColor: "rgb(209, 213, 219)",
+                            color: "rgb(156, 163, 175)",
+                          },
+                        }}
+                      >
+                        Export/Publish Book
+                      </Button>
+                      {planType !== "professional" && (
+                        <div
+                          className="absolute right-1"
+                          style={{ top: "-12px" }}
+                        >
+                          <Chip
+                            icon={<WorkspacePremiumOutlinedIcon />}
+                            label="Professional Feature"
+                            onClick={handleShowPricing}
+                            sx={{
+                              backgroundColor: "#fbbf24",
+                              color: "white",
+                              fontSize: "12px",
+                              fontWeight: "bold",
+                              height: "28px",
+                              cursor: "pointer",
+                              "& .MuiChip-icon": {
+                                color: "white",
+                              },
+                              "&:hover": {
+                                backgroundColor: "#f59e0b",
+                              },
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
                     <Button
                       onClick={handleDeleteBook}
                       variant="outlined"
@@ -3633,17 +3766,15 @@ const TwainStoryBuilder: React.FC = () => {
                           <button
                             className={`w-full flex flex-col items-center space-y-1 p-2 rounded cursor-pointer ${
                               planType !== "professional" && books.length >= 3
-                                ? "opacity-50 cursor-not-allowed"
+                                ? "opacity-75"
                                 : ""
                             }`}
                             onClick={
                               planType !== "professional" && books.length >= 3
-                                ? undefined
+                                ? handleShowPricing
                                 : handleCreateBookClick
                             }
-                            disabled={
-                              planType !== "professional" && books.length >= 3
-                            }
+                            disabled={false}
                           >
                             <AddCircleOutlinedIcon
                               sx={{
@@ -3678,15 +3809,20 @@ const TwainStoryBuilder: React.FC = () => {
                               <Chip
                                 icon={<WorkspacePremiumOutlinedIcon />}
                                 label="Professional"
+                                onClick={handleShowPricing}
                                 sx={{
                                   backgroundColor: "#fbbf24",
                                   color: "white",
                                   fontSize: "10px",
                                   fontWeight: "bold",
                                   height: "20px",
+                                  cursor: "pointer",
                                   "& .MuiChip-icon": {
                                     color: "white",
                                     fontSize: "12px",
+                                  },
+                                  "&:hover": {
+                                    backgroundColor: "#f59e0b",
                                   },
                                 }}
                               />
@@ -4027,8 +4163,16 @@ const TwainStoryBuilder: React.FC = () => {
                         </Typography>
                         <div className="flex items-center justify-center space-x-4 pt-6">
                           <button
-                            onClick={handleCreateBookClick}
-                            className="flex items-center space-x-2 text-white px-4 py-2 rounded-md transition-colors duration-200 cursor-pointer"
+                            onClick={
+                              planType !== "professional" && books.length >= 3
+                                ? handleShowPricing
+                                : handleCreateBookClick
+                            }
+                            className={`flex items-center space-x-2 text-white px-4 py-2 rounded-md transition-colors duration-200 cursor-pointer ${
+                              planType !== "professional" && books.length >= 3
+                                ? "opacity-75"
+                                : ""
+                            }`}
                             style={{ backgroundColor: "rgb(100, 114, 127)" }}
                             onMouseEnter={(e) => {
                               e.currentTarget.style.backgroundColor =
@@ -4354,8 +4498,16 @@ const TwainStoryBuilder: React.FC = () => {
                         </Typography>
                         <div className="flex items-center justify-center space-x-4 pt-6">
                           <button
-                            onClick={handleCreateBookClick}
-                            className="flex items-center space-x-2 text-white px-4 py-2 rounded-md transition-colors duration-200 cursor-pointer"
+                            onClick={
+                              planType !== "professional" && books.length >= 3
+                                ? handleShowPricing
+                                : handleCreateBookClick
+                            }
+                            className={`flex items-center space-x-2 text-white px-4 py-2 rounded-md transition-colors duration-200 cursor-pointer ${
+                              planType !== "professional" && books.length >= 3
+                                ? "opacity-75"
+                                : ""
+                            }`}
                             style={{ backgroundColor: "rgb(100, 114, 127)" }}
                             onMouseEnter={(e) => {
                               e.currentTarget.style.backgroundColor =
