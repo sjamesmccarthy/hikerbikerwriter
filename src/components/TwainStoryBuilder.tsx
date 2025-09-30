@@ -2395,14 +2395,19 @@ const TwainStoryBuilder: React.FC = () => {
             <Box
               sx={{
                 position: "absolute",
-                top: "50%",
-                left: "50%",
-                transform: "translate(-50%, -50%)",
-                width: { xs: "90vw", sm: 600 },
+                top: { xs: 0, sm: "50%" },
+                left: { xs: 0, sm: "50%" },
+                transform: { xs: "none", sm: "translate(-50%, -50%)" },
+                width: { xs: "100vw", sm: 600 },
+                maxWidth: { xs: "100vw", sm: "90vw" },
+                height: { xs: "100vh", sm: "auto" },
+                maxHeight: { xs: "100vh", sm: "90vh" },
                 bgcolor: "background.paper",
-                borderRadius: 3,
+                borderRadius: { xs: 0, sm: 3 },
                 overflow: "hidden",
                 boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
+                display: { xs: "flex", sm: "block" },
+                flexDirection: { xs: "column", sm: "row" },
               }}
             >
               {/* Header */}
@@ -2442,7 +2447,13 @@ const TwainStoryBuilder: React.FC = () => {
               </Box>
 
               {/* Content */}
-              <Box sx={{ p: 4 }}>
+              <Box
+                sx={{
+                  p: { xs: 3, sm: 4 },
+                  flex: { xs: 1, sm: "none" },
+                  overflowY: "auto",
+                }}
+              >
                 {/* Book Title Section */}
                 <Box sx={{ textAlign: "center", mb: 4 }}>
                   <Typography
@@ -3294,7 +3305,7 @@ const TwainStoryBuilder: React.FC = () => {
         <header
           className="h-[300px] flex flex-col justify-center items-center text-white relative"
           style={{
-            backgroundImage: `url(/images/twain5.png)`,
+            backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0.3)), url(/images/twain5.png)`,
             backgroundSize: "cover",
             backgroundPosition: "center",
             backgroundRepeat: "no-repeat",

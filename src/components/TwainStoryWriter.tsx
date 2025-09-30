@@ -1205,6 +1205,12 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
   };
 
   const handleCreateIdeaClick = () => {
+    // Check if freelance user has reached the limit
+    if (planType !== "professional" && ideas.length >= 3) {
+      setPricingModalOpen(true);
+      return;
+    }
+
     setEditingIdea(null);
     setCreateIdeaModalOpen(true);
   };
@@ -1291,6 +1297,12 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
   };
 
   const handleCreateCharacterClick = () => {
+    // Check if freelance user has reached the limit
+    if (planType !== "professional" && characters.length >= 3) {
+      setPricingModalOpen(true);
+      return;
+    }
+
     setEditingCharacter(null);
     setCreateCharacterModalOpen(true);
   };
@@ -2617,9 +2629,19 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                         onClick={(e) => {
                           e.stopPropagation();
                           if (
-                            (section.title === "IDEAS" ||
-                              section.title === "CHARACTERS" ||
-                              section.title === "PARTS") &&
+                            section.title === "IDEAS" &&
+                            planType !== "professional" &&
+                            ideas.length >= 3
+                          ) {
+                            setPricingModalOpen(true);
+                          } else if (
+                            section.title === "CHARACTERS" &&
+                            planType !== "professional" &&
+                            characters.length >= 3
+                          ) {
+                            setPricingModalOpen(true);
+                          } else if (
+                            section.title === "PARTS" &&
                             planType !== "professional"
                           ) {
                             setPricingModalOpen(true);
@@ -2700,7 +2722,8 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                       backgroundColor: "rgb(249, 250, 251)",
                     }}
                   >
-                    {section.title === "IDEAS" && ideas.length > 0 ? (
+                    {section.title === "IDEAS" &&
+                    (ideas.length > 0 || planType === "professional") ? (
                       <div className="space-y-3">
                         {ideas.map((idea) => (
                           <div
@@ -2768,7 +2791,7 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                         ))}
                       </div>
                     ) : section.title === "CHARACTERS" &&
-                      characters.length > 0 ? (
+                      (characters.length > 0 || planType === "professional") ? (
                       <div className="space-y-3">
                         {characters.map((character) => {
                           const styling = getCharacterStyling(character.gender);
@@ -3193,10 +3216,73 @@ const TwainStoryWriter: React.FC<TwainStoryWriterProps> = ({
                       </div>
                     ) : (
                       <div className="flex flex-col items-center justify-center py-4">
-                        {(section.title === "IDEAS" ||
-                          section.title === "CHARACTERS" ||
-                          section.title === "PARTS") &&
-                        planType !== "professional" ? (
+                        {section.title === "IDEAS" ? (
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontFamily: "'Rubik', sans-serif",
+                              fontWeight: 400,
+                              fontSize: "13px",
+                              color: "rgb(107, 114, 128)",
+                              lineHeight: 1.5,
+                              textAlign: "center",
+                            }}
+                          >
+                            {planType === "professional"
+                              ? `Professional users can create unlimited Ideas. You currently have ${
+                                  ideas.length
+                                } idea${
+                                  ideas.length !== 1 ? "s" : ""
+                                }. Store your creative ideas and inspiration here.`
+                              : `Freelance users can create 3 Ideas (${ideas.length}/3 used). Store your creative ideas and inspiration here.`}{" "}
+                            {planType !== "professional" && (
+                              <span
+                                onClick={() => setPricingModalOpen(true)}
+                                style={{
+                                  color: "rgb(19, 135, 194)",
+                                  cursor: "pointer",
+                                  textDecoration: "underline",
+                                }}
+                              >
+                                Professional plans can create unlimited ideas.
+                              </span>
+                            )}
+                          </Typography>
+                        ) : section.title === "CHARACTERS" ? (
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontFamily: "'Rubik', sans-serif",
+                              fontWeight: 400,
+                              fontSize: "13px",
+                              color: "rgb(107, 114, 128)",
+                              lineHeight: 1.5,
+                              textAlign: "center",
+                            }}
+                          >
+                            {planType === "professional"
+                              ? `Professional users can create unlimited Characters. You currently have ${
+                                  characters.length
+                                } character${
+                                  characters.length !== 1 ? "s" : ""
+                                }. Develop your characters, their backgrounds, motivations, and relationships.`
+                              : `Freelance users can create 3 Characters (${characters.length}/3 used). Develop your characters, their backgrounds, motivations, and relationships.`}{" "}
+                            {planType !== "professional" && (
+                              <span
+                                onClick={() => setPricingModalOpen(true)}
+                                style={{
+                                  color: "rgb(19, 135, 194)",
+                                  cursor: "pointer",
+                                  textDecoration: "underline",
+                                }}
+                              >
+                                Professional plans can create unlimited
+                                characters.
+                              </span>
+                            )}
+                          </Typography>
+                        ) : section.title === "PARTS" &&
+                          planType !== "professional" ? (
                           <Chip
                             icon={<WorkspacePremiumOutlinedIcon />}
                             label="Professional Feature"
