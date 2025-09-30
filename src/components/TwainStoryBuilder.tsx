@@ -160,6 +160,64 @@ const UserAvatar: React.FC<UserAvatarProps> = ({ session, onError }) => {
   );
 };
 
+// Reusable Profile Menu Component
+interface ProfileMenuProps {
+  session: {
+    user?: {
+      name?: string | null;
+      email?: string | null;
+      image?: string | null;
+    };
+  } | null;
+  planType: "freelance" | "professional";
+  anchorEl: HTMLElement | null;
+  onMenuOpen: (event: React.MouseEvent<HTMLElement>) => void;
+  onMenuClose: () => void;
+  onAccountSettings: () => void;
+  onLogout: () => void;
+  additionalClasses?: string;
+}
+
+const ProfileMenu: React.FC<ProfileMenuProps> = ({
+  session,
+  planType,
+  anchorEl,
+  onMenuOpen,
+  onMenuClose,
+  onAccountSettings,
+  onLogout,
+  additionalClasses = "",
+}) => {
+  return (
+    <div
+      className={`absolute top-4 right-4 flex items-center gap-2 ${additionalClasses}`}
+    >
+      <IconButton onClick={onMenuOpen}>
+        <UserAvatar session={session} />
+      </IconButton>
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl)}
+        onClose={onMenuClose}
+        anchorOrigin={{
+          vertical: "bottom",
+          horizontal: "right",
+        }}
+        transformOrigin={{
+          vertical: "top",
+          horizontal: "right",
+        }}
+      >
+        <div className="ml-2 pb-1 pt-2">
+          <Chip {...getPlanChipProps(planType)} />
+        </div>
+        <MenuItem onClick={onAccountSettings}>Account Settings</MenuItem>
+        <MenuItem onClick={onLogout}>Sign Out</MenuItem>
+      </Menu>
+    </div>
+  );
+};
+
 // Type definitions
 interface Contributor {
   id: string;
@@ -451,7 +509,7 @@ const TwainFooter: React.FC = () => {
         color="text.secondary"
         sx={{ fontFamily: "'Rubik', sans-serif", textAlign: "center" }}
       >
-        © 2025 Twain Story Writer. All rights reserved.
+        © {new Date().getFullYear()} Twain Story Writer. All rights reserved.
         <br />
         You are using a BETA version of this software - please report any bugs
         or issues and feature requests to{" "}
@@ -475,7 +533,6 @@ const TwainStoryBuilder: React.FC = () => {
     updatePlan,
     updatePreference,
     recordLogin,
-    checkFeature,
   } = useUserPreferences();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [createBookModalOpen, setCreateBookModalOpen] = useState(false);
@@ -1211,32 +1268,15 @@ const TwainStoryBuilder: React.FC = () => {
             style={{ backgroundColor: "rgb(38, 52, 63)" }}
           >
             {/* Profile Menu - Top Right */}
-            <div className="absolute top-4 right-4 flex items-center gap-2">
-              <IconButton onClick={handleMenuOpen}>
-                <UserAvatar session={session} />
-              </IconButton>
-              <Menu
-                anchorEl={anchorEl}
-                open={Boolean(anchorEl)}
-                onClose={handleMenuClose}
-                anchorOrigin={{
-                  vertical: "bottom",
-                  horizontal: "right",
-                }}
-                transformOrigin={{
-                  vertical: "top",
-                  horizontal: "right",
-                }}
-              >
-                <div className="ml-2 pb-1 pt-2">
-                  <Chip {...getPlanChipProps(planType)} />
-                </div>
-                <MenuItem onClick={handleAccountSettings}>
-                  Account Settings
-                </MenuItem>
-                <MenuItem onClick={handleLogout}>Sign Out</MenuItem>
-              </Menu>
-            </div>
+            <ProfileMenu
+              session={session}
+              planType={planType}
+              anchorEl={anchorEl}
+              onMenuOpen={handleMenuOpen}
+              onMenuClose={handleMenuClose}
+              onAccountSettings={handleAccountSettings}
+              onLogout={handleLogout}
+            />
 
             <div style={{ position: "relative", display: "inline-block" }}>
               <Image
@@ -2874,32 +2914,15 @@ const TwainStoryBuilder: React.FC = () => {
             style={{ backgroundColor: "rgb(38, 52, 63)" }}
           >
             {/* Profile Menu - Top Right */}
-            <div className="absolute top-4 right-4 flex items-center gap-2">
-              <IconButton onClick={handleMenuOpen}>
-                <UserAvatar session={session} />
-              </IconButton>
-              <Menu
-                anchorEl={anchorEl}
-                open={Boolean(anchorEl)}
-                onClose={handleMenuClose}
-                anchorOrigin={{
-                  vertical: "bottom",
-                  horizontal: "right",
-                }}
-                transformOrigin={{
-                  vertical: "top",
-                  horizontal: "right",
-                }}
-              >
-                <div className="ml-2 pb-1 pt-2">
-                  <Chip {...getPlanChipProps(planType)} />
-                </div>
-                <MenuItem onClick={handleAccountSettings}>
-                  Account Settings
-                </MenuItem>
-                <MenuItem onClick={handleLogout}>Sign Out</MenuItem>
-              </Menu>
-            </div>
+            <ProfileMenu
+              session={session}
+              planType={planType}
+              anchorEl={anchorEl}
+              onMenuOpen={handleMenuOpen}
+              onMenuClose={handleMenuClose}
+              onAccountSettings={handleAccountSettings}
+              onLogout={handleLogout}
+            />
 
             <div style={{ position: "relative", display: "inline-block" }}>
               <Image
@@ -3472,34 +3495,16 @@ const TwainStoryBuilder: React.FC = () => {
           }}
         >
           {/* Profile Menu - Top Right */}
-          <div className="absolute top-4 right-4 flex items-center z-10">
-            <div className="relative">
-              <IconButton onClick={handleMenuOpen}>
-                <UserAvatar session={session} />
-              </IconButton>
-            </div>
-            <Menu
-              anchorEl={anchorEl}
-              open={Boolean(anchorEl)}
-              onClose={handleMenuClose}
-              anchorOrigin={{
-                vertical: "bottom",
-                horizontal: "right",
-              }}
-              transformOrigin={{
-                vertical: "top",
-                horizontal: "right",
-              }}
-            >
-              <div className="ml-2 pb-1 pt-2">
-                <Chip {...getPlanChipProps(planType)} />
-              </div>
-              <MenuItem onClick={handleAccountSettings}>
-                Account Settings
-              </MenuItem>
-              <MenuItem onClick={handleLogout}>Sign Out</MenuItem>
-            </Menu>
-          </div>
+          <ProfileMenu
+            session={session}
+            planType={planType}
+            anchorEl={anchorEl}
+            onMenuOpen={handleMenuOpen}
+            onMenuClose={handleMenuClose}
+            onAccountSettings={handleAccountSettings}
+            onLogout={handleLogout}
+            additionalClasses="z-10"
+          />
 
           <div style={{ position: "relative", display: "inline-block" }}>
             <Image
@@ -5028,7 +5033,10 @@ export {
   updateQuickStoryWordCount,
   getQuickStoriesStorageKey,
   TwainFooter,
+  ProfileMenu,
+  UserAvatar,
+  getPlanChipProps,
 };
-export type { Book };
+export type { Book, ProfileMenuProps };
 
 export default TwainStoryBuilder;
